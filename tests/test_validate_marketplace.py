@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 import unittest
@@ -23,6 +24,67 @@ class MarketplaceValidatorTests(unittest.TestCase):
 
             self.assertTrue(
                 any("./skills/seo-audit" in error for error in errors),
+                errors,
+            )
+
+    def test_documented_skill_count_is_derived_from_everything_manifest(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = Path(temp_name) / "repository"
+            shutil.copytree(REPOSITORY, copied, ignore=shutil.ignore_patterns(".git"))
+            manifest_path = copied / ".claude-plugin" / "marketplace.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            everything = next(
+                plugin
+                for plugin in manifest["plugins"]
+                if plugin["name"] == "lss-everything"
+            )
+            everything["skills"].pop()
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            errors = validate(copied)
+
+            self.assertIn(
+                "ACCEPTANCE.md fresh-account total says 30 skills but "
+                "lss-everything lists 29",
+                errors,
+            )
+
+    def test_stale_documented_skill_count_fails(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = Path(temp_name) / "repository"
+            shutil.copytree(REPOSITORY, copied, ignore=shutil.ignore_patterns(".git"))
+            acceptance = copied / "ACCEPTANCE.md"
+            text = acceptance.read_text(encoding="utf-8")
+            acceptance.write_text(
+                text.replace("all 30 expected skills", "all 29 expected skills"),
+                encoding="utf-8",
+            )
+
+            errors = validate(copied)
+
+            self.assertIn(
+                "ACCEPTANCE.md fresh-account total says 29 skills but "
+                "lss-everything lists 30",
+                errors,
+            )
+
+    def test_bundle_description_count_matches_its_skill_list(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = Path(temp_name) / "repository"
+            shutil.copytree(REPOSITORY, copied, ignore=shutil.ignore_patterns(".git"))
+            manifest_path = copied / ".claude-plugin" / "marketplace.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["plugins"][0]["description"] = (
+                "Everything we use, in one install — all 29 Local Service "
+                "Spotlight skills."
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            errors = validate(copied)
+
+            self.assertIn(
+                "plugin 'lss-everything' description advertises 29 skills "
+                "but lists 30",
                 errors,
             )
 

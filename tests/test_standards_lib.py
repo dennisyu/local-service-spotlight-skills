@@ -69,7 +69,7 @@ class StandardFileTests(unittest.TestCase):
         self.assertEqual(standard.severity, "error")
 
     def test_only_the_body_is_embedded_never_the_header(self):
-        """Machine configuration must not leak into 27 skills as guidance."""
+        """Machine configuration must not leak into all skills as guidance."""
         header = {**HEADER, "applies_to": ["published-html"], "checks": [REGEX_CHECK]}
         standard = parse_standard(self.write("example-rule.md", header))
         self.assertNotIn("captured_from", standard.block())
@@ -241,6 +241,16 @@ class RepositoryStandardsTests(unittest.TestCase):
             if "published-html" in s.applies_to and not s.checks
         ]
         self.assertEqual(unenforced, [])
+
+    def test_email_attribution_preserves_the_human_send_boundary(self):
+        """An attribution rule must not quietly turn drafting into authority."""
+        by_slug = {standard.slug: standard for standard in self.standards}
+        attribution = by_slug["outbound-email-names-the-agent"].body
+
+        self.assertIn("agents-draft-humans-send", attribution)
+        self.assertIn("Drafted by", attribution)
+        self.assertIn("exact execution receipt", attribution)
+        self.assertIn("closer never grants send authority", attribution)
 
 
 if __name__ == "__main__":

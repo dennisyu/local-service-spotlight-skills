@@ -2163,6 +2163,11 @@ numbered list of steps is what you send only when you genuinely cannot act.
   names. Upstream skill: `skills/content-factory/SKILL.md`. Canon pages:
   https://blitzmetrics.com/content-factory/ and
   https://blitzmetrics.com/the-4-stages-of-the-content-factory/.
+- **Historical quotations, transcripts, captions, and archival artifacts stay
+  verbatim.** Do not silently rewrite a speaker's words. If an old stage line appears
+  in quoted material, label it as historical and state the current four stages outside
+  the quotation. This preservation exception is not permission to teach the old terms
+  as the current system.
 - SAE course map (Plumbing → Goals → Content → Targeting → Amplification →
   Optimization) is separate; the Content Factory block inside it is still only
   Produce → Process → Post → Promote.
@@ -2174,14 +2179,23 @@ numbered list of steps is what you send only when you genuinely cannot act.
 - When explaining a concept (GCT, Content Factory, Dollar-a-Day, MAA, SAE, Nine
   Triangles, or similar), always **show and link** at least one concrete example.
   A definition alone is incomplete.
-- Prefer live canonical URLs: Task Library, Local Service Spotlight, blitzmetrics.com
-  SEO leaves, dennisyu.com. Never invent example URLs.
+- Prefer live canonical URLs on Local Service Spotlight, the canonical method host,
+  Dennis's site, and the Nine Triangles site. Never invent example URLs.
+- Use descriptive Markdown links to the exact page. A bare domain, an internal skill
+  slug, a search-result URL, or a phrase such as "a client-safe MAA" is not a linked
+  example. Open the exact target and verify that it resolves before handoff.
 - Pattern: one sentence what it is, one sentence why it matters, then the linked
   example(s).
-- Starters: GCT → Task Library GCT task + theninetriangles.com; Content Factory →
-  https://blitzmetrics.com/content-factory/ and name Produce → Process → Post →
-  Promote; MAA → weekly-brand-maa / a client-safe Friday MAA; Dollar-a-Day → method
-  page + one public-safe winner when available.
+- Verified starters (each returned HTTP 200 on 2026-08-22; re-check before use):
+  - GCT → [Goals, Content, Targeting](https://theninetriangles.com/gct/).
+  - Content Factory → [Content Factory](https://blitzmetrics.com/content-factory/)
+    and [the four stages](https://blitzmetrics.com/the-4-stages-of-the-content-factory/),
+    naming Produce → Process → Post → Promote.
+  - MAA → [Metrics, Analysis, Action](https://theninetriangles.com/maa/) and a
+    [scheduled MAA example](https://blitzmetrics.com/18-scheduled-tasks-every-agency-owner-should-build-in-claude/).
+  - Dollar-a-Day → [the method and public proof](https://blitzmetrics.com/dad/).
+  - SAE → [the canonical operating guide](https://blitzmetrics.com/social-amplification/).
+  - Nine Triangles → [the complete map](https://theninetriangles.com/).
 <!-- shared-rule:explain-with-linked-examples:end -->
 
 <!-- shared-rule:lss-is-the-public-company:start -->
@@ -2195,8 +2209,20 @@ numbered list of steps is what you send only when you genuinely cannot act.
   still contain it. Do not add more.
 - **The existing canon/audit domain remains a publish host** for definitive articles
   and audits. Linking that URL is fine. Calling it the current company is not.
-- Prefer `@localservicespotlight.com` addresses in new mail. Legacy aliases may still
-  deliver; they are not a reason to put the sunset name in the body.
+- **Sender and thread integrity outrank the address preference.** In an existing
+  conversation, preserve the exact authenticated account, thread, `From:`, `To:`,
+  `Cc:`, and `Reply-To:` route. Do not silently start a new thread, change the
+  audience, or switch sender identities to make an address look on-brand. A delivery
+  rail that explicitly forbids email, such as Basecamp notifications, still controls.
+- Select an `@localservicespotlight.com` `From:` identity for a new message, or retain
+  one already used in a thread, only when that exact identity is configured and verified
+  on the authenticated account **and** its use is authorized for the intended audience.
+  Never spoof it, assume an alias can send, or substitute it for an unverified legacy
+  identity. If it is unavailable, preserve the verified sender and report the naming
+  exception; transport metadata is not a reason to repeat the old brand in the body.
+- A ready-to-send handoff records the authenticated account, exact thread, `From:`,
+  `To:`, `Cc:`, and whether the sender identity was verified and authorized. The
+  agent-transparency closer does not prove any of those delivery facts.
 - This does not rewrite old articles or legal entity paperwork. It is a public-facing
   naming rule for new work.
 <!-- shared-rule:lss-is-the-public-company:end -->
@@ -2204,16 +2230,23 @@ numbered list of steps is what you send only when you genuinely cannot act.
 <!-- shared-rule:outbound-email-names-the-agent:start -->
 ## Outbound email names the agent
 
-- Every outbound email an agent **sends** (or hands off ready-to-send) must end with a
-  one-line closer that names which agent wrote it: Grok Bot, Claude, ChatGPT, Codex,
-  Cursor, Perplexity, Gemini, or the desk name (e.g. `— Grok Bot (Ops)` /
-  `Sent via Claude`).
-- Name the agent even when `From:` is a human (Dennis). The From address is delivery;
-  the closer is transparency.
+- Every email an agent drafts or hands off ready-to-send—and every delivered copy
+  when a human approves and sends it—must end with a one-line attribution naming
+  the agent/model and its function.
+- The controlling default remains `agents-draft-humans-send`: the agent stages the
+  message and a human dispatches it. In that case use exact provenance such as
+  `Drafted by Codex (Ops); sent by Dennis Yu`. A draft that has not been dispatched
+  says only `Drafted by Codex (Ops)`.
+- Use `Sent by` or `Sent via` for an agent only when an exact execution receipt proves
+  that agent had scoped send authority and performed the dispatch. Under the default
+  human-send rule, `Sent via Claude` or similar is false and forbidden.
+- `From:` is the authenticated transport identity; the closer records authorship and
+  dispatch provenance. Do not attribute a human send to a model or a model draft to a
+  human.
 - Place the agent line after the body and before any mail-client legal footer.
 - Do not invent a fake human VA signature to hide that an agent wrote it.
-- This does not override send-approval gates. When a desk is authorized to send, the
-  signature is mandatory. When only drafting, still include the agent name in the draft.
+- The closer never grants send authority and never substitutes for an approval or
+  execution receipt.
 <!-- shared-rule:outbound-email-names-the-agent:end -->
 
 <!-- shared-rule-index:start -->

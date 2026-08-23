@@ -100,6 +100,73 @@ class SyncSharedRulesTests(unittest.TestCase):
             self.assertIn("- second", text)
             self.assertEqual(text.count("<!-- shared-rule:rule-one:start -->"), 1)
 
+    def test_new_rules_after_scoped_index_converge_in_one_sync(self):
+        """New rules crossing an old index reach a fixed point immediately."""
+        mod = load_module(self.root)
+        self.write_standard(
+            "basecamp-updates-stay-in-basecamp", "## Basecamp\n\n- basecamp"
+        )
+        self.write_standard(
+            "verify-by-opening-the-live-artifact", "## Verify\n\n- verify"
+        )
+        self.write_standard(
+            "website-only-rule",
+            """---
+{"title":"Website only","severity":"error","captured":"2026-08-22","captured_from":"test","applies_to":["published-html"]}
+---
+
+## Website only
+
+- website""",
+        )
+        mod.sync()
+
+        # PR #21 added four universal rules after the old skills already ended
+        # in a generated index. Their slugs interleave with the existing source
+        # order, so sync temporarily appends them after that old index.
+        new_rules = {
+            "content-factory-four-stages": "## Content Factory\n\n- content",
+            "explain-with-linked-examples": "## Examples\n\n- examples",
+            "lss-is-the-public-company": "## LSS\n\n- lss",
+            "outbound-email-names-the-agent": "## Email\n\n- email",
+        }
+        for slug, body in new_rules.items():
+            self.write_standard(slug, body)
+        changed, orphans = mod.sync()
+
+        self.assertEqual(orphans, [])
+        self.assertEqual(set(changed), set(mod.targets()))
+        first_sync = {}
+        for path in mod.targets():
+            rendered = path.read_bytes()
+            first_sync[path] = rendered
+            for slug in new_rules:
+                marker = f"<!-- shared-rule:{slug}:start -->".encode()
+                self.assertEqual(rendered.count(marker), 1)
+
+        for skill in ("alpha", "beta"):
+            rendered = (self.root / "skills" / skill / "SKILL.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn(mod.INDEX_START, rendered)
+            self.assertIn(
+                "<!-- shared-rule:verify-by-opening-the-live-artifact:end -->\n\n"
+                "<!-- shared-rule:content-factory-four-stages:start -->",
+                rendered,
+            )
+
+        stale, _ = mod.sync(check=True)
+        self.assertEqual(stale, [], "one sync must make --check clean")
+
+        changed_again, _ = mod.sync()
+        self.assertEqual(changed_again, [])
+        for path, rendered in first_sync.items():
+            self.assertEqual(
+                path.read_bytes(),
+                rendered,
+                "a second sync must be byte-identical",
+            )
+
     def test_orphan_block_is_reported(self):
         """A block whose standards/ source was deleted fails rather than lingering."""
         mod = load_module(self.root)

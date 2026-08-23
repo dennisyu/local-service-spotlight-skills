@@ -131,7 +131,10 @@ def drop_index(text: str) -> str:
         return text
     before, rest = text.split(INDEX_START, 1)
     _, after = rest.split(INDEX_END, 1)
-    return (before.rstrip() + "\n" + after.lstrip("\n")).rstrip() + "\n"
+    before = before.rstrip()
+    after = after.lstrip("\n")
+    separator = "\n\n" if before and after else ""
+    return (before + separator + after).rstrip() + "\n"
 
 
 def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tuple[Path, str]]]:
