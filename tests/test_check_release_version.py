@@ -79,8 +79,23 @@ class ReleaseVersionGateTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ReleaseVersionError,
-            r"not changed from every base manifest.*marketplace\.json",
+            r"not increased beyond every base manifest.*marketplace\.json",
         ):
+            check_release(self.root, self.base)
+
+    def test_protected_change_rejects_a_version_downgrade(self):
+        (self.root / "AGENTS.md").write_text("new rule\n", encoding="utf-8")
+        self._write_versions("1.1.9", "1.1.9")
+
+        with self.assertRaisesRegex(
+            ReleaseVersionError, "not increased beyond every base manifest"
+        ):
+            check_release(self.root, self.base)
+
+    def test_release_versions_must_be_stable_semver(self):
+        self._write_versions("release-two", "release-two")
+
+        with self.assertRaisesRegex(ReleaseVersionError, "stable semantic version"):
             check_release(self.root, self.base)
 
     def test_current_manifests_must_match_even_for_unprotected_change(self):

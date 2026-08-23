@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ from typing import Any
 CLAUDE_MANIFEST = Path(".claude-plugin/marketplace.json")
 GROK_MANIFEST = Path(".grok-plugin/plugin.json")
 PROTECTED_PREFIXES = ("standards/", "skills/")
+SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 
 class ReleaseVersionError(ValueError):
@@ -69,7 +71,19 @@ def _load_json(text: str, source: str) -> dict[str, Any]:
 def _version(value: Any, source: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ReleaseVersionError(f"{source} must contain a non-empty version string")
-    return value.strip()
+    normalized = value.strip()
+    if SEMVER.fullmatch(normalized) is None:
+        raise ReleaseVersionError(
+            f"{source} must contain a stable semantic version such as 1.2.2"
+        )
+    return normalized
+
+
+def _version_key(version: str) -> tuple[int, int, int]:
+    match = SEMVER.fullmatch(version)
+    if match is None:  # All callers receive values validated by _version().
+        raise ReleaseVersionError(f"invalid semantic version: {version!r}")
+    return tuple(int(part) for part in match.groups())
 
 
 def _versions_from_documents(
@@ -158,21 +172,21 @@ def check_release(root: Path, base_ref: str) -> ReleaseVersionReport:
     previous: ReleaseVersions | None = None
     if protected:
         previous = base_versions(root, base_commit)
-        unchanged_manifests = [
+        non_increased_manifests = [
             name
             for name, version in (
                 (str(CLAUDE_MANIFEST), previous.claude),
                 (str(GROK_MANIFEST), previous.grok),
             )
-            if current.claude == version
+            if _version_key(current.claude) <= _version_key(version)
         ]
-        if unchanged_manifests:
+        if non_increased_manifests:
             raise ReleaseVersionError(
                 "protected marketplace files changed but the shared release version "
-                "was not changed from every base manifest: "
+                "was not increased beyond every base manifest: "
                 f"current={current.claude!r}; "
                 f"base Claude={previous.claude!r}; base Grok={previous.grok!r}; "
-                f"unchanged against {', '.join(unchanged_manifests)}; "
+                f"not increased against {', '.join(non_increased_manifests)}; "
                 f"protected changes={', '.join(protected)}"
             )
 
