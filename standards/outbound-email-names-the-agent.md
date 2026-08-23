@@ -14,7 +14,7 @@
 
 - Every outbound email an agent **sends** (or hands off ready-to-send) must end with a
   one-line closer that names which agent wrote it: Grok Bot, Claude, ChatGPT, Codex,
-  Cursor, Perplexity, Gemini, or the desk name (e.g. `— Grok Bot (BlitzMetrics Ops)` /
+  Cursor, Perplexity, Gemini, or the desk name (e.g. `— Grok Bot (Ops)` /
   `Sent via Claude`).
 - Name the agent even when `From:` is a human (Dennis). The From address is delivery;
   the closer is transparency.

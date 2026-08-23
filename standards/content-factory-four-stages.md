@@ -5,8 +5,7 @@
   "captured": "2026-08-22",
   "captured_from": "Dennis Yu via Website Builder / Training → Ops, 2026-08-22",
   "applies_to": [
-    "agent-behaviour",
-    "published-html"
+    "agent-behaviour"
   ]
 }
 ---

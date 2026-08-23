@@ -385,6 +385,73 @@ Do not schedule a second call to "finish access" or "finish the form." Anything 
   control plane is the roster-driven Money Tree; derived output folders are not state.
 <!-- shared-rule:screen-gct-before-amplification:end -->
 
+<!-- shared-rule:content-factory-four-stages:start -->
+## Content Factory four stages
+
+- The Content Factory line is locked: **Produce → Process → Post → Promote**.
+  Do not rename, reorder, or merge these four.
+- **Plumbing** is onboarding / access / tracking **before** the factory
+  (`client-access-checklist`). It is not a factory stage.
+- **Perform** is MAA (Metrics → Analysis → Action) **after** the factory /
+  promotion loop (`weekly-brand-maa`). It is not a factory stage.
+- If copy still lists Plumbing / Publish / Promote / Perform as the factory's
+  4 P's, or uses Publish instead of Post inside that line, rewrite to the locked
+  names. Upstream skill: `skills/content-factory/SKILL.md`. Canon pages:
+  https://blitzmetrics.com/content-factory/ and
+  https://blitzmetrics.com/the-4-stages-of-the-content-factory/.
+- SAE course map (Plumbing → Goals → Content → Targeting → Amplification →
+  Optimization) is separate; the Content Factory block inside it is still only
+  Produce → Process → Post → Promote.
+<!-- shared-rule:content-factory-four-stages:end -->
+
+<!-- shared-rule:explain-with-linked-examples:start -->
+## Explain with linked examples
+
+- When explaining a concept (GCT, Content Factory, Dollar-a-Day, MAA, SAE, Nine
+  Triangles, or similar), always **show and link** at least one concrete example.
+  A definition alone is incomplete.
+- Prefer live canonical URLs: Task Library, Local Service Spotlight, blitzmetrics.com
+  SEO leaves, dennisyu.com. Never invent example URLs.
+- Pattern: one sentence what it is, one sentence why it matters, then the linked
+  example(s).
+- Starters: GCT → Task Library GCT task + theninetriangles.com; Content Factory →
+  https://blitzmetrics.com/content-factory/ and name Produce → Process → Post →
+  Promote; MAA → weekly-brand-maa / a client-safe Friday MAA; Dollar-a-Day → method
+  page + one public-safe winner when available.
+<!-- shared-rule:explain-with-linked-examples:end -->
+
+<!-- shared-rule:lss-is-the-public-company:start -->
+## Local Service Spotlight is the public company
+
+- **Dennis's current company in new public copy is Local Service Spotlight**, plus the
+  vertical spotlight sites (law firm, pest control, dunker, and the rest). Be specific
+  to that vertical. Do not present a sunset brand as the current company.
+- **Do not name the sunset brand (BlitzMetrics) in new public pages, client-facing
+  emails, social posts, or new product copy.** Historical URLs and git history may
+  still contain it. Do not add more.
+- **The existing canon/audit domain remains a publish host** for definitive articles
+  and audits. Linking that URL is fine. Calling it the current company is not.
+- Prefer `@localservicespotlight.com` addresses in new mail. Legacy aliases may still
+  deliver; they are not a reason to put the sunset name in the body.
+- This does not rewrite old articles or legal entity paperwork. It is a public-facing
+  naming rule for new work.
+<!-- shared-rule:lss-is-the-public-company:end -->
+
+<!-- shared-rule:outbound-email-names-the-agent:start -->
+## Outbound email names the agent
+
+- Every outbound email an agent **sends** (or hands off ready-to-send) must end with a
+  one-line closer that names which agent wrote it: Grok Bot, Claude, ChatGPT, Codex,
+  Cursor, Perplexity, Gemini, or the desk name (e.g. `— Grok Bot (Ops)` /
+  `Sent via Claude`).
+- Name the agent even when `From:` is a human (Dennis). The From address is delivery;
+  the closer is transparency.
+- Place the agent line after the body and before any mail-client legal footer.
+- Do not invent a fake human VA signature to hide that an agent wrote it.
+- This does not override send-approval gates. When a desk is authorized to send, the
+  signature is mandatory. When only drafting, still include the agent name in the draft.
+<!-- shared-rule:outbound-email-names-the-agent:end -->
+
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work
 
