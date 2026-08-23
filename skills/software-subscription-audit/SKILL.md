@@ -1,1 +1,1 @@
-@file:///workspace/push-content/stamp-pair-b-3-0.md
+x
