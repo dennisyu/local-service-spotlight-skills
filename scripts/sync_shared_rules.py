@@ -123,7 +123,9 @@ def drop_block(text: str, slug: str) -> str:
         return text
     before, rest = text.split(start, 1)
     _, after = rest.split(end, 1)
-    return (before.rstrip() + "\n" + after.lstrip("\n")).rstrip() + "\n"
+    tail = after.lstrip("\n")
+    joiner = "\n\n" if tail else "\n"
+    return (before.rstrip() + joiner + tail).rstrip() + "\n"
 
 
 def drop_index(text: str) -> str:
@@ -131,7 +133,9 @@ def drop_index(text: str) -> str:
         return text
     before, rest = text.split(INDEX_START, 1)
     _, after = rest.split(INDEX_END, 1)
-    return (before.rstrip() + "\n" + after.lstrip("\n")).rstrip() + "\n"
+    tail = after.lstrip("\n")
+    joiner = "\n\n" if tail else "\n"
+    return (before.rstrip() + joiner + tail).rstrip() + "\n"
 
 
 def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tuple[Path, str]]]:
@@ -150,10 +154,19 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
             else:
                 orphans.append((path, slug))
 
+        # Lift the trailing index out *before* upserting, so a rule seen for the
+        # first time appends at the true end of the file. Leaving the index in
+        # place made a new block land after it, and the join that then removed
+        # the index glued the new block to the previous one — a missing blank
+        # line that --check reports as stale. The result: `sync` ran, said it
+        # had updated every file, and CI still failed until it was run a second
+        # time. Two passes converged, so the bug looked like a mystery rather
+        # than a bug, and cost six red runs on 2026-08-22 to find.
+        expected = drop_index(expected)
+
         for standard in keep:
             expected = upsert(expected, standard.slug, standard.block())
 
-        expected = drop_index(expected)
         block = index_block(rest)
         if block:
             expected = expected.rstrip() + "\n\n" + block + "\n"
