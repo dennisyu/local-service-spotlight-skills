@@ -16,13 +16,22 @@ rule-scopes: published-html, design-review
 
 **Use this when** someone wants agents to grow a business with the Social Amplification Engine, or when you are about to run plumbing, content, ads, or a weekly MAA for a new name. This skill is the gate. It does not run the engine.
 
-**The rule:** amplify what is already working. A business with credibility, happy customers, a unique technique, and a clear ideal client is a candidate. A new idea, a commodity in a crowded market, a shop that serves everyone, or a catalog of too many products is not. Diagnose those. Do not buy them ads.
+**The rule:** amplify what is already working. A business with credibility, happy customers, a unique technique, and a clear ideal client is a candidate for review. A new idea, a commodity in a crowded market, a shop that serves everyone, or a catalog of too many products is not. Diagnose those. Do not buy them ads.
 
-Qualify is **one GCT triangle plus proof**, scored as a single card. It is not three sequential SAE stage pass/fails (Goals, then Content, then Targeting as course taxonomy). Course stages 2–4 run after QUALIFY.
+Qualify is **one GCT triangle plus proof**, one card. It is not three sequential SAE stage pass/fails (Goals, then Content, then Targeting as course taxonomy). Course stages 2–4 run only after independent review, accepted scope, and an Ops roster decision.
 
-Public start page (inventory + this rubric): https://blitzmetrics.com/social-amplification/
+Public start page (eight evidence gates; no score): https://blitzmetrics.com/social-amplification/
 
 GCT explainer (Nine Triangles HOW tier, not this screen): https://blitzmetrics.com/gct-business-strategy/
+
+## Two layers (do not collapse them)
+
+| Layer | Who | Output | What it is not |
+|---|---|---|---|
+| Public inventory | Owner or first agent, local/browser only | Coverage of eight gates | Not a client, not a score, not permission |
+| Independent review | A second fresh evaluator | `QUALIFIED_PENDING_REVIEW` candidate **or** named gap | Still not onboarding, publish, or spend |
+
+The public widget never auto-issues `DECLINED`. Agents never invent a 0–100 readiness score. `UNKNOWN` is not zero, false, or failure.
 
 ## Why this exists
 
@@ -35,53 +44,54 @@ Dennis's XYZ sentence is the alignment check: **I help X achieve Y through Z.** 
 - Public site, Google Business Profile, recent reviews, and 5–10 posts or ads. Fetch live. Do not invent.
 - What an AI already says about them (candid, not flattering).
 - Any existing audit, Quick Audit, or brand brief.
-- Named proof only: review counts, named customers, licenses, results, years, lighthouse ties.
+- Named proof only: review counts, named customers, licenses, results, years, lighthouse ties. Owner-site claims are not independent proof.
 
-If a file or access is missing, say which one and score from what is live. Missing access is not a passing score.
+If a file or access is missing, leave that gate `UNKNOWN`. Missing access is not a passing gate.
 
-## Hard gates (automatic DECLINE)
+## Eight evidence gates
 
-Any one of these ends the screen. Do not average them away.
+Evaluate all eight. State each as `UNKNOWN`, `OBSERVED`, `VERIFIED`, `CONTRADICTED`, or `EXPIRED`.
+
+1. **Identity and scope** — entity, domain, market, location, and service resolve through two attributes.
+2. **Goal** — one measurable outcome and reporting period.
+3. **Target** — one ICP: problem, geography, job size, exclusion.
+4. **Offer and technique** — one repeatable offer; competitor-swap test on Z.
+5. **Proof** — independent, identity-matched evidence of real customers and outcomes.
+6. **Source content** — recordings, reviews, jobs, stories, photos already exist to feed the factory.
+7. **Execution capacity** — a named function can serve demand, follow up, and capture evidence.
+8. **Measurement readiness** — traffic through collected revenue is defined; access verified or named as a blocker.
+
+## Evidenced hard fails (not unknowns)
+
+Record these only after checking produced a real contrary finding. Do not encode `UNKNOWN` as a fail.
 
 1. **NEW_IDEA** — no customers yet, or the offer is still a concept.
-2. **NO_PROOF** — no reviews, no named results, no third-party corroboration that they do the job well.
-3. **UNDIFFERENTIATED** — competitive market, no unique technique; the one-sentence claim swaps onto a competitor and still reads true.
+2. **NO_PROOF** — completed research found no independent corroboration.
+3. **UNDIFFERENTIATED** — the XYZ sentence swaps onto a competitor and still reads true.
 4. **TOO_BROAD_ICP** — trying to serve too many people, geos, or job types with one message.
-5. **TOO_MANY_OFFERS** — no clear process; too many products or service lines for one GCT.
+5. **TOO_MANY_OFFERS** — no clear process; too many products for one GCT.
 
-A DECLINE is not an insult. It is the honest next step: get proof, pick a niche, or name the technique before agents spend a cycle on plumbing and ads.
+## Verdicts
 
-## Rubric (100 points)
+**DISCOVERY_REQUIRED** — any essential gate is `UNKNOWN`, `OBSERVED`, `EXPIRED`, or evaluators disagree. Resolve the named question. Do not score, onboard, or amplify.
 
-Score only from evidence. Unknown = 0 for that row, and say UNKNOWN rather than guessing.
+**DEVELOP** — checking found a real gap (proof, ICP, technique, offer focus, capacity, content, or measurement). One named next action. Run `business-brand-strategist` and/or `positive-mentions-harvester`. Do **not** start Dollar a Day.
 
-| Component | Points | What a high score looks like |
-|---|---:|---|
-| **Proof** | 25 | Happy customers you can point at: reviews, named jobs, licenses, before/after, press. Proof gate: below 15 cannot QUALIFY even if the rest is 100. |
-| **Goals** | 20 | One primary outcome, a 90-day number, USP, unique technique, clear end result. Not "more awareness." |
-| **Content** | 20 | Proof assets already exist to amplify (reviews, videos, case studies, WHY). Not a plan to start posting. |
-| **Targeting** | 20 | One ICP: who they serve, where, job size, the work they want more of. Not "anyone who needs X." |
-| **Offer focus** | 15 | One primary process / offer the factory can repeat. Not a menu of twelve unrelated products. |
+**QUALIFIED_PENDING_REVIEW** — all eight gates `VERIFIED` and no evidenced hard fail. Candidate only. A second fresh evaluator must approve before Ops may add an `Active Client` row. Then `one-session-client-onboarding` and `social-amplification-engine` are stage-only.
 
-**QUALIFY** — total ≥ 70 **and** Proof ≥ 15 **and** no hard-gate fail. Agents may run `social-amplification-engine`.
-
-**DEVELOP** — total 40–69, or Proof 8–14, or one weak corner that can be fixed in days (pick the ICP, write the XYZ sentence, harvest existing reviews). Run `business-brand-strategist` and `positive-mentions-harvester`. Do **not** start Dollar a Day or conversion campaigns.
-
-**DECLINE** — a hard gate, or Proof < 8. Tell them what proof would change the verdict. Do not onboard them as an SAE client.
+**DECLINED** — a human records out-of-scope, safety, consent, ethics, or commercial no. Agents recommend; they do not auto-decline from a form.
 
 ## Steps
 
-1. **Fetch, don't interview first.** Site, GBP, reviews, ads, AI profile. Prefill GCT from evidence. The human confirms; they do not write a biography. Same rule as `one-session-client-onboarding`.
-2. **Write the XYZ sentence** from evidence: I help **X** achieve **Y** through **Z**.
-3. **Score the five rows** with a one-line evidence note each (URL, count, quote).
-4. **Apply hard gates.** If one trips, stop scoring for QUALIFY.
-5. **Name the weakest corner** of GCT. That is the only development assignment if the verdict is DEVELOP.
-6. **Write the GCT brief** the weekly MAA will judge against. Do not retrofit later.
-7. **Save and say the verdict in the first line** of the report. QUALIFY / DEVELOP / DECLINE plus the fail code if any.
+1. **Fetch, don't interview first.** Site, GBP, reviews, ads, AI profile. Prefill gates from evidence.
+2. **Write the XYZ sentence** from evidence: I help **X** achieve **Y** through **Z**. Record the swap test.
+3. **Mark all eight gates** with state, finding, and source URL. Preserve `UNKNOWN`.
+4. **Apply evidenced hard fails** only when research completed.
+5. **Name one next action** with owner function, date, and acceptance test.
+6. **Say the verdict in the first line.** Do not hand a weighted score.
+7. If `QUALIFIED_PENDING_REVIEW`, require a second reviewer. Do not onboard from this file alone.
 
-## Alignment check (must pass for QUALIFY)
-
-Read this aloud and keep it only if it is true:
+## Alignment check (must be true for a candidate)
 
 > We will achieve **[numeric Goal]** by showing **[named proof Content]** to **[specific ICP]**.
 
@@ -89,51 +99,53 @@ If the sentence is absurd, the weak corner is the job. Not ads.
 
 ## Output
 
-`Outputs/gct-screen/<entity-slug>/<YYYY-MM-DD>/report.md`
+`Outputs/gct-screen/<nonsecret-id>/<YYYY-MM-DD>/report.md` is a derived artifact. Roster and Money Tree receipts are the status plane.
 
 ```
 # GCT screen — <Name>
-Verdict: QUALIFY | DEVELOP | DECLINE
-Fail code: none | NEW_IDEA | NO_PROOF | UNDIFFERENTIATED | TOO_BROAD_ICP | TOO_MANY_OFFERS | UNCLEAR_GOALS
-Total: nn/100 (Proof nn · Goals nn · Content nn · Targeting nn · Offer nn)
+Verdict: QUALIFIED_PENDING_REVIEW | DISCOVERY_REQUIRED | DEVELOP | DECLINED
+Hard fail: none | NEW_IDEA | NO_PROOF | UNDIFFERENTIATED | TOO_BROAD_ICP | TOO_MANY_OFFERS
+XYZ: I help X achieve Y through Z. Swap test: pass | fail
 
-XYZ: I help X achieve Y through Z.
+Gates (state · finding · URL)
+- identity_scope:
+- goal:
+- target:
+- offer_and_technique:
+- proof:
+- source_content:
+- execution_capacity:
+- measurement_readiness:
 
-GCT brief
-- Goals: …
-- Content: … (assets with URLs)
-- Targeting: …
-
-Evidence (one line per row)
-Weakest corner → one owner, one action, one date
-Next skill: social-amplification-engine | business-brand-strategist | stop
+One next action → owner function, date, acceptance test
+Blocked downstream: onboard / publish / spend / plumbing-for-ads
+Second reviewer: required | n/a
 ```
-
-Also write or update the entity's canonical brief so `weekly-brand-maa` can read it next Friday. If the verdict is not QUALIFY, do not create an SAE weekly job.
 
 ## Definition of done
 
-- Verdict is the first line. A stranger can see QUALIFY vs DEVELOP vs DECLINE without reading the essay.
-- Every score row has evidence or UNKNOWN.
-- XYZ sentence exists. Swap test recorded (pass/fail).
-- Next skill is named. Ads and plumbing are named only on QUALIFY.
-- Nothing invented. Draft-only if a human message is needed (`agents-draft-humans-send`).
+- Verdict is the first line. A stranger can see candidate vs discovery vs develop without an essay.
+- Every gate has a state. `UNKNOWN` stays `UNKNOWN`.
+- XYZ sentence exists. Swap test recorded.
+- No 0–100 score. No client row, schedule, publish, or spend from this skill.
+- Draft-only if a human message is needed (`agents-draft-humans-send`).
 
 ## Do not
 
-- Start Stage 1 plumbing as a consolation prize for a DEVELOP. Plumbing without GCT is pipes into nowhere.
-- Soften DECLINE into "let's test ads and see." Dollar a Day amplifies winners; it does not create a niche.
-- Treat a filled-in form as a passing screen. Prefill is research. QUALIFY is the score.
+- Start Stage 1 plumbing as a consolation prize for DEVELOP. Plumbing without GCT is pipes into nowhere.
+- Soften a hard fail into "let's test ads and see." Dollar a Day amplifies winners; it does not create a niche.
+- Treat a filled-in public widget as independent review.
+- Encode missing research as zero points or as `DECLINED`.
 - Fork a second GCT article. Link to `/gct-business-strategy/` for the triangle; this file is the gate.
 
 ## Related
 
-- `social-amplification-engine` — run only after QUALIFY
+- `social-amplification-engine` — after independent review, accepted scope, and Active Client
 - `business-brand-strategist` — DEVELOP: name the company
 - `positive-mentions-harvester` — DEVELOP: gather proof that already exists
-- `one-session-client-onboarding` — QUALIFY then confirm + access
-- `client-access-checklist` — SAE Stage 1, after this gate
-- `weekly-brand-maa` — SAE Stage 6 heartbeat
+- `one-session-client-onboarding` — after Ops roster decision
+- `client-access-checklist` — SAE Stage 1, after this gate and roster
+- `weekly-brand-maa` — SAE Stage 6 heartbeat (existing Money Tree cadence; do not add a second SAE clock)
 - Task Library cousin: `gct-goals-content-targeting` (per-asset GCT). This screen is per-business qualification, not per-campaign copy.
 
 Public: https://blitzmetrics.com/social-amplification/ · Course (learn it yourself): https://blitzmetrics.com/sae/
@@ -670,10 +682,11 @@ is that your site did that.
 <!-- shared-rule:screen-gct-before-amplification:start -->
 ## Screen GCT before amplification
 
-- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
-- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
-- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
-- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
+- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** until `gct-screen` is an independent-review candidate (`QUALIFIED_PENDING_REVIEW`), a second evaluator has approved, Ops has an exact `Active Client` row, and plumbing is verified green. Amplify what is already working. A new idea has nothing to amplify.
+- **Fail closed** when completed research shows a new idea, no independent proof, an undifferentiated offer in a competitive market, serving everyone, or too many products with no clear process. `UNKNOWN` is not a fail and is not zero.
+- **Do not invent a 0–100 readiness score.** The public inventory at https://blitzmetrics.com/social-amplification/ is eight evidence gates. A public or first-pass `QUALIFIED_PENDING_REVIEW` is a candidate, not a client and not permission to onboard, publish, or spend.
+- **DEVELOP is not a candidate.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
+- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`.
 <!-- shared-rule:screen-gct-before-amplification:end -->
 
 <!-- shared-rule:silent-media-playback:start -->

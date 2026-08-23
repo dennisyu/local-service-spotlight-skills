@@ -11,7 +11,7 @@ description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1
 - Your organic posts/clips with REAL engagement numbers — comments, shares, watch time, not raw impressions.
 - Your lighthouse list (marquee people/brands you're tied to) and your podcast clips.
 - Plumbing in place: pixels, analytics, saved audiences. Boosting without a pixel is reach you can't retarget.
-- A passing `gct-screen` (QUALIFY). Dollar a Day amplifies a winner for a business that already has clear Goals, Content, and Targeting. It does not create a niche, rescue a new idea, or differentiate a commodity.
+- An independent-review `gct-screen` candidate plus exact `Active Client` roster row. Dollar a Day amplifies a winner for a business that already has clear Goals, Content, and Targeting. It does not create a niche, rescue a new idea, or differentiate a commodity. A public inventory result is not this gate.
 
 ## The rules — non-negotiable
 - Boost ONLY proven organic. Boosting amplifies a winner; it does not rescue a weak post. A hook that failed at $0 fails at $100.
@@ -344,10 +344,11 @@ See `boil-the-ocean.md` for the full operating principles.
 <!-- shared-rule:screen-gct-before-amplification:start -->
 ## Screen GCT before amplification
 
-- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
-- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
-- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
-- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
+- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** until `gct-screen` is an independent-review candidate (`QUALIFIED_PENDING_REVIEW`), a second evaluator has approved, Ops has an exact `Active Client` row, and plumbing is verified green. Amplify what is already working. A new idea has nothing to amplify.
+- **Fail closed** when completed research shows a new idea, no independent proof, an undifferentiated offer in a competitive market, serving everyone, or too many products with no clear process. `UNKNOWN` is not a fail and is not zero.
+- **Do not invent a 0–100 readiness score.** The public inventory at https://blitzmetrics.com/social-amplification/ is eight evidence gates. A public or first-pass `QUALIFIED_PENDING_REVIEW` is a candidate, not a client and not permission to onboard, publish, or spend.
+- **DEVELOP is not a candidate.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
+- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`.
 <!-- shared-rule:screen-gct-before-amplification:end -->
 
 <!-- shared-rule-index:start -->

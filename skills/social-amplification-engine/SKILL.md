@@ -19,7 +19,7 @@ rule-scopes: published-html, design-review
 
 # Social Amplification Engine (agentic package)
 
-**Use this when** a business already passed `gct-screen` (QUALIFY), or when you need the one map of how existing skills, Task Library SOPs, and scheduled jobs run the engine. Do not start here if GCT is unclear.
+**Use this when** a business already has an independent-review `gct-screen` candidate, accepted scope, and an exact `Active Client` roster row — or when you need the one map of how existing skills, Task Library SOPs, and scheduled jobs run the engine. Do not start here if GCT is unclear. A public widget result is not this gate.
 
 **The engine:** amplify reputation, proof, and trust that already exist, iteratively, from data. That is why well-known brands and small companies with real reviews both work. A new idea does not.
 
@@ -48,10 +48,10 @@ Per-recording stages in `content-factory` map onto the line: Capture = Produce; 
 
 ## Gate
 
-1. Run `gct-screen` if no dated QUALIFY report exists for this entity.
-2. If DEVELOP or DECLINE, stop this skill. Follow that report's next skill.
-3. Confirm roster status (`clients/ROSTER.md`). If Not Active, stop.
-4. Then run the six phases in order. Do not skip plumbing to "get ads live."
+1. Run `gct-screen` if no dated independent-review packet exists (eight gates, no invented score).
+2. If `DISCOVERY_REQUIRED`, `DEVELOP`, or `DECLINED`, stop this skill. Follow that report's next skill.
+3. `QUALIFIED_PENDING_REVIEW` still requires a second evaluator, accepted scope, and Ops roster decision. Confirm `clients/ROSTER.md` is exact `Active Client`. If Not Active, Special Project without its own scope, or HOLD, stop.
+4. Then run the six phases in order, **stage-only**. Do not skip plumbing to "get ads live."
 
 ## The six phases — who already owns each step
 
@@ -65,7 +65,7 @@ Per-recording stages in `content-factory` map onto the line: Capture = Produce; 
 | **5. Amplification** | Boost organic winners; kill losers; Dollar a Day math | `dollar-a-day-strategist` | `/dollar-a-day/` | `stage-5-amplification-boost-posts-remarketing-ads` |
 | **6. Optimization** | Weekly MAA; agents replace unreliable VA checklists | `weekly-brand-maa` + `measurement-analytics` + `sales-every-day` | `/maa/` | `stage-6-optimization-metrics-budget-review-recommendations` |
 
-Onboarding wrapper (after QUALIFY): `one-session-client-onboarding` — confirm GCT, grant access, first Friday MAA is the certainty date.
+Onboarding wrapper (after Ops roster): `one-session-client-onboarding` — confirm GCT, grant access, first Friday MAA is the certainty date.
 
 Local-service ads, websites, audits, and video-repurposing already have masters. Use them; do not fork:
 
@@ -94,12 +94,11 @@ When you ship a process improvement while they are on client work, say so on the
 
 ## Scheduled jobs
 
-A skill is how. A routine is when. Do not create a clock until this skill has passed once on a QUALIFY client with file output.
+A skill is how. A routine is when. Do not attach a live ads clock. Weekly MAA stays on the existing Money Tree cadence; do not register a second SAE heartbeat.
 
 | Job | When | Prompt |
 |---|---|---|
-| Per-client weekly MAA | Friday (or the PARAMETERS cadence) | `weekly-brand-maa` with a full PARAMETERS block |
-| SAE heartbeat | Weekly, internal | `tasks/sae-weekly-heartbeat/PROMPT-CLOUD.md` in agent-runtime — which Active Clients lack a GCT screen, which are stuck in plumbing, which MAA is silent |
+| Per-client weekly MAA | Existing Money Tree Friday/Monday cadence | `weekly-brand-maa` with a full PARAMETERS block — do not register a second SAE clock |
 | Sales every day | Weekdays, draft-only | `sales-every-day` aimed at the weakest funnel stage the MAA named |
 | Video watchdog | Daily | `video-repurposing-agent` against the GCT |
 
@@ -115,7 +114,7 @@ Cloud schedules may not read this repo. Embed the Basecamp delivery rail in any 
 
 `Outputs/sae/<entity-slug>/<YYYY-MM-DD>/`
 
-- `status.md` — current phase, blockers, QUALIFY date
+- `status.md` — current phase, blockers, independent-review date
 - `plumbing.md` — access rows
 - `gct.md` — copy of the screen brief
 - `maa.md` or pointer to the weekly report
@@ -123,7 +122,7 @@ Cloud schedules may not read this repo. Embed the Basecamp delivery rail in any 
 
 ## Definition of done (a cycle, not "the engine exists")
 
-- GCT QUALIFY on file and still true (re-screen if the offer changed).
+- Independent-review `gct-screen` candidate on file and still true (re-screen if the offer changed).
 - Plumbing rows 1–4 green or a named blocker with owner and date.
 - This week's factory output is real content from real proof, or an explicit "no new raw, amplified existing winners."
 - Dollar a Day recommendations staged; no unapproved spend.
@@ -679,10 +678,11 @@ is that your site did that.
 <!-- shared-rule:screen-gct-before-amplification:start -->
 ## Screen GCT before amplification
 
-- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
-- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
-- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
-- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
+- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** until `gct-screen` is an independent-review candidate (`QUALIFIED_PENDING_REVIEW`), a second evaluator has approved, Ops has an exact `Active Client` row, and plumbing is verified green. Amplify what is already working. A new idea has nothing to amplify.
+- **Fail closed** when completed research shows a new idea, no independent proof, an undifferentiated offer in a competitive market, serving everyone, or too many products with no clear process. `UNKNOWN` is not a fail and is not zero.
+- **Do not invent a 0–100 readiness score.** The public inventory at https://blitzmetrics.com/social-amplification/ is eight evidence gates. A public or first-pass `QUALIFIED_PENDING_REVIEW` is a candidate, not a client and not permission to onboard, publish, or spend.
+- **DEVELOP is not a candidate.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
+- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`.
 <!-- shared-rule:screen-gct-before-amplification:end -->
 
 <!-- shared-rule:silent-media-playback:start -->
