@@ -1,6 +1,6 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last canonical repository audit: 16 August 2026.
+Last canonical repository audit: 22 August 2026.
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 28 after merge of `one-session-client-onboarding` |
+| Skills in `lss-everything` | 30 after merge of `gct-qualify-screen` + `social-amplification-engine` |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -21,21 +21,21 @@ This repository is now the identifiable source of truth. The install guide at
 `https://localservicespotlight.com/install/` is the member-facing front door, not
 a competing copy of the skill files.
 
-`one-session-client-onboarding` is Available after merge only, not Installed.
-It is the agent-run one-session onboard: prefill GCT, confirm plus access, first
-Friday MAA. Humans are not the routing layer.
+`gct-qualify-screen` and `social-amplification-engine` are Available after merge only,
+not Installed. Qualify is one GCT triangle gate (corners scored together); SAE course
+Stages 2–4 Goals/Content/Targeting remain course taxonomy after PASS.
 
 ## Available bundles
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 28 |
+| `lss-everything` | 30 |
 | `authority-and-reputation` | 7 |
-| `content-engine` | 6 |
-| `client-operations` | 9 |
+| `content-engine` | 8 |
+| `client-operations` | 10 |
 | `quality-and-standards` | 6 |
 
-The topical totals overlap. They are selections over the same 28 directories.
+The topical totals overlap. They are selections over the same 30 directories.
 
 ## Per-account installation register
 
@@ -45,10 +45,6 @@ account/workspace and attach a receipt from `ACCEPTANCE.md`.
 | Account/workspace | Surface | Bundle | Commit/version | Installed | Enabled | Fresh-chat tested | Receipt |
 |---|---|---|---|---|---|---|---|
 | _Not yet evidenced_ | — | — | — | Unknown | Unknown | Unknown | — |
-
-Older claims that Dennis had six account skills and two team plugins were a
-point-in-time account snapshot, not marketplace or fleet state. They must not be
-used as current truth without a new receipt.
 
 ## Scheduled-job register
 
