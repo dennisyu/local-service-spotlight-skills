@@ -23,6 +23,11 @@
   names. Upstream skill: `skills/content-factory/SKILL.md`. Canon pages:
   https://blitzmetrics.com/content-factory/ and
   https://blitzmetrics.com/the-4-stages-of-the-content-factory/.
+- **Historical quotations, transcripts, captions, and archival artifacts stay
+  verbatim.** Do not silently rewrite a speaker's words. If an old stage line appears
+  in quoted material, label it as historical and state the current four stages outside
+  the quotation. This preservation exception is not permission to teach the old terms
+  as the current system.
 - SAE course map (Plumbing → Goals → Content → Targeting → Amplification →
   Optimization) is separate; the Content Factory block inside it is still only
   Produce → Process → Post → Promote.

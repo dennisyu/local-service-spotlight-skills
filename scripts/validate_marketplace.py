@@ -23,6 +23,112 @@ KEBAB = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LOCAL_REFERENCE = re.compile(
     r"(?<![\w/])((?:references|scripts|assets)/[A-Za-z0-9_.\-/]+)"
 )
+DOCUMENTED_SKILL_COUNT_CLAIMS = (
+    (
+        "README.md",
+        "marketplace overview",
+        re.compile(
+            r"canonical marketplace for the (?P<count>\d+) "
+            r"Local Service Spotlight skills",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "README.md",
+        "everything bundle table",
+        re.compile(r"\| `lss-everything` \| All (?P<count>\d+) skills \|"),
+    ),
+    (
+        "README.md",
+        "generated skill-file total",
+        re.compile(r"(?P<count>\d+) `SKILL\.md` files"),
+    ),
+    (
+        "ACCEPTANCE.md",
+        "fresh-account total",
+        re.compile(r"Confirm all (?P<count>\d+) expected skills"),
+    ),
+    (
+        "ACCEPTANCE.md",
+        "propagation-copy total",
+        re.compile(r"wc -l` returns (?P<count>\d+)"),
+    ),
+    (
+        "CONTRIBUTING.md",
+        "sync target total",
+        re.compile(r"stamps it into all (?P<count>\d+) skills"),
+    ),
+    (
+        "HOW-KNOWLEDGE-PROPAGATES.md",
+        "pack total",
+        re.compile(r"pack contains (?P<count>\d+) skills"),
+    ),
+    (
+        "HOW-KNOWLEDGE-PROPAGATES.md",
+        "stamp target total",
+        re.compile(r"into all (?P<count>\d+) skill files"),
+    ),
+    (
+        "HOW-KNOWLEDGE-PROPAGATES.md",
+        "manual-edit total",
+        re.compile(r"No editing (?P<count>\d+) files"),
+    ),
+    (
+        "HOW-KNOWLEDGE-PROPAGATES.md",
+        "diagram target total",
+        re.compile(r"all (?P<count>\d+) skills\s+a site"),
+    ),
+    (
+        "skills/skill-registry/SKILL.md",
+        "reconciliation total",
+        re.compile(r"all (?P<count>\d+) available skills"),
+    ),
+    (
+        "skills/skill-registry/references/inventory.md",
+        "canonical inventory total",
+        re.compile(r"\| Skills in `lss-everything` \| (?P<count>\d+)\b"),
+    ),
+    (
+        "skills/skill-registry/references/inventory.md",
+        "bundle inventory total",
+        re.compile(r"\| `lss-everything` \| (?P<count>\d+) \|"),
+    ),
+    (
+        "skills/skill-registry/references/inventory.md",
+        "directory inventory total",
+        re.compile(r"same (?P<count>\d+) directories"),
+    ),
+)
+
+
+def documented_skill_count_errors(root: Path, expected: int) -> list[str]:
+    """Keep every human-facing inventory count congruent with the manifest.
+
+    The `lss-everything` skills array is the source. The explicit claims below are
+    checked because they are acceptance and propagation instructions where an old
+    number can make a correct release look broken (or an incomplete release look
+    complete).
+    """
+    errors: list[str] = []
+    texts: dict[str, str] = {}
+    for relative, label, pattern in DOCUMENTED_SKILL_COUNT_CLAIMS:
+        if relative not in texts:
+            try:
+                texts[relative] = (root / relative).read_text(encoding="utf-8")
+            except OSError as exc:
+                errors.append(f"cannot read {relative} for skill-count validation: {exc}")
+                texts[relative] = ""
+        match = pattern.search(texts[relative])
+        if not match:
+            errors.append(f"{relative} is missing its {label} skill-count claim")
+            continue
+        found = int(match.group("count"))
+        if found != expected:
+            errors.append(
+                f"{relative} {label} says {found} skills but "
+                f"{EVERYTHING_PLUGIN} lists {expected}"
+            )
+    return errors
 
 
 def expected_blocks(root: Path) -> tuple[list[tuple[str, str]], list[str]]:
@@ -97,6 +203,18 @@ def validate(root: Path) -> list[str]:
         if not isinstance(skills, list) or not skills:
             errors.append(f"plugin {name!r} must have a non-empty skills array")
             continue
+        description = plugin.get("description")
+        if isinstance(description, str):
+            advertised = re.search(
+                r"\b(?P<count>\d+)(?:\s+Local Service Spotlight)?\s+skills\b",
+                description,
+                flags=re.IGNORECASE,
+            )
+            if advertised and int(advertised.group("count")) != len(skills):
+                errors.append(
+                    f"plugin {name!r} description advertises "
+                    f"{advertised.group('count')} skills but lists {len(skills)}"
+                )
         if len(skills) != len(set(skills)):
             errors.append(f"plugin {name!r} lists a skill more than once")
         for skill_ref in skills:
@@ -125,6 +243,8 @@ def validate(root: Path) -> list[str]:
         errors.append(f"skill is not in {EVERYTHING_PLUGIN}: {missing}")
     for stale in sorted(everything_set - actual_refs):
         errors.append(f"{EVERYTHING_PLUGIN} has a stale skill path: {stale}")
+    if everything is not None:
+        errors.extend(documented_skill_count_errors(root, len(everything)))
 
     blocks, block_errors = expected_blocks(root)
     errors.extend(block_errors)
@@ -174,12 +294,6 @@ def validate(root: Path) -> list[str]:
                         f"{markdown.relative_to(root)} references missing {relative}"
                     )
 
-    readme = (root / "README.md").read_text(encoding="utf-8")
-    advertised = re.search(r"all (\d+) skills", readme, flags=re.IGNORECASE)
-    if advertised and int(advertised.group(1)) != len(skill_dirs):
-        errors.append(
-            f"README advertises {advertised.group(1)} skills but found {len(skill_dirs)}"
-        )
     return sorted(set(errors))
 
 

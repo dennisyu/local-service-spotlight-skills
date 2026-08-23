@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Local Service Spotlight skills for Claude — personal brand, authority, content, and client operations.",
-    "version": "1.2.1"
+    "version": "1.2.2"
   },
   "plugins": [
     {

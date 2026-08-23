@@ -13,9 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Require a shared release-version bump for marketplace changes
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/check_release_version.py --base-ref "${{ github.event.pull_request.base.sha }}"
+      - name: Require a shared release-version bump on direct main pushes
+        if: github.event_name == 'push'
+        run: python3 scripts/check_release_version.py --base-ref "${{ github.event.before }}"
       - name: Check shared house rules are current in every skill
         run: python3 scripts/sync_shared_rules.py --check
       - name: Prove every house rule's checks actually fire
