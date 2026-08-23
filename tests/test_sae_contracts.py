@@ -27,10 +27,42 @@ class SAEContractsTest(unittest.TestCase):
         text = core("gct-screen")
         self.assertIn("`UNKNOWN` is not zero", text)
         self.assertIn("`DISCOVERY_REQUIRED`", text)
-        self.assertIn("do not use an invented weighted score", text)
+        self.assertIn("invented weighted score", text)
         self.assertNotIn("Unknown = 0", text)
         self.assertNotIn("total ≥", text)
         self.assertNotIn("70/100", text)
+
+    def test_gct_keeps_gate_outcome_separate_from_evidence_state(self):
+        text = core("gct-screen")
+        self.assertIn("`UNKNOWN` — the available evidence cannot establish an outcome", text)
+        self.assertIn("`MET` — the gate requirement is satisfied", text)
+        self.assertIn("`NOT_MET` — the gate requirement is not satisfied", text)
+        self.assertIn("`UNKNOWN` — not researched or unavailable", text)
+        self.assertIn("`OBSERVED` — present in a source", text)
+        self.assertIn("`VERIFIED` — corroborated", text)
+        self.assertIn("`CONTRADICTED` — credible sources disagree", text)
+        self.assertIn("`EXPIRED` — evidence is too old", text)
+        self.assertIn("separate `outcome` and `evidence_state` fields", text)
+
+    def test_gct_verdict_precedence_is_fail_closed(self):
+        text = core("gct-screen")
+        self.assertIn("If the independent evaluators disagree, return `DISCOVERY_REQUIRED`", text)
+        self.assertIn("any gate has `outcome: UNKNOWN`", text)
+        self.assertIn("`evidence_state: UNKNOWN`", text)
+        self.assertIn("`OBSERVED`, `CONTRADICTED`, or `EXPIRED`", text)
+        self.assertIn("`outcome: NOT_MET` with\n   `evidence_state: VERIFIED`", text)
+        self.assertIn("Only eight `outcome: MET` plus `evidence_state: VERIFIED` pairs", text)
+
+    def test_gct_receipt_contains_all_eight_two_axis_gates(self):
+        text = core("gct-screen")
+        self.assertIn("schema_version: 2", text)
+        receipt_gate_lines = [
+            line.strip()
+            for line in text.splitlines()
+            if "{outcome: MET, evidence_state: VERIFIED, evidence: []}" in line
+        ]
+        self.assertEqual(8, len(receipt_gate_lines))
+        self.assertTrue(receipt_gate_lines[0].startswith("identity_and_scope:"))
 
     def test_qualification_does_not_grant_execution(self):
         text = core("gct-screen")
@@ -46,6 +78,27 @@ class SAEContractsTest(unittest.TestCase):
         self.assertIn("Do not create a second SAE heartbeat", text)
         self.assertIn("one terminal checkpoint for every and", text)
         self.assertIn("only current Active Client row", text)
+
+    def test_sae_carries_the_two_axis_gct_contract(self):
+        text = core("social-amplification-engine")
+        self.assertIn("### GCT gate outcome", text)
+        self.assertIn("`UNKNOWN | MET | NOT_MET`", text)
+        self.assertIn(
+            "any\nevidence state other than `VERIFIED` routes to `DISCOVERY_REQUIRED`",
+            text,
+        )
+        self.assertIn("a verified `NOT_MET` routes to `DEVELOP`", text)
+        self.assertIn("only eight verified `MET` pairs", text)
+        self.assertIn("Qualification remains separate from action\nauthority", text)
+
+    def test_shared_gct_standard_carries_verdict_taxonomy(self):
+        text = (ROOT / "standards" / "screen-gct-before-amplification.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("`UNKNOWN | MET | NOT_MET`", text)
+        self.assertIn("`UNKNOWN | OBSERVED | VERIFIED | CONTRADICTED | EXPIRED`", text)
+        self.assertIn("verified `NOT_MET` routes to\n  `DEVELOP`", text)
+        self.assertIn("Only eight verified `MET` pairs", text)
 
     def test_child_skills_preserve_external_action_gate(self):
         content = core("content-factory")

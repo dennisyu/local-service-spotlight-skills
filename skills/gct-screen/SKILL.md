@@ -26,17 +26,25 @@ Use exactly one state. Do not collapse missing evidence into a negative finding.
 
 | State | Meaning | Next route |
 |---|---|---|
-| `QUALIFIED_PENDING_REVIEW` | Every essential fit gate is verified and no disqualifier is observed. This is a commercial-fit candidate, not a client or execution grant. | Independent review, agreement/scope, then Ops roster decision. |
-| `DISCOVERY_REQUIRED` | An essential fact is unknown, expired, or contradicted. | Resolve the named questions; do not score, decline, onboard, or amplify. |
-| `DEVELOP` | Evidence shows a real business, but positioning, proof, focus, capacity, or measurement needs work. | Run the one named development skill and re-screen. |
+| `QUALIFIED_PENDING_REVIEW` | All eight gates have `outcome: MET` and `evidence_state: VERIFIED`, with no evaluator disagreement recorded. This is a commercial-fit candidate, not a client or execution grant. | Independent review, agreement/scope, then Ops roster decision. |
+| `DISCOVERY_REQUIRED` | A gate outcome is `UNKNOWN`, a gate evidence state is `UNKNOWN`, `OBSERVED`, `CONTRADICTED`, or `EXPIRED`, or the evaluators disagree. | Resolve the named questions; do not score, decline, onboard, or amplify. |
+| `DEVELOP` | At least one gate has `outcome: NOT_MET` with `evidence_state: VERIFIED`, and no gate requires discovery. | Run the one named development skill and re-screen. |
 | `DECLINED` | A human records an out-of-scope, safety, consent, ethics, or commercial decision. | Stop. Preserve the evidence and reason. |
 
 `QUALIFIED_PENDING_REVIEW` is deliberately longer than `QUALIFY`: the name prevents
 an agent from treating fit as authority.
 
-## Evidence states
+## Gate outcomes and evidence states
 
-Every material fact uses one of:
+Record two separate fields for every gate. The gate **outcome** answers whether the
+business meets the requirement:
+
+- `UNKNOWN` — the available evidence cannot establish an outcome.
+- `MET` — the gate requirement is satisfied.
+- `NOT_MET` — the gate requirement is not satisfied.
+
+The gate **evidence state** records the quality and freshness of the support for that
+outcome. Every gate uses one of:
 
 - `UNKNOWN` — not researched or unavailable.
 - `OBSERVED` — present in a source, but not sufficiently corroborated.
@@ -49,6 +57,10 @@ question, why it is unavailable, the owner, the due/escalation date, and the act
 it blocks. Follow `evidence-verification`: match identity with two independent
 attributes and require at least one independent proof source. A form submission or
 owner-site assertion is client-provided evidence, not independent verification.
+
+Do not infer one field from the other. For example, `outcome: MET` with
+`evidence_state: OBSERVED` still routes to discovery, while `outcome: NOT_MET` with
+`evidence_state: VERIFIED` is an established development need.
 
 ## Inputs
 
@@ -64,7 +76,8 @@ status and source-safe links.
 
 ## Essential fit gates
 
-All eight gates must be `VERIFIED` for `QUALIFIED_PENDING_REVIEW`.
+All eight gates must pair `outcome: MET` with `evidence_state: VERIFIED` for
+`QUALIFIED_PENDING_REVIEW`.
 
 1. **Identity and scope** — entity, owner, canonical domain, market/location, and
    service scope resolve to the same business through two attributes.
@@ -93,7 +106,8 @@ qualify.
 
 ## Decision table
 
-These codes describe observed evidence. They do not override unknown handling.
+The development codes describe verified `NOT_MET` outcomes. `POLICY_OR_SCOPE` is the
+human-only override described below. None of the codes overrides discovery handling.
 
 | Code | When evidence establishes it | State | Development route |
 |---|---|---|---|
@@ -107,7 +121,25 @@ These codes describe observed evidence. They do not override unknown handling.
 | `POLICY_OR_SCOPE` | Human decision: prohibited claims, no consent, unethical, or out of scope | `DECLINED` | Stop. |
 
 If research is incomplete, use `DISCOVERY_REQUIRED`, never one of these codes by
-assumption.
+assumption. `DECLINED` is a human-only override; an agent must not derive it from gate
+outcomes.
+
+## Deterministic verdict
+
+Apply this precedence after evaluating all eight gates:
+
+1. A human may record `DECLINED` for an explicit policy, safety, consent, ethics, scope,
+   or commercial reason. Preserve the evidence and human decision receipt.
+2. If the independent evaluators disagree, return `DISCOVERY_REQUIRED`.
+3. If any gate has `outcome: UNKNOWN`, or any gate has `evidence_state: UNKNOWN`,
+   `OBSERVED`, `CONTRADICTED`, or `EXPIRED`, return `DISCOVERY_REQUIRED`.
+4. Otherwise, if any gate pairs `outcome: NOT_MET` with
+   `evidence_state: VERIFIED`, return `DEVELOP`.
+5. Only eight `outcome: MET` plus `evidence_state: VERIFIED` pairs return
+   `QUALIFIED_PENDING_REVIEW`.
+
+This is a precedence rule, not a score. A verified negative does not cancel an unknown,
+and several weak observations do not add up to verification.
 
 ## Procedure
 
@@ -115,7 +147,8 @@ assumption.
 2. Fetch live evidence before interviewing. Preserve source URL, source class,
    checked-at timestamp, and claim supported.
 3. Draft the two alignment sentences and run the competitor swap test.
-4. Evaluate all eight gates as evidence states; do not use an invented weighted score.
+4. Evaluate all eight gates with separate `outcome` and `evidence_state` fields; do not
+   use an invented weighted score.
 5. Select the state from the table and name one owned next action with due date and
    acceptance test.
 6. For `QUALIFIED_PENDING_REVIEW`, have a second fresh evaluator review the evidence.
@@ -128,25 +161,26 @@ assumption.
 The report begins with the state and contains:
 
 ```yaml
-schema_version: 1
+schema_version: 2
 assessment_id: stable-id
 lane: prospect_public | active_client_requalification
 entity:
   name: exact name
   canonical_domain: example.com
 identity_match:
-  state: VERIFIED
+  evidence_state: VERIFIED
   attributes: [domain, location]
 verdict: QUALIFIED_PENDING_REVIEW | DISCOVERY_REQUIRED | DEVELOP | DECLINED
 reason_codes: []
 gates:
-  goal: {state: VERIFIED, evidence: []}
-  target: {state: VERIFIED, evidence: []}
-  offer_and_technique: {state: VERIFIED, evidence: []}
-  proof: {state: VERIFIED, evidence: []}
-  source_content: {state: VERIFIED, evidence: []}
-  capacity: {state: VERIFIED, evidence: []}
-  measurement: {state: VERIFIED, evidence: []}
+  identity_and_scope: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  goal: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  target: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  offer_and_technique: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  proof: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  source_content: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  capacity: {outcome: MET, evidence_state: VERIFIED, evidence: []}
+  measurement: {outcome: MET, evidence_state: VERIFIED, evidence: []}
 unknowns: []
 review:
   state: PENDING | AGREED | DISAGREED
@@ -173,7 +207,8 @@ After fit review, the following sequence is mandatory:
 ## Definition of done
 
 - State is the first line and follows the decision table.
-- Every essential gate is evidence-linked or explicitly unknown.
+- Every essential gate records an `outcome` and an `evidence_state`, with evidence links
+  or an explicit unknown.
 - Unknown count and questions are reported separately; no numeric score hides them.
 - Identity has a two-attribute receipt and proof includes an independent source.
 - The second review exists for a qualification candidate.
@@ -721,10 +756,15 @@ is that your site did that.
 - **Qualification is an evidence gate, not an execution grant.** A passing business-fit
   screen still needs independent review, an accepted scope/agreement receipt, and the
   authoritative Ops roster decision before onboarding or recurring work.
-- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
-  with the exact question, owner, due date, and blocked action. Missing evidence routes
-  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
-- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
+- **Gate outcome and evidence quality are separate.** Every GCT gate records outcome
+  `UNKNOWN | MET | NOT_MET` and evidence state
+  `UNKNOWN | OBSERVED | VERIFIED | CONTRADICTED | EXPIRED`. Unknown is never zero or
+  failure; preserve the exact question, owner, due date, and blocked action.
+- **Verdicts are deterministic, not scored.** Evaluator disagreement, an `UNKNOWN`
+  outcome, or any evidence state other than `VERIFIED` routes to
+  `DISCOVERY_REQUIRED`. With no discovery condition, verified `NOT_MET` routes to
+  `DEVELOP`. Only eight verified `MET` pairs can be `QUALIFIED_PENDING_REVIEW`.
+- **Amplify what is already working.** Verified new-idea, no-proof, undifferentiated,
   overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
   and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
 - **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
