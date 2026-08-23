@@ -15,7 +15,12 @@ from typing import Any
 
 CLAUDE_MANIFEST = Path(".claude-plugin/marketplace.json")
 GROK_MANIFEST = Path(".grok-plugin/plugin.json")
-PROTECTED_PREFIXES = ("standards/", "skills/")
+PROTECTED_PREFIXES = (
+    ".claude-plugin/",
+    ".grok-plugin/",
+    "standards/",
+    "skills/",
+)
 SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 

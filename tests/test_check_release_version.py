@@ -12,6 +12,9 @@ from scripts.check_release_version import (
 )
 
 
+REPOSITORY = Path(__file__).resolve().parents[1]
+
+
 class ReleaseVersionGateTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -68,7 +71,14 @@ class ReleaseVersionGateTests(unittest.TestCase):
         self.assertEqual(report.current_version, "1.2.2")
         self.assertEqual(report.base_versions.claude, "1.2.1")
         self.assertEqual(report.base_versions.grok, "1.2.0")
-        self.assertEqual(report.protected_changes, ("AGENTS.md",))
+        self.assertEqual(
+            report.protected_changes,
+            (
+                ".claude-plugin/marketplace.json",
+                ".grok-plugin/plugin.json",
+                "AGENTS.md",
+            ),
+        )
 
     def test_protected_change_rejects_version_unchanged_from_either_base_manifest(self):
         (self.root / "standards").mkdir()
@@ -107,6 +117,19 @@ class ReleaseVersionGateTests(unittest.TestCase):
         ):
             check_release(self.root, self.base)
 
+    def test_manifest_only_change_requires_a_version_bump(self):
+        self._write_versions("1.2.1", "1.2.1")
+        self.base = self._commit("align versions")
+        manifest_path = self.root / ".claude-plugin" / "marketplace.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["metadata"]["description"] = "changed release metadata"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with self.assertRaisesRegex(
+            ReleaseVersionError, "not increased beyond every base manifest"
+        ):
+            check_release(self.root, self.base)
+
     def test_unprotected_change_allows_existing_shared_version(self):
         self._write_versions("1.2.1", "1.2.1")
         self.base = self._commit("align versions")
@@ -135,6 +158,15 @@ class ReleaseVersionGateTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ReleaseVersionError, "rev-parse.*failed"):
             check_release(self.root, "missing-base")
+
+    def test_ci_checks_pull_requests_and_direct_main_pushes(self):
+        workflow = (REPOSITORY / ".github/workflows/validate.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("github.event.pull_request.base.sha", workflow)
+        self.assertIn("github.event_name == 'push'", workflow)
+        self.assertIn("github.event.before", workflow)
 
 
 if __name__ == "__main__":
