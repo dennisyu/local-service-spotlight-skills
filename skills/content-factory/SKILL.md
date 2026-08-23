@@ -1,1 +1,1 @@
-@file:///workspace/lss-skills-work/repo/skills/content-factory/SKILL.md
+@file:///home/box/.cursor/projects/workspace/agent-tools/cf_skill_push.md
