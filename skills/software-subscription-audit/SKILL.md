@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_FAIL
+@file:///workspace/push-content/stamp-pair-b-3-0.md
