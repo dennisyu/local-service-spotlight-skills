@@ -70,7 +70,10 @@ For each meaningful change, explain WHY, tied to the entity's goals (own the ent
 Concrete and verifiable, each with an owner and a due day. Prefer "publish the rewritten /ac-repair-plano/ page by Tue — Eric" over "improve SEO." Tie every action to a goal from Step 2.
 
 ## STEP 4 — SAFE SITE UPDATES (governed by site_update_policy)
-- `additive-auto`: if logged in (check /wp-admin first; fleet WAF blocks Basic Auth → use cookie + X-WP-Nonce from window.wpApiSettings.nonce), apply low-risk additive updates only: add a new legit mention to /media/ + Person sameAs; refresh stats; publish a substantive repurposed SEO article (entity as author, verified content only, link to source, internal-link the cluster); set Rank Math title/desc where missing. Validate render after.
+- `additive-auto`: allowed only when a current scoped approval receipt explicitly grants
+  this client, site, action class, and time window. Then apply only the named low-risk
+  additive update and validate anonymous render after. `additive-auto` is never inferred
+  from a prior successful run, login, connector, or HTTP 200.
 - `stage-only`: write the changes as drafts/to-dos in `report_dir`; note that a wp-admin login is needed.
 - `none`: skip (tracker-lite).
 - Structural changes (layout/nav/schema overhaul): ALWAYS stage for human review, never auto-apply.
@@ -81,10 +84,18 @@ Re-score the 100-pt rubric: Entity Home 20, Knowledge Panel 15, Search Presence 
 
 ## STEP 6 — DELIVER
 1. Save the report to `report_dir`/MAA-YYYY-MM-DD.md and append a one-line entry to MAA-LOG.md (create if missing). ALWAYS keep the file copy regardless of channel.
-2. Deliver per `delivery`: post to the Basecamp thread via Claude in Chrome (Dennis stays logged in; verify the post appeared) OR create a Gmail draft to the given address OR file_only. If a Basecamp URL is configured but unreachable, fall back to a Gmail draft and note it.
+2. Deliver per `delivery`: post to the exact authorized Basecamp thread and verify
+   server-side, create an explicitly configured external Gmail **draft**, or use
+   `file_only`. These rails are not interchangeable. If a Basecamp destination is
+   unreachable, write `UNPOSTED` and an internal blocker; never route or draft the
+   Basecamp update through Gmail.
    - **Basecamp two-thread rule (added 2026-07-19, Dennis's explicit instruction):** most client projects have both a client-visible thread and a separate internal-only "Updates" thread. Default to internal. Only post to the client-visible thread when the update is genuinely interesting/noteworthy to the client (a real win or milestone) — routine no-change verification passes, internal process/incident notes, and anything with internal-only commentary always go to the internal thread, never client-visible. Confirm which kind of thread you're looking at via Basecamp's "The client can see this" banner, don't assume from the thread name.
    - **Gmail-draft delivery is DRAFT-ONLY, always — no exceptions.** Use the draft-creation tool; never a send-message tool. This applies even when the configured recipient is Dennis himself — a scheduled/autonomous run never has standing to put a message in someone's inbox unreviewed. Before marking this step done, re-fetch the message (search_threads/list_drafts/get_message) and confirm its label is DRAFT, not SENT, and that the To: field matches the `delivery` parameter's address exactly. Pulling the entity's own contact info (athlete/client personal email) out of the canonical brief instead of the configured fallback address is a real, observed failure mode (2026-07-17, Trenton Sandler run: a report meant for `gmail_draft:dennis@blitzmetrics.com` was instead fully SENT to the athlete's personal address + a teammate, skipping Dennis's review entirely) — not a hypothetical one. If you ever discover a prior run sent instead of drafted, do not attempt to unsend or delete it; flag it plainly at the top of the next report and let Dennis decide on any follow-up.
-   - **Agency-roster mode:** deliver per-client (one Basecamp post per client with a `basecamp.project_url` configured; skip+flag clients without one) AND always send one combined summary email to YOUR OWN inbox (the owner address configured for this agent — this skill ships in public packs, so it must never carry someone else's address) with one bullet per client — headline metric delta, biggest action, link to that client's Basecamp post or a note that posting was skipped. Never put internal-only figures (EBITDA, valuation, exit plans) in a client-facing Basecamp post — those stay in the Dennis-only summary email.
+   - **Agency-roster mode:** prepare one report per client and use only the configured,
+     verified delivery policy. A combined owner summary is a file by default, or a Gmail
+     draft only when that exact external address is configured. Never send from a
+     scheduled run. Never put internal-only figures (EBITDA, valuation, exit plans) in a
+     client-facing Basecamp post.
 3. Keep it tight: lead with business metrics + the 2–3 actions; diagnostics below. Plain English, encouraging, honest. Client-facing posts never include internal commentary (EBITDA, valuation, exit) — that goes only to Dennis.
 4. Run `extra_steps` (entity-unique work like content repurposing) where provided.
 5. If a connector or login needed this run isn't working, don't retry in bursts (WAF risk) — save what you have, note the gap plainly in the report, and say what Dennis needs to do to unblock next run.
@@ -116,7 +127,8 @@ perfect metrics and didn't land in the channel is a failed run. Three rules make
    banner alone stop you: check the vendor status page, then ATTEMPT the post and let the attempt be the
    verdict. Only a failed attempt is a real outage.
 3. **Queue, never drop.** If the post genuinely fails, write the exact post body to
-   `report_dir`/UNPOSTED/YYYY-MM-DD.md, note the failure in the report, and send the Gmail draft fallback.
+   `report_dir`/UNPOSTED/YYYY-MM-DD.md and record an internal blocker. Do not create a
+   Gmail fallback for a Basecamp destination.
    **At STEP 0 of every subsequent run, check UNPOSTED/ first** — if anything is queued, post it (labeled
    with its original date) before the current week's report, then delete the queued file. A skipped post
    must resurface by itself; it may never depend on a human remembering.
@@ -282,7 +294,8 @@ the tool cap). (2) Basecamp service disruptions render a `system-degradations-ba
 Same day, hours later, the banner still claimed read-only while 37signals' status page read
 "All Systems Operational" and the comment posted successfully on the first try. Corrected rule:
 a degradation banner is a hint, never a verdict. Check the vendor status page, then ATTEMPT the
-post; only a failed attempt justifies the Gmail-DRAFT fallback + UNPOSTED/ queue (STEP 6.6).
+post; a failed attempt creates the UNPOSTED queue and an internal blocker (STEP 6.6). The older
+Gmail fallback was retired on 22 August 2026 because Basecamp updates stay in Basecamp.
 Deferring on the banner alone cost this project a week of client-visible silence.
 (3) Threads get rotated: ops closes "Updates (Continuation-N)" with a pointer comment and opens
 N+1 — before posting, confirm the ACTIVE thread (the closed one's last comment says "continue
@@ -1606,3 +1619,22 @@ review. Never add the marker merely to make the sweep pass.
 - This rule controls the delivery path; it does not grant permission to post or
   weaken any existing human approval requirement.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
+
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
+
+- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
+  screen still needs independent review, an accepted scope/agreement receipt, and the
+  authoritative Ops roster decision before onboarding or recurring work.
+- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
+  with the exact question, owner, due date, and blocked action. Missing evidence routes
+  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
+- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
+  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
+  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
+- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
+  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
+  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
+- The public guide is https://blitzmetrics.com/social-amplification/. The operational
+  control plane is the roster-driven Money Tree; derived output folders are not state.
+<!-- shared-rule:screen-gct-before-amplification:end -->

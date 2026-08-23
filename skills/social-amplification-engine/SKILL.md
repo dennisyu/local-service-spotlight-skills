@@ -1,328 +1,257 @@
 ---
-name: security-audit
-description: Continuously verify that a website is still the site you published — no injected spam, no rogue admin, no hidden plugin, no different page served to Googlebot than to humans. Use to stand up monitoring on a new property, to run a point-in-time compromise check, to investigate a "my site looks hacked" report, or as the daily read-only sweep across a network of sites. Read-only by default; it finds and proves, it does not clean.
+name: social-amplification-engine
+description: Orchestrate Dennis Yu's six-phase Social Amplification Engine for an evidence-qualified, authorized client: Plumbing, Goals, Content, Targeting, Amplification, and weekly MAA optimization. Use after gct-screen and the engagement/roster gates, or to reconcile existing SAE components without creating a parallel system.
 author: Dennis Yu — Local Service Spotlight
 references:
-  - https://localservicespotlight.com/security-audit/
-  - DealCon-Skills/evidence-verification.md
-  - DealCon-Skills/seo-audit.md
-  - DealCon-Skills/client-access-checklist.md
-  - Fleet-Security-2026-07-27/README.md
-  - Sigrun-SOMBA/security/monitor.py
+  - https://blitzmetrics.com/social-amplification/
+  - https://blitzmetrics.com/digital-plumbing/
+  - https://blitzmetrics.com/gct-business-strategy/
+  - https://blitzmetrics.com/content-factory/
+  - https://blitzmetrics.com/dollar-a-day/
+  - https://blitzmetrics.com/maa/
+  - https://github.com/Goodrich-Dev/google-ads-maa-skills
+  - skills/gct-screen
+  - skills/client-access-checklist
+  - skills/content-factory
+  - skills/dollar-a-day-strategist
+  - skills/weekly-brand-maa
 rule-scopes: published-html, design-review
 ---
 
-# Security Audit
+# Social Amplification Engine
 
-**Use this when** you are responsible for a site staying the site you published — which, on
-a managed network, is every day, not the day someone complains.
+This is a thin orchestrator over existing skills and the roster-driven Money Tree.
+It sequences work; it is not a second CRM, content factory, scorecard, scheduler,
+client roster, or system of record.
 
-This skill exists because of a specific pattern we kept losing to: **we found out from the
-outside.** A first-degree LinkedIn connection messaged at 6:19am asking whether we had been
-hacked. A Search Console email about video markup turned out to be three sites serving a spam
-storefront. A client forwarded a newsletter about a WordPress vulnerability and asked whether
-it affected his sites — it did, and the sweep that question triggered found more. Every one of those was discoverable from outside, for free, with no
-credentials, on any morning before it was reported to us.
+The engine amplifies reputation, proof, and trust that already exist. The public
+operating guide is https://blitzmetrics.com/social-amplification/.
 
-## The one idea
+## Vocabulary lock
 
-**A site is compromised the moment it stops matching its own baseline — not the moment
-somebody notices.**
+| Concept | Canonical meaning |
+|---|---|
+| SAE | Plumbing → Goals → Content → Targeting → Amplification → Optimization |
+| GCT | Goals, Content, Targeting: one fit/strategy triangle and SAE phases 2–4 |
+| Content Factory line | Produce → Process → Post → Promote |
+| Dollar a Day | The paid testing math inside Promote / SAE phase 5 |
+| MAA | Metrics → Analysis → Action; weekly operational heartbeat |
 
-So the job is not "look for malware." Malware you have never seen is invisible to you. The
-job is to **write down what the site is when it is known-good, and then diff it every day.**
-A new external script domain is suspicious whether or not you recognise the payload. A new
-admin user is suspicious whether or not you know what they did.
+Older material calls Plumbing, Publish, Promote, Perform “the 4 P’s.” Treat that as
+a wrapper view of the whole engine, not a competing Content Factory line. Per-recording
+stages map to the factory as Capture = Produce; Transcribe/mine + atomize = Process;
+definitive article + distribution = Post; proven-winner boost = Promote.
 
----
+## Entry gates
 
-## The seven checks
+Do not start phase 1 from a form response or a fit verdict alone.
 
-All read-only. All runnable against any WordPress property with a REST endpoint and an
-application password. Six can run credential-free from outside.
+1. A current `gct-screen` result is `QUALIFIED_PENDING_REVIEW` and its independent
+   review is `AGREED`.
+2. An accepted scope/agreement receipt exists.
+3. Ops has placed the entity in the authoritative `clients/ROSTER.md` as exactly
+   `Active Client`, or recorded an explicit Special Project scope receipt.
+4. `Not Active`, `HOLD`, status-unconfirmed, absent roster evidence, or stale/contradicted
+   identity stops the run.
+5. The Money Tree client config/checkpoint exists and declares the action authority.
 
-| # | Check | What a failure looks like |
+A strong unsigned prospect remains a prospect. This skill may prepare a read-only
+handoff, but it may not onboard, schedule, publish, message, request permissions, or spend.
+
+## One control plane
+
+- `clients/ROSTER.md` is the authority for engagement status.
+- `money-tree/client-config.json` and immutable Money Tree run checkpoints are the
+  operational state, safety, delivery, evidence, and receipt plane.
+- A per-client canonical brief stores accepted GCT, offer, proof inventory, domain,
+  funnel definitions, authorized channels, access state, and explicit unknowns.
+- Secrets remain in Keychain or the approved secret store; briefs contain references,
+  never credential values.
+- Output folders are derived artifacts. Folder existence never creates status, and a
+  missing folder must become an explicit `NOT_STARTED` checkpoint rather than omission.
+- One case orchestrator is the only writer allowed to transition canonical state.
+  Specialists write immutable proposals/evidence; the orchestrator accepts or rejects
+  them with version/hash checks.
+
+Where available, use the `money-tree/sae/` router and schemas in
+`Local-Service-Spotlight/agent-runtime`. Do not reimplement that state machine here.
+
+## Orthogonal state machines
+
+Keep these separate so a positive result in one lane cannot grant authority in another.
+
+### Engagement
+
+`INTAKE_RECEIVED → EVIDENCE_INTAKE → QUALIFICATION_REVIEW → QUALIFIED_PENDING_AGREEMENT`
+
+Other qualification outcomes are `DISCOVERY_REQUIRED`, `DEVELOP`, `DECLINED`, or
+`NURTURE`. After an accepted agreement and Ops roster receipt:
+
+`ONBOARDING → READY_FOR_LAUNCH → OPERATING ↔ AT_RISK → OFFBOARDING`
+
+`HOLD` may interrupt any post-agreement state. Release requires an explicit human
+receipt and restores only the prior state.
+
+### Evidence
+
+`UNKNOWN | OBSERVED | VERIFIED | CONTRADICTED | EXPIRED`
+
+Unknown is not zero, clean, pass, or fail. It carries question, cause, owner, due date,
+and blocked action.
+
+### Action authority
+
+`READ_ONLY | STAGE_ONLY | APPROVED_LOW_RISK | HUMAN_EXECUTES`
+
+The default is `STAGE_ONLY`. Every delegated skill inherits this mode. A child skill’s
+verb such as publish, post, boost, pause, kill, scale, add access, or send is overridden
+to prepare/draft unless an exact scoped approval receipt matches actor, client/account,
+target/destination, action, amount/scope, start/end or expiry, and rollback/acceptance
+test. Fallback models may reduce throughput; they may not lower evidence or approval.
+
+### Artifact lifecycle
+
+`PROPOSED → STAGED → APPROVED → EXECUTED → VERIFIED`
+
+Never call a draft “published,” an approved action “executed,” a registered clock
+“observed,” or HTTP 200 “business impact.”
+
+## The six phases
+
+Run phases in order. A blocked phase may produce drafts and an owned ask, but downstream
+external action remains blocked.
+
+| Phase | Required work | Existing owner |
 |---|---|---|
-| 1 | **External resource inventory** | A script, iframe or link to a domain that was not in yesterday's baseline |
-| 2 | **Spam-injection markers** | Known link-spam domains, casino/pharma keyword blocks, hidden-link patterns in the rendered HTML |
-| 3 | **Users** | A new account, or an existing account whose role escalated |
-| 4 | **Plugins** | A new or removed plugin, a status flip, a version *downgrade*, or a version that is not a real published release |
-| 5 | **Reachability** | A critical page that stopped returning 200 |
-| 6 | **Cloak check** | The page served to Googlebot differs from the page served to a human |
-| 7 | **Did checks 3 and 4 actually run?** | An unreadable REST endpoint, an unparseable 200, or an empty baseline |
+| 1. Plumbing | Access, GTM, GA4, GSC, conversion definitions, CRM/source contracts | `client-access-checklist`, `measurement-analytics`, Task Library Stage 1 |
+| 2. Goals | Accepted measurable goal, economics, capacity, offer/technique | `business-brand-strategist`, accepted GCT brief, Task Library Stage 2 |
+| 3. Content | Proof inventory and Produce → Process → Post drafts | `content-factory`, `video-repurposing-agent`, `definitive-article-writer`, Task Library Stage 3 |
+| 4. Targeting | ICP and bounded hypotheses; targeting remains last | accepted GCT brief, Task Library Stage 4 |
+| 5. Amplification | Rank proven organic and stage day-7 kill/hold/scale recommendations | `dollar-a-day-strategist`, Task Library Stage 5 |
+| 6. Optimization | Weekly full-funnel Metrics → Analysis → Action and ask ledger | `weekly-brand-maa`, `measurement-analytics`, Money Tree, Task Library Stage 6 |
 
-### Check 7 is the one that makes the other six trustworthy
-An endpoint that 403s and a site with zero plugins produce the same empty list. Without a
-guard, "we could not read the plugin list" silently renders as "no plugins changed" — the
-monitor reports **clean** on the day it went blind. So: an unreadable endpoint is its own
-ALERT, naming the real cause, and that half of the diff is **SKIPPED** — never reported as
-mass deletion, and never allowed to pass as clean.
+### Phase gates
 
-This generalises past security. *Any* check whose failure mode resembles its success mode
-needs a third state.
+- Search Console, CMS, GA4, and Tag Manager must be verified green before content ships
+  or amplification runs. A named blocker makes routing complete but the phase remains
+  `BLOCKED`.
+- Define traffic → inquiry → qualified lead → booking/job → collected/recognized revenue
+  before optimization. Do not promote submissions, calls, pipeline value, or traffic into
+  revenue without a source-receipted join.
+- No approved campaign/platform, billing owner, spend ceiling, dates, claim/creative
+  approval, and kill metric means recommendations only.
+- Dollar-a-Day day-7 output is a decision recommendation. It never spends, pauses, kills,
+  scales, or moves audiences by itself.
+- Client-visible MAA requires an authorized destination and server-side readback.
+  Basecamp failure becomes `UNPOSTED` plus an internal blocker; never Gmail-reply or
+  draft to Basecamp notification addresses.
 
----
+## Agent ownership
 
-## Three states, never two
+Assign functions, not irreplaceable people.
 
-The hardest bug in this whole skill is the two-valued answer. When the monitor asked
-wordpress.org "what versions of this plugin exist?", a `None` reply meant two opposite
-things: **the plugin is premium and not listed there** (fine, forever) and **wordpress.org
-did not answer** (a real blind spot). Both printed the same alert line, so a paid plugin
-alerted every single morning — and an alert that fires every morning is an alert nobody
-reads.
+| Function | Responsibility | Cannot do |
+|---|---|---|
+| Case orchestration | canonical state, brief acceptance, routing, locks, receipts | silently accept stale proposals |
+| Evidence/qualification | proof inventory, identity, GCT, contradictions | invent positioning, client status, or proof |
+| Plumbing/measurement | access audit, source contracts, Money Tree joins | add users, rotate credentials, change DNS/CRM |
+| Content | source mining, atomization, drafts, manager QA | fabricate or publish without scope |
+| Promotion analytics | proven-organic ranking and MAA recommendations | spend, pause, kill, scale, move audiences |
+| Client success/MAA | weekly MAA, ask ledger, authorized delivery | bypass client relationships or fallback to email |
+| Human owner | positioning, claims, capacity, scope, spend, publishes, sends, holds | delegate accountability to an agent |
 
-The fix is the shape, not the wording:
+Use low-cost workers for bounded collection and mechanical drafts. Keep identity,
+evidence adjudication, strategy, client voice, and approval at the judgment layer.
 
-- **NOT_LISTED** — a definitive answer (404, or a 200 whose body is `false`). Advances the
-  baseline, logged as INFO, and states plainly that the version was *not verified upstream*.
-- **UNREACHABLE** — timeout, 5xx, unparseable. Still ALERTs, names the upstream service
-  rather than accusing the plugin, and retries with backoff so one network blip cannot
-  manufacture a security alert.
-- **A real version set** — compare normally.
+## Contribution and adapter register
 
-And delete the hand-maintained exception list. We had a `PREMIUM_SLUGS` constant listing
-which plugins to excuse; hand-maintained lists drift behind the thing they describe.
-wordpress.org answers the question itself, so ask it.
+Names are provenance, not ownership. Record each contribution as:
 
----
+`contributor | exact source/thread/commit | component | extracted contract | overlap |
+disposition | canonical target | validation receipt`
 
-## Prove the monitor can fail
+Current integration contracts:
 
-A check that cannot fail is not a check. Before you trust a clean result, run **live negative
-tests** against the real baseline in memory (never writing to the baseline file):
+- **Analytics Function / Daniel Goodrich:** the public
+  `Goodrich-Dev/google-ads-maa-skills` package is an adapter for verified Google Ads
+  collection, analysis, dry-run change proposals, and client-safe rendering. Pin an exact
+  commit before use. MCP/source data is primary; continuity/email input remains explicit
+  fallback evidence. It plugs into phases 1 and 6 and never broadens action authority.
+- **Content Function / Dylan Haugen:** BlitzBase is the persistent client-knowledge layer
+  for accepted facts, recordings, proof, GCT context, and history. It is not the method
+  repository. Export a versioned/hash-checked proposal to the canonical brief; do not
+  overwrite Dylan’s Elementor canvas or copy private knowledge into Git.
+- **Task Library:** canonical task/SOP layer. Point at the task; do not paste another SOP.
+- **Skills marketplace:** reusable method layer. Improvements land in the named skill.
+- **Agent runtime:** locks, receipts, accepted operational state, and handoffs.
 
-- control → expect 0 alerts
-- inject a rogue admin → expect exactly 1
-- remove a plugin → expect exactly 1
-- tamper a version → expect exactly 1
+Mark an adapter `UNKNOWN` until its exact source, version, identity, and validation receipt
+are observed. “Daniel/Dylan own this” or “integrated” without those fields is not evidence.
 
-Only then is "clean" an earned result. When we did this the first time, the test suite went
-from 55 to 116 assertions and immediately caught a defect the live path would never have
-reached: the new retry branch called `time.sleep()` and `time` was never imported — code that
-only executes during a wordpress.org outage, which is exactly when the monitor matters most.
+## Cadence
 
----
+A skill is how; the scheduler is when. Schedules stay thin and point to this skill/version
+and the Money Tree procedures.
 
-## What the real incidents taught
+- Intake: idempotent public-read-only screen and one owned next action.
+- Onboarding: working-day blocker sweep only while a gate is open; ask ledger dedupes.
+- Daily: collect source material and prepare candidates; no external actions.
+- Day 7 after an approved test: recommend kill/hold/scale with exact metric receipt.
+- Thursday/Friday: extend the existing roster-derived Money Tree review and weekly MAA.
+- Monthly: reuse the existing Money Tree rebuild and meeting packet.
+- Quarterly or material change: re-screen GCT, capacity, claims, access, and definitions.
 
-**A hidden plugin is not in the plugin list, by design.** One backdoor shipped as "Web Media
-Optimizer" and filtered *itself* out of `all_plugins`, stripped its own action links, and
-removed itself from update checks. A clean plugin audit meant nothing. It was found by
-requesting its file path directly and comparing the status code against a control path that
-should not exist: real file → 200, control → 307. **Probe for the thing, do not ask the list.**
+Do not create a second SAE heartbeat. Extend the existing
+`monthly-client-money-tree-maa` routine. A schedule is only `REGISTERED` until its first
+firing leaves a complete roster-hash receipt and one terminal checkpoint for every and
+only current Active Client row.
 
-**Payload and repair are two halves.** The same compromise had a dropper in `mu-plugins/`
-and a hidden fake plugin. Removing one and declaring victory is how a backdoor self-heals.
+## Every transition leaves a receipt
 
-**Cloaking is invisible from a browser.** Three sites answered 500 to humans and 200 with a
-spam storefront to Googlebot. Nobody clicking around would ever see it.
+Required fields:
 
-**Not every scare is an incident, and saying so is the deliverable.** A "lickfix malware"
-report turned out to be a Cloudflare bot-challenge interstitial. Sixteen independent checks
-came back clean and the honest answer was *no active malware*. An audit that can only
-conclude "compromised" is not an audit.
+- run ID and deterministic idempotency key;
+- prior/new state and canonical brief version/hash;
+- roster hash/status and Special Project scope receipt when applicable;
+- source links/hashes, collectors, checked-at timestamps, and freshness;
+- explicit unknowns and blocked downstream actions;
+- action-authority mode and approval receipt reference;
+- owner function, due date, acceptance test, and next escalation;
+- artifact lifecycle state;
+- authorized delivery destination/audience and server-side readback, when delivered.
 
-**Rate-limit yourself.** Chained manual runs against one host earned a 429 that got logged as
-an ALERT. Space runs out, and annotate self-inflicted noise in the log immediately so nobody
-reads it as an incident six weeks later.
+Use a run lease/lock, destination allowlists, source-freshness limits, rate limits, and a
+global plus per-client `HOLD`. A duplicate firing must produce no duplicate post, draft,
+task, state transition, payment, or spend action.
 
----
+## Definition of done for one weekly cycle
 
-## Running it across a network
+- Exact roster/scope and current GCT review are verified.
+- Plumbing rows 1–4 are green, or the cycle is explicitly `BLOCKED`; nothing ships.
+- Factory output is derived from real proof, or records “no new source material.”
+- Promotion recommendations are staged with no unapproved spend.
+- Full-funnel evidence preserves not-connected/unknown and reconciles outcomes.
+- MAA file exists; delivery is separately `UNPOSTED` or `VERIFIED` on the named channel.
+- Money Tree has one immutable terminal checkpoint and the agent note is pushed.
 
-1. **Baseline every property** the day you take it on. No baseline, no monitoring — and say
-   so out loud rather than implying coverage you do not have.
-2. **Run daily, read-only, from a residential IP** with a full browser User-Agent. Datacenter
-   IPs and minimal UAs get edge-blocked and you will audit the WAF instead of the site.
-3. **Alert on change, log on clean.** The log is the evidence that the quiet days were checked.
-4. **Never auto-remediate.** Writing to a compromised site destroys evidence and usually does
-   not reach the interceptor anyway. Diagnose fully, package the fix, hand it to a human with
-   host access.
-5. **Count what you do not cover.** If the network is 198 sites and you can enumerate 49, the
-   report says 49 of 198 — not "the fleet is clean."
+## Never automate
 
-## Definition of done
-- Every monitored property has a dated known-good baseline in version control.
-- Every check has a third state for "could not determine."
-- The negative tests pass — the monitor demonstrably catches a planted change.
-- The uncovered count is stated in every report.
-- No cleaning was performed by the audit itself.
+- Client identity, niche, pricing, differentiation, capacity, consent, or GCT invention.
+- Legal, medical, financial, reputation, comparative, or regulated claims without the
+  qualified human review appropriate to the claim.
+- Credentials, permissions, account ownership, DNS, billing, payments, calendars, CRM
+  workflow, structural-site changes, or live spend.
+- External email, DMs, review requests, social posts, or client messages outside a
+  narrowly configured, authorized recurring delivery policy.
+- PII, private revenue, lead-level data, secrets, or private artifacts in Git/public HTML,
+  JSON-LD, CSS, data attributes, alt text, metadata, filenames, or obscure URLs.
+- A second roster, scorecard, scheduler, Content Factory, collaborator database, or SAE.
 
-## Learned in the field
+## Related sequence
 
-*Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
-
-<!-- learning:2026-08-02-one-message-for-two-opposite-facts -->
-**August 2, 2026** (from: sigrun.com security monitor — a paid plugin alerted every morning forever because "not listed" and "unreachable" printed the same line)
-
-### When one code path can produce a message for two opposite facts, the message is wrong in both cases
-
-The sigrun.com monitor verifies each plugin version against api.wordpress.org. Its lookup returned `None` for
-two situations that have nothing in common:
-
-- **wordpress.org answered, and it does not distribute this plugin** — true of every paid add-on (Elementor
-  Pro, Yoast Premium, WPConsent Premium) and of the site's own custom plugin.
-- **wordpress.org could not be reached at all** — a timeout, a 5xx, a WAF interstitial.
-
-Both printed `upstream UNVERIFIABLE ... lookup failed`. One sentence, two opposite meanings, and the failure
-runs in both directions:
-
-1. **It never clears.** A paid plugin nobody had hand-added to the `PREMIUM_SLUGS` allowlist alerted every
-   single morning, forever, and the only way to silence it was for a human to edit a hardcoded set. That is
-   alert fatigue attached to a scheduled job. This monitor exists to catch the next infection on day one — and a daily alert everyone learns to skim rebuilds the exact condition it was built to remove.
-2. **It hides the real thing.** During a wordpress.org outage, every ordinary plugin bump prints that same
-   "UNVERIFIABLE" line. A genuinely tampered plugin folder arriving in that window would have been visually
-   identical to the routine noise. The one line a human most needs to trust said the same thing whether the
-   news was "nothing to see" or "someone edited your plugins."
-
-**Rules:**
-
-1. **Distinguish "answered no" from "did not answer."** A 404 is data. A timeout is the absence of data. Any
-   function that collapses them into one return value has thrown away the more important half. Return a
-   three-state result, not a nullable one.
-2. **A hand-maintained allowlist is a clock that runs slower than the thing it describes.** `PREMIUM_SLUGS`
-   had two entries and the site had four unlisted plugins. Derive the answer from the authority (wordpress.org
-   already knows) instead of restating it locally.
-3. **Retry before you alarm; vary time before you vary anything else.** A one-second network blip should not
-   be able to manufacture a security alert. Backoff-retry the unreachable case, then report it.
-4. **Dispatch on type and fail CLOSED.** The sentinel chain `if known is UNREACHABLE ... elif nv in known`
-   would substring-match on a sentinel (`"1.1" in "NOT_LISTED"`) or raise `TypeError` on `None` if identity
-   ever missed. Check the *shape* of the good case first and let everything unexpected fall through to the
-   alert branch — a security check must never be able to pass by accident.
-5. **Test the path that only runs during the emergency.** The new retry code called `time.sleep()` with `time`
-   unimported. It executes only when wordpress.org is down — i.e. only when the monitor matters — so no live
-   run would ever have caught it. Any branch that fires only under failure conditions needs a test that
-   simulates those conditions, because production will never rehearse it for you.
-6. **Prove red before you trust green.** Reconstructing the pre-change code and running the new suite against
-   it produced 17 failures and a `TypeError`. Without that step, 116 passing assertions prove only that the
-   tests agree with the code that was just written.
-
-Learned August 2, 2026.
-
-<!-- learning:2026-08-03-a-capability-with-no-skill-file-cannot-propagate -->
-**August 3, 2026** (from: SEO-audit discoverability + security-audit generalization build — 49 published SEO audits with no hub, a rubric that lived inside one task's parameters, and a jammed harvest queue that turned out to be the same problem)
-
-### A capability with no skill file cannot propagate, cannot be taught, and cannot absorb its own lessons
-
-Dennis asked to be "clearly known for doing SEO audits." The assumption going in was that
-this was a marketing problem — write something, publish it. It was not. An inventory of our
-own properties found **49 published SEO audits** already live, plus 341 audit-family URLs
-across three domains. The work existed. What did not exist was any way to see it as a body
-of work: **no hub page, 38 of the 49 with zero inbound links from any sibling audit, 35 with
-zero outbound links.** Forty-nine deliverables, each an island.
-
-The root cause was one level deeper than the missing page. There was **no `seo-audit` skill
-file.** The seven-component SEO & Growth rubric — the thing that makes two audits
-comparable — existed only inside the parameter block of a single scheduled task
-(`wtp-monthly-seo-reaudit`). One job could score a site. Nothing else could, because there
-was nowhere else to read the definition from.
-
-And that had a visible symptom nobody had connected to it: **three learning notes had been
-jammed in the harvest inbox since the previous day, all naming `seo-audit`**, all
-unresolvable, aging toward the stale-queue gate. The morning run reported them as a queue
-defect. They were not a queue defect. They were the loop correctly reporting that a skill
-our own runs believed in did not exist. **A jammed learning note is a missing-capability
-alarm, not a filing error.** Creating the skill cleared all three on the next run.
-
-Same shape on the security side: seven real checks, a 116-assertion test suite, and a
-track record of caught compromises — all of it existing only as one client site's
-`monitor.py`. Nothing generalized to the network because there was no file to generalize
-*into*.
-
-**The rule:** when you find yourself doing something well and repeatedly, check whether it
-has a canonical skill file. If it does not, that is the deliverable — before the landing
-page, before the marketing. The file is what lets the capability propagate to every pack,
-teach itself to the next agent, and accumulate lessons. Publishing a page about a
-capability with no skill file behind it produces a claim; publishing the skill produces a
-system.
-
-**Second-order effect worth expecting:** adding two mandated skills tripped every coverage
-gate that had been built in the preceding days — the SOMBA orphan check, the numbering
-lists, the count derivations. All of them fired correctly and named exactly what to edit.
-Ten registration points across three builders, caught by gates rather than by users. That
-is what those gates are for, and a day where several fire at once is a good day, not a
-messy one.
-
-### Corollary — measure your own work before describing it
-
-Before writing a word of the hub page, the 49 audits were fetched anonymously and measured:
-status, transfer size, time to last byte, inbound and outbound sibling links, `h1`, meta
-description, JSON-LD. That is our own `seo-audit` skill run against our own SEO audits, and
-it produced the specific numbers the page and this note are built on — including one page
-taking **9.9 seconds** to load and three returning **403 to every programmatic client**
-(browser-verified fine, so: invisible to AI crawlers, visible to humans).
-
-Running the skill on yourself first is not a nice touch. It is how you find out whether the
-claim you are about to publish is true.
-
-<!-- learning:2026-08-03-a-compromised-site-must-not-outscore-a-clean-one -->
-**August 3, 2026** (from: weekly-fleet-hub-audit v2, fleet-wide proof enrichment)
-
-### Rankings are evidence about *someone's* work — check whose before you score them
-
-The fleet scoreboard rates every site on PROVE: Domain Rating, organic traffic, and the
-breadth of keywords it ranks for. On August 3, 2026 the two sites whose keyword breadth
-looked strongest were **philmershon.com (15 ranking keywords)** and
-**theathletespotlight.com (5)**. Both readings were the attacker's, not the client's.
-
-Pulling the keywords themselves rather than the count showed philmershon.com — a speaker
-coach — ranking for `hollymoviehd`, `borat thong`, `nintendo store`, `jupiter 125 black
-colour`, `silver aranjanam for baby boy`. Fourteen of its fifteen keywords were junk. On
-theathletespotlight.com it was five of five: `activa 6g best colour`, `bici decathlon`,
-`charola de unicel`. Selecting `best_position_url` alongside the keyword named the cause —
-every junk term ranked on an injected path:
-
-    /product-similar-image/?<digits>
-    /product/category/<digits>
-    /shop/manufacturer-site?&transition=top<digits>
-
-with a per-site numeric suffix (`…1310` on one, `…1760` on the other): one kit, two of our
-sites. Uncorrected, philmershon.com scored **impact 40**; netting the injected rankings out
-drops it to **21** — an eight-point BIS swing. A compromised site was being rewarded for
-being compromised, and would have been reported as a fleet-best performer.
-
-**Rules:**
-
-1. **Never score a ranking you have not attributed to a URL.** `org_keywords` is a count of
-   things Google associates with the domain, not a count of the client's wins. Select
-   `best_position_url` and read the paths before any keyword number reaches a score or a
-   report.
-2. **Net hostile rankings out of the score and raise them as an action instead.** Traffic
-   attributed to injected URLs gets discounted in the same proportion. Infection is a
-   dispatch item, never a credit.
-3. **Judge the keywords by fit with the person, not by how spammy they look.** `nintendo
-   store` is a fine keyword — for a games retailer. The tell is a *speaker coach* ranking
-   for it. The GCT already states who each site is for; compare against that.
-4. **A clean sitemap and a clean REST API do not mean a clean site.** Both sites' sitemaps
-   and post lists were entirely legitimate, and their real content is real. The injection
-   lives beside WordPress, in URL space the CMS never enumerates — so any check that walks
-   the sitemap or `/wp-json/wp/v2/posts` is structurally unable to find it. What Google has
-   indexed is a separate source of truth from what the CMS will admit to.
-5. **404 today does not mean clean.** These URLs now return 404 to human and Googlebot
-   alike from a datacenter IP, while still ranking. That is consistent with cleaned-but-
-   still-indexed *and* with a cloak keyed to something the probe can't reproduce. Say which
-   of those you have ruled out; removal still has to be requested in Search Console either
-   way, because the junk keeps ranking after the files are gone.
-
-Companion to the same day's `classify-the-metric-dont-just-count-it` (referring domains,
-same disease one metric over): fleet median referring domains is 368 against a median of
-**26 dofollow**, because a `.shop`/`.store` link-spam blast hits every site daily. Report
-`refdomains_dofollow`; `refdomains` is noise. billybatt.com reads as 324 referring domains
-and is actually **2 dofollow, both of them ours** — the authority problem the number
-appears to have solved is entirely intact. Ahrefs exposes an `is_spam` flag; use it.
-
-Learned August 3, 2026.
-
-<!-- shared-rule:silent-media-playback:start -->
-## Silent media playback
-
-- Never let audio from browser, video, audio, presentation, or application testing play through the user's speakers unless the user explicitly asks to hear it.
-- Before starting any media playback, mute the player and set its volume to zero. Keep it muted for the full test, including replays, reloads, new tabs, and alternate players.
-- Apply this rule to the primary agent and every delegated agent. Include the mute requirement whenever work that may involve media playback is delegated.
-- If the mute state cannot be controlled and verified before playback, do not start playback. Use metadata, captions, transcripts, frames, screenshots, network state, or player state instead.
-- Only unmute when the user explicitly requests audible playback in the current task.
-<!-- shared-rule:silent-media-playback:end -->
+`evidence-verification` → `gct-screen` → agreement/roster gate →
+`one-session-client-onboarding` → `client-access-checklist` → `content-factory` →
+`dollar-a-day-strategist` → `weekly-brand-maa`
 
 <!-- shared-rule:agents-draft-humans-send:start -->
 ## Agents draft; a human sends and publishes
@@ -376,6 +305,35 @@ Learned August 3, 2026.
 - Work assigned to a named individual and nowhere else is work that silently stops when
   that individual does.
 <!-- shared-rule:assign-work-to-a-function:end -->
+
+<!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
+## Basecamp updates stay in Basecamp
+
+- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
+  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
+  visible From addresses are notification infrastructure, not destinations.
+- Post the update in the exact existing Basecamp thread through an authorized
+  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
+  Basecamp itself, so do not substitute a per-message
+  `*@replies.app.basecamp.com` email token even when one is present.
+- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
+  contains a generic Basecamp notifications address, stop without creating or
+  sending the message.
+- Changing the Gmail From identity does not repair this failure. In the
+  incident that produced this rule, the connector resolved the visible From
+  address as the recipient and discarded Basecamp's unique Reply-To route; the
+  result was an `Email Received in Error` bounce and no Basecamp comment.
+- A Basecamp update is complete only after readback proves the live thread URL
+  or recording ID, the expected author, and a unique phrase from the comment.
+  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
+  blocker and put the intended update in the run result; do not fall back to
+  email.
+- Embed this rail directly in every scheduled or cloud task that may touch
+  Basecamp. Such runs may not load repository instructions before using an
+  already-authorized Gmail tool.
+- This rule controls the delivery path; it does not grant permission to post or
+  weaken any existing human approval requirement.
+<!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:be-proactive-see-it-through:start -->
 ## Be proactive and see it through
@@ -465,6 +423,42 @@ Learned August 3, 2026.
 - Images also carry the provenance required by `process-real-content-never-generate` —
   a photograph of the work actually done proves more than any sentence about it.
 <!-- shared-rule:every-article-has-pictures:end -->
+
+<!-- shared-rule:every-public-page-has-real-imagery:start -->
+## Every public page shows real people or real work
+
+- **Every visitor-facing content page must contain at least one meaningful image
+  of the actual business: its people, its work, its customers with permission,
+  its product, or its place.** This includes conversion and utility pages such as
+  Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
+  ship a wall of text.
+- A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
+  photograph does not satisfy the rule. Neither does an unrelated real photo
+  added merely to pass a count. The image must help a visitor understand or trust
+  the page.
+- Use the business's approved source library. Give the image honest alt text and,
+  when useful, a caption that explains what it proves. Describe only what the
+  source establishes: never relabel one project photo as work completed in every
+  city, and never infer a person, location, service, or result from a filename.
+- If no suitable approved image exists, request one and block that page from
+  publication. Do not manufacture evidence with image generation or stock.
+- Build QA must inventory every rendered content route and fail when any route
+  lacks a verified real image. Keep a provenance allowlist or equivalent asset
+  record so logos and decorative images cannot make the check pass. Mark at least
+  one qualifying `<img>` per page with `data-lss-real-image="verified"` only
+  after that provenance check. Also inspect the rendered desktop and mobile page;
+  a hidden, broken, or contextless image does not count.
+- Machine-only documents and routes that never render as visitor content—such as
+  `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
+  browser-rendered redirect placeholder is not exempt; replace it with a real
+  redirect or make the page comply.
+
+The fleet check proves only that a page declares the verified marker and supplies
+a nonblank, non-data source plus nonblank alt text. It cannot prove that the
+source loads, is visible, is meaningfully sized, or is truthful. Enforce those
+claims with each site's provenance-aware build validator plus a human visual
+review. Never add the marker merely to make the sweep pass.
+<!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:immersive-hero-standard:start -->
 ## Personal-brand heroes are immersive, not boxed
@@ -788,20 +782,34 @@ is that your site did that.
   first — see `analytics-on-every-page`.
 <!-- shared-rule:report-business-impact-not-volume:end -->
 
-<!-- shared-rule:verify-by-opening-the-live-artifact:start -->
-## Verify by opening the live artifact
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
 
-- **"I did it" is not evidence. The artifact is.** Before reporting any work complete,
-  fetch the live URL, open the file, or query the API and confirm the change is actually
-  there. An agent that has been caught reporting published articles onto a site with no
-  articles has burned more trust than the task was worth.
-- **Check the thing a user would see, not the thing you wrote.** A database row is not a
-  published page — caches, builders and permissions all sit in between. Fetch the public
-  URL as an anonymous visitor.
-- **A page that could not be fetched has not been verified.** Report it as unverified,
-  never as done.
-- Quote the evidence in the report: the URL, the status code, and the string you found.
-<!-- shared-rule:verify-by-opening-the-live-artifact:end -->
+- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
+  screen still needs independent review, an accepted scope/agreement receipt, and the
+  authoritative Ops roster decision before onboarding or recurring work.
+- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
+  with the exact question, owner, due date, and blocked action. Missing evidence routes
+  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
+- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
+  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
+  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
+- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
+  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
+  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
+- The public guide is https://blitzmetrics.com/social-amplification/. The operational
+  control plane is the roster-driven Money Tree; derived output folders are not state.
+<!-- shared-rule:screen-gct-before-amplification:end -->
+
+<!-- shared-rule:silent-media-playback:start -->
+## Silent media playback
+
+- Never let audio from browser, video, audio, presentation, or application testing play through the user's speakers unless the user explicitly asks to hear it.
+- Before starting any media playback, mute the player and set its volume to zero. Keep it muted for the full test, including replays, reloads, new tabs, and alternate players.
+- Apply this rule to the primary agent and every delegated agent. Include the mute requirement whenever work that may involve media playback is delegated.
+- If the mute state cannot be controlled and verified before playback, do not start playback. Use metadata, captions, transcripts, frames, screenshots, network state, or player state instead.
+- Only unmute when the user explicitly requests audible playback in the current task.
+<!-- shared-rule:silent-media-playback:end -->
 
 <!-- shared-rule:spoken-urls-must-resolve:start -->
 ## Every URL we say out loud resolves
@@ -831,86 +839,17 @@ is that your site did that.
   what stops this being rediscovered every few months.
 <!-- shared-rule:spoken-urls-must-resolve:end -->
 
-<!-- shared-rule:every-public-page-has-real-imagery:start -->
-## Every public page shows real people or real work
+<!-- shared-rule:verify-by-opening-the-live-artifact:start -->
+## Verify by opening the live artifact
 
-- **Every visitor-facing content page must contain at least one meaningful image
-  of the actual business: its people, its work, its customers with permission,
-  its product, or its place.** This includes conversion and utility pages such as
-  Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
-  ship a wall of text.
-- A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
-  photograph does not satisfy the rule. Neither does an unrelated real photo
-  added merely to pass a count. The image must help a visitor understand or trust
-  the page.
-- Use the business's approved source library. Give the image honest alt text and,
-  when useful, a caption that explains what it proves. Describe only what the
-  source establishes: never relabel one project photo as work completed in every
-  city, and never infer a person, location, service, or result from a filename.
-- If no suitable approved image exists, request one and block that page from
-  publication. Do not manufacture evidence with image generation or stock.
-- Build QA must inventory every rendered content route and fail when any route
-  lacks a verified real image. Keep a provenance allowlist or equivalent asset
-  record so logos and decorative images cannot make the check pass. Mark at least
-  one qualifying `<img>` per page with `data-lss-real-image="verified"` only
-  after that provenance check. Also inspect the rendered desktop and mobile page;
-  a hidden, broken, or contextless image does not count.
-- Machine-only documents and routes that never render as visitor content—such as
-  `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
-  browser-rendered redirect placeholder is not exempt; replace it with a real
-  redirect or make the page comply.
-
-The fleet check proves only that a page declares the verified marker and supplies
-a nonblank, non-data source plus nonblank alt text. It cannot prove that the
-source loads, is visible, is meaningfully sized, or is truthful. Enforce those
-claims with each site's provenance-aware build validator plus a human visual
-review. Never add the marker merely to make the sweep pass.
-<!-- shared-rule:every-public-page-has-real-imagery:end -->
-
-<!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
-## Basecamp updates stay in Basecamp
-
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
-<!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
-
-<!-- shared-rule:screen-gct-before-amplification:start -->
-## Screen GCT before amplification
-
-- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
-  screen still needs independent review, an accepted scope/agreement receipt, and the
-  authoritative Ops roster decision before onboarding or recurring work.
-- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
-  with the exact question, owner, due date, and blocked action. Missing evidence routes
-  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
-- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
-  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
-  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
-- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
-  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
-  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
-- The public guide is https://blitzmetrics.com/social-amplification/. The operational
-  control plane is the roster-driven Money Tree; derived output folders are not state.
-<!-- shared-rule:screen-gct-before-amplification:end -->
+- **"I did it" is not evidence. The artifact is.** Before reporting any work complete,
+  fetch the live URL, open the file, or query the API and confirm the change is actually
+  there. An agent that has been caught reporting published articles onto a site with no
+  articles has burned more trust than the task was worth.
+- **Check the thing a user would see, not the thing you wrote.** A database row is not a
+  published page — caches, builders and permissions all sit in between. Fetch the public
+  URL as an anonymous visitor.
+- **A page that could not be fetched has not been verified.** Report it as unverified,
+  never as done.
+- Quote the evidence in the report: the URL, the status code, and the string you found.
+<!-- shared-rule:verify-by-opening-the-live-artifact:end -->

@@ -14,7 +14,11 @@ references:
 
 **Use this when** a new client signs up, an onboarding is split across multiple calls, or someone asks how we onboard. The destination is an agent-run session, not a better project-management SOP.
 
-**The rule:** a human is not the routing layer. The agent already scored the client. The agent prefills GCT. The one session is confirm plus access. First Friday MAA is the certainty date. Do not add form fields for the client to fill.
+**The rule:** a human is not the routing layer. `gct-screen` already produced an
+evidence-linked `QUALIFIED_PENDING_REVIEW` result, an independent reviewer agreed, an
+accepted engagement receipt exists, and Ops made the authoritative roster decision.
+The agent prefills GCT. The one session is confirm plus access. First Friday MAA is the
+certainty date. Do not add form fields for the client to fill.
 
 ## Why
 
@@ -26,12 +30,22 @@ Project boards are a temporary window so a human can see the work. They are not 
 
 ## Before the session (agent, no client time)
 
-1. Confirm the engagement is live. If it is dead, stop.
-2. Run `client-access-checklist` against public HTML and any credentials already on file. Ask only for rows that are actually missing.
-3. Prefill GCT (Goals, Content, Targeting) from the quick audit, the site, GBP, and ads. Revenue, services, geo, CRM, and review process are agent-researched first. The client confirms, they do not type a biography.
-4. Generate **one** client requirement list: only the missing access rows plus any asset the audit cannot see. One list, one owner, one date.
-5. Create the working project (whatever board is still in use) with the client added **before** any client-visible post. One list for their asks, one internal list for ours. Assign each to-do to the real owner, including the client.
-6. Write the certainty date: first Friday MAA after the session. Not "2-4 weeks."
+1. Confirm the accepted scope/agreement receipt and the authoritative roster row. `Not
+   Active`, status-unconfirmed, absent scope, or `HOLD` stops. A qualification result is
+   not an engagement.
+2. Read the accepted `gct-screen` brief and independent review. Never replace unknowns
+   with zero or invent a weighted score.
+3. Run `client-access-checklist` against public HTML and authorized credential references.
+   Ask only for rows that are actually missing. Never add users, mint credentials, or
+   change permissions without the account owner's action/approval.
+4. Prefill GCT (Goals, Content, Targeting) from the accepted screen, quick audit, site,
+   GBP, and ads. Revenue, services, geo, CRM, and review process are agent-researched
+   first. The client confirms; they do not type a biography.
+5. Generate **one** client requirement list: only the missing access rows plus any asset the audit cannot see. One list, one owner, one date.
+6. Use the existing verified project and channel mapping. Do not create a duplicate
+   project or add a person from an agent-only run. One list for their asks, one internal
+   list for ours; stage client-visible writes unless the exact delivery policy authorizes them.
+7. Write the certainty date: first Friday MAA after the session. Not "2-4 weeks."
 
 ## The session (target under 90 minutes)
 
@@ -346,6 +360,25 @@ Do not schedule a second call to "finish access" or "finish the form." Anything 
 - This rule controls the delivery path; it does not grant permission to post or
   weaken any existing human approval requirement.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
+
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
+
+- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
+  screen still needs independent review, an accepted scope/agreement receipt, and the
+  authoritative Ops roster decision before onboarding or recurring work.
+- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
+  with the exact question, owner, due date, and blocked action. Missing evidence routes
+  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
+- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
+  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
+  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
+- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
+  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
+  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
+- The public guide is https://blitzmetrics.com/social-amplification/. The operational
+  control plane is the roster-driven Money Tree; derived output folders are not state.
+<!-- shared-rule:screen-gct-before-amplification:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

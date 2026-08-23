@@ -1,6 +1,6 @@
 ---
 name: content-factory
-description: Turn ONE recording into a full library — definitive article, clips, reels, tweets, ads — using Dennis Yu's 4 P's (Plumbing, Publish, Promote, Perform) and the 6-stage repurposing line, everything pointing at one canonical hub. Use when you have a recording to repurpose or a content system to design.
+description: Turn ONE recording into a full library — definitive article, clips, reels, posts, and ad-ready creative — through Produce, Process, Post, Promote, with every asset pointing at one canonical hub. Use when you have a recording to repurpose or a content system to design inside the Social Amplification Engine.
 rule-scopes: published-html, design-review
 ---
 
@@ -14,28 +14,45 @@ rule-scopes: published-html, design-review
 - Your lighthouse list — the marquee people and brands you're tied to.
 - Your canonical hub URLs, so nothing you publish competes with them.
 
-## The operating system — the 4 P's
-Run them in order. Each feeds the next; skip one and the next breaks.
-1. **Plumbing** — tracking, analytics, retargeting pixels, social integrations. Fix the leaks before you pour traffic — promoted content with no pixel is money you can't follow.
-2. **Publish** — everywhere, organized by **GCT**: **Goals** (what outcome this is for), **Content** (what earns that outcome), **Targeting** (who it's for) — in that order. Most people start with targeting. That's backwards.
-3. **Promote** — boost only the top organic performers, a dollar a day (`dollar-a-day-strategist`).
-4. **Perform** — read results through **MAA**: **Metrics** say what happened, **Analysis** says why, **Action** closes the gap. No MAA, no learning, no compounding.
+## The factory line — Produce, Process, Post, Promote
+
+Run the line in order. Each station feeds the next; skip one and the next breaks.
+
+1. **Produce** — capture real source material: a recording, customer story, job,
+   demonstration, review, or interview.
+2. **Process** — transcribe, verify, mine, edit, and atomize the source without inventing
+   claims, quotes, or proof.
+3. **Post** — assemble the one canonical hub and its channel-ready derivatives. Stage by
+   default; publish only under the caller's exact action authority.
+4. **Promote** — rank proven organic performers and prepare Dollar-a-Day recommendations.
+   Live spend, kill, scale, and audience changes require a scoped approval receipt.
+
+This factory sits inside the six-phase Social Amplification Engine. Plumbing comes
+before the line; accepted Goals and Targeting aim it; weekly MAA reads performance.
+Older material uses Plumbing, Publish, Promote, Perform as a wrapper for that broader
+system. It is not a second name for the factory assembly line.
 
 ## Where the other skills plug in
-- **Plumbing** = your entity home and Knowledge Panel setup (steps 4–5: `personal-brand-website-agent`, `knowledge-panel-entity-seo`).
-- **Publish** = the 6-stage line below, aimed by your buy box from step 1.
-- **Promote** = step 7 (`dollar-a-day-strategist`). **Perform** = the MAA read you run monthly.
+- **Plumbing** = `client-access-checklist` plus measurement contracts. Search Console,
+  CMS, GA4, and Tag Manager must be verified green before shipping or amplification.
+- **GCT** = the accepted business brief from `gct-screen`, with targeting last.
+- **Factory** = the 6-stage per-recording line below.
+- **Promote** = `dollar-a-day-strategist`, recommendations by default.
+- **Perform** = the weekly `weekly-brand-maa` read.
 
 ## The assembly line — 6 stages per recording
 1. **Capture** — record once. One Zoom interview or one 60-second conference clip is a month of raw material.
 2. **Transcribe & mine** — pull the strongest quotes, claims, numbers, and stories out of the transcript.
 3. **Definitive article** — write the ONE canonical long-form hub (`definitive-article-writer`). The hub is the product; everything else is distribution.
 4. **Atomize** — cut clips, reels/shorts, and tweets from the same recording, Descript-style. One strong quote = one asset; an hour of recording yields 10–20 clips.
-5. **Distribute** — publish across YouTube/Shorts, LinkedIn, Instagram, TikTok, X, Facebook, email. Every asset links BACK to the hub. A second page on the same topic is content vandalism — competing with yourself.
-6. **Boost** — put $1/day behind the proven winners (`dollar-a-day-strategist`).
+5. **Distribute** — prepare channel-specific packages for YouTube/Shorts, LinkedIn,
+   Instagram, TikTok, X, Facebook, and email. Publish/send only under exact action
+   authority. Every approved asset links back to the hub; never create a competing page.
+6. **Boost recommendation** — prepare the $1/day test for proven winners
+   (`dollar-a-day-strategist`). Do not spend without the exact approval scope.
 
 ## The org chart — worker, manager, architect
-- **Worker** — a VA or account manager cuts the clips, posts on schedule, reports against the checklist.
+- **Worker function** — cuts clips, prepares channel packages, and reports against the checklist.
 - **Manager** — runs the workflow, enforces the SOP, reviews QA before anything publishes.
 - **Architect** — designs the system: sets the Goals in GCT, picks topics off the topic wheel, approves the definitive article, owns the standards.
 
@@ -43,13 +60,16 @@ You are the architect. Build the factory; don't run the line. Stages 1 and 3 nee
 
 ## First run — this week
 1. Book one 30-minute Zoom where someone interviews YOU about your differentiation from step 1.
-2. Run stages 2–5 on it; assign each stage to a named person with a deadline.
-3. Boost the two best clips at $1/day. Read the MAA numbers in 7 days. Now you have a factory, not a post.
+2. Run stages 2–5 on it; assign each stage to an owner function with a deadline.
+3. Stage the two strongest clips for a $1/day test. After a human approves the exact
+   account, amount, and dates, read the MAA evidence at day 7. The agent recommends the
+   decision; it does not autonomously spend, kill, or scale.
 
 ## Output
 - One definitive article + a pack of clips, shorts, tweets, and ad-ready creative — all cross-linked to the hub.
 - A written SOP per stage, so a worker runs the next recording without you.
-- Cadence: capture monthly, atomize weekly, boost daily at $1, review MAA monthly — adjust the system, not just the posts.
+- Cadence: capture monthly, atomize weekly, stage proven-winner tests, and review MAA
+  weekly — adjust the system, not just the posts.
 
 ## For DealCon — agency owners & acquirers
 **If you run an agency:** a productized content factory — pre-defined offers, the Apple/Tesla factory model — lets you sell a system instead of hours, charge premium for repeatable results, and hand a buyer an agency that runs without you.
@@ -57,7 +77,10 @@ You are the architect. Build the factory; don't run the line. Stages 1 and 3 nee
 **Your edge:** name the one topic only you could talk about for 60 unscripted seconds. That's your first capture — schedule it this week.
 
 ## Run on a persistent agent (Fable 5)
-- **Loop to done:** one recording in, all six stages out — the run isn't done at the definitive article; loop until the clips are cut, distributed everywhere, every asset links back to the hub, and the winners are queued for `dollar-a-day-strategist`.
+- **Loop to done:** one recording in, all six stages staged — the run is not done at the
+  definitive article; loop until the clips are cut, channel packages are ready, every
+  asset points back to the hub, and proven candidates are queued for
+  `dollar-a-day-strategist`. External execution remains a separate approved state.
 - **Self-verify:** QA each stage against its SOP before the next stage starts — a deviation that ships compounds downstream.
 - **Compound with memory:** hold the hub URLs, lighthouse list, and per-stage SOPs in memory so every new recording drops into a running factory instead of a rebuilt one.
 - **Log the run:** per-stage notes become the SOP updates that make the next run cleaner — you're the architect, and the log is how the factory improves.
@@ -665,3 +688,22 @@ review. Never add the marker merely to make the sweep pass.
 - This rule controls the delivery path; it does not grant permission to post or
   weaken any existing human approval requirement.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
+
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
+
+- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
+  screen still needs independent review, an accepted scope/agreement receipt, and the
+  authoritative Ops roster decision before onboarding or recurring work.
+- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
+  with the exact question, owner, due date, and blocked action. Missing evidence routes
+  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
+- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
+  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
+  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
+- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
+  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
+  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
+- The public guide is https://blitzmetrics.com/social-amplification/. The operational
+  control plane is the roster-driven Money Tree; derived output folders are not state.
+<!-- shared-rule:screen-gct-before-amplification:end -->
