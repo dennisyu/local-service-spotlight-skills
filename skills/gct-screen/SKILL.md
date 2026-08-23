@@ -1,109 +1,142 @@
 ---
-name: content-factory
-description: Turn ONE recording into a full library — definitive article, clips, reels, tweets, ads — using the Content Factory line (Produce, Process, Post, Promote) inside the Social Amplification Engine, everything pointing at one canonical hub. Use when you have a recording to repurpose or a content system to design.
+name: gct-screen
+description: "Screen whether a business has clear Goals, Content, and Targeting plus real proof before agents run the Social Amplification Engine. Use when qualifying a prospect, starting SAE, onboarding a client, or someone has a new idea, an undifferentiated offer, too many products, or is trying to serve everyone."
+author: Dennis Yu — Local Service Spotlight
+references:
+  - https://blitzmetrics.com/social-amplification/
+  - https://blitzmetrics.com/gct-business-strategy/
+  - https://blitzmetrics.com/sae/
+  - skills/business-brand-strategist
+  - skills/social-amplification-engine
+  - skills/one-session-client-onboarding
 rule-scopes: published-html, design-review
 ---
 
-# Content Factory
+# GCT Screen
 
-**Use this when** you've captured one thing — a Zoom interview, a 60-second hallway clip, a conference talk — and want a content library that compounds instead of a post that disappears. Step 8 of the Local Service Spotlight method, and the engine the other nine skills feed.
+**Use this when** someone wants agents to grow a business with the Social Amplification Engine, or when you are about to run plumbing, content, ads, or a weekly MAA for a new name. This skill is the gate. It does not run the engine.
+
+**The rule:** amplify what is already working. A business with credibility, happy customers, a unique technique, and a clear ideal client is a candidate. A new idea, a commodity in a crowded market, a shop that serves everyone, or a catalog of too many products is not. Diagnose those. Do not buy them ads.
+
+Qualify is **one GCT triangle plus proof**, scored as a single card. It is not three sequential SAE stage pass/fails (Goals, then Content, then Targeting as course taxonomy). Course stages 2–4 run after QUALIFY.
+
+Public start page (inventory + this rubric): https://blitzmetrics.com/social-amplification/
+
+GCT explainer (Nine Triangles HOW tier, not this screen): https://blitzmetrics.com/gct-business-strategy/
+
+## Why this exists
+
+The six-phase SAE, the Content Factory line, Dollar a Day, and weekly MAA only compound when Goals, Content, and Targeting are already true. VAs who ran MAA mechanically without GCT produced motion without follow-up. Agents will repeat that failure unless this screen fails closed.
+
+Dennis's XYZ sentence is the alignment check: **I help X achieve Y through Z.** X is targeting. Y is the goal (end result). Z is the unique technique (content/proof). If that sentence could sit on a competitor's site, they are not ready.
 
 ## Inputs
-- One raw recording (video or audio) + transcript. Phone quality is fine — Marko Sipila built HVAC Quote on phone-shot conference interviews.
-- The subject's positioning and proof (from `personal-brand-strategist` and `positive-mentions-harvester`).
-- Your lighthouse list — the marquee people and brands you're tied to.
-- Your canonical hub URLs, so nothing you publish competes with them.
 
-## The operating system — SAE components and the factory line
+- Public site, Google Business Profile, recent reviews, and 5–10 posts or ads. Fetch live. Do not invent.
+- What an AI already says about them (candid, not flattering).
+- Any existing audit, Quick Audit, or brand brief.
+- Named proof only: review counts, named customers, licenses, results, years, lighthouse ties.
 
-Two vocabularies, one machine. Do not mix them into a third.
+If a file or access is missing, say which one and score from what is live. Missing access is not a passing score.
 
-**SAE components (the engine around this factory):** Plumbing → then the factory → Promote with Dollar a Day → Perform with MAA. The older name for that wrapper was the 4 P's (Plumbing, Publish, Promote, Perform). Treat Publish as "the factory aimed by GCT."
+## Hard gates (automatic DECLINE)
 
-**Factory line (Task Library and https://blitzmetrics.com/content-factory/):** **Produce → Process → Post → Promote.** Promote includes Dollar a Day. This is the assembly line for one recording and for ongoing proof.
+Any one of these ends the screen. Do not average them away.
 
-**GCT aims the line:** Goals, then Content, then Targeting — in that order. Most people start with targeting. That's backwards. A business without a passing `gct-screen` does not enter this factory as an SAE client.
+1. **NEW_IDEA** — no customers yet, or the offer is still a concept.
+2. **NO_PROOF** — no reviews, no named results, no third-party corroboration that they do the job well.
+3. **UNDIFFERENTIATED** — competitive market, no unique technique; the one-sentence claim swaps onto a competitor and still reads true.
+4. **TOO_BROAD_ICP** — trying to serve too many people, geos, or job types with one message.
+5. **TOO_MANY_OFFERS** — no clear process; too many products or service lines for one GCT.
 
-Run the wrapper in order. Each feeds the next; skip one and the next breaks.
-1. **Plumbing** — tracking, analytics, retargeting pixels, social integrations (`client-access-checklist`). Fix the leaks before you pour traffic — promoted content with no pixel is money you can't follow.
-2. **Produce / Process / Post** — capture, mine, definitive article, atomize, distribute, organized by GCT.
-3. **Promote** — boost only the top organic performers, a dollar a day (`dollar-a-day-strategist`). Requires `gct-screen` QUALIFY.
-4. **Perform** — read results through **MAA**: **Metrics** say what happened, **Analysis** says why, **Action** closes the gap. No MAA, no learning, no compounding.
+A DECLINE is not an insult. It is the honest next step: get proof, pick a niche, or name the technique before agents spend a cycle on plumbing and ads.
 
-The six per-recording stages below are the factory line in more detail: Capture = Produce; Transcribe + atomize = Process; definitive article + distribute = Post; Boost = Promote.
+## Rubric (100 points)
 
-## Where the other skills plug in
-- **Plumbing** = your entity home and Knowledge Panel setup (steps 4–5: `personal-brand-website-agent`, `knowledge-panel-entity-seo`).
-- **Publish** = the 6-stage line below, aimed by your buy box from step 1.
-- **Promote** = step 7 (`dollar-a-day-strategist`). **Perform** = the MAA read you run monthly.
+Score only from evidence. Unknown = 0 for that row, and say UNKNOWN rather than guessing.
 
-## The assembly line — 6 stages per recording
-1. **Capture** — record once. One Zoom interview or one 60-second conference clip is a month of raw material.
-2. **Transcribe & mine** — pull the strongest quotes, claims, numbers, and stories out of the transcript.
-3. **Definitive article** — write the ONE canonical long-form hub (`definitive-article-writer`). The hub is the product; everything else is distribution.
-4. **Atomize** — cut clips, reels/shorts, and tweets from the same recording, Descript-style. One strong quote = one asset; an hour of recording yields 10–20 clips.
-5. **Distribute** — publish across YouTube/Shorts, LinkedIn, Instagram, TikTok, X, Facebook, email. Every asset links BACK to the hub. A second page on the same topic is content vandalism — competing with yourself.
-6. **Boost** — put $1/day behind the proven winners (`dollar-a-day-strategist`).
+| Component | Points | What a high score looks like |
+|---|---:|---|
+| **Proof** | 25 | Happy customers you can point at: reviews, named jobs, licenses, before/after, press. Proof gate: below 15 cannot QUALIFY even if the rest is 100. |
+| **Goals** | 20 | One primary outcome, a 90-day number, USP, unique technique, clear end result. Not "more awareness." |
+| **Content** | 20 | Proof assets already exist to amplify (reviews, videos, case studies, WHY). Not a plan to start posting. |
+| **Targeting** | 20 | One ICP: who they serve, where, job size, the work they want more of. Not "anyone who needs X." |
+| **Offer focus** | 15 | One primary process / offer the factory can repeat. Not a menu of twelve unrelated products. |
 
-## The org chart — worker, manager, architect
-- **Worker** — a VA or account manager cuts the clips, posts on schedule, reports against the checklist.
-- **Manager** — runs the workflow, enforces the SOP, reviews QA before anything publishes.
-- **Architect** — designs the system: sets the Goals in GCT, picks topics off the topic wheel, approves the definitive article, owns the standards.
+**QUALIFY** — total ≥ 70 **and** Proof ≥ 15 **and** no hard-gate fail. Agents may run `social-amplification-engine`.
 
-You are the architect. Build the factory; don't run the line. Stages 1 and 3 need you — your face, your facts. Stages 2, 4, 5, and 6 belong to workers. If you're personally editing clips, the system failed — write the SOP that makes a worker's output indistinguishable from yours.
+**DEVELOP** — total 40–69, or Proof 8–14, or one weak corner that can be fixed in days (pick the ICP, write the XYZ sentence, harvest existing reviews). Run `business-brand-strategist` and `positive-mentions-harvester`. Do **not** start Dollar a Day or conversion campaigns.
 
-## First run — this week
-1. Book one 30-minute Zoom where someone interviews YOU about your differentiation from step 1.
-2. Run stages 2–5 on it; assign each stage to a named person with a deadline.
-3. Boost the two best clips at $1/day. Read the MAA numbers in 7 days. Now you have a factory, not a post.
+**DECLINE** — a hard gate, or Proof < 8. Tell them what proof would change the verdict. Do not onboard them as an SAE client.
+
+## Steps
+
+1. **Fetch, don't interview first.** Site, GBP, reviews, ads, AI profile. Prefill GCT from evidence. The human confirms; they do not write a biography. Same rule as `one-session-client-onboarding`.
+2. **Write the XYZ sentence** from evidence: I help **X** achieve **Y** through **Z**.
+3. **Score the five rows** with a one-line evidence note each (URL, count, quote).
+4. **Apply hard gates.** If one trips, stop scoring for QUALIFY.
+5. **Name the weakest corner** of GCT. That is the only development assignment if the verdict is DEVELOP.
+6. **Write the GCT brief** the weekly MAA will judge against. Do not retrofit later.
+7. **Save and say the verdict in the first line** of the report. QUALIFY / DEVELOP / DECLINE plus the fail code if any.
+
+## Alignment check (must pass for QUALIFY)
+
+Read this aloud and keep it only if it is true:
+
+> We will achieve **[numeric Goal]** by showing **[named proof Content]** to **[specific ICP]**.
+
+If the sentence is absurd, the weak corner is the job. Not ads.
 
 ## Output
-- One definitive article + a pack of clips, shorts, tweets, and ad-ready creative — all cross-linked to the hub.
-- A written SOP per stage, so a worker runs the next recording without you.
-- Cadence: capture monthly, atomize weekly, boost daily at $1, review MAA monthly — adjust the system, not just the posts.
 
-## For DealCon — agency owners & acquirers
-**If you run an agency:** a productized content factory — pre-defined offers, the Apple/Tesla factory model — lets you sell a system instead of hours, charge premium for repeatable results, and hand a buyer an agency that runs without you.
-**If you buy & sell companies:** install the factory in every acquisition post-close, so marketing stops being the founder's personal hustle and becomes transferable SOPs — that shows up directly in EBITDA and the exit multiple.
-**Your edge:** name the one topic only you could talk about for 60 unscripted seconds. That's your first capture — schedule it this week.
+`Outputs/gct-screen/<entity-slug>/<YYYY-MM-DD>/report.md`
 
-## Run on a persistent agent (Fable 5)
-- **Loop to done:** one recording in, all six stages out — the run isn't done at the definitive article; loop until the clips are cut, distributed everywhere, every asset links back to the hub, and the winners are queued for `dollar-a-day-strategist`.
-- **Self-verify:** QA each stage against its SOP before the next stage starts — a deviation that ships compounds downstream.
-- **Compound with memory:** hold the hub URLs, lighthouse list, and per-stage SOPs in memory so every new recording drops into a running factory instead of a rebuilt one.
-- **Log the run:** per-stage notes become the SOP updates that make the next run cleaner — you're the architect, and the log is how the factory improves.
+```
+# GCT screen — <Name>
+Verdict: QUALIFY | DEVELOP | DECLINE
+Fail code: none | NEW_IDEA | NO_PROOF | UNDIFFERENTIATED | TOO_BROAD_ICP | TOO_MANY_OFFERS | UNCLEAR_GOALS
+Total: nn/100 (Proof nn · Goals nn · Content nn · Targeting nn · Offer nn)
 
-See `boil-the-ocean.md` for the full operating principles.
+XYZ: I help X achieve Y through Z.
 
-## Notes — Dennis's method
-- The proof: Marko Sipila shot phone interviews at HVAC conferences, repurposed them onto the HVACQuote YouTube, boosted the winners at a dollar a day, and scaled HVAC Quote past 300 customers. Interview once → repurpose → boost.
-- Same three moves behind Harry Gold (harryjgold.com built from a single Zoom interview) and the Superior Fence & Rail footage with Zach Peyton (largest US fence franchise — 110+ locations, $310M+).
-- Feature your lighthouse. A clip with a marquee name converts harder than a clip alone — their authority reflects onto you.
-- Standardize and productize. Custom work doesn't scale and doesn't sell; a factory does. Boil the ocean on the system once, then let workers run it forever.
-- The factory is the Publish-and-Promote muscle behind your entity home (step 4) and Knowledge Panel plumbing (step 5) — corroboration at scale.
+GCT brief
+- Goals: …
+- Content: … (assets with URLs)
+- Targeting: …
 
-## Definitive article & pairings
-- Reference: https://blitzmetrics.com/content-factory/ · https://dennisyu.com/topic-wheel/ · SAE hub https://blitzmetrics.com/social-amplification/
-- Pairs with: gct-screen → **content-factory** → dollar-a-day-strategist → weekly-brand-maa → social-amplification-engine
+Evidence (one line per row)
+Weakest corner → one owner, one action, one date
+Next skill: social-amplification-engine | business-brand-strategist | stop
+```
 
-## Learned in the field
+Also write or update the entity's canonical brief so `weekly-brand-maa` can read it next Friday. If the verdict is not QUALIFY, do not create an SAE weekly job.
 
-*Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
+## Definition of done
 
-<!-- learning:2026-07-20-daily-video-watchdog-loop -->
-**July 20, 2026** (from: Absorption of Daniel Goodrich's Repurposing Suite v0.2 (Basecamp message 9944086092) into the master pack)
+- Verdict is the first line. A stranger can see QUALIFY vs DEVELOP vs DECLINE without reading the essay.
+- Every score row has evidence or UNKNOWN.
+- XYZ sentence exists. Swap test recorded (pass/fail).
+- Next skill is named. Ads and plumbing are named only on QUALIFY.
+- Nothing invented. Draft-only if a human message is needed (`agents-draft-humans-send`).
 
-The Capture stage now has a daily automated feeder: `video-repurposing-agent` (added to this pack July 20, 2026) watches the client's YouTube channel every day with an incremental watermark (first run inventories the whole uploads playlist; later runs stop at the first already-seen video), triages each new upload SKIP / LIGHT / MODERATE / STRONG against the GCT, and routes the winners through definitive-article-writer → jennifer → publish. Two rules it enforces that this factory inherits: search the site BEFORE writing and enhance the existing article (embed the new video there) when one already owns the topic — never ship a competing page; and when a client runs both a personal-brand site and a company site, one video may become two different articles (first-person cut and third-person cut, cross-linked), never the same article twice. Proven economics from the Escape Fitness validation (May 2026, Daniel Goodrich): a 247-episode channel inventoried and the first A- article cost 251 of 10,000 free daily YouTube API units.
+## Do not
 
-<!-- shared-rule:silent-media-playback:start -->
-## Silent media playback
+- Start Stage 1 plumbing as a consolation prize for a DEVELOP. Plumbing without GCT is pipes into nowhere.
+- Soften DECLINE into "let's test ads and see." Dollar a Day amplifies winners; it does not create a niche.
+- Treat a filled-in form as a passing screen. Prefill is research. QUALIFY is the score.
+- Fork a second GCT article. Link to `/gct-business-strategy/` for the triangle; this file is the gate.
 
-- Never let audio from browser, video, audio, presentation, or application testing play through the user's speakers unless the user explicitly asks to hear it.
-- Before starting any media playback, mute the player and set its volume to zero. Keep it muted for the full test, including replays, reloads, new tabs, and alternate players.
-- Apply this rule to the primary agent and every delegated agent. Include the mute requirement whenever work that may involve media playback is delegated.
-- If the mute state cannot be controlled and verified before playback, do not start playback. Use metadata, captions, transcripts, frames, screenshots, network state, or player state instead.
-- Only unmute when the user explicitly requests audible playback in the current task.
-<!-- shared-rule:silent-media-playback:end -->
+## Related
+
+- `social-amplification-engine` — run only after QUALIFY
+- `business-brand-strategist` — DEVELOP: name the company
+- `positive-mentions-harvester` — DEVELOP: gather proof that already exists
+- `one-session-client-onboarding` — QUALIFY then confirm + access
+- `client-access-checklist` — SAE Stage 1, after this gate
+- `weekly-brand-maa` — SAE Stage 6 heartbeat
+- Task Library cousin: `gct-goals-content-targeting` (per-asset GCT). This screen is per-business qualification, not per-campaign copy.
+
+Public: https://blitzmetrics.com/social-amplification/ · Course (learn it yourself): https://blitzmetrics.com/sae/
 
 <!-- shared-rule:agents-draft-humans-send:start -->
 ## Agents draft; a human sends and publishes
@@ -157,6 +190,35 @@ The Capture stage now has a daily automated feeder: `video-repurposing-agent` (a
 - Work assigned to a named individual and nowhere else is work that silently stops when
   that individual does.
 <!-- shared-rule:assign-work-to-a-function:end -->
+
+<!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
+## Basecamp updates stay in Basecamp
+
+- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
+  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
+  visible From addresses are notification infrastructure, not destinations.
+- Post the update in the exact existing Basecamp thread through an authorized
+  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
+  Basecamp itself, so do not substitute a per-message
+  `*@replies.app.basecamp.com` email token even when one is present.
+- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
+  contains a generic Basecamp notifications address, stop without creating or
+  sending the message.
+- Changing the Gmail From identity does not repair this failure. In the
+  incident that produced this rule, the connector resolved the visible From
+  address as the recipient and discarded Basecamp's unique Reply-To route; the
+  result was an `Email Received in Error` bounce and no Basecamp comment.
+- A Basecamp update is complete only after readback proves the live thread URL
+  or recording ID, the expected author, and a unique phrase from the comment.
+  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
+  blocker and put the intended update in the run result; do not fall back to
+  email.
+- Embed this rail directly in every scheduled or cloud task that may touch
+  Basecamp. Such runs may not load repository instructions before using an
+  already-authorized Gmail tool.
+- This rule controls the delivery path; it does not grant permission to post or
+  weaken any existing human approval requirement.
+<!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:be-proactive-see-it-through:start -->
 ## Be proactive and see it through
@@ -246,6 +308,42 @@ The Capture stage now has a daily automated feeder: `video-repurposing-agent` (a
 - Images also carry the provenance required by `process-real-content-never-generate` —
   a photograph of the work actually done proves more than any sentence about it.
 <!-- shared-rule:every-article-has-pictures:end -->
+
+<!-- shared-rule:every-public-page-has-real-imagery:start -->
+## Every public page shows real people or real work
+
+- **Every visitor-facing content page must contain at least one meaningful image
+  of the actual business: its people, its work, its customers with permission,
+  its product, or its place.** This includes conversion and utility pages such as
+  Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
+  ship a wall of text.
+- A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
+  photograph does not satisfy the rule. Neither does an unrelated real photo
+  added merely to pass a count. The image must help a visitor understand or trust
+  the page.
+- Use the business's approved source library. Give the image honest alt text and,
+  when useful, a caption that explains what it proves. Describe only what the
+  source establishes: never relabel one project photo as work completed in every
+  city, and never infer a person, location, service, or result from a filename.
+- If no suitable approved image exists, request one and block that page from
+  publication. Do not manufacture evidence with image generation or stock.
+- Build QA must inventory every rendered content route and fail when any route
+  lacks a verified real image. Keep a provenance allowlist or equivalent asset
+  record so logos and decorative images cannot make the check pass. Mark at least
+  one qualifying `<img>` per page with `data-lss-real-image="verified"` only
+  after that provenance check. Also inspect the rendered desktop and mobile page;
+  a hidden, broken, or contextless image does not count.
+- Machine-only documents and routes that never render as visitor content—such as
+  `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
+  browser-rendered redirect placeholder is not exempt; replace it with a real
+  redirect or make the page comply.
+
+The fleet check proves only that a page declares the verified marker and supplies
+a nonblank, non-data source plus nonblank alt text. It cannot prove that the
+source loads, is visible, is meaningfully sized, or is truthful. Enforce those
+claims with each site's provenance-aware build validator plus a human visual
+review. Never add the marker merely to make the sweep pass.
+<!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:immersive-hero-standard:start -->
 ## Personal-brand heroes are immersive, not boxed
@@ -569,20 +667,24 @@ is that your site did that.
   first — see `analytics-on-every-page`.
 <!-- shared-rule:report-business-impact-not-volume:end -->
 
-<!-- shared-rule:verify-by-opening-the-live-artifact:start -->
-## Verify by opening the live artifact
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
 
-- **"I did it" is not evidence. The artifact is.** Before reporting any work complete,
-  fetch the live URL, open the file, or query the API and confirm the change is actually
-  there. An agent that has been caught reporting published articles onto a site with no
-  articles has burned more trust than the task was worth.
-- **Check the thing a user would see, not the thing you wrote.** A database row is not a
-  published page — caches, builders and permissions all sit in between. Fetch the public
-  URL as an anonymous visitor.
-- **A page that could not be fetched has not been verified.** Report it as unverified,
-  never as done.
-- Quote the evidence in the report: the URL, the status code, and the string you found.
-<!-- shared-rule:verify-by-opening-the-live-artifact:end -->
+- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
+- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
+- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
+- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
+<!-- shared-rule:screen-gct-before-amplification:end -->
+
+<!-- shared-rule:silent-media-playback:start -->
+## Silent media playback
+
+- Never let audio from browser, video, audio, presentation, or application testing play through the user's speakers unless the user explicitly asks to hear it.
+- Before starting any media playback, mute the player and set its volume to zero. Keep it muted for the full test, including replays, reloads, new tabs, and alternate players.
+- Apply this rule to the primary agent and every delegated agent. Include the mute requirement whenever work that may involve media playback is delegated.
+- If the mute state cannot be controlled and verified before playback, do not start playback. Use metadata, captions, transcripts, frames, screenshots, network state, or player state instead.
+- Only unmute when the user explicitly requests audible playback in the current task.
+<!-- shared-rule:silent-media-playback:end -->
 
 <!-- shared-rule:spoken-urls-must-resolve:start -->
 ## Every URL we say out loud resolves
@@ -612,76 +714,17 @@ is that your site did that.
   what stops this being rediscovered every few months.
 <!-- shared-rule:spoken-urls-must-resolve:end -->
 
-<!-- shared-rule:every-public-page-has-real-imagery:start -->
-## Every public page shows real people or real work
+<!-- shared-rule:verify-by-opening-the-live-artifact:start -->
+## Verify by opening the live artifact
 
-- **Every visitor-facing content page must contain at least one meaningful image
-  of the actual business: its people, its work, its customers with permission,
-  its product, or its place.** This includes conversion and utility pages such as
-  Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
-  ship a wall of text.
-- A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
-  photograph does not satisfy the rule. Neither does an unrelated real photo
-  added merely to pass a count. The image must help a visitor understand or trust
-  the page.
-- Use the business's approved source library. Give the image honest alt text and,
-  when useful, a caption that explains what it proves. Describe only what the
-  source establishes: never relabel one project photo as work completed in every
-  city, and never infer a person, location, service, or result from a filename.
-- If no suitable approved image exists, request one and block that page from
-  publication. Do not manufacture evidence with image generation or stock.
-- Build QA must inventory every rendered content route and fail when any route
-  lacks a verified real image. Keep a provenance allowlist or equivalent asset
-  record so logos and decorative images cannot make the check pass. Mark at least
-  one qualifying `<img>` per page with `data-lss-real-image="verified"` only
-  after that provenance check. Also inspect the rendered desktop and mobile page;
-  a hidden, broken, or contextless image does not count.
-- Machine-only documents and routes that never render as visitor content—such as
-  `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
-  browser-rendered redirect placeholder is not exempt; replace it with a real
-  redirect or make the page comply.
-
-The fleet check proves only that a page declares the verified marker and supplies
-a nonblank, non-data source plus nonblank alt text. It cannot prove that the
-source loads, is visible, is meaningfully sized, or is truthful. Enforce those
-claims with each site's provenance-aware build validator plus a human visual
-review. Never add the marker merely to make the sweep pass.
-<!-- shared-rule:every-public-page-has-real-imagery:end -->
-
-<!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
-## Basecamp updates stay in Basecamp
-
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
-<!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
-
-<!-- shared-rule:screen-gct-before-amplification:start -->
-## Screen GCT before amplification
-
-- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
-- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
-- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
-- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
-<!-- shared-rule:screen-gct-before-amplification:end -->
+- **"I did it" is not evidence. The artifact is.** Before reporting any work complete,
+  fetch the live URL, open the file, or query the API and confirm the change is actually
+  there. An agent that has been caught reporting published articles onto a site with no
+  articles has burned more trust than the task was worth.
+- **Check the thing a user would see, not the thing you wrote.** A database row is not a
+  published page — caches, builders and permissions all sit in between. Fetch the public
+  URL as an anonymous visitor.
+- **A page that could not be fetched has not been verified.** Report it as unverified,
+  never as done.
+- Quote the evidence in the report: the URL, the status code, and the string you found.
+<!-- shared-rule:verify-by-opening-the-live-artifact:end -->

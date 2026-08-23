@@ -8,6 +8,8 @@ references:
   - skills/client-access-checklist
   - skills/client-relationship-cadence
   - skills/weekly-brand-maa
+  - skills/gct-screen
+  - skills/social-amplification-engine
 ---
 
 # One-session client onboarding
@@ -27,8 +29,8 @@ Project boards are a temporary window so a human can see the work. They are not 
 ## Before the session (agent, no client time)
 
 1. Confirm the engagement is live. If it is dead, stop.
-2. Run `client-access-checklist` against public HTML and any credentials already on file. Ask only for rows that are actually missing.
-3. Prefill GCT (Goals, Content, Targeting) from the quick audit, the site, GBP, and ads. Revenue, services, geo, CRM, and review process are agent-researched first. The client confirms, they do not type a biography.
+2. Run `gct-screen` against public evidence. Prefill GCT from the site, GBP, and ads. If the verdict is DEVELOP or DECLINE, the session is a diagnosis handoff — not SAE onboarding. Do not start plumbing-for-ads as a consolation.
+3. Run `client-access-checklist` against public HTML and any credentials already on file. Ask only for rows that are actually missing.
 4. Generate **one** client requirement list: only the missing access rows plus any asset the audit cannot see. One list, one owner, one date.
 5. Create the working project (whatever board is still in use) with the client added **before** any client-visible post. One list for their asks, one internal list for ours. Assign each to-do to the real owner, including the client.
 6. Write the certainty date: first Friday MAA after the session. Not "2-4 weeks."
@@ -69,14 +71,18 @@ Do not schedule a second call to "finish access" or "finish the form." Anything 
 - Route work to the nearest human
 - Enter a password into a login form
 - Start work on a dead engagement
+- Onboard a `gct-screen` DEVELOP or DECLINE as an SAE client
 
 ## Related
 
+- `gct-screen` — QUALIFY before this session is SAE onboarding
+- `social-amplification-engine` — the six-phase package after QUALIFY
 - `client-access-checklist` — the nine rows; 1-4 are the gate
 - `client-relationship-cadence` — to-dos with owners, chase the artifact
 - `weekly-brand-maa` — the Friday report
 - The System — https://blitzmetrics.com/the-system/
 - Public leaf: https://localservicespotlight.com/client-onboarding/
+- SAE hub: https://blitzmetrics.com/social-amplification/
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
@@ -346,6 +352,15 @@ Do not schedule a second call to "finish access" or "finish the form." Anything 
 - This rule controls the delivery path; it does not grant permission to post or
   weaken any existing human approval requirement.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
+
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
+
+- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
+- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
+- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
+- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
+<!-- shared-rule:screen-gct-before-amplification:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

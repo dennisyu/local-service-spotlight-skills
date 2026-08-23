@@ -11,9 +11,11 @@ description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1
 - Your organic posts/clips with REAL engagement numbers — comments, shares, watch time, not raw impressions.
 - Your lighthouse list (marquee people/brands you're tied to) and your podcast clips.
 - Plumbing in place: pixels, analytics, saved audiences. Boosting without a pixel is reach you can't retarget.
+- A passing `gct-screen` (QUALIFY). Dollar a Day amplifies a winner for a business that already has clear Goals, Content, and Targeting. It does not create a niche, rescue a new idea, or differentiate a commodity.
 
 ## The rules — non-negotiable
 - Boost ONLY proven organic. Boosting amplifies a winner; it does not rescue a weak post. A hook that failed at $0 fails at $100.
+- Do not boost if `gct-screen` is DEVELOP or DECLINE. Screen GCT before amplification.
 - $1/day × 7 days per post. Small money buys real signal.
 - Kill the bottom 90% at day 7. No mercy, no sunk-cost stories.
 - Winners get $30 over 30 days. Unicorns get new audiences and bigger budgets.
@@ -338,6 +340,15 @@ See `boil-the-ocean.md` for the full operating principles.
 - This rule controls the delivery path; it does not grant permission to post or
   weaken any existing human approval requirement.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
+
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
+
+- **Do not run Dollar a Day, conversion campaigns, or SAE Stage 5 amplification** for a business that has not passed `gct-screen` (QUALIFY). Amplify what is already working. A new idea has nothing to amplify.
+- **Fail closed** when the offer is a new idea, has no proof (reviews, named results, happy customers), is undifferentiated in a competitive market, tries to serve everyone, or has too many products and no clear process.
+- **DEVELOP is not QUALIFY.** Positioning (`business-brand-strategist`) and proof harvest are the next skills. Plumbing and ads are not a consolation prize.
+- This rule is the gate in front of `social-amplification-engine` and `dollar-a-day-strategist`. The public inventory is https://blitzmetrics.com/social-amplification/.
+<!-- shared-rule:screen-gct-before-amplification:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

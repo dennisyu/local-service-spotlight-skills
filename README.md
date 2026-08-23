@@ -1,6 +1,6 @@
 # Local Service Spotlight Skills for Claude
 
-The canonical marketplace for the 28 Local Service Spotlight skills used across
+The canonical marketplace for the 30 Local Service Spotlight skills used across
 authority, content, client operations, and quality assurance.
 
 ## Install
@@ -51,7 +51,7 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 28 skills |
+| `lss-everything` | All 30 skills |
 | `authority-and-reputation` | Knowledge Panel, AI search, reviews, and proof |
 | `content-engine` | Articles, video, repurposing, and distribution |
 | `client-operations` | Onboarding, cadence, access, reporting, and audits |

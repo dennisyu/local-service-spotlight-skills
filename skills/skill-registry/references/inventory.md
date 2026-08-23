@@ -1,6 +1,6 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last canonical repository audit: 16 August 2026.
+Last canonical repository audit: 22 August 2026.
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 28 after merge of `one-session-client-onboarding` |
+| Skills in `lss-everything` | 30 after merge of `gct-screen` and `social-amplification-engine` |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -21,21 +21,22 @@ This repository is now the identifiable source of truth. The install guide at
 `https://localservicespotlight.com/install/` is the member-facing front door, not
 a competing copy of the skill files.
 
-`one-session-client-onboarding` is Available after merge only, not Installed.
-It is the agent-run one-session onboard: prefill GCT, confirm plus access, first
-Friday MAA. Humans are not the routing layer.
+`gct-screen` and `social-amplification-engine` are Available after merge only,
+not Installed. They are the qualification gate and the SAE orchestrator. Do not
+run Dollar a Day until GCT QUALIFY. `one-session-client-onboarding` remains
+Available after merge; it now calls `gct-screen` before access.
 
 ## Available bundles
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 28 |
+| `lss-everything` | 30 |
 | `authority-and-reputation` | 7 |
-| `content-engine` | 6 |
-| `client-operations` | 9 |
+| `content-engine` | 7 |
+| `client-operations` | 11 |
 | `quality-and-standards` | 6 |
 
-The topical totals overlap. They are selections over the same 28 directories.
+The topical totals overlap. They are selections over the same 30 directories.
 
 ## Per-account installation register
 
