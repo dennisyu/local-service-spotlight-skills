@@ -1,257 +1,93 @@
 ---
 name: social-amplification-engine
-description: Orchestrate Dennis Yu's six-phase Social Amplification Engine for an evidence-qualified, authorized client: Plumbing, Goals, Content, Targeting, Amplification, and weekly MAA optimization. Use after gct-screen and the engagement/roster gates, or to reconcile existing SAE components without creating a parallel system.
-author: Dennis Yu — Local Service Spotlight
-references:
-  - https://blitzmetrics.com/social-amplification/
-  - https://blitzmetrics.com/digital-plumbing/
-  - https://blitzmetrics.com/gct-business-strategy/
-  - https://blitzmetrics.com/content-factory/
-  - https://blitzmetrics.com/dollar-a-day/
-  - https://blitzmetrics.com/maa/
-  - https://github.com/Goodrich-Dev/google-ads-maa-skills
-  - skills/gct-screen
-  - skills/client-access-checklist
-  - skills/content-factory
-  - skills/dollar-a-day-strategist
-  - skills/weekly-brand-maa
-rule-scopes: published-html, design-review
+description: >-
+  Use when packaging or running Dennis Yu's Social Amplification Engine as an
+  agentic service for a client that already passed the GCT qualify screen.
+  Orchestrates existing LSS skills across the six SAE stages; does not invent
+  a parallel method.
 ---
+# Social Amplification Engine (orchestrator)
 
-# Social Amplification Engine
+**Use this when** a client (or Special Project) has clear Goals, Content, and Targeting plus proof, and you need agents to run the full loop: plumbing → Content Factory → Dollar-a-Day → weekly MAA.
 
-This is a thin orchestrator over existing skills and the roster-driven Money Tree.
-It sequences work; it is not a second CRM, content factory, scorecard, scheduler,
-client roster, or system of record.
+This skill is a **router and runbook**. It does not replace `client-access-checklist`, `content-factory`, `dollar-a-day-strategist`, or `weekly-brand-maa`. Read and run those skills for their phases.
 
-The engine amplifies reputation, proof, and trust that already exist. The public
-operating guide is https://blitzmetrics.com/social-amplification/.
+Canonical course leaf (SEO only, do not promote BlitzMetrics): https://blitzmetrics.com/sae/
 
-## Vocabulary lock
+## PARAMETERS (caller supplies)
 
-| Concept | Canonical meaning |
-|---|---|
-| SAE | Plumbing → Goals → Content → Targeting → Amplification → Optimization |
-| GCT | Goals, Content, Targeting: one fit/strategy triangle and SAE phases 2–4 |
-| Content Factory line | Produce → Process → Post → Promote |
-| Dollar a Day | The paid testing math inside Promote / SAE phase 5 |
-| MAA | Metrics → Analysis → Action; weekly operational heartbeat |
+```
+entity_name:
+roster_status: # Active Client | Special Project — never Not Active
+gct_screen_result: # PASS required; path to qualify card
+canonical_brief: # path or URL to verified GCT + proof
+owner:
+steward:
+domains: []
+handles: {}
+access_register:
+maa_delivery: # Basecamp / email / Drive path
+dad_budget_cap: # default $1/day tests; never invent spend
+report_dir:
+escalate_rule:
+```
 
-Older material calls Plumbing, Publish, Promote, Perform “the 4 P’s.” Treat that as
-a wrapper view of the whole engine, not a competing Content Factory line. Per-recording
-stages map to the factory as Capture = Produce; Transcribe/mine + atomize = Process;
-definitive article + distribution = Post; proven-winner boost = Promote.
+## Preconditions
 
-## Entry gates
+1. Roster status is Active Client or Special Project (`client-roster-never-delete`).
+2. `gct-qualify-screen` returned **PASS** with evidence.
+3. Steward lock respected (one writer). If another steward holds the claim, stop.
+4. Read `boil-the-ocean` operating rules before looping.
 
-Do not start phase 1 from a form response or a fit verdict alone.
+## Six stages → skills
 
-1. A current `gct-screen` result is `QUALIFIED_PENDING_REVIEW` and its independent
-   review is `AGREED`.
-2. An accepted scope/agreement receipt exists.
-3. Ops has placed the entity in the authoritative `clients/ROSTER.md` as exactly
-   `Active Client`, or recorded an explicit Special Project scope receipt.
-4. `Not Active`, `HOLD`, status-unconfirmed, absent roster evidence, or stale/contradicted
-   identity stops the run.
-5. The Money Tree client config/checkpoint exists and declares the action authority.
-
-A strong unsigned prospect remains a prospect. This skill may prepare a read-only
-handoff, but it may not onboard, schedule, publish, message, request permissions, or spend.
-
-## One control plane
-
-- `clients/ROSTER.md` is the authority for engagement status.
-- `money-tree/client-config.json` and immutable Money Tree run checkpoints are the
-  operational state, safety, delivery, evidence, and receipt plane.
-- A per-client canonical brief stores accepted GCT, offer, proof inventory, domain,
-  funnel definitions, authorized channels, access state, and explicit unknowns.
-- Secrets remain in Keychain or the approved secret store; briefs contain references,
-  never credential values.
-- Output folders are derived artifacts. Folder existence never creates status, and a
-  missing folder must become an explicit `NOT_STARTED` checkpoint rather than omission.
-- One case orchestrator is the only writer allowed to transition canonical state.
-  Specialists write immutable proposals/evidence; the orchestrator accepts or rejects
-  them with version/hash checks.
-
-Where available, use the `money-tree/sae/` router and schemas in
-`Local-Service-Spotlight/agent-runtime`. Do not reimplement that state machine here.
-
-## Orthogonal state machines
-
-Keep these separate so a positive result in one lane cannot grant authority in another.
-
-### Engagement
-
-`INTAKE_RECEIVED → EVIDENCE_INTAKE → QUALIFICATION_REVIEW → QUALIFIED_PENDING_AGREEMENT`
-
-Other qualification outcomes are `DISCOVERY_REQUIRED`, `DEVELOP`, `DECLINED`, or
-`NURTURE`. After an accepted agreement and Ops roster receipt:
-
-`ONBOARDING → READY_FOR_LAUNCH → OPERATING ↔ AT_RISK → OFFBOARDING`
-
-`HOLD` may interrupt any post-agreement state. Release requires an explicit human
-receipt and restores only the prior state.
-
-### Evidence
-
-`UNKNOWN | OBSERVED | VERIFIED | CONTRADICTED | EXPIRED`
-
-Unknown is not zero, clean, pass, or fail. It carries question, cause, owner, due date,
-and blocked action.
-
-### Action authority
-
-`READ_ONLY | STAGE_ONLY | APPROVED_LOW_RISK | HUMAN_EXECUTES`
-
-The default is `STAGE_ONLY`. Every delegated skill inherits this mode. A child skill’s
-verb such as publish, post, boost, pause, kill, scale, add access, or send is overridden
-to prepare/draft unless an exact scoped approval receipt matches actor, client/account,
-target/destination, action, amount/scope, start/end or expiry, and rollback/acceptance
-test. Fallback models may reduce throughput; they may not lower evidence or approval.
-
-### Artifact lifecycle
-
-`PROPOSED → STAGED → APPROVED → EXECUTED → VERIFIED`
-
-Never call a draft “published,” an approved action “executed,” a registered clock
-“observed,” or HTTP 200 “business impact.”
-
-## The six phases
-
-Run phases in order. A blocked phase may produce drafts and an owned ask, but downstream
-external action remains blocked.
-
-| Phase | Required work | Existing owner |
+| Stage | Name | Run |
 |---|---|---|
-| 1. Plumbing | Access, GTM, GA4, GSC, conversion definitions, CRM/source contracts | `client-access-checklist`, `measurement-analytics`, Task Library Stage 1 |
-| 2. Goals | Accepted measurable goal, economics, capacity, offer/technique | `business-brand-strategist`, accepted GCT brief, Task Library Stage 2 |
-| 3. Content | Proof inventory and Produce → Process → Post drafts | `content-factory`, `video-repurposing-agent`, `definitive-article-writer`, Task Library Stage 3 |
-| 4. Targeting | ICP and bounded hypotheses; targeting remains last | accepted GCT brief, Task Library Stage 4 |
-| 5. Amplification | Rank proven organic and stage day-7 kill/hold/scale recommendations | `dollar-a-day-strategist`, Task Library Stage 5 |
-| 6. Optimization | Weekly full-funnel Metrics → Analysis → Action and ask ledger | `weekly-brand-maa`, `measurement-analytics`, Money Tree, Task Library Stage 6 |
+| 1 | Plumbing | `client-access-checklist` until rows 1–4 green |
+| 2 | Goals | `business-brand-strategist` + `nine-triangles` (GCT Goals) — confirm, do not blank-form |
+| 3 | Content | `positive-mentions-harvester` → `evidence-verification` → `content-factory` produce/process + `definitive-article-writer` / `video-repurposing-agent` as needed |
+| 4 | Targeting | Lock ICP + geo/niche from GCT; write targeting last on every boost (`dollar-a-day-strategist`) |
+| 5 | Amplification | `dollar-a-day-strategist` on proven organic only |
+| 6 | Optimization | `weekly-brand-maa` every Friday (certainty date from `one-session-client-onboarding`) |
 
-### Phase gates
+Content Factory line inside stages 3–5: **produce → process → post → promote**.  
+Skill alias “4 P’s” (Plumbing, Publish, Promote, Perform) maps Perform → Stage 6 MAA.
 
-- Search Console, CMS, GA4, and Tag Manager must be verified green before content ships
-  or amplification runs. A named blocker makes routing complete but the phase remains
-  `BLOCKED`.
-- Define traffic → inquiry → qualified lead → booking/job → collected/recognized revenue
-  before optimization. Do not promote submissions, calls, pipeline value, or traffic into
-  revenue without a source-receipted join.
-- No approved campaign/platform, billing owner, spend ceiling, dates, claim/creative
-  approval, and kill metric means recommendations only.
-- Dollar-a-Day day-7 output is a decision recommendation. It never spends, pauses, kills,
-  scales, or moves audiences by itself.
-- Client-visible MAA requires an authorized destination and server-side readback.
-  Basecamp failure becomes `UNPOSTED` plus an internal blocker; never Gmail-reply or
-  draft to Basecamp notification addresses.
+## Kickoff sequence
 
-## Agent ownership
+1. Run `one-session-client-onboarding` (prefilled GCT; access in one sitting).
+2. Stage 1 until gate green. Content does not ship before rows 1–4.
+3. Stage 2–3: lock brief, harvest proof, stand up one canonical hub per major claim.
+4. Stage 4–5: post organic; boost only winners per Dollar-a-Day rules.
+5. Stage 6: schedule Friday MAA with PARAMETERS for `weekly-brand-maa`.
+6. Loop: ask client only for more proof, more raw content, or more budget on winners. Agents own the rest.
 
-Assign functions, not irreplaceable people.
+## Definition of done (package live)
 
-| Function | Responsibility | Cannot do |
-|---|---|---|
-| Case orchestration | canonical state, brief acceptance, routing, locks, receipts | silently accept stale proposals |
-| Evidence/qualification | proof inventory, identity, GCT, contradictions | invent positioning, client status, or proof |
-| Plumbing/measurement | access audit, source contracts, Money Tree joins | add users, rotate credentials, change DNS/CRM |
-| Content | source mining, atomization, drafts, manager QA | fabricate or publish without scope |
-| Promotion analytics | proven-organic ranking and MAA recommendations | spend, pause, kill, scale, move audiences |
-| Client success/MAA | weekly MAA, ask ledger, authorized delivery | bypass client relationships or fallback to email |
-| Human owner | positioning, claims, capacity, scope, spend, publishes, sends, holds | delegate accountability to an agent |
+- [ ] Qualify card PASS on file
+- [ ] Access rows 1–4 green (or routed blocker with owner + date)
+- [ ] Verified GCT brief saved
+- [ ] At least one canonical hub URL live
+- [ ] Dollar-a-Day candidate list exists (even if spend not yet approved)
+- [ ] Friday MAA scheduled with delivery channel
+- [ ] Agent note written; status board updated
 
-Use low-cost workers for bounded collection and mechanical drafts. Keep identity,
-evidence adjudication, strategy, client voice, and approval at the judgment layer.
+## Do not
 
-## Contribution and adapter register
+- Staff FAIL screens
+- Boost unproven posts
+- Promote BlitzMetrics as the product brand (use Local Service Spotlight / person / vertical)
+- Duplicate recipes that already live in child skills
+- Send client or Basecamp messages without approval when the desk requires it
+- Start a second OS copy in dennis-os-vault for client knowledge (BlitzBase is SoT)
 
-Names are provenance, not ownership. Record each contribution as:
+## Pairs with
 
-`contributor | exact source/thread/commit | component | extracted contract | overlap |
-disposition | canonical target | validation receipt`
+`gct-qualify-screen`, `skill-registry`, `recursive-self-improvement-qa`
 
-Current integration contracts:
+## Receipt
 
-- **Analytics Function / Daniel Goodrich:** the public
-  `Goodrich-Dev/google-ads-maa-skills` package is an adapter for verified Google Ads
-  collection, analysis, dry-run change proposals, and client-safe rendering. Pin an exact
-  commit before use. MCP/source data is primary; continuity/email input remains explicit
-  fallback evidence. It plugs into phases 1 and 6 and never broadens action authority.
-- **Content Function / Dylan Haugen:** BlitzBase is the persistent client-knowledge layer
-  for accepted facts, recordings, proof, GCT context, and history. It is not the method
-  repository. Export a versioned/hash-checked proposal to the canonical brief; do not
-  overwrite Dylan’s Elementor canvas or copy private knowledge into Git.
-- **Task Library:** canonical task/SOP layer. Point at the task; do not paste another SOP.
-- **Skills marketplace:** reusable method layer. Improvements land in the named skill.
-- **Agent runtime:** locks, receipts, accepted operational state, and handoffs.
-
-Mark an adapter `UNKNOWN` until its exact source, version, identity, and validation receipt
-are observed. “Daniel/Dylan own this” or “integrated” without those fields is not evidence.
-
-## Cadence
-
-A skill is how; the scheduler is when. Schedules stay thin and point to this skill/version
-and the Money Tree procedures.
-
-- Intake: idempotent public-read-only screen and one owned next action.
-- Onboarding: working-day blocker sweep only while a gate is open; ask ledger dedupes.
-- Daily: collect source material and prepare candidates; no external actions.
-- Day 7 after an approved test: recommend kill/hold/scale with exact metric receipt.
-- Thursday/Friday: extend the existing roster-derived Money Tree review and weekly MAA.
-- Monthly: reuse the existing Money Tree rebuild and meeting packet.
-- Quarterly or material change: re-screen GCT, capacity, claims, access, and definitions.
-
-Do not create a second SAE heartbeat. Extend the existing
-`monthly-client-money-tree-maa` routine. A schedule is only `REGISTERED` until its first
-firing leaves a complete roster-hash receipt and one terminal checkpoint for every and
-only current Active Client row.
-
-## Every transition leaves a receipt
-
-Required fields:
-
-- run ID and deterministic idempotency key;
-- prior/new state and canonical brief version/hash;
-- roster hash/status and Special Project scope receipt when applicable;
-- source links/hashes, collectors, checked-at timestamps, and freshness;
-- explicit unknowns and blocked downstream actions;
-- action-authority mode and approval receipt reference;
-- owner function, due date, acceptance test, and next escalation;
-- artifact lifecycle state;
-- authorized delivery destination/audience and server-side readback, when delivered.
-
-Use a run lease/lock, destination allowlists, source-freshness limits, rate limits, and a
-global plus per-client `HOLD`. A duplicate firing must produce no duplicate post, draft,
-task, state transition, payment, or spend action.
-
-## Definition of done for one weekly cycle
-
-- Exact roster/scope and current GCT review are verified.
-- Plumbing rows 1–4 are green, or the cycle is explicitly `BLOCKED`; nothing ships.
-- Factory output is derived from real proof, or records “no new source material.”
-- Promotion recommendations are staged with no unapproved spend.
-- Full-funnel evidence preserves not-connected/unknown and reconciles outcomes.
-- MAA file exists; delivery is separately `UNPOSTED` or `VERIFIED` on the named channel.
-- Money Tree has one immutable terminal checkpoint and the agent note is pushed.
-
-## Never automate
-
-- Client identity, niche, pricing, differentiation, capacity, consent, or GCT invention.
-- Legal, medical, financial, reputation, comparative, or regulated claims without the
-  qualified human review appropriate to the claim.
-- Credentials, permissions, account ownership, DNS, billing, payments, calendars, CRM
-  workflow, structural-site changes, or live spend.
-- External email, DMs, review requests, social posts, or client messages outside a
-  narrowly configured, authorized recurring delivery policy.
-- PII, private revenue, lead-level data, secrets, or private artifacts in Git/public HTML,
-  JSON-LD, CSS, data attributes, alt text, metadata, filenames, or obscure URLs.
-- A second roster, scorecard, scheduler, Content Factory, collaborator database, or SAE.
-
-## Related sequence
-
-`evidence-verification` → `gct-screen` → agreement/roster gate →
-`one-session-client-onboarding` → `client-access-checklist` → `content-factory` →
-`dollar-a-day-strategist` → `weekly-brand-maa`
+Leave entity, stages completed, skill versions/commit, blockers, next Friday MAA date.
 
 <!-- shared-rule:agents-draft-humans-send:start -->
 ## Agents draft; a human sends and publishes
@@ -265,19 +101,6 @@ task, state transition, payment, or spend action.
 - It is the boundary on `be-proactive-see-it-through`: act freely on reversible work,
   stop at anything that reaches another person or the public.
 <!-- shared-rule:agents-draft-humans-send:end -->
-
-<!-- shared-rule:analytics-on-every-page:start -->
-## Analytics goes on before anything gets optimised
-
-- **Measurement is the first build step, not the last.** A page with no analytics cannot
-  be improved, only redecorated, and every argument about it becomes a matter of taste.
-- **The invisible plumbing outranks the visual design** — tracking, CRM connection,
-  conversion events, schema and page structure come before fonts and colours.
-- **Confirm the tag actually fires on the live page**, not that it exists in a settings
-  screen. See `verify-by-opening-the-live-artifact`.
-- Instrument the business outcome, not the vanity metric: calls, booked jobs and revenue,
-  not impressions.
-<!-- shared-rule:analytics-on-every-page:end -->
 
 <!-- shared-rule:ask-blocking-questions-up-front:start -->
 ## Ask every blocking question up front
@@ -350,21 +173,6 @@ task, state transition, payment, or spend action.
 - Report what you changed in enough detail that undoing it is a one-line instruction.
 <!-- shared-rule:be-proactive-see-it-through:end -->
 
-<!-- shared-rule:buttons-must-contrast-with-their-background:start -->
-## A button must contrast with what it sits on
-
-- **A call to action must be visibly separate from the section behind it** at rest, not
-  only on hover. A visitor on a phone never hovers, and a button that only appears on
-  hover does not exist.
-- **Check the button against every background it appears on.** The same component sits on
-  white, on the hero image and on the dark footer; one of those is usually where it
-  disappears.
-- Text on the button needs at least **4.5:1** against the button fill, and the fill itself
-  needs to be clearly distinct from the section fill.
-- This is the general case of `no-black-buttons`. Black is the most common way to break it;
-  it is not the only way.
-<!-- shared-rule:buttons-must-contrast-with-their-background:end -->
-
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
@@ -412,88 +220,6 @@ task, state transition, payment, or spend action.
   enforceable form never gets written.
 <!-- shared-rule:capture-what-you-learn:end -->
 
-<!-- shared-rule:every-article-has-pictures:start -->
-## Every article has pictures
-
-- **No article ships as a wall of text.** Every published piece carries images — real
-  photographs, screenshots, or diagrams that carry meaning, not decorative stock.
-- **A diagram beats a paragraph** wherever the point is a structure, a sequence or a
-  comparison.
-- Caption them. An uncaptioned image is decoration; a captioned one is evidence.
-- Images also carry the provenance required by `process-real-content-never-generate` —
-  a photograph of the work actually done proves more than any sentence about it.
-<!-- shared-rule:every-article-has-pictures:end -->
-
-<!-- shared-rule:every-public-page-has-real-imagery:start -->
-## Every public page shows real people or real work
-
-- **Every visitor-facing content page must contain at least one meaningful image
-  of the actual business: its people, its work, its customers with permission,
-  its product, or its place.** This includes conversion and utility pages such as
-  Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
-  ship a wall of text.
-- A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
-  photograph does not satisfy the rule. Neither does an unrelated real photo
-  added merely to pass a count. The image must help a visitor understand or trust
-  the page.
-- Use the business's approved source library. Give the image honest alt text and,
-  when useful, a caption that explains what it proves. Describe only what the
-  source establishes: never relabel one project photo as work completed in every
-  city, and never infer a person, location, service, or result from a filename.
-- If no suitable approved image exists, request one and block that page from
-  publication. Do not manufacture evidence with image generation or stock.
-- Build QA must inventory every rendered content route and fail when any route
-  lacks a verified real image. Keep a provenance allowlist or equivalent asset
-  record so logos and decorative images cannot make the check pass. Mark at least
-  one qualifying `<img>` per page with `data-lss-real-image="verified"` only
-  after that provenance check. Also inspect the rendered desktop and mobile page;
-  a hidden, broken, or contextless image does not count.
-- Machine-only documents and routes that never render as visitor content—such as
-  `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
-  browser-rendered redirect placeholder is not exempt; replace it with a real
-  redirect or make the page comply.
-
-The fleet check proves only that a page declares the verified marker and supplies
-a nonblank, non-data source plus nonblank alt text. It cannot prove that the
-source loads, is visible, is meaningfully sized, or is truthful. Enforce those
-claims with each site's provenance-aware build validator plus a human visual
-review. Never add the marker merely to make the sweep pass.
-<!-- shared-rule:every-public-page-has-real-imagery:end -->
-
-<!-- shared-rule:immersive-hero-standard:start -->
-## Personal-brand heroes are immersive, not boxed
-
-A public figure's hero is the whole first screen, not a card with a headshot in it. The
-standard, fleet-wide:
-
-- **Full bleed and viewport height.** The hero occupies the first screen: `height:94svh`
-  with `min-height:600px` and `max-height:1000px`. Use `svh`, not `vh` — mobile browser
-  chrome makes `vh` overshoot and push the call to action below the fold.
-- **The subject is the background, not a thumbnail.** No small boxed portrait, no framed
-  inset, no stock-photo collage. The photograph is edge-to-edge and the type sits on it.
-- **Join the image to the type with a mask, not a hard edge.** A horizontal
-  `mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.35) 16%, #000 42%)`
-  dissolves the photo into the text column so the two read as one composition.
-  **Override it to a vertical mask on mobile** — a horizontal mask on a narrow screen
-  fades the subject's face.
-- **Control the crop with a focal variable**, e.g. `--focal: 56% 4%`, so the frame can be
-  nudged per person without rewriting the block. Check the top of the head is not clipped.
-- **Reset `box-sizing` on your own block.** These themes scope `border-box` to a theme
-  wrapper, not `*`. A new hero inherits `content-box`, so `height:100%` plus padding
-  overflows an `overflow:hidden` section and silently clips the calls to action out of
-  frame — the page looks fine and the buttons are simply gone.
-- **One primary call to action, in the brand colour, above the fold on a 1366×768
-  laptop.** Verify at desktop, laptop and mobile widths before calling it done.
-- **A proof rail under the fold, not claims inside the hero** — credentials, logos, or
-  named results on a solid brand-colour band.
-- **Motion is optional and must be silent.** A background video is permitted only when it
-  is `muted`, `playsinline` and `loop`, with a poster image; see `nothing-plays-uninvited`.
-- **The photograph has to earn full bleed.** Composed portraits and documentary
-  photography can carry a hero; selfies cannot, at any resolution. When the only assets
-  are selfies, use the typographic hero — it never looks cheap. See
-  `photo-earns-full-bleed`.
-<!-- shared-rule:immersive-hero-standard:end -->
-
 <!-- shared-rule:keep-the-system-of-record-outside-the-model:start -->
 ## Keep the system of record outside any one model
 
@@ -535,59 +261,6 @@ standard, fleet-wide:
   not anticipate.
 <!-- shared-rule:learn-do-teach:end -->
 
-<!-- shared-rule:links-must-resolve:start -->
-## Every link and every entity claim resolves
-
-- **A broken entity claim is worse than no claim.** `sameAs` is how a site tells Google,
-  Bing and every AI answer engine "this person is that entity". Pointed at a deleted or
-  wrong target, it does not merely fail — it actively teaches the wrong association.
-- **Verify every `sameAs` target returns 200 before publishing schema, and re-verify
-  quarterly.** Entities get deleted. A Wikidata item asserted on a client site was
-  deleted on 7 July 2026 and the claim stood until an audit found it five weeks later.
-- **Only anchors count.** `preconnect`, `dns-prefetch`, `canonical` and `alternate`
-  hints are not links a visitor can follow, and treating them as links reports
-  `googletagmanager.com` as a dead link on every site that loads analytics — noise that
-  teaches people to ignore the sweep.
-- **Request every outbound link before publishing.** A dead social link in a footer
-  appears on every page of the site, which makes one careless paste a site-wide defect.
-- Treat `401`, `403`, `405` and `429` from Instagram, Facebook, X and LinkedIn as *pass*.
-  Those platforms block automated requests by policy; that is not a broken link, and
-  reporting it as one trains people to ignore the sweep. `404`, `410`, `5xx`, DNS
-  failure and connection timeout are real.
-- When a target is genuinely gone, remove the claim rather than leaving it. An honest
-  smaller `sameAs` set outperforms a larger one containing a lie.
-<!-- shared-rule:links-must-resolve:end -->
-
-<!-- shared-rule:no-black-buttons:start -->
-## Never ship a black button
-
-- A call-to-action button must use the site's brand colour, never black. Black buttons
-  camouflage against dark heroes, navigation and footers, carry no brand signal, and
-  measurably lose conversions. This is the single most repeated finding across hundreds
-  of Local Service Spotlight website audits.
-- Nobody ships a black button on purpose. It is the default in every builder —
-  Gutenberg's `has-black-background-color` preset, Elementor's dark fill, Astra starter
-  themes, any Bootstrap-derived `btn-dark`. It looks correct on the white editor canvas
-  and disappears on the dark section it ships into. Assume the default is wrong and
-  override it deliberately.
-- Determine the brand colour, do not guess it: fetch the live pages, count hex values,
-  and take the most-used non-neutral. Where a site has two strong non-neutrals, the
-  darker is usually navigation and the brighter is the CTA — as gold `#f5a623` is to
-  teal `#22698a` on Local Service Spotlight.
-- Verify contrast before publishing. Text on a CTA needs at least 4.5:1. A gold or
-  yellow button needs dark text, not white.
-- Before reporting any site work as done, confirm the published HTML contains none of:
-  `background:#000`, `background-color:#000`, `btn-dark`, `btn-black`, `button-black`,
-  `bg-black`, or an applied `has-black-background-color` class.
-- An element may keep a black fill only with a documented exemption class where black
-  genuinely belongs — a logo lockup, an icon button on a dark rail. Mark it with the
-  fleet's existing exemption class, `bm-keep-black` or `lss-keep-black`,
-  so the sweep can see the exemption was
-  deliberate. Exempt one element, never a default.
-- Full reasoning and the enforcement-plugin pattern:
-  https://blitzmetrics.com/why-we-dont-use-black-buttons/
-<!-- shared-rule:no-black-buttons:end -->
-
 <!-- shared-rule:no-flattery-tell-it-straight:start -->
 ## No flattery — tell it straight
 
@@ -600,128 +273,6 @@ standard, fleet-wide:
 - Being wrong is recoverable. Being agreeable and wrong is not, because nobody checks
   the agreeable answer.
 <!-- shared-rule:no-flattery-tell-it-straight:end -->
-
-<!-- shared-rule:no-placeholder-copy:start -->
-## Placeholder copy never reaches production
-
-- **A number on a page is a claim.** Every stat needs a definition, a date, and someone
-  who can say where it came from. If the same figure appears twice on a site it has to be
-  the same figure.
-- **Builder placeholder text is a defect, not a cosmetic issue.** "Lorem ipsum", "Your
-  photo here", `xxx-xxx-xxxx`, `example@example.com` — each one tells a visitor the page
-  was never finished, on the page where you are asking them to trust you.
-- **A testimonial needs a real, nameable person.** No initials-only quotes, no
-  "a client in Minneapolis".
-- **The sweep only catches the obvious half, and you need to know which half.** A
-  placeholder that looks like a real number — a hero stat reading "$34K Monthly MRR" that
-  nobody can source — is indistinguishable from a true one to any regex. That exact
-  string sat live on a paying client's site. The only defence is that whoever publishes a
-  number can name its source before it goes up.
-<!-- shared-rule:no-placeholder-copy:end -->
-
-<!-- shared-rule:no-popup-on-load:start -->
-## No popup on page load
-
-- **Nothing covers the page before the visitor has read anything.** A modal that opens on
-  load, on a timer, or on scroll-depth before the first section is finished interrupts
-  the only moment you had their full attention, and it is the single most common reason a
-  first-time visitor closes the tab.
-- The permitted triggers are **click** and **exit intent on desktop**. A newsletter offer
-  earns its place in the page, after the proof, as a section — not as an ambush.
-- This applies to cookie and consent banners too: they may be present, but they must not
-  block the content or be dismissable only by accepting.
-- **Coverage is partial and you should know it.** These checks catch the three signatures
-  that cover most of the fleet — Elementor's `page_load` trigger, the `auto_open` popup
-  type, and load triggers declared in markup. A popup wired up in custom JavaScript will
-  pass the sweep. When you touch a site, look at it once with a fresh session and no
-  cookies; that is the only reliable test.
-<!-- shared-rule:no-popup-on-load:end -->
-
-<!-- shared-rule:no-unnamed-link-text:start -->
-## No unnamed link text
-
-- **Link text must name its destination when read on its own.** Screen readers and search
-  engines both pull links out of context; "read more" out of context is nothing. Write
-  "Read George's story", not "Read more".
-- The banned set in practice: *click here, read more, learn more, continue reading,
-  download, more, here, this, link.* If the anchor text is one of those words and nothing
-  else, rewrite it.
-- **An image-only link still needs a name.** A logo or social icon wrapped in an anchor
-  needs meaningful `alt` text on the image or an `aria-label` on the link. `alt=""` is
-  correct for decoration and wrong for a link — a link with no name is a link nobody can
-  follow by voice or by ear.
-- **An anchor points at the thing it names.** If the text says a company, the link goes to
-  that company; if it says "LinkedIn", it goes to linkedin.com. Two links with identical
-  anchor text going to different destinations on the same page is always a defect — one of
-  them is lying.
-- Expect the first sweep of an existing WordPress site to report this on archive and
-  blog templates, where "Read more" is the theme default. That is one template edit, not
-  a per-post fix, and it is why this rule reports rather than blocks.
-<!-- shared-rule:no-unnamed-link-text:end -->
-
-<!-- shared-rule:nothing-plays-uninvited:start -->
-## Nothing plays at the visitor uninvited
-
-The test is not "is there a video." The test is **would this irritate someone who
-just arrived.** Motion the visitor chose to look at is atmosphere; sound and
-motion that grab at them are an ambush, and the first thing they learn about you
-is that your site did that.
-
-- **Background video in a hero is encouraged.** It is how the immersive standard
-  gets met. Ship it with all four of `muted`, `playsinline`, `loop` and a `poster`
-  image. `playsinline` is not optional — without it, iOS yanks the video full
-  screen the moment it starts, which is the loudest version of the thing this rule
-  exists to prevent.
-- **Sound never starts on its own.** A hero film may absolutely have an audio
-  track. It loads muted with a visible, labelled unmute control, and the visitor
-  decides. That satisfies both halves: the video is there, the ambush is not.
-- **`<audio>` never autoplays**, muted or not. There is no case for it.
-- **Embedded players count.** `?autoplay=1` on a YouTube or Vimeo iframe must be
-  paired with `mute=1`, or dropped.
-- **Anything that cannot meet the muted conditions ships without `autoplay`**,
-  behind a poster frame and a play control.
-- Judge the rest by the same intent, even where no regex covers it: a video that
-  covers the content, one that cannot be paused, one that restarts on every scroll,
-  or one that pushes the call to action off the screen is irritating whether or not
-  it makes a sound.
-- This is the published-page half of `silent-media-playback`. That rule stops an
-  agent putting sound through *your* speakers while it tests; this one stops a site
-  putting sound through a *visitor's* speakers.
-<!-- shared-rule:nothing-plays-uninvited:end -->
-
-<!-- shared-rule:order-proof-by-authority:start -->
-## Order proof by authority, strongest first
-
-- **Testimonials, logos and mentions are never in random order.** Score each on the
-  30-point scale — 10 for who said it, 10 for where it was said, 10 for what they actually
-  said — and lead with the highest.
-- **A visitor reads the first two and leaves.** Whatever is in position one is, in
-  practice, your entire proof section.
-- **Video beats text.** The same endorsement on camera is more persuasive and harder to
-  fake than the same words in a pull quote; capture it as video wherever it exists.
-- Cut the bottom of the list rather than padding it. A short list of strong proof
-  outperforms a long list containing weak proof.
-<!-- shared-rule:order-proof-by-authority:end -->
-
-<!-- shared-rule:photo-earns-full-bleed:start -->
-## A photograph has to earn full bleed
-
-- **Judge the genre before the pixels.** Composed portraits, stage photography and
-  third-party documentary shots can carry a full-bleed hero. Phone selfies, webcam grabs,
-  cropped group photos and screenshots cannot — at any resolution, under any treatment.
-  Resolution and file size say nothing about whether an image can be six feet wide behind
-  a headline.
-- **Open every candidate before you rank it.** Selecting by filename, dimensions or
-  weight is how a selfie ends up presented as a hero option. If you have not looked at
-  the image, you have not evaluated it.
-- **When the only assets are selfies, use the typographic hero.** A confident type
-  composition on a brand-colour field never looks cheap; an enlarged selfie always does.
-  Say plainly that better photography is the unblock, and what to shoot.
-- **Full bleed magnifies everything.** Soft focus, a cluttered background, a bad crop and
-  mixed colour temperature are all invisible in a thumbnail and unmissable at full width.
-- Related: `immersive-hero-standard` for the construction; this rule is only about
-  whether a given photograph is allowed to be the hero at all.
-<!-- shared-rule:photo-earns-full-bleed:end -->
 
 <!-- shared-rule:pre-audit-before-the-client-does:start -->
 ## Audit our own work before anyone else can
@@ -782,25 +333,6 @@ is that your site did that.
   first — see `analytics-on-every-page`.
 <!-- shared-rule:report-business-impact-not-volume:end -->
 
-<!-- shared-rule:screen-gct-before-amplification:start -->
-## Screen GCT before amplification
-
-- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
-  screen still needs independent review, an accepted scope/agreement receipt, and the
-  authoritative Ops roster decision before onboarding or recurring work.
-- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
-  with the exact question, owner, due date, and blocked action. Missing evidence routes
-  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
-- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
-  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
-  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
-- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
-  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
-  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
-- The public guide is https://blitzmetrics.com/social-amplification/. The operational
-  control plane is the roster-driven Money Tree; derived output folders are not state.
-<!-- shared-rule:screen-gct-before-amplification:end -->
-
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
 
@@ -810,34 +342,6 @@ is that your site did that.
 - If the mute state cannot be controlled and verified before playback, do not start playback. Use metadata, captions, transcripts, frames, screenshots, network state, or player state instead.
 - Only unmute when the user explicitly requests audible playback in the current task.
 <!-- shared-rule:silent-media-playback:end -->
-
-<!-- shared-rule:spoken-urls-must-resolve:start -->
-## Every URL we say out loud resolves
-
-- **A URL spoken from a stage, printed on a QR code, or read into a podcast has no
-  inbound link.** No crawler finds it, no internal link audit sees it, and no analytics
-  records it until a human types it and fails. It is the one class of URL that dies
-  completely silently, and the people who hit the 404 are the warmest audience we ever
-  get.
-- **Every hub domain answers the same short paths.** `/install/`, `/skills/` and
-  `/activate/` resolve on every site we tell an audience to visit — 200, or a 301 to the
-  page that actually serves that intent. Never a 404.
-- **Say it once, spell it the same way everywhere.** If the talk says "slash install",
-  every hub answers `/install/`. Do not rely on one domain having a page while another
-  has a redirect and a third has nothing.
-- **A short path is a promise, so keep it even after the page moves.** When the
-  destination is renamed, repoint the redirect in the same change. The short path
-  outlives every page it has ever pointed at.
-- **Redirect within the domain the audience was told to visit** where a suitable page
-  exists. A cross-domain hop from a QR code loses the brand impression at the exact
-  moment it was earned.
-- **Check it from outside, logged out.** An editor screen saying "saved" is not a
-  resolving URL, and a page cache can serve a stale 404 long after the rule exists.
-  See `verify-by-opening-the-live-artifact`.
-- Adding a spoken path to a talk, a slide or a business card means adding it to this
-  rule's `paths` list in the same week. That is the whole maintenance cost, and it is
-  what stops this being rediscovered every few months.
-<!-- shared-rule:spoken-urls-must-resolve:end -->
 
 <!-- shared-rule:verify-by-opening-the-live-artifact:start -->
 ## Verify by opening the live artifact
@@ -853,3 +357,24 @@ is that your site did that.
   never as done.
 - Quote the evidence in the report: the URL, the status code, and the string you found.
 <!-- shared-rule:verify-by-opening-the-live-artifact:end -->
+
+<!-- shared-rule-index:start -->
+## Other house rules that apply to this work
+
+These are not repeated here because they govern published pages rather than agent behaviour. They are binding all the same — read the full text in `AGENTS.md` or `standards/` before touching a website.
+
+- **Analytics goes on before anything gets optimised** (`analytics-on-every-page`)
+- **A button must contrast with what it sits on** (`buttons-must-contrast-with-their-background`)
+- **Every article has pictures** (`every-article-has-pictures`)
+- **Every public page shows real people or real work** (`every-public-page-has-real-imagery`)
+- **Personal-brand heroes are immersive, not boxed** (`immersive-hero-standard`)
+- **Every link and every entity claim resolves** (`links-must-resolve`)
+- **Never ship a black button** (`no-black-buttons`)
+- **Placeholder copy never reaches production** (`no-placeholder-copy`)
+- **No popup on page load** (`no-popup-on-load`)
+- **No unnamed link text** (`no-unnamed-link-text`)
+- **Nothing plays at the visitor uninvited** (`nothing-plays-uninvited`)
+- **Order proof by authority, strongest first** (`order-proof-by-authority`)
+- **A photograph has to earn full bleed** (`photo-earns-full-bleed`)
+- **Every URL we say out loud resolves** (`spoken-urls-must-resolve`)
+<!-- shared-rule-index:end -->
