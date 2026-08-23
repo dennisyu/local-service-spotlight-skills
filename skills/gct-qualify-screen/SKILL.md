@@ -9,6 +9,14 @@ description: >-
 
 **Use this when** someone wants agents to run the full SAE / Content Factory package, or when filling the public start-page inventory. Screen first. Do not spend agent cycles on undifferentiated or proof-empty businesses.
 
+## Naming lock (Strategy Bot 2026-08-22)
+
+The SAE course page lists Goals / Content / Targeting as **three sequential stages** (Stages 2–4). That is **course taxonomy** for the package run after PASS.
+
+`gct-qualify-screen` is different: GCT is **one Nine Triangles gate** — three corners scored together with proof. Do **not** make agents run three separate stage pass/fails before qualify. PASS/HOLD/FAIL is a single card.
+
+Public framing: https://theninetriangles.com/ · https://localservicespotlight.com/tasks/gct-goals-content-targeting/
+
 ## Inputs
 
 - Website, GBP, recent posts/ads
@@ -79,6 +87,7 @@ package: # social-amplification-engine | start-page-only
 - Invent proof
 - Staff agents on FAIL
 - Ask the prospect to write a blank biography (prefill from public evidence)
+- Run three separate stage pass/fails for Goals then Content then Targeting before qualify
 
 ## Canonical GCT framing
 
