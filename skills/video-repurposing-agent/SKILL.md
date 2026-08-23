@@ -1,19 +1,25 @@
 ---
 name: video-repurposing-agent
-description: Watch a YouTube channel every day, judge which new videos deserve repurposing, and turn the winners into published articles on the right site (personal brand, company, or both) — written to Local Service Spotlight standards, graded to A- by jennifer, cross-linked per the Content Factory hub rules. Use when a client or member has a YouTube channel and wants it feeding their sites without anyone watching the uploads page.
+description: Watch a YouTube channel, judge which new videos deserve repurposing, and turn winners into verified article packages on the right site — staged by default and published only under exact action authority. Use when a client or member wants real recordings feeding their Content Factory.
 rule-scopes: published-html, design-review
 ---
 
 # Video Repurposing Agent — the daily channel watchdog
 
-**Use this when** someone records on YouTube but their websites don't know it. This agent closes that gap on a schedule: every day it checks the channel, triages anything new, and moves the worthwhile videos through transcript → article(s) → grade → publish → cross-link. One recording becomes site equity the same week it was uploaded.
+**Use this when** someone records on YouTube but their websites do not know it. This
+agent closes that gap on a schedule: check the channel, triage new videos, and move the
+worthwhile ones through transcript → article package → grade → stage. Publishing and
+cross-linking are separate approved states.
 
 Built July 20, 2026 by merging Daniel Goodrich's Repurposing Suite v0.2 (the YouTube Data API watch loop, effort routing, and grader caps he validated on Escape Fitness LIFTS — 247 episodes inventoried, first article graded A- for 251 API units) into the Content Factory method. Daniel's grader was already scoring "per Jennifer rubric," so the two systems merged without a seam.
 
 ## The client card (fill once, reuse every run)
 One block per client/member — keep it in the project or a `client.json`:
 - **Channel URL** (and channel_id once resolved — cache it).
-- **Sites**: personal-brand site URL, company site URL, or both. Each with its publish mode: `draft` (self-serve members — they click publish) or `live` (managed — we publish via the site's Application Password; see blitzmetrics.com/application-passwords/).
+- **Sites and authority**: personal-brand site URL, company site URL, or both. Default
+  mode is `draft`. `live` is valid only with a current scoped approval receipt naming the
+  site, action class, executor, and time window; a stored Application Password or prior
+  publication is not standing approval.
 - **Voice + context files**: brand-voice doc, ideal-client file, links file (real domains, offer pages) — read them every run; never invent a link or offer.
 - **Network entities**: name → URL map of the people, companies, and partners this client is tied to.
 - **Extra banned words** (client-specific), batch cap per run (default 3), and the hub URLs nothing may compete with.
@@ -61,13 +67,21 @@ Hand the cleaned transcript + client card to `definitive-article-writer` (Brando
 - Featured image = the video's own maxres thumbnail (`i.ytimg.com/vi/{id}/maxresdefault.jpg`) — a real frame, never a text-only card and never stock (blog-card thumbnails standard).
 - Evergreen: no dates-as-news, no limited-time promos.
 
-## Step 7 — Grade to done, then publish
-- Hand the draft to `jennifer`. **A- is the publish bar — never iterate past A-** (an A is reserved for world-class national-publication journalism). Revise within the tier's budget; below a C after budget, stop and flag for a human with the penalty list.
-- Publish per site mode: `live` → post via the site's Application Password (REST, full browser User-Agent), then verify the URL with a cache-busted fetch and confirm the images render; `draft` → stage the post + a one-line morning note ("ready to publish: [title]").
-- Mark the video `published` / `staged` / `enhanced` in `inventory.json` with the article URL.
+## Step 7 — Grade to done, then stage or execute
+- Hand the draft to the configured QA judge. A- is the publish-readiness bar; revise
+  within the tier's budget, then stop and flag with the penalty list when it cannot pass.
+- `draft` stages the complete post plus verification checklist. `live` may execute only
+  when the exact approval receipt still matches; then verify the URL with a cache-busted
+  anonymous fetch and confirm images, links, schema, and canonical behavior.
+- Mark the artifact lifecycle accurately: `staged`, `approved`, `executed`, or
+  `verified`. Never label a draft `published`.
 
 ## Step 8 — Report
-Append one run report: videos found / skipped (with reasons) / articles shipped (grade, tier, destination, URL) / enhancements / API units used / anything a human must do. Post client-relevant results to the client's Basecamp thread. If the run taught something, file a Skill-Learnings note — that's how this skill stays alive.
+Append one run report: videos found / skipped (with reasons) / articles by lifecycle
+state (grade, tier, destination, URL when executed) / enhancements / API units used /
+anything a human must do. Deliver only through the configured authorized channel and
+verify readback; otherwise save `UNPOSTED` and an internal blocker. Never Gmail-fallback
+a Basecamp update.
 
 ## Output
 - `inventory.json` — the channel's full state, every video accounted for.
@@ -75,7 +89,9 @@ Append one run report: videos found / skipped (with reasons) / articles shipped 
 - A run report a human can read in 30 seconds, plus the log line that stops tomorrow's run from repeating today's work.
 
 ## Run on a persistent agent (Fable 5)
-- **Loop to done:** a video isn't "processed" at the draft — loop until graded, published/staged, cross-linked, inventoried, reported.
+- **Loop to done:** a video is not processed at the first draft — loop until graded,
+  staged, inventoried, and reported. Approved execution and live verification are
+  separate states; do not manufacture them to close the loop.
 - **Self-verify:** re-fetch every published URL cache-busted; grep the live HTML for the embed and the links you claim are there.
 - **Compound with memory:** the inventory watermark, the client card, and the hub map make run 100 cheaper than run 1.
 - **Know when to stop:** SKIP is a first-class verdict, zero-new-videos is a clean run, and A- terminates revision. Agents that can't stop are as broken as agents that can't start.
@@ -671,3 +687,22 @@ review. Never add the marker merely to make the sweep pass.
 - This rule controls the delivery path; it does not grant permission to post or
   weaken any existing human approval requirement.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
+
+<!-- shared-rule:screen-gct-before-amplification:start -->
+## Screen GCT before amplification
+
+- **Qualification is an evidence gate, not an execution grant.** A passing business-fit
+  screen still needs independent review, an accepted scope/agreement receipt, and the
+  authoritative Ops roster decision before onboarding or recurring work.
+- **Unknown is never zero or failure.** Preserve `UNKNOWN`, `CONTRADICTED`, and `EXPIRED`
+  with the exact question, owner, due date, and blocked action. Missing evidence routes
+  to `DISCOVERY_REQUIRED`; do not invent a weighted score to hide it.
+- **Amplify what is already working.** Observed new-idea, no-proof, undifferentiated,
+  overbroad-ICP, unfocused-offer, or capacity conditions route to one development action
+  and re-screening. They do not earn plumbing, publishing, or ad spend as a consolation.
+- **Fail closed on authority.** Prospect screening is public-read-only. Publishing,
+  messaging, permissions, Basecamp delivery, and spend require exact scoped approval;
+  `Not Active`, `HOLD`, missing roster evidence, or blocked plumbing stops execution.
+- The public guide is https://blitzmetrics.com/social-amplification/. The operational
+  control plane is the roster-driven Money Tree; derived output folders are not state.
+<!-- shared-rule:screen-gct-before-amplification:end -->

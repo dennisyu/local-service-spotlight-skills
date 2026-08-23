@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 30 after merge of `gct-qualify-screen` + `social-amplification-engine` |
+| Skills in `lss-everything` | 30 after merge of `gct-screen` + `social-amplification-engine` |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -21,9 +21,11 @@ This repository is now the identifiable source of truth. The install guide at
 `https://localservicespotlight.com/install/` is the member-facing front door, not
 a competing copy of the skill files.
 
-`gct-qualify-screen` and `social-amplification-engine` are Available after merge only,
-not Installed. Qualify is one GCT triangle gate (corners scored together); SAE course
-Stages 2–4 Goals/Content/Targeting remain course taxonomy after PASS.
+`gct-screen` and `social-amplification-engine` are Available after merge only, not
+Installed. The screen evaluates one GCT triangle through evidence gates; it does not
+use an invented weighted score and it does not create client or execution authority.
+SAE course Stages 2–4 Goals/Content/Targeting remain the execution taxonomy after an
+accepted engagement and roster gate.
 
 ## Available bundles
 
@@ -31,8 +33,8 @@ Stages 2–4 Goals/Content/Targeting remain course taxonomy after PASS.
 |---|---:|
 | `lss-everything` | 30 |
 | `authority-and-reputation` | 7 |
-| `content-engine` | 8 |
-| `client-operations` | 10 |
+| `content-engine` | 7 |
+| `client-operations` | 11 |
 | `quality-and-standards` | 6 |
 
 The topical totals overlap. They are selections over the same 30 directories.

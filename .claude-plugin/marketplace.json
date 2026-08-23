@@ -26,7 +26,7 @@
         "./skills/definitive-article-writer",
         "./skills/dollar-a-day-strategist",
         "./skills/evidence-verification",
-        "./skills/gct-qualify-screen",
+        "./skills/gct-screen",
         "./skills/geo-visibility-audit",
         "./skills/grokipedia-authority",
         "./skills/knowledge-panel-entity-seo",
@@ -64,7 +64,7 @@
     },
     {
       "name": "content-engine",
-      "description": "Turn one idea into everything — articles, video, repurposing, distribution, SAE package. (8 skills)",
+      "description": "Turn one idea into everything — articles, video, repurposing, distribution, SAE. (7 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -73,26 +73,26 @@
         "./skills/content-factory",
         "./skills/definitive-article-writer",
         "./skills/dollar-a-day-strategist",
-        "./skills/gct-qualify-screen",
         "./skills/social-amplification-engine",
         "./skills/video-repurposing-agent"
       ]
     },
     {
       "name": "client-operations",
-      "description": "Run the account — onboarding, qualify screen, cadence, access, reporting, audits. (10 skills)",
+      "description": "Run the account — onboarding, qualification, cadence, access, reporting, audits, and SAE. (11 skills)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/client-access-checklist",
         "./skills/client-relationship-cadence",
-        "./skills/gct-qualify-screen",
+        "./skills/gct-screen",
         "./skills/measurement-analytics",
         "./skills/one-session-client-onboarding",
         "./skills/sales-every-day",
         "./skills/security-audit",
         "./skills/seo-audit",
         "./skills/software-subscription-audit",
+        "./skills/social-amplification-engine",
         "./skills/weekly-brand-maa"
       ]
     },
