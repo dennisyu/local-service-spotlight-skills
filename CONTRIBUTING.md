@@ -65,13 +65,36 @@ walkthrough: [HOW-KNOWLEDGE-PROPAGATES.md](HOW-KNOWLEDGE-PROPAGATES.md).
 
 ## Local checks
 
+Before every push, one command — the same steps CI runs, in the same order:
+
+```bash
+bash scripts/preflight.sh
+```
+
+Or individually:
+
 ```bash
 python3 scripts/sync_shared_rules.py --check
 python3 scripts/fleet_check.py --self-test
 python3 scripts/validate_marketplace.py
 python3 -m unittest discover -s tests -v
+python3 scripts/check_commit_attribution.py
 npx -y @anthropic-ai/claude-code@latest plugin validate .
 ```
+
+## Sign your commits
+
+Every commit names the agent that wrote it, as the last block of the message:
+
+```
+Agent: Claude Code        # or Cursor, Codex, Gemini, Grok, ChatGPT…
+Agent: none               # if a human typed it
+```
+
+The `Co-Authored-By:` line Claude Code and Cursor already emit satisfies this on
+its own. Agents run under a human's git identity, so the author field says who
+owns the account and never who wrote the change — the trailer is the only thing
+that does. Rule: [standards/commits-name-the-agent.md](standards/commits-name-the-agent.md).
 
 Shared house rules live under `standards/`, one file per rule. After changing
 one, run `python3 scripts/sync_shared_rules.py` to update the self-contained copy
