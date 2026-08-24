@@ -446,18 +446,41 @@ template, it does not send a campaign.
 <!-- shared-rule:lss-is-the-public-company:end -->
 
 <!-- shared-rule:outbound-email-names-the-agent:start -->
-## Outbound email names the agent
+## Every outbound agent action names the agent
 
-- Every outbound email an agent **sends** (or hands off ready-to-send) must end with a
-  one-line closer that names which agent wrote it: Grok Bot, Claude, ChatGPT, Codex,
-  Cursor, Perplexity, Gemini, or the desk name (e.g. `— Grok Bot (Ops)` /
-  `Sent via Claude`).
-- Name the agent even when `From:` is a human (Dennis). The From address is delivery;
-  the closer is transparency.
-- Place the agent line after the body and before any mail-client legal footer.
-- Do not invent a fake human VA signature to hide that an agent wrote it.
-- This does not override send-approval gates. When a desk is authorized to send, the
-  signature is mandatory. When only drafting, still include the agent name in the draft.
+- **When agent-authored content reaches another person, name the agent in the
+  message itself.** This covers sent email, Basecamp comments and messages,
+  DMs, support replies, scheduled reports, and the human-visible receipt for a
+  publish or system change. A GitHub commit or private log is supporting
+  evidence, not a substitute for visible attribution.
+- End with one compact line:
+
+  `Agent receipt: <agent> [<model if known>] · action: <drafted|sent|posted|published|changed> · human review: <reviewed by Dennis|authorized, not separately reviewed|no human review recorded>`
+
+- Put the name a human recognizes first: `Claude`, `Codex`, `Grok`, `Cursor`,
+  or the actual agent name. A persona alone is ambiguous; write `Grok — Meter
+  Maid`, not only `Meter Maid`. Include the exact model only when the runtime
+  exposes it. Otherwise omit it or say `model UNKNOWN`; never infer it from the
+  writing style, OAuth client, or vendor name.
+- State review truthfully. `Reviewed by Dennis` requires evidence that Dennis
+  reviewed that exact message or action. Permission to act is not review, so
+  use `authorized, not separately reviewed` when that is what happened. If the
+  record is missing, use `no human review recorded`.
+- Name the agent even when `From:` or the source-system creator is Dennis. That
+  identity is the delivery account; the receipt is authorship and action
+  transparency. Place the receipt after the body and before any automatic legal
+  footer.
+- If an agent only prepared material and a human sent the final version, use
+  `Prepared with <agent>; sent by <human>` when attribution is appropriate. Do
+  not label a purely human-authored message as agent-authored, and never invent
+  a fake human assistant signature to hide agent authorship.
+- For a public page or code change, put the line in the delivery receipt or
+  source-system update; do not add operational metadata to visitor-facing copy
+  unless the publishing brief asks for it.
+- This rule grants no authority to send, post, publish, spend, merge, or change
+  access. Apply the existing approval and destination rules first. Once an
+  outbound action is separately authorized, attribution is mandatory. When only
+  drafting, include the agent name in the draft so it survives handoff.
 <!-- shared-rule:outbound-email-names-the-agent:end -->
 
 <!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:start -->
