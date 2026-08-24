@@ -1,71 +1,185 @@
 ---
 name: positive-mentions-harvester
-description: Find, verify, and score every good thing the market already says about you — podcasts, testimonials, press, speaking, client results, reviews, unprompted shoutouts — on a 30-point authority scale, into a ranked proof library that feeds your site, Knowledge Panel, and Dollar-a-Day boosts. Run right after your positioning brief.
+description: Find, verify, deduplicate, record permission for, and score positive mentions on the Who / Where / What 30-point scale, then maintain one canonical proof inventory that feeds public authority pages, schema, and amplification. Run after the positioning brief and before reputation-gap analysis.
 rule-scopes: published-html, design-review
 ---
 
 # Positive Mentions Harvester
 
-**Use this when** you have your positioning brief and need the receipts. Most founders sit on years of proof they never collected; this skill harvests it systematically. Step 2 of the Local Service Spotlight method.
+**Use this when** a person or company has scattered testimonials, third-party praise,
+press, reviews, speaking clips, or social shoutouts and needs one evidence-backed system
+of record. This skill collects and processes existing proof; it does not invent praise,
+treat every appearance as an endorsement, or publish private evidence.
 
 ## Inputs
-- Positioning brief from `personal-brand-strategist` — proof gets scored against the buy box, not your ego.
-- Your profile links: LinkedIn, X, Instagram, YouTube, your site, podcast directories.
-- Names of clients, podcasts, events, and people who have referenced you — spelled correctly, so search actually finds them.
-- Screenshots, transcripts, testimonials, thank-you emails you already have. Paste everything; thin inputs make a thin library.
+- Positioning brief from `business-brand-strategist`, including the buy box and the
+  claims the proof must support.
+- The existing canonical mentions inventory. If one exists, update it in place; do not
+  start a second tracker.
+- Verified entity names, aliases, languages, profile links, clients, podcasts, events,
+  topics, and date ranges to search.
+- Source material already held: exact quotes, reviews, transcripts, screenshots, video
+  timestamps, emails, and permission receipts.
+- The public entity home and other approved serving pages that consume the inventory.
+
+## Canonical roles and boundaries
+
+Keep one row-level operational source of truth. A public page is a selected display of
+that inventory, not a second ledger.
+
+| Role | What it owns | What it must not become |
+|---|---|---|
+| Canonical inventory | Every candidate and accepted record, evidence URL, score, permission state, dedupe key, lifecycle state, and reuse destinations | A public dump of private URLs or a collection split across personal side sheets |
+| Entity-home mentions wall | The best verified proof a person wants buyers and search engines to see | The place where unverified candidates are adjudicated |
+| Public serving / worked-example page | A transparent, filterable view that demonstrates the method and preserves classification | A claim that every podcast or event appearance is an endorsement |
+| Reviews page | First-party and third-party reviews with source attribution | A substitute for third-party mentions or press evidence |
+| Appearance inventory | Verified participation in podcasts, events, interviews, or media | Positive sentiment unless the source contains an actual positive statement |
+| Coordination thread | Ownership, due dates, and exceptions | The row-level list or an alternate system of record |
+
+Use these classes consistently:
+
+- **Mention:** a named source makes a positive, attributable statement or concrete claim
+  about the subject, backed by a reviewable source.
+- **Mention candidate:** a potentially positive item still missing exact language,
+  primary evidence, permission, identity resolution, scoring, or deduplication.
+- **Appearance candidate:** evidence that the subject appeared somewhere. Promote it to
+  a mention only when the source actually says something positive about the subject.
+- **Duplicate / rejected:** a repeated, mismatched, inaccessible, contradicted, or
+  otherwise unusable record retained for audit history rather than silently deleted.
 
 ## Steps
-1. **Sweep every source.** Search the web and the supplied links for podcast appearances, press quotes, speaking listings, testimonials, reviews, client results, and unprompted social shoutouts. Search your name against every client, event, and topic in the brief.
-2. **Capture each mention in full:** the exact quote or claim · who said it · where, with link · date · format (video, audio, text) · why it carries weight.
-3. **Score each mention on the 30-Point Authority Scale** (below). No gut calls — the rubric keeps the library honest.
-4. **Rank the library, highest score first.** Flag the top 10 — these become the homepage proof wall, the Knowledge Panel corroboration, and the first Dollar-a-Day boosts.
-5. **Flag every lighthouse mention.** One quote from a marquee name you're tied to outranks ten generic compliments — their authority reflects onto you.
-6. **Log the silence.** Buy-box claims with zero proof go straight to `reputation-gap-analyzer` as the gap list.
+1. **Open the canonical inventory first.** Confirm its owner, columns, current schema,
+   last reviewed date, and accepted vocabulary. Append there. If no inventory exists,
+   create one governed table before harvesting; never create per-source or per-agent
+   competing trackers.
+2. **Sweep every source and language.** Search the verified name and aliases against
+   clients, events, topics, podcasts, publications, review platforms, social networks,
+   owned archives, and supplied private material. Record exactly which sources,
+   languages, and date ranges were searched.
+3. **Capture the primary evidence.** Store the exact quote or concrete claim, speaker,
+   speaker role and organization, source title, platform, normalized evidence URL,
+   publication date, capture date, format, timestamp when applicable, and a concise note
+   explaining what the source proves. Search snippets and AI summaries are discovery
+   aids, not primary evidence.
+4. **Resolve identity and deduplicate.** Confirm the source and subject are the intended
+   people. Use the stable dedupe key `source platform + normalized evidence URL +
+   speaker + date + quote hash`; merge variants into one record while retaining aliases
+   and audit notes.
+5. **Classify the record.** Mark it as mention, mention candidate, appearance candidate,
+   duplicate, or rejected. An episode credit, event listing, or photograph proves an
+   appearance, not praise.
+6. **Record evidence and permission state.** Use only these permission values:
+   `GRANTED_PUBLIC_RECEIPT`, `GRANTED_ATTESTED_NO_DIRECT_RECEIPT`,
+   `USER_REPORTED_UNVERIFIED`, `PUBLIC_SOURCE`, or `UNKNOWN`. Keep the exact permission
+   receipt or attestation locator private. Never publish Gmail, Zoom, Basecamp, private
+   Drive, private Docs, or other access-controlled URLs.
+7. **Score Who / Where / What.** Give each dimension 0–10 using the canonical
+   inventory's current notes, record the three component scores, and calculate the total.
+   Do not substitute buy-box relevance for a dimension; use relevance as a routing note
+   or tie-breaker after the authority score.
+8. **Apply the promotion gate.** A record may move from candidate to reusable proof only
+   when it has a named source, exact quote or concrete claim, live primary evidence,
+   resolved identity, semantic deduplication, Who / Where / What score, permission state,
+   and approved reuse destinations. Unknown permission or private evidence stays out of
+   public surfaces.
+9. **Rank and route.** Sort strongest first, then send approved records to the entity
+   home, topic pages, schema-supported proof, sales assets, or Dollar-a-Day testing.
+   Record every reuse destination in the canonical row so public displays remain derived
+   views, not independent lists.
+10. **Log gaps and leave a receipt.** Route unsupported buy-box claims to
+    `reputation-gap-analyzer`; record search coverage, additions, merges, rejections,
+    unresolved blockers, and the next review date. A weekly or monthly job is only
+    Activated or Observed when a real scheduler and timestamped run receipt prove it.
 
-## The 30-Point Authority Scale
-| Dimension | Points | What earns them |
-|---|---|---|
-| Source authority | 0–10 | Who said it and who listens to them — a lighthouse name or national outlet maxes this |
-| Specificity | 0–10 | Numbers, names, outcomes ("took us past 300 customers") beat adjectives ("great guy") |
-| Buy-box relevance | 0–10 | Whether the mention sells the exact deals you want next |
+## The Who / Where / What 30-point scale
+
+| Dimension | Points | Question the score answers |
+|---|---:|---|
+| **Who** | 0–10 | How authoritative and relevant is the named person or organization making the statement? |
+| **Where** | 0–10 | How authoritative, independent, durable, and reviewable is the property where it appears? |
+| **What** | 0–10 | How strong, specific, attributable, and useful is what was actually said? |
+
+Keep the component scores visible. A total with no Who / Where / What breakdown is not
+auditable.
 
 - **24–30:** lead with it — homepage, pinned posts, first boosts.
 - **15–23:** supporting proof — topic pages, follow-up sequences.
-- **Under 15:** archive it. Weak proof dilutes strong proof.
+- **Under 15:** retain in the archive or candidate pool; do not let weak proof dilute
+  the strongest proof.
 
 ## Output
-- Scored proof table: quote, source, link, date, format, why it carries weight, 30-point score.
-- Top-10 shortlist, ranked — raw material for the entity home, the Knowledge Panel, and Dollar-a-Day.
-- Lighthouse list: the marquee names already on record about you.
-- Gap list: buy-box claims with no proof yet, handed to `reputation-gap-analyzer`.
+- One deduplicated canonical table with row-level provenance, lifecycle state, permission
+  state, Who / Where / What components, total score, and reuse destinations.
+- A ranked lighthouse shortlist and an approved public-serving queue.
+- A candidate / blocker queue that preserves appearances, unknown permissions, weak
+  evidence, and identity collisions without overstating them.
+- A reputation gap list and a timestamped run receipt.
 
-## Worked examples
-- **Dennis's public tracker:** 236+ podcast appearances logged in one place at dennisyu.com/podcast-appearances — proof compounds when you track it; it rots when you scatter it across old links.
-- **Cam Hazzard:** harvested testimonials became the wall on camhazzard.com. The proof existed for years; collecting it was the work.
-- **Marko Sipila — HVAC Quote:** phone-shot conference interviews became a proof library, repurposed and boosted at $1/day, on the way to 300+ customers.
+## Definition of done (QA checklist)
 
-## For DealCon — agency owners & acquirers
-**If you run an agency:** every harvested mention is a closing asset — the prospect who Googles you finds third parties vouching instead of you selling. A documented proof library also transfers in a sale; reputation that lives only in your head doesn't.
-**If you buy & sell companies:** every mention is a relationship thread — the podcast host, the quoted client, the event organizer are warm paths to off-market deals. Harvest the proof AND the people.
-**Your edge:** the mentions scoring highest on buy-box relevance reveal what the market already believes only about you — amplify that, not the generic praise.
+- [ ] The existing canonical inventory was updated in place, or one governed inventory
+      was created; no competing row-level list remains.
+- [ ] Every promoted mention names the correct source and subject and includes the exact
+      positive statement or concrete claim.
+- [ ] Every promoted mention has live primary evidence, a normalized URL, date, format,
+      and timestamp when applicable.
+- [ ] Every record has a lifecycle class, permission state, dedupe key, Who / Where /
+      What components, total score, and reuse destinations.
+- [ ] Appearance-only records remain appearances or candidates, not endorsements.
+- [ ] Private evidence locators and permission receipts remain private; public pages use
+      only public-safe sources.
+- [ ] Public views are derived from the canonical inventory and ordered strongest first.
+- [ ] Search coverage, unresolved gaps, next review date, and run receipt are recorded.
+- [ ] The result links back to the definitive article and the stable Task Library entry.
+
+## Example(s)
+
+- **Dennis Yu is the worked example.** The private team workbook named *Dennis Yu
+  Positive Mentions — Canonical Inventory* is the single row-level operational ledger;
+  its access-controlled locator is deliberately not published in this skill.
+- [Dennis Yu's public serving inventory](https://blitzmetrics.com/high-powered-positive-mentions/)
+  demonstrates the classification boundary. In the 2026-08-23 audit it exposed 217
+  public records: 41 curated mentions, 32 mention candidates, and 144 appearance
+  candidates. Those classes must not be collapsed into “217 endorsements.”
+- [Dennis Yu's entity-home mentions wall](https://dennisyu.com/mentions/) is the selected
+  buyer-facing proof display, while [his reviews](https://dennisyu.com/reviews/) remain a
+  distinct review surface.
+- [Dennis Yu's appearance inventory](https://dennisyu.com/podcast-appearances/) records
+  podcast participation. An appearance becomes a positive mention only when the source
+  contains attributable positive language.
 
 ## Run on a persistent agent (Fable 5)
-- **Loop to done:** keep sweeping until new searches stop surfacing mentions — every client, event, and topic in the brief, not the first page of results. A 90% harvest produces a gap list you can't trust.
-- **Self-verify:** no mention enters the library without quote, source, link, date, format, and its 30-point score — rubric only, no gut calls.
-- **Compound with memory:** read the brief from `personal-brand-strategist` and the existing proof library first; append and re-score the deltas instead of rebuilding, so the monthly rerun takes minutes.
-- **Log the run:** record what each sweep found and missed — that meta-article sharpens next month's search list.
+- **Loop to coverage:** keep sweeping until the defined names, languages, sources, and
+  date ranges are exhausted. Never claim “complete” when a known source is inaccessible.
+- **Self-verify:** no record enters the serving queue without passing the promotion gate;
+  keep candidate and rejected records visible in the ledger.
+- **Compound from the ledger:** read the positioning brief and canonical inventory first,
+  then append and re-score deltas instead of rebuilding from memory.
+- **Log every run:** preserve search coverage, changes, misses, and errors so the next run
+  can improve the method.
+- **Current automation boundary:** a recurring positive-mentions harvest is Available as
+  a documented job design, not Activated or Observed until a scheduler definition and a
+  successful timestamped run receipt exist.
 
 See `boil-the-ocean.md` for the full operating principles.
 
 ## Notes — Dennis's method
 - The more material you paste in, the better this gets. Boil the ocean: every podcast, every event, every thank-you email.
-- Score against the buy box, not your ego — a flattering mention that attracts the wrong deal scores low.
+- Who / Where / What decides proof strength. The buy box decides where strong proof is
+  useful; do not merge those two judgments into one opaque score.
 - Lighthouse mentions are the priority output: they become the pieces you boost first with Dollar-a-Day.
-- Run this monthly. New proof appears constantly; re-score so the library stays current, like the public tracker does.
+- Re-score when sources, URLs, permissions, or the positioning brief change. A recurring
+  cadence is a commitment only after it has an owner, scheduler, and observed receipt.
 
-## Definitive article & pairings
-- Reference: Authority tracker — https://dennisyu.com/podcast-appearances/ ; Knowledge Panel corroboration — https://blitzmetrics.com/knowledge-panel/
-- Pairs with: personal-brand-strategist → **this skill** → reputation-gap-analyzer
+## Definitive article & links
+
+- Hub: https://blitzmetrics.com/how-to-collect-organize-positive-mentions-to-build-authority/
+- Short alias: https://blitzmetrics.com/positive-mentions/
+- Stable Task Library entry: https://local-service-spotlight.github.io/task-library/?task=positive-mentions-harvester
+- Run order: `business-brand-strategist` → **this skill** →
+  `reputation-gap-analyzer` → `knowledge-panel-entity-seo` →
+  `dollar-a-day-strategist`
+- Evidence QA: `evidence-verification`
 
 ## Learned in the field
 
