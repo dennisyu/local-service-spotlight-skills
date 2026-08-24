@@ -890,3 +890,101 @@ review. Never add the marker merely to make the sweep pass.
 - This does not override send-approval gates. When a desk is authorized to send, the
   signature is mandatory. When only drafting, still include the agent name in the draft.
 <!-- shared-rule:outbound-email-names-the-agent:end -->
+
+<!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:start -->
+## Definitive articles show what they are, their evidence strength, and where they fit
+
+- **The marker is a reviewed semantic claim, not a workflow status.** Mark a page as a
+  Definitive Article, Definitive SOP or Definitive Framework only after a reviewer has
+  confirmed that its labels, steps, links, evidence and canonical ownership agree with
+  the accepted source of truth. A complete Task Library task, an all-tasks-complete hub,
+  a taxonomy term or a `READY` state is useful workflow evidence, but none is sufficient
+  by itself. An archive, alias, WIP page or semantically conflicted page gets no marker.
+- **Mark the reviewed canonical hub visibly.** Put the appropriate marker above the
+  opening summary so a reader can distinguish the maintained source of truth from a
+  supporting post before scrolling. Supporting stories, updates and meta-articles point
+  to the hub; they do not wear the marker themselves.
+- **Keep certification, task priority and evidence volume separate.** Definitive status
+  says the page is the reviewed canonical owner. Task importance decides which gap to
+  work first. Meta-orbit strength measures only the number of verified completed-run
+  meta-articles behind the hub. None of the three may be used as a proxy for another.
+- **Derive the meta count from evidence; never type it into two sources.** One generated
+  manifest owns the exact hub URL, mapped Task Library tasks, every counted and held
+  evidence record, audit time, count and strength band. The article badge/footer and the
+  Task Library render from that manifest. If the corpus cannot be checked, report
+  `unknown`; if only a lower bound is proved, report `partial`. Never turn either into
+  zero.
+- **Count a primary worked example, not a generic cross-link.** A counted meta-article
+  must be published, explicitly classified as a meta-article, document a completed run,
+  materially execute the hub's task, and link to the exact canonical hub in its
+  task-specific narrative or receipt. A shared framework map, compliance table,
+  related-reading list, template, index, instructional page, archive, self-link or
+  incidental concept mention does not make the post part of that hub's orbit. Preserve
+  the reason for every excluded or held candidate.
+- **Use fixed, transparent evidence bands.** Show the exact count next to the definitive
+  pill and label 0 as `No verified examples`, 1–2 as `Emerging`, 3–5 as `Supported`,
+  6–10 as `Strong`, and 11+ as `Deep`. This label measures documented-run volume only,
+  not accuracy, freshness, traffic, quality or certification. Do not emit rating or
+  review schema from it.
+- **Make the graph work in both directions.** The Task Library task links to the final
+  canonical article. The article's generated, collapsed evidence footer links to the
+  exact filtered Task Library route and back to every counted meta-article. A stable
+  `?task=` route opens one task and a stable `?article=` route opens the complete hub.
+  A count without its inspectable source URLs is decoration, not evidence.
+- **Lead with the result and the article's own evidence.** Give the 2–3 sentence
+  plain-language summary first, then a compact outcome/checklist block. Keep the most
+  specific primary visual or proof for that article above the fold: the actual framework
+  diagram on a framework hub, the task-specific screenshot or flow on a software SOP,
+  or the real photograph, artifact or result that proves the work. A generic system map
+  must never displace that evidence or push it below the fold. Move audience explanation,
+  history and secondary evidence below this primary orientation.
+- **Use the larger system map as truthful context.** When an established framework has
+  an exact relationship to the article, place its maintained detailed map after the
+  article-specific primary visual and highlight only the subcomponents the article
+  actually performs. Keep surrounding components visible but muted and caption what the
+  highlight and handoff mean. On a framework hub, the canonical framework diagram is
+  itself the primary visual and may serve both purposes.
+- **A stage-only highlight or no map is valid.** If the task belongs to a stage but no
+  named child station truthfully represents it, highlight only the stage and, where
+  useful, its verified boundary or handoff. If no honest placement exists, omit the map
+  and explain the cross-system relationship in text. Never activate a nearby box merely
+  to make the diagram look complete.
+- **Do not redraw a framework from memory.** Reuse the maintained labels, order, palette
+  and relationships. A task-specific flow may accompany the system-placement view, but
+  neither visual may make a relationship the accepted source does not support.
+
+No fleet regex can enforce this honestly: a crawler cannot infer canonical ownership,
+primary-parent evidence, truthful framework placement or whether a generic link documents
+a completed run. Enforce it in the semantic preflight, source-backed orbit manifest,
+bidirectional-link verifier and rendered desktop/mobile review.
+<!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:end -->
+
+<!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
+## Named entities link to the most helpful canonical destination
+
+- **Route the first meaningful mention of a named entity to the page that best helps
+  the reader understand or act on it.** Link once; do not turn every repeated name
+  into a link. Use the entity's natural name for a person or company, and use 3–6
+  descriptive words for a training or concept link.
+- **People point to their verified personal-brand home.** Prefer the person's owned
+  website over an author archive, search result or social profile. If no owned site can
+  be verified, use the relevant first-party company page or a canonical article that
+  establishes who the person is; otherwise leave the name plain.
+- **Companies point to their owned company site.** Correct the entity name before
+  linking it. A plausible domain for the wrong spelling teaches the wrong association.
+- **Tools and concepts point to our canonical training when it exists.** In explanatory
+  copy, use a destination-naming phrase such as "our Listen Notes inventory guide" for
+  the definitive how-to page; do not point the bare product name at our domain. Put the
+  product's natural name and official website on the execution step where the reader
+  actually opens it. This preserves both education and a direct path to action without
+  making the anchor lie about where it goes.
+- **Verify every destination before publishing.** The name, page title and live content
+  must identify the intended entity. SEO value is a by-product of a truthful,
+  reader-helpful relationship; it is never a reason to guess a domain.
+
+This extends `no-unnamed-link-text`: that rule makes the anchor truthful; this rule makes
+the destination useful. When a bare entity name and a training page would conflict, the
+destination-naming anchor above is the reconciliation. No generic fleet regex can identify
+people, ownership or the right internal training page, so enforce this through the
+entity-linking preflight and a live link audit.
+<!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
