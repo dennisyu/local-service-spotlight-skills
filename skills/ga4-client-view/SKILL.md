@@ -9,6 +9,15 @@ rule-scopes: published-html, design-review
 
 # GA4 Client View — MAA Display Stage
 
+## Executive Summary
+
+This skill turns a finished website report into a single page an owner can read at a
+glance. It takes the numbers the GA4 report already produced and lays them out as a
+printable one-pager: the headline result, a short trend chart, where the customers came
+from, anything urgent flagged in red, and a clear list of what happens next and who is
+doing it. It performs no analysis of its own. Every figure on the page comes from the
+report it was handed, which keeps the one-pager and the full report in agreement.
+
 ## What this skill does
 
 Takes a completed GA4 website MAA (from `ga4-website-maa`) and produces the
