@@ -785,6 +785,16 @@ review. Never add the marker merely to make the sweep pass.
   reviewed that exact message or action. Permission to act is not review, so
   use `authorized, not separately reviewed` when that is what happened. If the
   record is missing, use `no human review recorded`.
+- Resolve the exact destination, audience, thread or record before acting. If
+  routing or authority is unclear, fail closed instead of sending to Dennis or
+  asking him to relay the work.
+- An outbound action is complete only after source-system read-back verifies
+  the destination/audience, thread or record, intended content/result, and
+  agent receipt. A toast, sent item, commit, or private note alone is not proof.
+- Leave the next action with its real owner. For completed Gmail work, archive
+  the exact thread after verified action and restore it after seven days only
+  when no human reply arrived; automation and system notices are not human
+  replies.
 - Name the agent even when `From:` or the source-system creator is Dennis. That
   identity is the delivery account; the receipt is authorship and action
   transparency. Place the receipt after the body and before any automatic legal
@@ -800,6 +810,10 @@ review. Never add the marker merely to make the sweep pass.
   access. Apply the existing approval and destination rules first. Once an
   outbound action is separately authorized, attribution is mandatory. When only
   drafting, include the agent name in the draft so it survives handoff.
+- Scheduled prompts that may act externally must explicitly use the
+  `outbound-action-closeout` skill and embed its routing, receipt, read-back,
+  ownership, and fail-closed rails because an unattended session may not load
+  repository rules or prior conversation.
 <!-- shared-rule:outbound-email-names-the-agent:end -->
 
 <!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:start -->

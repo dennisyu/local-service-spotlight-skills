@@ -1,6 +1,6 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last canonical repository audit: 22 August 2026.
+Last canonical repository audit: 24 August 2026.
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 30 after merge of `gct-screen` + `social-amplification-engine` |
+| Skills in `lss-everything` | 31 after merge of `outbound-action-closeout` |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -31,13 +31,13 @@ accepted engagement and roster gate.
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 30 |
+| `lss-everything` | 31 |
 | `authority-and-reputation` | 7 |
 | `content-engine` | 7 |
 | `client-operations` | 11 |
-| `quality-and-standards` | 6 |
+| `quality-and-standards` | 7 |
 
-The topical totals overlap. They are selections over the same 30 directories.
+The topical totals overlap. They are selections over the same 31 directories.
 
 ## Per-account installation register
 
