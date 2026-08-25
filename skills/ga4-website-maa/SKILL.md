@@ -9,6 +9,10 @@ references:
 
 # GA4 Website Report (any small business)
 
+## Executive Summary
+
+This skill produces the weekly website report that goes to a business owner. It reads the Google Analytics account for that business, works out what actually counts as a result there, whether that is a lead, a sale, a signup, a membership or a donation, and then answers the three questions an owner asks: what is bringing people in, what changed since last time, and what to do about it. It adapts to any kind of small business rather than assuming one industry. The owner gets plain language and real numbers, and the technical checks that make those numbers trustworthy stay behind the scenes.
+
 ## Business-model router — adapt, never reject (do this FIRST)
 
 This skill works for **any small business**. There is no "out of scope." Nothing is ever rejected. A business is never told the analysis "doesn't apply" — the worst honest outcome is "we need to confirm what counts as a conversion for you," never a refusal. Before Phase 1, route the client to its **business model** and let that choice drive what a conversion is, which dimensional lens the report uses, and which local-only modules run. The data-trust, Data Clarity, swing-decomposition, and report machinery are identical across every model; only the conversion definition and the lens change.
