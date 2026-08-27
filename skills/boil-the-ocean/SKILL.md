@@ -1,11 +1,13 @@
 ---
 name: boil-the-ocean
-description: Operating principles for the whole skill pack — how to run every Local Service Spotlight skill on persistent, looping, max-effort agents (Claude Fable 5 and peers from OpenAI and Google) — loop until the Definition of done passes, self-verify, compound with memory, document every run. Read before running any skill; this governs HOW they all execute.
+description: Operating principles for the whole skill pack. Use when running any Local Service Spotlight skill: loop until the Definition of done passes, self-verify, compound with memory. Completeness is coverage, not model tier. Read before running any skill; this governs HOW they all execute. Pair with model-judgment for which engine.
 ---
 
 # Boil the Ocean — operating principles for persistent agents
 
-This file is the operating layer beneath all ten skills in this pack: it changes nothing about WHAT each skill does and everything about HOW an agent runs it. It matters now because the agents running these skills — Claude Fable 5 and similarly capable models from OpenAI and Google — loop, self-correct, hold memory, and finish end-to-end, so stopping at 90% stopped being a constraint and became a choice.
+This file is the operating layer beneath all ten skills in this pack: it changes nothing about WHAT each skill does and everything about HOW an agent runs it. Persistent agents loop, self-correct, hold memory, and finish end-to-end, so stopping at 90% stopped being a constraint and became a choice.
+
+Completeness is coverage, not model tier. Boil the ocean on COVERAGE. Never on TIER. "Max effort" means do not stop at 90%. It does NOT mean run every step on the most expensive model. Your session model is the CEILING, not the floor. Which engine runs each part is `model-judgment`: cheapest tier that still clears the bar.
 
 ## The principle
 
@@ -15,7 +17,7 @@ The working rule: **always prefer the complete approach over the 90% shortcut** 
 
 This was already the house rule. Dennis has taught "always boil the ocean — because good enough is not enough" for years; in his words: "do the whole thing, do it right, with tests and docs; ship the finished product, not a plan." Persistent agents are the first workers that can hold that bar on every run — without fatigue, without being asked twice.
 
-## How to run every skill now (Fable 5 and friends)
+## How to run every skill now
 
 Eight rules. They apply to every skill in this pack, on every run.
 
@@ -47,7 +49,7 @@ The loop is the `recursive-self-improvement-qa` skill (step 10 of this pack); ht
 
 - Dennis's rule, verbatim: "The marginal cost of completeness is near zero with AI — do the whole thing, do it right, with tests and docs; ship the finished product, not a plan."
 - This file governs execution; each skill still owns its inputs, steps, and outputs. Where they meet, the skill's Definition of done wins — this file just forbids stopping short of it.
-- Boil the ocean on coverage, proof, and verification — never on adjectives, scope creep, or invented work. Completeness is not padding.
+- Boil the ocean on coverage, proof, and verification — never on adjectives, scope creep, invented work, or model tier. Completeness is not padding, and it is not "always frontier." 
 - Rules 1 and 2 travel together: a persistent agent that loops without verifying just automates its own mistakes.
 - Install this file alongside the ten skills (Project knowledge, Skills, or your `memory/` folder) so every chat that runs a skill runs it this way.
 - Date every run. "We keep the skills current" is a claim; a dated meta-article trail is the proof.
