@@ -21,7 +21,8 @@ Do not record passwords, tokens, or private client data here.
 2. Add `https://github.com/dennisyu/local-service-spotlight-skills` as a marketplace.
 3. Confirm all five bundles appear.
 4. Install `lss-everything`.
-5. Confirm all 32 expected skills are listed and enabled.
+5. Compare the enabled skill list with the `lss-everything` array in the tested
+   commit and record both displayed and expected counts.
 6. Start a fresh chat and use a literal trigger phrase from one selected skill.
 7. Confirm the selected skill activates and its output matches its contract.
 8. Restart Claude, return to a fresh chat, and repeat the activation check.
@@ -105,7 +106,8 @@ Run after adding or amending anything in `standards/`.
 2. `python3 scripts/validate_marketplace.py` exits 0 — this checks *every* rule
    in *every* skill, not one hardcoded rule.
 3. Count the copies and record the number, e.g.
-   `grep -rl "shared-rule:<slug>:start" skills/ | wc -l` returns 32.
+   `grep -rl "shared-rule:<slug>:start" skills/ | wc -l`. Compare it with the
+   rule's scope-derived skill count; scoped rules are not expected in every skill.
 4. On a canary account, sync the commit and start a fresh chat. Ask the agent to
    state the house rule without naming the file. Record the reply verbatim.
 

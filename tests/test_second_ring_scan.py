@@ -1,11 +1,16 @@
 import argparse
+import html
 import importlib.util
+import io
 import json
+import re
+import struct
 import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -86,7 +91,7 @@ class SecondRingScanTests(unittest.TestCase):
         self.assertNotIn(str(path), report)
         self.assertNotIn("javascript:", report)
         self.assertIn("Source: LinkedIn", report)
-        self.assertIn("true second ring requires separately authorized", report)
+        self.assertIn("separately authorized relationship evidence", report)
 
     def test_untrusted_export_text_is_bounded_and_cannot_break_report_markup(self):
         escape = chr(27)
@@ -252,7 +257,76 @@ class SecondRingScanTests(unittest.TestCase):
         self.assertEqual(payload["source"], "Synthetic demo")
         self.assertEqual(payload["owner"], "Network Owner")
         self.assertTrue(payload["direct"][0]["person"].startswith("Person "))
-        self.assertNotIn("@", report)
+        for real_name in (
+            "Alex Owner", "Jordan Host", "Riley Recruiter", "Morgan Partner",
+            "Taylor Guest", "Casey Buyer",
+        ):
+            self.assertNotIn(real_name, report)
+
+    def test_redacted_html_uses_one_identity_keyed_alias_map(self):
+        contact_rows = [
+            "Connector,Alpha,https://linkedin.com/in/connector,,Alpha Co,Owner,2026-01-01",
+            "Person,Bravo,,,,Manager,2026-01-01",
+            "Person,Charlie,,,,Manager,2026-01-01",
+            "Person,Delta,,,,Manager,2026-01-01",
+            "Person,Echo,,,,Manager,2026-01-01",
+            "Person,Foxtrot,,,,Manager,2026-01-01",
+            "Person,Golf,,,,Manager,2026-01-01",
+        ]
+        input_path = self.write(
+            "Connections.csv",
+            "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+            + "\n".join(contact_rows)
+            + "\n",
+        )
+        relation_path = self.write(
+            "relationships.csv",
+            "Source,Target,Relationship,Status\n"
+            "Connector Alpha,Taylor Guest,recorded podcast,confirmed\n",
+        )
+        report = scan.run(
+            self.args(
+                input_path,
+                relationships=relation_path,
+                confirm_relationship_data_authorized=True,
+                owner="Owner <script>alert(1)</script>",
+                format="html",
+                redact_names=True,
+            )
+        )
+        graph_target = re.search(
+            r'class="node second"/><text[^>]*>(Person \d{3})</text>', report
+        )
+        pre = re.search(r"<pre>(.*?)</pre>", report, flags=re.DOTALL)
+        self.assertIsNotNone(graph_target)
+        self.assertIsNotNone(pre)
+        markdown = html.unescape(pre.group(1))
+        table_target = re.search(
+            r"## Supported two-hop paths.*?\n\| 1 \| (Person \d{3}) \|",
+            markdown,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(table_target)
+        self.assertEqual(graph_target.group(1), table_target.group(1))
+        for real_name in ("Connector Alpha", "Taylor Guest", "Person Golf"):
+            self.assertNotIn(real_name, report)
+        self.assertNotIn("<script>alert(1)</script>", report)
+
+    def test_redacted_aliases_keep_name_only_homonyms_distinct(self):
+        path = self.write(
+            "Connections.csv",
+            "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+            "Sam,Lee,,,,,\n"
+            "Sam,Lee,,,,,\n",
+        )
+        payload = json.loads(
+            scan.run(self.args(path, owner="Sam Lee", format="json", redact_names=True))
+        )
+        aliases = [item["person"] for item in payload["direct"]]
+        self.assertEqual(payload["owner"], "Network Owner")
+        self.assertEqual(len(aliases), 2)
+        self.assertEqual(len(set(aliases)), 2)
+        self.assertNotIn("Sam Lee", json.dumps(payload))
 
     def test_zip_expansion_ratio_is_rejected_before_parse(self):
         path = self.root / "linkedin.zip"
@@ -260,6 +334,173 @@ class SecondRingScanTests(unittest.TestCase):
             archive.writestr("Connections.csv", "A" * 100_000)
         with self.assertRaisesRegex(scan.ScanError, "50:1"):
             scan.load_contacts(path)
+
+    def test_zip_rejects_multidisk_and_zip64_metadata(self):
+        original = self.root / "original.zip"
+        with zipfile.ZipFile(original, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("Connections.csv", "First Name,Last Name\nAlex,Owner\n")
+        raw = original.read_bytes()
+        eocd = raw.rfind(b"PK\x05\x06")
+        self.assertGreaterEqual(eocd, 0)
+
+        cases = {
+            "multi-disk": ((4, 1), (6, 1)),
+            "ZIP64": ((8, 0xFFFF), (10, 0xFFFF)),
+        }
+        for label, mutations in cases.items():
+            with self.subTest(label=label):
+                changed = bytearray(raw)
+                for relative_offset, value in mutations:
+                    struct.pack_into("<H", changed, eocd + relative_offset, value)
+                path = self.root / f"{label}.zip"
+                path.write_bytes(changed)
+                with self.assertRaisesRegex(scan.ScanError, "Multi-disk|ZIP64"):
+                    scan.validated_zip_entries(path)
+
+    def test_zip_ratio_uses_physical_span_not_forged_central_size(self):
+        path = self.root / "forged.zip"
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("Connections.csv", "A" * 300_000)
+        changed = bytearray(path.read_bytes())
+        central = changed.find(b"PK\x01\x02")
+        self.assertGreaterEqual(central, 0)
+        original_size = struct.unpack_from("<L", changed, central + 24)[0]
+        struct.pack_into("<L", changed, central + 20, original_size)
+        path.write_bytes(changed)
+        with self.assertRaisesRegex(scan.ScanError, "impossible compressed size|physical expansion"):
+            scan.validated_zip_entries(path)
+
+    def test_zip_parse_uses_the_exact_validated_snapshot(self):
+        path = self.root / "linkedin.zip"
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr(
+                "Connections.csv",
+                "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+                "Alex,Owner,,,,,2026-01-01\n",
+            )
+        original_zipfile = zipfile.ZipFile
+        opened_sources = []
+
+        def recording_zipfile(source, *args, **kwargs):
+            opened_sources.append(source)
+            return original_zipfile(source, *args, **kwargs)
+
+        with mock.patch.object(scan.zipfile, "ZipFile", side_effect=recording_zipfile):
+            source, contacts, _duplicates, _skipped = scan.load_contacts(path)
+
+        self.assertEqual(source, "LinkedIn")
+        self.assertEqual([contact.name for contact in contacts], ["Alex Owner"])
+        self.assertEqual(len(opened_sources), 2)
+        self.assertTrue(all(isinstance(source, io.BytesIO) for source in opened_sources))
+
+    def test_future_and_ambiguous_dates_are_not_fresh(self):
+        self.assertEqual(scan.freshness_points("2099-01-01"), (0, "future date; not usable"))
+        self.assertIsNone(scan.parse_date("04/05/2026"))
+        self.assertEqual(scan.parse_date("13/05/2026").date().isoformat(), "2026-05-13")
+        self.assertEqual(scan.parse_date("05/13/2026").date().isoformat(), "2026-05-13")
+
+    def test_goal_keywords_match_words_not_substrings(self):
+        false_contexts = ("Christopher Homes LLC", "Peoples Bank", "Serviceable Goods")
+        for context in false_contexts:
+            with self.subTest(context=context):
+                points, reason = scan.goal_points(scan.Contact("key", "Name", context, ""), "hiring")
+                self.assertEqual(points, 4)
+                self.assertIn("no goal keyword", reason)
+        points, reason = scan.goal_points(
+            scan.Contact("key", "Name", "Service Talent", "HR Manager"), "hiring"
+        )
+        self.assertEqual(points, 15)
+        self.assertIn("matched", reason)
+
+    def test_score_components_sum_and_scopes_are_not_comparable(self):
+        direct = scan.score_direct(
+            scan.Contact("direct", "Direct Person", "Roof Co", "Owner", "2026-01-01"),
+            "customers",
+        )
+        relationship = scan.Relationship(
+            "Direct Person", "Target Person", "recorded podcast", "confirmed"
+        )
+        paths, exclusions = scan.build_paths([direct.contact], [relationship], "customers")
+        self.assertEqual(exclusions, {})
+        self.assertEqual(sum(map(int, re.findall(r"\+(\d+)", " ".join(direct.factors)))), direct.score)
+        self.assertEqual(sum(map(int, re.findall(r"\+(\d+)", " ".join(paths[0].factors)))), paths[0].score)
+        result = scan.ScanResult(
+            "Owner", "customers", "Test", [direct.contact], [direct], paths, 0, 0
+        )
+        payload = json.loads(scan.json_report(result, False))
+        self.assertFalse(payload["scoring"]["comparableAcrossScopes"])
+        self.assertEqual(payload["direct"][0]["scoreScope"], "direct_priority")
+        self.assertEqual(payload["paths"][0]["scoreScope"], "two_hop_path_priority")
+
+    def test_relationship_accounting_and_zero_usable_rows_preserve_direct_report(self):
+        input_path = self.write("Connections.csv", LINKEDIN_CSV)
+        relation_path = self.write(
+            "relationships.csv",
+            "Source,Target,Relationship,Status\n"
+            "Jordan Host,Taylor Guest,podcast,confirmed\n"
+            "Alex Owner,Jordan Host,colleagues,confirmed\n"
+            "Outside One,Outside Two,colleagues,confirmed\n",
+        )
+        payload = json.loads(
+            scan.run(
+                self.args(
+                    input_path,
+                    relationships=relation_path,
+                    confirm_relationship_data_authorized=True,
+                    format="json",
+                )
+            )
+        )
+        self.assertEqual(payload["counts"]["relationshipRowsSupplied"], 3)
+        self.assertEqual(payload["counts"]["relationshipRowsExcluded"], 2)
+        self.assertEqual(payload["counts"]["supportedTwoHopPaths"], 1)
+        self.assertEqual(sum(payload["relationshipExclusionReasons"].values()), 2)
+        self.assertEqual(payload["paths"][0]["relationship"], "podcast")
+
+        empty_path = self.write(
+            "empty-relationships.csv",
+            "Source,Target,Relationship,Status\n"
+            ",Missing Source,podcast,confirmed\n",
+        )
+        report = scan.run(
+            self.args(
+                input_path,
+                relationships=empty_path,
+                confirm_relationship_data_authorized=True,
+            )
+        )
+        self.assertIn("## Ranked direct actions", report)
+        self.assertIn("direct results remain available", report)
+
+    def test_minimal_relationship_header_is_accepted(self):
+        input_path = self.write("Connections.csv", LINKEDIN_CSV)
+        relation_path = self.write(
+            "relationships.csv",
+            "Source,Target,Relationship,Status\n"
+            "Jordan Host,Taylor Guest,podcast,confirmed\n",
+        )
+        report = scan.run(
+            self.args(
+                input_path,
+                relationships=relation_path,
+                confirm_relationship_data_authorized=True,
+            )
+        )
+        self.assertIn("Taylor Guest", report)
+        self.assertIn("podcast", report)
+
+    def test_google_contacts_enforces_post_merge_contact_limit(self):
+        path = self.write(
+            "google-contacts.csv",
+            "Name,E-mail 1 - Value\nAlice Person,\nBob Person,\nCasey Person,\n",
+        )
+        original_limit = scan.MAX_CONTACTS
+        scan.MAX_CONTACTS = 2
+        try:
+            with self.assertRaisesRegex(scan.ScanError, "2-contact limit"):
+                scan.load_contacts(path)
+        finally:
+            scan.MAX_CONTACTS = original_limit
 
     def test_script_contains_no_network_client(self):
         source = SCRIPT.read_text(encoding="utf-8")

@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 32 after merge of `second-ring-network-mapper` |
+| Skills in `lss-everything` | Derived from the manifest's complete skill array |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -39,7 +39,8 @@ exports; it does not make private relationship data public or guarantee an intro
 | `client-operations` | 11 |
 | `quality-and-standards` | 7 |
 
-The topical totals overlap. They are selections over the same 32 directories.
+The topical totals overlap. They are selections over the same canonical skill
+directories.
 
 ## Per-account installation register
 

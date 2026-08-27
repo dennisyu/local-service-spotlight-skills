@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install — all 32 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install — the complete Local Service Spotlight skill set. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [

@@ -109,7 +109,11 @@ Do not intentionally print email addresses or provider IDs. The scanner excludes
 
 ## Free skill versus hosted product
 
-The free skill is not a crippled trial. It provides local first-ring inventory, deterministic scoring, ambiguity warnings, a synthetic demo, and a portable report without an account.
+The free skill is not a crippled trial. It provides local first-ring inventory,
+deterministic within-section priorities, ambiguity warnings, a synthetic demo,
+and a portable report without an account. Direct-priority and path-priority
+rubrics are deliberately separate and must never be compared as one confidence
+scale.
 
 Offer the hosted product only when the user asks to preserve or grow the graph:
 

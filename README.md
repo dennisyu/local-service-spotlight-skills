@@ -1,6 +1,6 @@
 # Local Service Spotlight Skills for Claude
 
-The canonical marketplace for the 32 Local Service Spotlight skills used across
+The canonical marketplace for Local Service Spotlight skills used across
 authority, content, client operations, and quality assurance.
 Claude and Grok Build load the same `skills/` source, so the operating method does
 not fork by model.
@@ -50,7 +50,7 @@ this repository currently distributes skills only.
 Run this deterministic inventory canary:
 
 ```bash
-grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "lss-everything"); assert p["enabled"] and p["provides"]["skills"] == 32; print("Grok canary passed: lss-everything, 32 skills")'
+grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "lss-everything"); assert p["enabled"] and p["provides"]["skills"] > 0; print("Grok canary passed: lss-everything, %s skills discovered" % p["provides"]["skills"])'
 ```
 
 Then prove that a fresh agent can activate one of the shared skills (this uses one
@@ -84,7 +84,7 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 32 skills |
+| `lss-everything` | The complete canonical skill set |
 | `authority-and-reputation` | Knowledge Panel, AI search, reviews, proof, and relationship paths |
 | `content-engine` | Articles, video, repurposing, and distribution |
 | `client-operations` | Onboarding, cadence, access, reporting, and audits |
@@ -108,9 +108,10 @@ sound, no popup on load, every link and entity claim resolves, personal-brand
 heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
-`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and all
-32 `SKILL.md` files, so the rules arrive with the pack even though `standards/`
-itself is not distributed. CI rejects a pull request when even one copy is
+`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and
+every in-scope `SKILL.md`, so the rules arrive with the pack even though
+`standards/` itself is not distributed. Some rules intentionally apply only to
+web or media skills. CI rejects a pull request when even one required copy is
 missing or stale.
 
 The same file also carries the patterns that detect a violation in real HTML, and

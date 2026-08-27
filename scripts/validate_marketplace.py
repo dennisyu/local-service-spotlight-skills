@@ -78,7 +78,29 @@ def validate(root: Path) -> list[str]:
     if not isinstance(plugins, list) or not plugins:
         return ["marketplace.json must contain a non-empty plugins array"]
 
+    marketplace_metadata = manifest.get("metadata")
+    marketplace_version = (
+        marketplace_metadata.get("version")
+        if isinstance(marketplace_metadata, dict)
+        else None
+    )
+    if not isinstance(marketplace_version, str) or not marketplace_version:
+        errors.append("marketplace metadata.version must be a non-empty string")
+    grok_path = root / ".grok-plugin" / "plugin.json"
+    try:
+        grok_manifest = json.loads(grok_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        grok_manifest = {}
+        errors.append(f"cannot read {grok_path.relative_to(root)}: {exc}")
+    if grok_manifest.get("version") != marketplace_version:
+        errors.append(
+            ".grok-plugin/plugin.json version must equal marketplace metadata.version"
+        )
+    if grok_manifest.get("name") != EVERYTHING_PLUGIN:
+        errors.append(f".grok-plugin/plugin.json name must be {EVERYTHING_PLUGIN!r}")
+
     plugin_names: set[str] = set()
+    plugin_skill_counts: dict[str, int] = {}
     everything: list[str] | None = None
     for index, plugin in enumerate(plugins):
         if not isinstance(plugin, dict):
@@ -99,6 +121,16 @@ def validate(root: Path) -> list[str]:
             continue
         if len(skills) != len(set(skills)):
             errors.append(f"plugin {name!r} lists a skill more than once")
+        if isinstance(name, str):
+            plugin_skill_counts[name] = len(skills)
+        description = plugin.get("description")
+        if isinstance(description, str):
+            for advertised_count in re.findall(r"\b(\d+)\s+skills\b", description, re.IGNORECASE):
+                if int(advertised_count) != len(skills):
+                    errors.append(
+                        f"plugin {name!r} description advertises {advertised_count} skills "
+                        f"but lists {len(skills)}"
+                    )
         for skill_ref in skills:
             if not isinstance(skill_ref, str) or not skill_ref.startswith("./skills/"):
                 errors.append(f"plugin {name!r} has invalid skill path: {skill_ref!r}")
@@ -125,6 +157,30 @@ def validate(root: Path) -> list[str]:
         errors.append(f"skill is not in {EVERYTHING_PLUGIN}: {missing}")
     for stale in sorted(everything_set - actual_refs):
         errors.append(f"{EVERYTHING_PLUGIN} has a stale skill path: {stale}")
+
+    inventory_path = root / "skills" / "skill-registry" / "references" / "inventory.md"
+    try:
+        inventory_text = inventory_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"cannot read {inventory_path.relative_to(root)}: {exc}")
+        inventory_text = ""
+    inventory_counts = {
+        name: int(count)
+        for name, count in re.findall(
+            r"^\| `([^`]+)` \| (\d+) \|$", inventory_text, flags=re.MULTILINE
+        )
+    }
+    for name, expected_count in sorted(plugin_skill_counts.items()):
+        actual_count = inventory_counts.get(name)
+        if actual_count is None:
+            errors.append(f"canonical inventory is missing bundle count for {name}")
+        elif actual_count != expected_count:
+            errors.append(
+                f"canonical inventory lists {actual_count} skills for {name} "
+                f"but manifest lists {expected_count}"
+            )
+    for stale_name in sorted(set(inventory_counts) - set(plugin_skill_counts)):
+        errors.append(f"canonical inventory has a stale bundle row: {stale_name}")
 
     blocks, block_errors = expected_blocks(root)
     errors.extend(block_errors)
@@ -174,12 +230,6 @@ def validate(root: Path) -> list[str]:
                         f"{markdown.relative_to(root)} references missing {relative}"
                     )
 
-    readme = (root / "README.md").read_text(encoding="utf-8")
-    advertised = re.search(r"all (\d+) skills", readme, flags=re.IGNORECASE)
-    if advertised and int(advertised.group(1)) != len(skill_dirs):
-        errors.append(
-            f"README advertises {advertised.group(1)} skills but found {len(skill_dirs)}"
-        )
     return sorted(set(errors))
 
 

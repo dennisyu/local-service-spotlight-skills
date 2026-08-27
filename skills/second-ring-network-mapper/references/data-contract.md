@@ -25,10 +25,15 @@ Accept a Google Contacts CSV with `Name`, or `Given Name` plus `Family Name`. Re
 Require these columns:
 
 ```csv
-Source,Target,Relationship,Status,Evidence,Observed At
+Source,Target,Relationship,Status
 ```
 
-Optional target-context columns are `Target Company`, `Target Position`, and `Target URL`. The file must be separately owner-authorized. A public co-appearance belongs in `Status=shared_context`; it is not a supported private introduction edge.
+Optional columns are `Evidence`, `Observed At`, `Target Company`, `Target Position`,
+and `Target URL`. `Observed At` can contribute freshness when its date is
+unambiguous and is not in the future. Free-text `Evidence` remains in the owner's
+source file but is intentionally not selected into reports. The file must be
+separately owner-authorized. A public co-appearance belongs in
+`Status=shared_context`; it is not a supported private introduction edge.
 
 ## Safety limits
 
@@ -41,7 +46,10 @@ Optional target-context columns are `Target Company`, `Target Position`, and `Ta
 | Compression ratio | 50:1 |
 | Contacts | 50,000 |
 
-Do not extract ZIP entries to disk. Reject encrypted, multi-disk, malformed, or ZIP64-dependent archives when the local runtime cannot validate them safely.
+Do not extract ZIP entries to disk. Before decompression, validate the classic
+single-disk end record, central-directory records, local-header offsets, physical
+compressed spans, and declared sizes. Reject encrypted, multi-disk, malformed,
+overlapping, or ZIP64-dependent archives.
 
 ## Identity rules
 
@@ -71,10 +79,16 @@ Default output is Markdown on stdout. Include:
 - parser version and run time;
 - source type, not source filename or path;
 - imported, duplicate, skipped, direct, and supported-path counts;
+- supplied and excluded relationship-row counts with exclusion reasons;
 - ranked direct actions with explainable factors;
 - supported and unsupported two-hop candidates separately;
 - ambiguity and missing-data warnings;
 - one explicit next action;
 - a statement of what the input proves and does not prove.
+
+Direct-priority and path-priority values are separate within-section ranking
+rubrics. They are not comparable across sections; direct outreach precedes an
+introduction request. Every reported value must show the numeric components that
+sum to it.
 
 Never intentionally select dedicated email-address or provider-ID fields for output. Apply best-effort redaction to email-like and known provider-ID tokens found inside selected display fields, but do not claim that arbitrary hostile text is guaranteed free of every possible sensitive identifier. Do not include the source path or source filename. Do not create a file unless `--output` is supplied. Redacted mode replaces people with stable aliases and removes company/title context.

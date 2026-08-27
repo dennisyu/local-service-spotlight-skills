@@ -18,6 +18,7 @@ import io
 import json
 import math
 import re
+import struct
 import sys
 import unicodedata
 import zipfile
@@ -28,13 +29,17 @@ from typing import Iterable
 from urllib.parse import urlparse
 
 
-PARSER_VERSION = "1.0.0"
+PARSER_VERSION = "1.1.0"
 MAX_ARCHIVE_BYTES = 25 * 1024 * 1024
 MAX_EXPANDED_BYTES = 100 * 1024 * 1024
 MAX_ENTRY_BYTES = 20 * 1024 * 1024
 MAX_ENTRIES = 5_000
 MAX_CONTACTS = 50_000
 MAX_COMPRESSION_RATIO = 50
+
+DIRECT_RECORD_BASE = 40
+DIRECT_EXPORT_EVIDENCE = 18
+PATH_RECORD_BASE = 25
 
 EMAIL_PATTERN = re.compile(
     r"(?<![\w.+-])[\w.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}(?![\w.-])",
@@ -102,7 +107,6 @@ class Relationship:
     target_name: str
     label: str
     status: str
-    evidence: str = ""
     observed_at: str = ""
     target_company: str = ""
     target_position: str = ""
@@ -139,6 +143,38 @@ class ScanResult:
     warnings: list[str] = field(default_factory=list)
     target_query: str = ""
     target_state: str = "none"
+    relationship_rows_supplied: int = 0
+    relationship_rows_excluded: int = 0
+    relationship_exclusion_reasons: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ZipEntryMetadata:
+    compressed_size: int
+    original_size: int
+    local_header_offset: int
+    physical_compressed_bytes: int
+
+
+class NameRegistry:
+    """Render one stable, identity-keyed alias map across a whole report."""
+
+    def __init__(self, redact: bool):
+        self.redact = redact
+        self.aliases: dict[str, str] = {}
+        self.counter = 0
+
+    def owner(self, name: str) -> str:
+        return "Network Owner" if self.redact else name
+
+    def contact(self, contact: Contact) -> str:
+        if not self.redact:
+            return contact.name
+        identity = f"contact:{contact.key}"
+        if identity not in self.aliases:
+            self.counter += 1
+            self.aliases[identity] = f"Person {self.counter:03d}"
+        return self.aliases[identity]
 
 
 def normalize(value: str) -> str:
@@ -289,8 +325,7 @@ def merge_contacts(contacts: Iterable[tuple[Contact, str, str]]) -> tuple[list[C
     return list(merged.values()), duplicates
 
 
-def parse_linkedin(text: str) -> tuple[list[Contact], int, int]:
-    rows = rows_from_text(text)
+def parse_linkedin_rows(rows: list[list[str]]) -> tuple[list[Contact], int, int]:
     index = header_index(rows, {"first name", "last name"})
     if index < 0:
         raise ScanError("This CSV does not contain LinkedIn First Name and Last Name columns.")
@@ -323,8 +358,11 @@ def parse_linkedin(text: str) -> tuple[list[Contact], int, int]:
     return contacts, duplicates, skipped
 
 
-def parse_google_contacts(text: str) -> tuple[list[Contact], int, int]:
-    rows = rows_from_text(text)
+def parse_linkedin(text: str) -> tuple[list[Contact], int, int]:
+    return parse_linkedin_rows(rows_from_text(text))
+
+
+def parse_google_contacts_rows(rows: list[list[str]]) -> tuple[list[Contact], int, int]:
     index = header_index(rows, {"name"})
     if index < 0:
         index = header_index(rows, {"given name", "family name"})
@@ -355,29 +393,152 @@ def parse_google_contacts(text: str) -> tuple[list[Contact], int, int]:
         )
         parsed.append((contact, email, profile))
     contacts, duplicates = merge_contacts(parsed)
+    if len(contacts) > MAX_CONTACTS:
+        raise ScanError(f"The export exceeds the {MAX_CONTACTS:,}-contact limit.")
     return contacts, duplicates, skipped
+
+
+def parse_google_contacts(text: str) -> tuple[list[Contact], int, int]:
+    return parse_google_contacts_rows(rows_from_text(text))
 
 
 def parse_contact_csv(text: str) -> tuple[str, list[Contact], int, int]:
     rows = rows_from_text(text)
     if header_index(rows, {"first name", "last name"}) >= 0:
-        contacts, duplicates, skipped = parse_linkedin(text)
+        contacts, duplicates, skipped = parse_linkedin_rows(rows)
         return "LinkedIn", contacts, duplicates, skipped
-    contacts, duplicates, skipped = parse_google_contacts(text)
+    contacts, duplicates, skipped = parse_google_contacts_rows(rows)
     return "Google Contacts", contacts, duplicates, skipped
 
 
-def validated_zip_entries(path: Path) -> list[zipfile.ZipInfo]:
-    if path.stat().st_size > MAX_ARCHIVE_BYTES:
-        raise ScanError("The ZIP exceeds the 25 MiB compressed archive limit.")
-    if not zipfile.is_zipfile(path):
+def inspect_zip_structure(raw: bytes) -> dict[int, ZipEntryMetadata]:
+    """Validate classic single-disk ZIP metadata before decompression."""
+    minimum_record_bytes = 22
+    maximum_comment_bytes = 65_535
+    if len(raw) < minimum_record_bytes:
         raise ScanError("The file is named ZIP but does not have a valid ZIP structure.")
-    with zipfile.ZipFile(path) as archive:
-        entries = archive.infolist()
-    if len(entries) > MAX_ENTRIES:
-        raise ScanError(f"The ZIP contains more than {MAX_ENTRIES:,} entries.")
+    first_candidate = max(0, len(raw) - minimum_record_bytes - maximum_comment_bytes)
+    for offset in range(len(raw) - minimum_record_bytes, first_candidate - 1, -1):
+        if raw[offset : offset + 4] != b"PK\x05\x06":
+            continue
+        (
+            _signature,
+            disk_number,
+            central_directory_disk,
+            entries_on_disk,
+            total_entries,
+            central_directory_bytes,
+            central_directory_offset,
+            comment_length,
+        ) = struct.unpack_from("<4s4H2LH", raw, offset)
+        if offset + minimum_record_bytes + comment_length != len(raw):
+            continue
+        if (
+            disk_number != 0
+            or central_directory_disk != 0
+            or entries_on_disk != total_entries
+            or entries_on_disk == 0xFFFF
+            or total_entries == 0xFFFF
+            or central_directory_bytes == 0xFFFFFFFF
+            or central_directory_offset == 0xFFFFFFFF
+        ):
+            raise ScanError("Multi-disk and ZIP64-dependent archives are not supported.")
+        if total_entries > MAX_ENTRIES:
+            raise ScanError(f"The ZIP contains more than {MAX_ENTRIES:,} entries.")
+        if (
+            central_directory_offset + central_directory_bytes > offset
+            or central_directory_offset + central_directory_bytes > len(raw)
+        ):
+            raise ScanError("The ZIP has an invalid central directory.")
+
+        declared_entries: list[tuple[int, int, int, int]] = []
+        cursor = central_directory_offset
+        for _index in range(total_entries):
+            if cursor + 46 > len(raw) or raw[cursor : cursor + 4] != b"PK\x01\x02":
+                raise ScanError("The ZIP has a truncated or invalid central-directory entry.")
+            flags = struct.unpack_from("<H", raw, cursor + 8)[0]
+            compressed_size = struct.unpack_from("<L", raw, cursor + 20)[0]
+            original_size = struct.unpack_from("<L", raw, cursor + 24)[0]
+            filename_length = struct.unpack_from("<H", raw, cursor + 28)[0]
+            extra_length = struct.unpack_from("<H", raw, cursor + 30)[0]
+            entry_comment_length = struct.unpack_from("<H", raw, cursor + 32)[0]
+            starting_disk = struct.unpack_from("<H", raw, cursor + 34)[0]
+            local_header_offset = struct.unpack_from("<L", raw, cursor + 42)[0]
+            record_bytes = 46 + filename_length + extra_length + entry_comment_length
+            if (
+                compressed_size == 0xFFFFFFFF
+                or original_size == 0xFFFFFFFF
+                or local_header_offset == 0xFFFFFFFF
+            ):
+                raise ScanError("ZIP64-dependent entries are not supported.")
+            if starting_disk != 0:
+                raise ScanError("Multi-disk ZIP entries are not supported.")
+            if cursor + record_bytes > len(raw):
+                raise ScanError("The ZIP has truncated central-directory metadata.")
+            if flags & 0x1:
+                raise ScanError("Encrypted ZIP entries are not supported.")
+            declared_entries.append(
+                (local_header_offset, compressed_size, original_size, flags)
+            )
+            cursor += record_bytes
+        if cursor != central_directory_offset + central_directory_bytes:
+            raise ScanError("The ZIP has inconsistent central-directory metadata.")
+
+        ordered = sorted(declared_entries)
+        metadata: dict[int, ZipEntryMetadata] = {}
+        for index, (local_offset, compressed_size, original_size, central_flags) in enumerate(ordered):
+            next_offset = ordered[index + 1][0] if index + 1 < len(ordered) else central_directory_offset
+            if local_offset in metadata or local_offset + 30 > central_directory_offset:
+                raise ScanError("The ZIP has overlapping or truncated local entries.")
+            if raw[local_offset : local_offset + 4] != b"PK\x03\x04":
+                raise ScanError("The ZIP has an invalid local entry.")
+            local_flags = struct.unpack_from("<H", raw, local_offset + 6)[0]
+            local_name_length = struct.unpack_from("<H", raw, local_offset + 26)[0]
+            local_extra_length = struct.unpack_from("<H", raw, local_offset + 28)[0]
+            data_offset = local_offset + 30 + local_name_length + local_extra_length
+            if (
+                local_flags & 0x1
+                or local_flags != central_flags
+                or data_offset > next_offset
+                or next_offset > central_directory_offset
+            ):
+                raise ScanError("The ZIP has inconsistent or overlapping local-entry metadata.")
+            physical_compressed_bytes = next_offset - data_offset
+            if compressed_size > physical_compressed_bytes:
+                raise ScanError("The ZIP reports an impossible compressed size.")
+            metadata[local_offset] = ZipEntryMetadata(
+                compressed_size=compressed_size,
+                original_size=original_size,
+                local_header_offset=local_offset,
+                physical_compressed_bytes=physical_compressed_bytes,
+            )
+        return metadata
+    raise ScanError("The ZIP is missing its end-of-central-directory record.")
+
+
+def validated_zip_entries(path: Path) -> tuple[bytes, list[zipfile.ZipInfo]]:
+    """Return the immutable archive snapshot and entries that were validated."""
+    with path.open("rb") as stream:
+        raw = stream.read(MAX_ARCHIVE_BYTES + 1)
+    if len(raw) > MAX_ARCHIVE_BYTES:
+        raise ScanError("The ZIP exceeds the 25 MiB compressed archive limit.")
+    metadata = inspect_zip_structure(raw)
+    try:
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            entries = archive.infolist()
+    except zipfile.BadZipFile as error:
+        raise ScanError("The file is named ZIP but does not have a valid ZIP structure.") from error
+    if len(entries) != len(metadata):
+        raise ScanError("The ZIP entry count does not match its central directory.")
     expanded = 0
     for entry in entries:
+        declared = metadata.get(entry.header_offset)
+        if (
+            declared is None
+            or declared.original_size != entry.file_size
+            or declared.compressed_size != entry.compress_size
+        ):
+            raise ScanError("The ZIP entry metadata is inconsistent.")
         if entry.flag_bits & 0x1:
             raise ScanError("Encrypted ZIP entries are not supported.")
         if entry.is_dir():
@@ -385,13 +546,14 @@ def validated_zip_entries(path: Path) -> list[zipfile.ZipInfo]:
         if entry.file_size > MAX_ENTRY_BYTES:
             raise ScanError("A supported ZIP entry exceeds the 20 MiB per-entry limit.")
         if entry.file_size and (
-            entry.compress_size == 0 or entry.file_size / entry.compress_size > MAX_COMPRESSION_RATIO
+            declared.physical_compressed_bytes == 0
+            or entry.file_size / declared.physical_compressed_bytes > MAX_COMPRESSION_RATIO
         ):
-            raise ScanError("A ZIP entry exceeds the safe 50:1 expansion ratio.")
+            raise ScanError("A ZIP entry exceeds the safe 50:1 physical expansion ratio.")
         expanded += entry.file_size
         if expanded > MAX_EXPANDED_BYTES:
             raise ScanError("The ZIP expands beyond the 100 MiB total limit.")
-    return entries
+    return raw, entries
 
 
 def load_contacts(path: Path) -> tuple[str, list[Contact], int, int]:
@@ -403,13 +565,15 @@ def load_contacts(path: Path) -> tuple[str, list[Contact], int, int]:
     if suffix != ".zip":
         raise ScanError("Choose a LinkedIn ZIP, Connections.csv, or Google Contacts CSV.")
 
-    entries = validated_zip_entries(path)
+    raw, entries = validated_zip_entries(path)
     csv_entries = [entry for entry in entries if entry.filename.lower().endswith(".csv")]
     exact = [entry for entry in csv_entries if Path(entry.filename).name.lower() == "connections.csv"]
     if len(exact) > 1:
         raise ScanError("The ZIP contains multiple Connections.csv files; choose the intended CSV directly.")
     candidates = exact or csv_entries
-    with zipfile.ZipFile(path) as archive:
+    # Parse the same immutable bytes inspected above. Reopening the pathname here
+    # would allow a local replacement between validation and decompression.
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         for entry in candidates:
             try:
                 source_label, contacts, duplicates, skipped = parse_contact_csv(
@@ -422,7 +586,11 @@ def load_contacts(path: Path) -> tuple[str, list[Contact], int, int]:
     raise ScanError("The ZIP does not contain a recognized Connections.csv or Google Contacts CSV.")
 
 
-def parse_relationships(path: Path) -> list[Relationship]:
+def add_count(counts: dict[str, int], reason: str) -> None:
+    counts[reason] = counts.get(reason, 0) + 1
+
+
+def parse_relationships(path: Path) -> tuple[list[Relationship], int, dict[str, int]]:
     if not path.is_file() or path.suffix.lower() != ".csv":
         raise ScanError("The relationship evidence must be a readable CSV file.")
     text = read_limited_csv(path)
@@ -432,10 +600,15 @@ def parse_relationships(path: Path) -> list[Relationship]:
         raise ScanError("Relationship CSV needs Source, Target, Relationship, and Status columns.")
     mapping = header_map(rows[index])
     relationships: list[Relationship] = []
-    for row in rows[index + 1 :]:
+    exclusions: dict[str, int] = {}
+    data_rows = rows[index + 1 :]
+    if len(data_rows) > MAX_CONTACTS:
+        raise ScanError(f"The relationship file exceeds the {MAX_CONTACTS:,}-row limit.")
+    for row in data_rows:
         source_name = pick(row, mapping, "Source")
         target_name = pick(row, mapping, "Target")
         if not source_name or not target_name:
+            add_count(exclusions, "missing_source_or_target")
             continue
         relationships.append(
             Relationship(
@@ -443,18 +616,13 @@ def parse_relationships(path: Path) -> list[Relationship]:
                 target_name=target_name,
                 label=pick(row, mapping, "Relationship") or "relationship",
                 status=pick(row, mapping, "Status"),
-                evidence=pick(row, mapping, "Evidence"),
                 observed_at=pick(row, mapping, "Observed At", "Observed On", "Date"),
                 target_company=pick(row, mapping, "Target Company"),
                 target_position=pick(row, mapping, "Target Position"),
                 target_url=safe_linkedin_profile_url(pick_raw(row, mapping, "Target URL")),
             )
         )
-        if len(relationships) > MAX_CONTACTS:
-            raise ScanError(f"The relationship file exceeds the {MAX_CONTACTS:,}-row limit.")
-    if not relationships:
-        raise ScanError("The relationship CSV contains no usable relationship rows.")
-    return relationships
+    return relationships, len(data_rows), exclusions
 
 
 def parse_date(value: str) -> datetime | None:
@@ -467,7 +635,17 @@ def parse_date(value: str) -> datetime | None:
         return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except ValueError:
         pass
-    for pattern in ("%d %b %Y", "%b %d, %Y", "%m/%d/%Y", "%Y-%m-%d", "%d/%m/%Y"):
+    slash_date = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{4})", candidate)
+    if slash_date:
+        first, second, year = (int(part) for part in slash_date.groups())
+        if first <= 12 and second <= 12:
+            return None
+        pattern = "%d/%m/%Y" if first > 12 else "%m/%d/%Y"
+        try:
+            return datetime.strptime(candidate, pattern).replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    for pattern in ("%d %b %Y", "%b %d, %Y"):
         try:
             return datetime.strptime(candidate, pattern).replace(tzinfo=timezone.utc)
         except ValueError:
@@ -479,7 +657,10 @@ def freshness_points(value: str) -> tuple[int, str]:
     observed = parse_date(value)
     if observed is None:
         return 0, "no usable date"
-    age_days = max(0, (datetime.now(timezone.utc) - observed).days)
+    now = datetime.now(timezone.utc)
+    if observed > now:
+        return 0, "future date; not usable"
+    age_days = (now - observed).days
     if age_days <= 366:
         points = 15
     elif age_days <= 2 * 366:
@@ -495,7 +676,11 @@ def goal_points(contact: Contact, goal: str) -> tuple[int, str]:
     context = normalize(f"{contact.position} {contact.company}")
     if not context:
         return 0, "goal fit unknown"
-    matches = [keyword for keyword in GOAL_KEYWORDS[goal] if keyword in context]
+    matches = [
+        keyword
+        for keyword in GOAL_KEYWORDS[goal]
+        if re.search(rf"\b{re.escape(keyword)}\b", context)
+    ]
     if len(matches) >= 2:
         return 15, f"matched {matches[0]} and {matches[1]}"
     if len(matches) == 1:
@@ -530,15 +715,26 @@ def score_direct(contact: Contact, goal: str) -> ScoredDirect:
     fresh, fresh_reason = freshness_points(contact.connected_on)
     relevance, relevance_reason = goal_points(contact, goal)
     identity, identity_reason = identity_points(contact)
-    score = min(100, 40 + 18 + fresh + relevance + identity)
+    score = min(
+        100,
+        DIRECT_RECORD_BASE + DIRECT_EXPORT_EVIDENCE + fresh + relevance + identity,
+    )
     return ScoredDirect(
         contact=contact,
         score=score,
-        factors=["direct export", relevance_reason, fresh_reason, identity_reason],
+        factors=[
+            f"direct-record base +{DIRECT_RECORD_BASE}",
+            f"direct-export evidence +{DIRECT_EXPORT_EVIDENCE}",
+            f"goal fit +{relevance} ({relevance_reason})",
+            f"freshness +{fresh} ({fresh_reason})",
+            f"identity +{identity} ({identity_reason})",
+        ],
     )
 
 
-def build_paths(contacts: list[Contact], relationships: list[Relationship], goal: str) -> list[ScoredPath]:
+def build_paths(
+    contacts: list[Contact], relationships: list[Relationship], goal: str
+) -> tuple[list[ScoredPath], dict[str, int]]:
     direct_by_name: dict[str, list[Contact]] = {}
     for contact in contacts:
         direct_by_name.setdefault(normalize(contact.name), []).append(contact)
@@ -547,17 +743,25 @@ def build_paths(contacts: list[Contact], relationships: list[Relationship], goal
     }
     direct_names = set(direct_by_name)
     paths: list[ScoredPath] = []
+    exclusions: dict[str, int] = {}
     for row_number, relationship in enumerate(relationships, start=1):
         source_key = normalize(relationship.source_name)
         target_key = normalize(relationship.target_name)
         source_connector = unique_direct.get(source_key)
         target_connector = unique_direct.get(target_key)
         if bool(source_connector) == bool(target_connector):
+            if source_connector and target_connector:
+                add_count(exclusions, "both_endpoints_are_direct")
+            elif source_key in direct_names or target_key in direct_names:
+                add_count(exclusions, "direct_endpoint_is_ambiguous")
+            else:
+                add_count(exclusions, "no_direct_endpoint")
             continue
         connector = source_connector or target_connector
         assert connector is not None
         target_name = relationship.target_name if source_connector else relationship.source_name
         if normalize(target_name) in direct_names:
+            add_count(exclusions, "other_endpoint_is_direct_or_ambiguous")
             continue
         target_company = relationship.target_company if source_connector else ""
         target_position = relationship.target_position if source_connector else ""
@@ -581,7 +785,7 @@ def build_paths(contacts: list[Contact], relationships: list[Relationship], goal
         fresh, fresh_reason = freshness_points(relationship.observed_at)
         relevance, relevance_reason = goal_points(target, goal)
         identity, identity_reason = identity_points(target)
-        score = min(100, 25 + evidence + fresh + relevance + identity)
+        score = min(100, PATH_RECORD_BASE + evidence + fresh + relevance + identity)
         paths.append(
             ScoredPath(
                 connector=connector,
@@ -589,10 +793,19 @@ def build_paths(contacts: list[Contact], relationships: list[Relationship], goal
                 relationship=relationship,
                 score=score,
                 supported=evidence >= 18,
-                factors=[evidence_reason, relevance_reason, fresh_reason, identity_reason],
+                factors=[
+                    f"path base +{PATH_RECORD_BASE}",
+                    f"evidence +{evidence} ({evidence_reason})",
+                    f"goal fit +{relevance} ({relevance_reason})",
+                    f"freshness +{fresh} ({fresh_reason})",
+                    f"identity +{identity} ({identity_reason})",
+                ],
             )
         )
-    return sorted(paths, key=lambda item: (not item.supported, -item.score, normalize(item.target.name)))
+    return (
+        sorted(paths, key=lambda item: (not item.supported, -item.score, normalize(item.target.name))),
+        exclusions,
+    )
 
 
 def apply_target(result: ScanResult, query: str) -> None:
@@ -634,27 +847,31 @@ def demo_data(owner: str, goal: str) -> ScanResult:
         Contact("demo-morgan", "Morgan Partner", "Trade Alliance", "Partnerships Director", "2024-08-03", "Synthetic", False, True),
     ]
     relationships = [
-        Relationship("Jordan Host", "Taylor Guest", "recorded podcast", "confirmed", "Synthetic episode receipt", "2026-06-01", "Trade Media", "Host"),
-        Relationship("Morgan Partner", "Casey Buyer", "shared event", "shared_context", "Synthetic event listing", "2026-04-10", "Home Services Group", "President"),
+        Relationship(
+            "Jordan Host", "Taylor Guest", "recorded podcast", "confirmed",
+            observed_at="2026-06-01", target_company="Trade Media", target_position="Host",
+        ),
+        Relationship(
+            "Morgan Partner", "Casey Buyer", "shared event", "shared_context",
+            observed_at="2026-04-10", target_company="Home Services Group", target_position="President",
+        ),
     ]
     direct = sorted((score_direct(contact, goal) for contact in contacts), key=lambda item: -item.score)
-    paths = build_paths(contacts, relationships, goal)
-    return ScanResult(owner, goal, "Synthetic demo", contacts, direct, paths, 0, 0, ["Every person and relationship in this report is fictional."])
-
-
-def aliaser(result: ScanResult):
-    aliases: dict[str, str] = {normalize(result.owner): "Network Owner"}
-    counter = 0
-
-    def alias(name: str) -> str:
-        nonlocal counter
-        key = normalize(name)
-        if key not in aliases:
-            counter += 1
-            aliases[key] = f"Person {counter:03d}"
-        return aliases[key]
-
-    return alias
+    paths, exclusions = build_paths(contacts, relationships, goal)
+    return ScanResult(
+        owner=owner,
+        goal=goal,
+        source_label="Synthetic demo",
+        contacts=contacts,
+        direct=direct,
+        paths=paths,
+        duplicates=0,
+        skipped=0,
+        warnings=["Every person and relationship in this report is fictional."],
+        relationship_rows_supplied=len(relationships),
+        relationship_rows_excluded=sum(exclusions.values()),
+        relationship_exclusion_reasons=exclusions,
+    )
 
 
 def display_context(contact: Contact, redact: bool) -> str:
@@ -663,35 +880,37 @@ def display_context(contact: Contact, redact: bool) -> str:
     return " · ".join(part for part in (contact.position, contact.company) if part) or "No role/company supplied"
 
 
-def best_action(result: ScanResult, name) -> tuple[str, str, str]:
+def best_action(result: ScanResult, names: NameRegistry) -> tuple[str, str, str]:
     if result.direct:
         item = result.direct[0]
-        person = name(item.contact.name)
+        person = names.contact(item.contact)
         return person, "; ".join(item.factors[:3]), f"Contact {person} directly with a specific, relevant reason."
     supported = [item for item in result.paths if item.supported]
     if supported:
         item = supported[0]
-        connector = name(item.connector.name)
-        target = name(item.target.name)
+        connector = names.contact(item.connector)
+        target = names.contact(item.target)
         return connector, "; ".join(item.factors[:3]), f"Ask {connector} whether they are comfortable introducing you to {target}; make it easy to decline."
     if result.paths:
         item = result.paths[0]
-        connector = name(item.connector.name)
-        target = name(item.target.name)
+        connector = names.contact(item.connector)
+        target = names.contact(item.target)
         return connector, "; ".join(item.factors[:2]), f"Verify {connector}'s current relationship with {target} before asking for any introduction."
     return "No person selected", "The supplied data does not support a path.", "Refine the goal, confirm ambiguous identities, or add separately authorized relationship evidence."
 
 
-def markdown_report(result: ScanResult, redact: bool) -> str:
-    name = aliaser(result) if redact else (lambda value: value)
-    ask, why, action = best_action(result, name)
+def markdown_report(
+    result: ScanResult, redact: bool, names: NameRegistry | None = None
+) -> str:
+    names = names or NameRegistry(redact)
+    ask, why, action = best_action(result, names)
     supported = [item for item in result.paths if item.supported]
     unsupported = [item for item in result.paths if not item.supported]
     lines = [
         "# Second Ring local report",
         "",
         f"Generated: {datetime.now(timezone.utc).isoformat(timespec='seconds')} · Parser {PARSER_VERSION}",
-        f"Owner: {markdown_cell(name(result.owner))} · Goal: {result.goal} · Source: {result.source_label}",
+        f"Owner: {markdown_cell(names.owner(result.owner))} · Goal: {result.goal} · Source: {result.source_label}",
         "",
         "## Best next action",
         "",
@@ -701,37 +920,41 @@ def markdown_report(result: ScanResult, redact: bool) -> str:
         "",
         "## What the input proves",
         "",
-        f"{len(result.contacts):,} unique direct records · {result.duplicates:,} strong-key duplicates merged · {result.skipped:,} rows skipped · {len(supported):,} supported two-hop paths",
+        f"{len(result.contacts):,} unique direct records · {result.duplicates:,} strong-key duplicates merged · {result.skipped:,} contact rows skipped · {result.relationship_rows_supplied:,} relationship rows supplied · {result.relationship_rows_excluded:,} relationship rows excluded · {len(supported):,} supported two-hop paths",
+        "",
+        f"Applied safety limits: {MAX_ARCHIVE_BYTES // (1024 * 1024)} MiB ZIP · {MAX_EXPANDED_BYTES // (1024 * 1024)} MiB expanded · {MAX_ENTRIES:,} ZIP entries · {MAX_ENTRY_BYTES // (1024 * 1024)} MiB per entry · {MAX_COMPRESSION_RATIO}:1 physical expansion · {MAX_CONTACTS:,} contact or relationship records.",
+        "",
+        "Direct-priority and path-priority scores use different ranking rubrics and are not comparable. Act on direct records before requesting an introduction.",
         "",
     ]
     if result.warnings:
         lines.extend(["## Review warnings", "", *[f"- {warning}" for warning in result.warnings], ""])
     if result.direct:
-        lines.extend(["## Ranked direct actions", "", "| Rank | Person | Context | Score | Evidence |", "|---:|---|---|---:|---|"])
+        lines.extend(["## Ranked direct actions", "", "| Rank | Person | Context | Direct priority | Components |", "|---:|---|---|---:|---|"])
         for index, item in enumerate(result.direct[:10], start=1):
             lines.append(
-                f"| {index} | {markdown_cell(name(item.contact.name))} | {markdown_cell(display_context(item.contact, redact))} | {item.score} | {markdown_cell('; '.join(item.factors))} |"
+                f"| {index} | {markdown_cell(names.contact(item.contact))} | {markdown_cell(display_context(item.contact, redact))} | {item.score} | {markdown_cell('; '.join(item.factors))} |"
             )
         lines.append("")
     if supported:
-        lines.extend(["## Supported two-hop paths", "", "| Rank | Target | Ask | Score | Evidence |", "|---:|---|---|---:|---|"])
+        lines.extend(["## Supported two-hop paths", "", "| Rank | Target | Ask | Relationship | Path priority | Components |", "|---:|---|---|---|---:|---|"])
         for index, item in enumerate(supported[:10], start=1):
             lines.append(
-                f"| {index} | {markdown_cell(name(item.target.name))} | {markdown_cell(name(item.connector.name))} | {item.score} | {markdown_cell(item.relationship.status)}: {markdown_cell('; '.join(item.factors))} |"
+                f"| {index} | {markdown_cell(names.contact(item.target))} | {markdown_cell(names.contact(item.connector))} | {markdown_cell(item.relationship.label)} ({markdown_cell(item.relationship.status)}) | {item.score} | {markdown_cell('; '.join(item.factors))} |"
             )
         lines.append("")
     if unsupported:
         lines.extend(["## Context to verify — not introduction paths", "", "| Target | Possible connector | Status | Why held back |", "|---|---|---|---|"])
         for item in unsupported[:10]:
             lines.append(
-                f"| {markdown_cell(name(item.target.name))} | {markdown_cell(name(item.connector.name))} | {markdown_cell(item.relationship.status or 'unknown')} | {markdown_cell(item.factors[0])} |"
+                f"| {markdown_cell(names.contact(item.target))} | {markdown_cell(names.contact(item.connector))} | {markdown_cell(item.relationship.status or 'unknown')} | {markdown_cell(item.relationship.label)}; {markdown_cell(item.factors[1])} |"
             )
         lines.append("")
     if not result.paths:
         lines.extend([
             "## Second-ring status",
             "",
-            "This input proves direct records only. A true second ring requires separately authorized relationship evidence or a consenting contributor; the scanner will not invent one.",
+            "This report contains no usable two-hop path. Direct data alone cannot prove a second ring; separately authorized relationship evidence must also map exactly one unambiguous direct connector to a non-direct target. Review any exclusions above—the scanner will not invent a path.",
             "",
         ])
     lines.extend([
@@ -741,15 +964,15 @@ def markdown_report(result: ScanResult, redact: bool) -> str:
         "",
         "## Privacy receipt",
         "",
-        "The parser made no network requests and emitted no telemetry. It does not select dedicated email/provider-ID fields or include the source path, source filename, or raw rows. It best-effort redacts email-like and known provider-ID tokens found in selected display fields. If an AI product launched this script, that product's own workspace and data policy still apply.",
+        "The parser made no network requests and emitted no telemetry. It does not select dedicated email/provider-ID fields, free-text Evidence notes, or include the source path, source filename, or raw rows. It best-effort redacts email-like and known provider-ID tokens found in selected display fields. If an AI product launched this script, that product's own workspace and data policy still apply.",
         "",
     ])
     return "\n".join(lines)
 
 
 def html_report(result: ScanResult, redact: bool) -> str:
-    markdown = markdown_report(result, redact)
-    name = aliaser(result) if redact else (lambda value: value)
+    names = NameRegistry(redact)
+    markdown = markdown_report(result, redact, names)
     nodes = [item.contact for item in result.direct[:6]]
     supported_paths = [item for item in result.paths if item.supported][:4]
     width, height = 920, 560
@@ -761,7 +984,7 @@ def html_report(result: ScanResult, redact: bool) -> str:
         x = center_x + math.cos(angle) * 190
         y = center_y + math.sin(angle) * 170
         edge_markup.append(f'<line x1="{center_x:.1f}" y1="{center_y:.1f}" x2="{x:.1f}" y2="{y:.1f}" class="edge direct"/>')
-        node_markup.append(f'<g><circle cx="{x:.1f}" cy="{y:.1f}" r="48" class="node direct"/><text x="{x:.1f}" y="{y:.1f}" class="label">{html.escape(name(contact.name))}</text></g>')
+        node_markup.append(f'<g><circle cx="{x:.1f}" cy="{y:.1f}" r="48" class="node direct"/><text x="{x:.1f}" y="{y:.1f}" class="label">{html.escape(names.contact(contact))}</text></g>')
     for index, path in enumerate(supported_paths):
         connector_index = next((i for i, contact in enumerate(nodes) if contact.key == path.connector.key), None)
         if connector_index is None:
@@ -773,8 +996,8 @@ def html_report(result: ScanResult, redact: bool) -> str:
         target_x = center_x + math.cos(target_angle) * 315
         target_y = center_y + math.sin(target_angle) * 235
         edge_markup.append(f'<line x1="{connector_x:.1f}" y1="{connector_y:.1f}" x2="{target_x:.1f}" y2="{target_y:.1f}" class="edge second"/>')
-        node_markup.append(f'<g><circle cx="{target_x:.1f}" cy="{target_y:.1f}" r="43" class="node second"/><text x="{target_x:.1f}" y="{target_y:.1f}" class="label">{html.escape(name(path.target.name))}</text></g>')
-    graph = "".join(edge_markup) + f'<circle cx="{center_x}" cy="{center_y}" r="58" class="node owner"/><text x="{center_x}" y="{center_y}" class="label owner-label">{html.escape(name(result.owner))}</text>' + "".join(node_markup)
+        node_markup.append(f'<g><circle cx="{target_x:.1f}" cy="{target_y:.1f}" r="43" class="node second"/><text x="{target_x:.1f}" y="{target_y:.1f}" class="label">{html.escape(names.contact(path.target))}</text></g>')
+    graph = "".join(edge_markup) + f'<circle cx="{center_x}" cy="{center_y}" r="58" class="node owner"/><text x="{center_x}" y="{center_y}" class="label owner-label">{html.escape(names.owner(result.owner))}</text>' + "".join(node_markup)
     escaped_markdown = html.escape(markdown)
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -790,45 +1013,65 @@ svg{{display:block;min-width:760px;width:100%;height:auto}}.edge{{stroke-width:3
 .label{{fill:#fff;text-anchor:middle;dominant-baseline:middle;font-size:13px;font-weight:750}}.owner-label{{font-size:14px}}
 pre{{white-space:pre-wrap;background:#fff;padding:24px;border-radius:18px;border:1px solid #d8d2c7;font:14px/1.6 ui-monospace,monospace}}
 </style></head><body><main><p class="eyebrow">Local · deterministic · no call-home</p><h1>Second Ring report</h1>
-<p class="trust">The parser made no network requests. It does not select dedicated email/provider-ID fields, source paths, source filenames, or raw rows; selected display fields receive best-effort sensitive-token redaction. Your AI product or managed computer may have its own data policy.</p>
+<p class="trust">The parser made no network requests. It does not select dedicated email/provider-ID fields, free-text Evidence notes, source paths, source filenames, or raw rows; selected display fields receive best-effort sensitive-token redaction. Your AI product or managed computer may have its own data policy.</p>
 <div class="graph"><svg viewBox="0 0 {width} {height}" role="img" aria-label="Relationship graph"><title>Second Ring relationship graph</title>{graph}</svg></div>
 <pre>{escaped_markdown}</pre></main></body></html>"""
 
 
 def json_report(result: ScanResult, redact: bool) -> str:
-    name = aliaser(result) if redact else (lambda value: value)
+    names = NameRegistry(redact)
     supported = [item for item in result.paths if item.supported]
-    ask, why, action = best_action(result, name)
+    ask, why, action = best_action(result, names)
     payload = {
         "schemaVersion": "second-ring-local-report-v1",
         "parserVersion": PARSER_VERSION,
         "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "owner": name(result.owner),
+        "owner": names.owner(result.owner),
         "goal": result.goal,
         "source": result.source_label,
         "counts": {
             "direct": len(result.contacts),
             "duplicates": result.duplicates,
             "skipped": result.skipped,
+            "relationshipRowsSupplied": result.relationship_rows_supplied,
+            "relationshipRowsExcluded": result.relationship_rows_excluded,
             "supportedTwoHopPaths": len(supported),
+        },
+        "relationshipExclusionReasons": result.relationship_exclusion_reasons,
+        "limits": {
+            "maxArchiveBytes": MAX_ARCHIVE_BYTES,
+            "maxExpandedBytes": MAX_EXPANDED_BYTES,
+            "maxEntries": MAX_ENTRIES,
+            "maxEntryBytes": MAX_ENTRY_BYTES,
+            "maxPhysicalExpansionRatio": MAX_COMPRESSION_RATIO,
+            "maxRecords": MAX_CONTACTS,
+        },
+        "scoring": {
+            "directScope": "direct_priority",
+            "pathScope": "two_hop_path_priority",
+            "comparableAcrossScopes": False,
+            "instruction": "Act on direct records before requesting an introduction.",
         },
         "bestAction": {"person": ask, "why": why, "action": action},
         "warnings": result.warnings,
         "direct": [
             {
-                "person": name(item.contact.name),
+                "person": names.contact(item.contact),
                 "context": display_context(item.contact, redact),
                 "score": item.score,
+                "scoreScope": "direct_priority",
                 "factors": item.factors,
             }
             for item in result.direct[:10]
         ],
         "paths": [
             {
-                "target": name(item.target.name),
-                "connector": name(item.connector.name),
+                "target": names.contact(item.target),
+                "connector": names.contact(item.connector),
                 "score": item.score,
+                "scoreScope": "two_hop_path_priority",
                 "supported": item.supported,
+                "relationship": item.relationship.label,
                 "status": item.relationship.status,
                 "factors": item.factors,
             }
@@ -866,8 +1109,15 @@ def run(args: argparse.Namespace) -> str:
     else:
         source_label, contacts, duplicates, skipped = load_contacts(args.input)
         direct = sorted((score_direct(contact, args.goal) for contact in contacts), key=lambda item: (-item.score, normalize(item.contact.name)))
-        relationships = parse_relationships(args.relationships) if args.relationships else []
-        paths = build_paths(contacts, relationships, args.goal)
+        if args.relationships:
+            relationships, relationship_rows, relationship_exclusions = parse_relationships(
+                args.relationships
+            )
+        else:
+            relationships, relationship_rows, relationship_exclusions = [], 0, {}
+        paths, path_exclusions = build_paths(contacts, relationships, args.goal)
+        for reason, count in path_exclusions.items():
+            relationship_exclusions[reason] = relationship_exclusions.get(reason, 0) + count
         warnings: list[str] = []
         name_counts: dict[str, int] = {}
         for contact in contacts:
@@ -876,7 +1126,33 @@ def run(args: argparse.Namespace) -> str:
         duplicate_names = sum(1 for count in name_counts.values() if count > 1)
         if duplicate_names:
             warnings.append(f"{duplicate_names} normalized name collisions remain separate and require human review.")
-        result = ScanResult(clean_display(args.owner), args.goal, source_label, contacts, direct, paths, duplicates, skipped, warnings)
+        relationship_rows_excluded = sum(relationship_exclusions.values())
+        if relationship_rows_excluded:
+            detail = ", ".join(
+                f"{count} {reason.replace('_', ' ')}"
+                for reason, count in sorted(relationship_exclusions.items())
+            )
+            warnings.append(
+                f"{relationship_rows_excluded} of {relationship_rows} relationship rows did not become paths ({detail})."
+            )
+        if args.relationships and not relationships:
+            warnings.append(
+                "The relationship CSV contained no rows with both Source and Target; direct results remain available."
+            )
+        result = ScanResult(
+            owner=clean_display(args.owner),
+            goal=args.goal,
+            source_label=source_label,
+            contacts=contacts,
+            direct=direct,
+            paths=paths,
+            duplicates=duplicates,
+            skipped=skipped,
+            warnings=warnings,
+            relationship_rows_supplied=relationship_rows,
+            relationship_rows_excluded=relationship_rows_excluded,
+            relationship_exclusion_reasons=relationship_exclusions,
+        )
     apply_target(result, clean_display(args.target))
     if args.format == "html":
         return html_report(result, args.redact_names)

@@ -81,9 +81,10 @@ marks each copy with an invisible tag so it knows which text it owns:
 <!-- shared-rule:no-black-buttons:end -->
 ```
 
-Nobody types those copies and nobody edits them. The command writes them. Today
-that is **10 rules × 28 files = 280 copies**, all generated, all identical to
-their source.
+Nobody types those copies and nobody edits them. The command writes the
+scope-derived copies, all generated and all identical to their source. The
+validator derives the expected set from the current standards and skills instead
+of relying on a narrative count that can drift.
 
 **The build refuses to let a copy go stale.** Every time a change is proposed,
 an automatic check re-runs the stamp and compares. If one copy differs from the
