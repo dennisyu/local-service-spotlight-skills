@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the local BlitzMetrics Claude marketplace without dependencies."""
+"""Validate the local Local Service Spotlight Claude marketplace without dependencies."""
 
 from __future__ import annotations
 
@@ -8,13 +8,43 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from standards_lib import (  # noqa: E402
+    StandardError,
+    load_standards,
+    skill_scopes,
+    standards_for,
+)
+
+
+EVERYTHING_PLUGIN = "lss-everything"
 KEBAB = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LOCAL_REFERENCE = re.compile(
     r"(?<![\w/])((?:references|scripts|assets)/[A-Za-z0-9_.\-/]+)"
 )
-SHARED_RULE_START = "<!-- shared-rule:silent-media-playback:start -->"
-SHARED_RULE_END = "<!-- shared-rule:silent-media-playback:end -->"
+
+
+def expected_blocks(root: Path) -> tuple[list[tuple[str, str]], list[str]]:
+    """Return ([(slug, block)], errors) for every rule in standards/.
+
+    Every rule is checked in every distributed skill, not one chosen rule.
+    Hardcoding a single slug here was the second place propagation silently
+    narrowed to a single file.
+    """
+    try:
+        standards = load_standards(root / "standards")
+    except StandardError as exc:
+        return [], [f"standards/ is malformed: {exc}"]
+    if not standards:
+        return [], ["standards/ contains no rules"]
+    return [(s.slug, s.block()) for s in standards], []
+
+
+def blocks_for_skill(root: Path, skill_file: Path) -> list[tuple[str, str]]:
+    standards = load_standards(root / "standards")
+    keep = standards_for(standards, skill_scopes(skill_file))
+    return [(s.slug, s.block()) for s in keep]
 
 
 def _frontmatter(path: Path) -> dict[str, str]:
@@ -50,7 +80,6 @@ def validate(root: Path) -> list[str]:
 
     plugin_names: set[str] = set()
     everything: list[str] | None = None
-    everything_plugin: dict[str, object] | None = None
     for index, plugin in enumerate(plugins):
         if not isinstance(plugin, dict):
             errors.append(f"plugins[{index}] must be an object")
@@ -77,14 +106,13 @@ def validate(root: Path) -> list[str]:
             skill_path = root / skill_ref.removeprefix("./")
             if not (skill_path / "SKILL.md").is_file():
                 errors.append(f"plugin {name!r} references missing {skill_ref}/SKILL.md")
-        if name == "blitzmetrics-everything":
+        if name == EVERYTHING_PLUGIN:
             if everything is not None:
-                errors.append("blitzmetrics-everything must appear exactly once")
+                errors.append(f"{EVERYTHING_PLUGIN} must appear exactly once")
             everything = skills
-            everything_plugin = plugin
 
     if everything is None:
-        errors.append("missing required blitzmetrics-everything plugin")
+        errors.append(f"missing required {EVERYTHING_PLUGIN} plugin")
         everything_set: set[str] = set()
     else:
         everything_set = set(everything)
@@ -94,70 +122,21 @@ def validate(root: Path) -> list[str]:
     ) if (root / "skills").is_dir() else []
     actual_refs = {f"./skills/{path.name}" for path in skill_dirs}
     for missing in sorted(actual_refs - everything_set):
-        errors.append(f"skill is not in blitzmetrics-everything: {missing}")
+        errors.append(f"skill is not in {EVERYTHING_PLUGIN}: {missing}")
     for stale in sorted(everything_set - actual_refs):
-        errors.append(f"blitzmetrics-everything has a stale skill path: {stale}")
+        errors.append(f"{EVERYTHING_PLUGIN} has a stale skill path: {stale}")
 
-    grok_manifest_path = root / ".grok-plugin" / "plugin.json"
-    try:
-        grok_manifest = json.loads(grok_manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        errors.append(
-            f"cannot read {grok_manifest_path.relative_to(root)}: {exc}"
-        )
-        grok_manifest = None
-
-    if not isinstance(grok_manifest, dict):
-        if grok_manifest is not None:
-            errors.append(".grok-plugin/plugin.json must contain an object")
-    elif everything_plugin is not None:
-        expected_name = everything_plugin.get("name")
-        if grok_manifest.get("name") != expected_name:
-            errors.append(
-                "Grok plugin name must match the Claude blitzmetrics-everything "
-                f"name {expected_name!r}, found {grok_manifest.get('name')!r}"
-            )
-
-        metadata = manifest.get("metadata")
-        expected_version = metadata.get("version") if isinstance(metadata, dict) else None
-        if not isinstance(expected_version, str) or not expected_version:
-            errors.append("Claude marketplace metadata.version must be a non-empty string")
-        elif grok_manifest.get("version") != expected_version:
-            errors.append(
-                "Grok plugin version must match Claude marketplace metadata.version "
-                f"{expected_version!r}, found {grok_manifest.get('version')!r}"
-            )
-
-        grok_skills = grok_manifest.get("skills")
-        if grok_skills != "./skills/":
-            errors.append(
-                "Grok plugin skills must be './skills/' so it resolves to the "
-                "Claude blitzmetrics-everything inventory, "
-                f"found {grok_skills!r}"
-            )
-        elif actual_refs != everything_set:
-            errors.append(
-                "Grok ./skills/ inventory must match Claude blitzmetrics-everything"
-            )
-
-    try:
-        shared_rule = (
-            root / "standards" / "silent-media-playback.md"
-        ).read_text(encoding="utf-8").strip()
-        expected_rule_block = (
-            f"{SHARED_RULE_START}\n{shared_rule}\n{SHARED_RULE_END}"
-        )
-    except OSError as exc:
-        errors.append(f"cannot read shared media rule: {exc}")
-        expected_rule_block = ""
+    blocks, block_errors = expected_blocks(root)
+    errors.extend(block_errors)
 
     agents_file = root / "AGENTS.md"
     if not agents_file.is_file():
-        errors.append("missing AGENTS.md with the shared media rule")
-    elif expected_rule_block and expected_rule_block not in agents_file.read_text(
-        encoding="utf-8"
-    ):
-        errors.append("AGENTS.md has a missing or stale shared media rule")
+        errors.append("missing AGENTS.md with the shared house rules")
+    else:
+        agents_text = agents_file.read_text(encoding="utf-8")
+        for slug, block in blocks:
+            if block not in agents_text:
+                errors.append(f"AGENTS.md has a missing or stale shared rule: {slug}")
 
     for skill_dir in skill_dirs:
         skill_file = skill_dir / "SKILL.md"
@@ -172,12 +151,18 @@ def validate(root: Path) -> list[str]:
             )
         if not metadata.get("description"):
             errors.append(f"{skill_file.relative_to(root)} needs a description")
-        if expected_rule_block and expected_rule_block not in skill_file.read_text(
-            encoding="utf-8"
-        ):
-            errors.append(
-                f"{skill_file.relative_to(root)} has a missing or stale shared media rule"
-            )
+        skill_text = skill_file.read_text(encoding="utf-8")
+        try:
+            expected_here = blocks_for_skill(root, skill_file)
+        except StandardError as exc:
+            errors.append(str(exc))
+            expected_here = []
+        for slug, block in expected_here:
+            if block not in skill_text:
+                errors.append(
+                    f"{skill_file.relative_to(root)} has a missing or stale "
+                    f"shared rule: {slug}"
+                )
 
         for markdown in skill_dir.rglob("*.md"):
             text = markdown.read_text(encoding="utf-8")

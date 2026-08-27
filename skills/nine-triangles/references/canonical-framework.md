@@ -46,7 +46,7 @@ This is an operational summary, not a reproduction of paid course lessons.
 
 ## Known name drift
 
-- **ACC — Awareness · Consideration · Conversion** appears on older BlitzMetrics
+- **ACC — Awareness · Consideration · Conversion** appears on older company
   checklist/course pages. The August 2026 definitive article uses the operating
   language **Audience · Engagement · Conversion**. This accepted reference treats
   ACC as the legacy funnel alias and AEC as the current operational label; disclose
@@ -64,7 +64,7 @@ This is an operational summary, not a reproduction of paid course lessons.
 - `https://blitzmetrics.com/blitzmetrics-9-triangles-checklist/` — legacy checklist
   showing ACC language.
 - `https://blitzmetrics.com/ntf/` — course/landing page.
-- BlitzMetrics Task Library — access-controlled source to verify during owner
+- Local Service Spotlight Task Library — access-controlled source to verify during owner
   review; do not claim its current wording without an access receipt.
 
 If these sources change, update this file through a reviewed pull request and add

@@ -1,7 +1,6 @@
 # Contributing safely
 
-This repository is the canonical source for the BlitzMetrics Claude marketplace
-and Grok Build plugin.
+This repository is the canonical source for the Local Service Spotlight Claude marketplace.
 A green-looking agent report is not proof that a change reached a user or ran on
 schedule. Changes therefore move through a branch, automated checks, review, and
 an acceptance receipt.
@@ -30,30 +29,58 @@ release identity; a ZIP filename or modification date is not.
 
 1. Add `skills/<skill-name>/SKILL.md`. The directory and frontmatter `name` must
    be the same stable kebab-case value.
-2. Add `./skills/<skill-name>` to `blitzmetrics-everything` in
+2. Add `./skills/<skill-name>` to `lss-everything` in
    `.claude-plugin/marketplace.json` and any appropriate topical bundle.
 3. Do not rename an existing skill or bundle. Treat a rename as a migration:
    audit scheduled prompts and installed copies first.
 4. Run the checks below.
 
+## Capturing a house rule
+
+**A rule that lives only in an article is a rule the next agent will break.** The
+black-button rule was published on 17 May 2026 and broken by an agent holding the
+whole pack in context on 15 August 2026, because it was never in `standards/`.
+
+When anyone states a rule — the account owner, a client, an audit, or your own
+failure — capture it in the same session:
+
+```bash
+python3 scripts/new_standard.py "No autoplay with sound" \
+  --from "Dennis Yu, Cowork session, 2026-08-16" \
+  --applies-to published-html
+```
+
+Then write the rule, add machine checks if an honest one exists, and sync:
+
+```bash
+python3 scripts/fleet_check.py --self-test    # proves the checks actually fire
+python3 scripts/sync_shared_rules.py          # stamps it into all 27 skills
+```
+
+`--from` is required. Provenance is how we see which channels leak: if a source
+never appears in `captured_from`, that source is not being captured.
+
+Adding a rule is a file drop — no code change, no bundle edit. Plain language
+walkthrough: [HOW-KNOWLEDGE-PROPAGATES.md](HOW-KNOWLEDGE-PROPAGATES.md).
+
 ## Local checks
 
 ```bash
 python3 scripts/sync_shared_rules.py --check
+python3 scripts/fleet_check.py --self-test
 python3 scripts/validate_marketplace.py
 python3 -m unittest discover -s tests -v
 npx -y @anthropic-ai/claude-code@latest plugin validate .
-grok plugin validate .
 ```
 
-Shared agent rules live under `standards/`. After changing one, run
-`python3 scripts/sync_shared_rules.py` to update the self-contained copy inside
-every distributed skill. Never hand-edit a generated block; validation rejects
-missing or stale copies.
+Shared house rules live under `standards/`, one file per rule. After changing
+one, run `python3 scripts/sync_shared_rules.py` to update the self-contained copy
+inside every distributed skill. Never hand-edit a generated block; validation
+rejects missing or stale copies, for every rule, in every skill.
 
-The repository check also keeps the Grok plugin name, version, and shared skill
-directory aligned with Claude's `blitzmetrics-everything` bundle. The final two
-checks use Claude's and Grok's official validators.
+`--self-test` runs each rule's machine checks against the passing and failing
+samples in its own header. A check with no bite is the failure mode that matters:
+it reports every site clean forever and looks exactly like a working check.
 
 ## What status words mean
 

@@ -1,0 +1,14 @@
+# Fleet sweep targets — one URL per line, optional comma-separated tags.
+#
+#   python3 scripts/fleet_check.py --targets fleet.example.txt
+#
+# Tags decide which rules apply. A rule with "target_tags" in its header only
+# runs on pages carrying one of those tags, so a personal-brand rule does not
+# fire on a product site. A rule with no target_tags applies everywhere.
+#
+# Copy this file, add the client sites you are responsible for, and keep the
+# copy out of version control if the list is not public.
+
+https://blitzmetrics.com/               company
+https://localservicespotlight.com/      company
+https://dennisyu.com/                   personal-brand

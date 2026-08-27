@@ -20,8 +20,8 @@ Do not record passwords, tokens, or private client data here.
 1. Start with an account or workspace that does not already have this marketplace.
 2. Add `https://github.com/dennisyu/local-service-spotlight-skills` as a marketplace.
 3. Confirm all five bundles appear.
-4. Install `blitzmetrics-everything`.
-5. Confirm all 28 expected skills are listed and enabled.
+4. Install `lss-everything`.
+5. Confirm all 32 expected skills are listed and enabled.
 6. Start a fresh chat and use a literal trigger phrase from one selected skill.
 7. Confirm the selected skill activates and its output matches its contract.
 8. Restart Claude, return to a fresh chat, and repeat the activation check.
@@ -95,34 +95,38 @@ Fail on audible output, playback before silence is established, missing state
 evidence, or a delegated agent that did not receive the rule. A prose claim such
 as “I kept it muted” is not an acceptance receipt.
 
-## F. Grok Build native plugin install
+## F. House-rule propagation and fleet sweep
 
-Run the native manifest validator from the repository root:
+Run after adding or amending anything in `standards/`.
 
-```bash
-grok plugin validate .
-```
+**Propagation — the rule reached the skills**
 
-For a fresh-environment install receipt, isolate the canary from existing Grok
-plugins, install the canonical repository, and verify the stable plugin identity
-and full inventory:
+1. `python3 scripts/sync_shared_rules.py --check` exits 0.
+2. `python3 scripts/validate_marketplace.py` exits 0 — this checks *every* rule
+   in *every* skill, not one hardcoded rule.
+3. Count the copies and record the number, e.g.
+   `grep -rl "shared-rule:<slug>:start" skills/ | wc -l` returns 32.
+4. On a canary account, sync the commit and start a fresh chat. Ask the agent to
+   state the house rule without naming the file. Record the reply verbatim.
 
-```bash
-grok_canary_dir=$(mktemp -d /tmp/blitzmetrics-grok-canary.XXXXXX)
-GROK_HOME="$grok_canary_dir" grok plugin install dennisyu/blitzmetrics-skills --trust
-GROK_HOME="$grok_canary_dir" grok plugin details blitzmetrics-everything
-GROK_HOME="$grok_canary_dir" grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "blitzmetrics-everything"); assert p["enabled"] and p["provides"]["skills"] == 27; print("Grok canary passed: blitzmetrics-everything, 27 skills")'
-```
+Step 4 is the only one that proves distribution reached a *user*. Steps 1–3
+prove the repository is consistent, which is not the same claim.
 
-After installing in the account being accepted, start a fresh headless agent and
-test actual skill activation:
+**Enforcement — the sweep can actually fail**
 
-```bash
-grok -p 'Use the skill-registry skill. In one sentence, identify the numbered registry system that is the only canonical source.'
-```
+5. `python3 scripts/fleet_check.py --self-test` exits 0. Every check flags its
+   violating samples and clears its clean ones.
+6. Sweep the fleet and keep the JSON:
+   `python3 scripts/fleet_check.py --targets <your fleet file> --json report.json`
+7. Record, per URL: findings, rules **not applied** (wrong target tag), and pages
+   **not swept** (fetch failed). A page that could not be fetched is not clean.
+8. Confirm at least one known-bad fixture is caught. A sweep that has never
+   failed has not been shown to work.
 
-Pass when `grok plugin validate .` succeeds, the inventory command prints the
-exact canary line above, and the model answer identifies **System 1, the canonical
-GitHub marketplace**. Record the Grok version, repository commit, plugin version,
-all command output, account/environment, tester, and timestamp. Installation and
-discovery do not by themselves prove activation.
+**Status vocabulary applies here too.** A rule in `standards/` is **Available**.
+A rule stamped into the skills is **Installed**. A rule an agent restates on a
+canary account is **Tested**. A sweep in the Friday fleet audit is **Scheduled**.
+Only a completed run with a timestamped report is **Observed**.
+
+Record the commit SHA, the fleet file used, counts of blocking/warning/not-swept,
+and the tester. Do not record client URLs here if the list is not public.

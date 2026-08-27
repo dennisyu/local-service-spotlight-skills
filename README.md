@@ -1,13 +1,11 @@
-# BlitzMetrics Skills for Claude and Grok
+# Local Service Spotlight Skills for Claude
 
-The canonical marketplace for the 28 BlitzMetrics and Local Service Spotlight
-skills used across authority, content, client operations, and quality assurance.
+The canonical marketplace for the 32 Local Service Spotlight skills used across
+authority, content, client operations, and quality assurance.
 Claude and Grok Build load the same `skills/` source, so the operating method does
 not fork by model.
 
 ## Install
-
-### Claude
 
 Members should start with the illustrated guide:
 [localservicespotlight.com/install](https://localservicespotlight.com/install/).
@@ -17,12 +15,17 @@ When Claude asks for the marketplace repository, paste:
 https://github.com/dennisyu/local-service-spotlight-skills
 ```
 
-Then install `blitzmetrics-everything`.
+Then install `lss-everything`.
+
+If you already added `https://github.com/dennisyu/blitzmetrics-skills` or
+installed `blitzmetrics-everything`, remove that marketplace and add this one.
+GitHub redirects the old repository URL. Claude still needs a fresh install of
+`lss-everything` because plugin names are keyed in the account.
 
 The guide and repository have different jobs:
 
 - The **install guide** tells a nontechnical member where to click and how to test.
-- This **GitHub repository** is the source Claude and Grok read and maintainers review.
+- This **GitHub repository** is the source Claude reads and maintainers review.
 - GitHub's `/upload/main` page is for maintainers and is not an install link.
 
 The repository is one update channel, so members do not need a new ZIP for every
@@ -37,7 +40,7 @@ Review the repository, then install it with Grok Build's native plugin command:
 
 ```bash
 grok plugin install dennisyu/local-service-spotlight-skills --trust
-grok plugin details blitzmetrics-everything
+grok plugin details lss-everything
 ```
 
 `--trust` is required for a non-interactive install. Grok plugins can also contain
@@ -47,7 +50,7 @@ this repository currently distributes skills only.
 Run this deterministic inventory canary:
 
 ```bash
-grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "blitzmetrics-everything"); assert p["enabled"] and p["provides"]["skills"] == 27; print("Grok canary passed: blitzmetrics-everything, 27 skills")'
+grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "lss-everything"); assert p["enabled"] and p["provides"]["skills"] == 32; print("Grok canary passed: lss-everything, 32 skills")'
 ```
 
 Then prove that a fresh agent can activate one of the shared skills (this uses one
@@ -72,25 +75,24 @@ Start a new chat and ask in plain language. For example:
 >
 > “Map my second ring from my LinkedIn connections export.”
 
-The active model should select the relevant skill. Seeing the plugin in a list
-proves it is installed; a successful fresh-chat trigger proves that skill is
-working.
+Claude should select the relevant skill. Seeing the plugin in a list proves it is
+installed; a successful fresh-chat trigger proves that skill is working.
 
 ## Bundles
 
-Most people should install `blitzmetrics-everything`.
+Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `blitzmetrics-everything` | All 28 skills |
+| `lss-everything` | All 32 skills |
 | `authority-and-reputation` | Knowledge Panel, AI search, reviews, proof, and relationship paths |
 | `content-engine` | Articles, video, repurposing, and distribution |
-| `client-operations` | Cadence, access, reporting, and audits |
-| `quality-and-standards` | Nine Triangles, verification, QA, judgment, and the registry |
+| `client-operations` | Onboarding, cadence, access, reporting, and audits |
+| `quality-and-standards` | Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
 
 ## Skills, agents, and scheduled jobs
 
-- A **skill** is a written recipe Claude or Grok can use when asked.
+- A **skill** is a written recipe Claude can use when asked.
 - An **agent** carries out a multi-step assignment using skills and tools.
 - A **scheduled job** tells an agent when to run.
 - A **receipt** is timestamped evidence that a run succeeded or failed.
@@ -98,20 +100,34 @@ Most people should install `blitzmetrics-everything`.
 Creating a schedule is not proof that it ran. See [ACCEPTANCE.md](ACCEPTANCE.md)
 for installation, update, and fleet-job checks.
 
-## Workplace-safe media testing
+## House rules travel inside every skill
 
-Every distributed skill carries the same silent-playback guardrail: an agent must
-mute the player and set volume to zero before testing video or audio. The rule
-also applies to delegated agents, reloads, replays, new tabs, and alternate
-players. If mute cannot be controlled and verified, the agent must use captions,
-transcripts, metadata, screenshots, frames, or player state instead of pressing
-Play.
+Every rule the team has learned lives once, as one file, in
+[`standards/`](standards/) — never ship a black button, nothing autoplays with
+sound, no popup on load, every link and entity claim resolves, personal-brand
+heroes are immersive, and the rule about rules: capture what you learn in the
+same session.
 
-The human-readable source is
-[`standards/silent-media-playback.md`](standards/silent-media-playback.md).
-`scripts/sync_shared_rules.py` embeds that source in every `SKILL.md`, and the
-repository validator rejects a pull request when even one copy is missing or
-stale. That is Content · Checklist · Software in a form anyone can inspect.
+`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and all
+32 `SKILL.md` files, so the rules arrive with the pack even though `standards/`
+itself is not distributed. CI rejects a pull request when even one copy is
+missing or stale.
+
+The same file also carries the patterns that detect a violation in real HTML, and
+`scripts/fleet_check.py` compiles them into a live sweep:
+
+```bash
+python3 scripts/fleet_check.py --self-test          # prove the checks bite
+python3 scripts/fleet_check.py --targets fleet.example.txt
+```
+
+One file therefore produces the agent instruction, the human checklist, and the
+automated check — Content · Checklist · Software from a single source, so the
+rule and the thing that enforces it cannot disagree.
+
+**Adding a house rule to the whole fleet is dropping one markdown file into
+`standards/`.** How and why, in plain language:
+[HOW-KNOWLEDGE-PROPAGATES.md](HOW-KNOWLEDGE-PROPAGATES.md).
 
 ## For maintainers
 
@@ -121,7 +137,7 @@ between bundles.
 
 Never commit from GitHub's `/upload/main` page. Create a branch and pull request,
 then let the validation workflow check the manifest, local references, converter,
-Claude marketplace format, and Grok adapter alignment. Full instructions are in
+and Claude marketplace format. Full instructions are in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Do not rename an existing skill or bundle without a migration. Installed copies

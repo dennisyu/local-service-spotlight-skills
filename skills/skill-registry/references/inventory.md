@@ -1,6 +1,6 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last canonical repository audit: 14 August 2026.
+Last canonical repository audit: 27 August 2026.
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `blitzmetrics-everything` | 28 |
+| Skills in `lss-everything` | 32 after merge of `second-ring-network-mapper` |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -21,17 +21,25 @@ This repository is now the identifiable source of truth. The install guide at
 `https://localservicespotlight.com/install/` is the member-facing front door, not
 a competing copy of the skill files.
 
+`gct-screen`, `social-amplification-engine`, and `second-ring-network-mapper` are
+Available after their respective merges only, not proven Installed. The GCT screen
+evaluates one triangle through evidence gates; it does not
+use an invented weighted score and it does not create client or execution authority.
+SAE course Stages 2–4 Goals/Content/Targeting remain the execution taxonomy after an
+accepted engagement and roster gate. Second Ring locally audits owner-authorized
+exports; it does not make private relationship data public or guarantee an introduction.
+
 ## Available bundles
 
 | Bundle | Skills available |
 |---|---:|
-| `blitzmetrics-everything` | 28 |
+| `lss-everything` | 32 |
 | `authority-and-reputation` | 8 |
-| `content-engine` | 6 |
-| `client-operations` | 8 |
-| `quality-and-standards` | 6 |
+| `content-engine` | 7 |
+| `client-operations` | 11 |
+| `quality-and-standards` | 7 |
 
-The topical totals overlap. They are selections over the same 28 directories.
+The topical totals overlap. They are selections over the same 32 directories.
 
 ## Per-account installation register
 
@@ -41,10 +49,6 @@ account/workspace and attach a receipt from `ACCEPTANCE.md`.
 | Account/workspace | Surface | Bundle | Commit/version | Installed | Enabled | Fresh-chat tested | Receipt |
 |---|---|---|---|---|---|---|---|
 | _Not yet evidenced_ | — | — | — | Unknown | Unknown | Unknown | — |
-
-Older claims that Dennis had six account skills and two team plugins were a
-point-in-time account snapshot, not marketplace or fleet state. They must not be
-used as current truth without a new receipt.
 
 ## Scheduled-job register
 
