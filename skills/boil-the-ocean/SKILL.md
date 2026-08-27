@@ -54,9 +54,9 @@ The loop is the `recursive-self-improvement-qa` skill (step 10 of this pack); ht
 - Install this file alongside the ten skills (Project knowledge, Skills, or your `memory/` folder) so every chat that runs a skill runs it this way.
 - Date every run. "We keep the skills current" is a claim; a dated meta-article trail is the proof.
 
-## Model landscape — kept current (August 1, 2026)
+## Model landscape — rewritten weekly
 
-Reviewed the past month's releases. The persistent-agent thesis this file is built on is now shipping infrastructure, not a bet:
+Last rewritten August 26, 2026. This block is a weekly rewrite, not a leftover heading. The routing rule is unchanged: cheapest tier that clears the bar, effort dial before model, always a fallback. The persistent-agent thesis this file is built on is shipping infrastructure, not a bet:
 
 - **Claude Opus 5** (July 24, 2026) added a 1M-token context window and a per-turn reasoning-effort dial — low, medium, high, xhigh. Treat that dial as a routing lever, not a preference: raise effort for the one hard call inside a skill instead of moving the whole run to a pricier model, and drop it for the mechanical steps. Escalate effort before you escalate model.
 - **Claude Sonnet 5** (June 30, 2026) is the cheap agentic workhorse — it plans, drives browsers and terminals, and self-checks. Route bulk skill runs here: draft, collect, sweep, first pass. It is now the sensible default for any step that chains several tool calls; smaller models stay right for single-shot classification and extraction inside a step.
