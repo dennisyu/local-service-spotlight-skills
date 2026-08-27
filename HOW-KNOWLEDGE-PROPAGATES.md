@@ -63,7 +63,7 @@ file, one rule, plain English — the black-button rule is a page of text saying
 what to do, why, and how to check. That file is the *only* place the rule is
 written down. There is no second copy anyone maintains.
 
-**Skills are the envelopes.** The pack contains 27 skills — content factory, SEO
+**Skills are the envelopes.** The pack contains a catalog of skills — content factory, SEO
 audit, weekly brand MAA, and so on. Each one is a self-contained folder. When
 someone installs the pack from a QR code at a conference, what lands on their
 machine is those folders. **They do not get the `standards/` directory. They do
@@ -72,7 +72,7 @@ would ride along until it reached them and then evaporate.
 
 **So we stamp the rule into every envelope.** One command —
 `python3 scripts/sync_shared_rules.py` — reads every file in `standards/` and
-copies its text, word for word, into `AGENTS.md` and into all 27 skill files. It
+copies its text, word for word, into `AGENTS.md` and into every skill file. It
 marks each copy with an invisible tag so it knows which text it owns:
 
 ```
@@ -111,7 +111,7 @@ different things**, which is exactly Content · Checklist · Software:
    the rule text,           the same words,           the machine checks
    stamped into             read by a person          in the file header,
    AGENTS.md and            before they touch         compiled into the
-   all 27 skills            a site                    live fleet sweep
+   every skill              a site                    live fleet sweep
         │                        │                        │
         ▼                        ▼                        ▼
    every agent              every person             every published page

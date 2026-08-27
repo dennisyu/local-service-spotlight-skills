@@ -18,7 +18,7 @@ Every LinkedIn row is first-degree platform evidence. It is not proof of relatio
 
 ### Google Contacts
 
-Accept a Google Contacts CSV with `Name`, or `Given Name` plus `Family Name`. Recognize organization, title, email, and profile URL variants when supplied. Treat this as address-book evidence, not proof of a social connection.
+Accept a Google Contacts CSV with `Name`, or `Given Name` plus `Family Name`. Recognize organization, title, and email variants when supplied. Treat this as address-book evidence, not proof of a social connection. Generic website fields are not person-identity evidence.
 
 ### Relationship CSV
 

@@ -95,7 +95,7 @@ schedule or credential changes.
 
 ## Reconciliation — run monthly, or when something feels missing
 
-1. List the canonical marketplace commit and all 32 available skills.
+1. List the canonical marketplace commit and every available skill.
 2. List what each target account and fleet site actually reports as its commit/version and installed skills.
 3. Diff them. **Every target behind the canonical commit is a propagation failure; every untracked local skill is an orphan.**
 4. For each recurring scheduled job, confirm the skill it names still exists under that exact name. Renaming a skill silently breaks every job that calls it.

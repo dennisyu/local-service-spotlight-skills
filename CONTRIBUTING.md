@@ -54,7 +54,7 @@ Then write the rule, add machine checks if an honest one exists, and sync:
 
 ```bash
 python3 scripts/fleet_check.py --self-test    # proves the checks actually fire
-python3 scripts/sync_shared_rules.py          # stamps it into all 27 skills
+python3 scripts/sync_shared_rules.py          # stamps it into every skill
 ```
 
 `--from` is required. Provenance is how we see which channels leak: if a source
