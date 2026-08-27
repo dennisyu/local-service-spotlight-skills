@@ -1,4 +1,4 @@
 interface:
   display_name: "Second Ring Network Mapper"
-  short_description: "Map warm paths without sending files to BlitzMetrics"
+  short_description: "Map warm paths without sending files to Second Ring"
   default_prompt: "Use $second-ring-network-mapper to analyze my authorized LinkedIn export locally and show my strongest honest relationship paths."

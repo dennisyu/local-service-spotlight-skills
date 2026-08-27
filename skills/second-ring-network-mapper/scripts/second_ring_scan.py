@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 BlitzMetrics
+# Copyright 2026 Local Service Spotlight
 """Build a privacy-preserving Second Ring report from owner-authorized exports.
 
 The script uses only the Python standard library, makes no network requests,
