@@ -10,7 +10,7 @@ another.
 
 | Field | Current fact |
 |---|---|
-| Repository | `https://github.com/dennisyu/blitzmetrics-skills` |
+| Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
 | Skills in `blitzmetrics-everything` | 28 |
 | Topical bundles | 4 |

@@ -14,7 +14,7 @@ Members should start with the illustrated guide:
 When Claude asks for the marketplace repository, paste:
 
 ```text
-https://github.com/dennisyu/blitzmetrics-skills
+https://github.com/dennisyu/local-service-spotlight-skills
 ```
 
 Then install `blitzmetrics-everything`.
@@ -36,7 +36,7 @@ commit/version and a fresh chat passes an activation test.
 Review the repository, then install it with Grok Build's native plugin command:
 
 ```bash
-grok plugin install dennisyu/blitzmetrics-skills --trust
+grok plugin install dennisyu/local-service-spotlight-skills --trust
 grok plugin details blitzmetrics-everything
 ```
 

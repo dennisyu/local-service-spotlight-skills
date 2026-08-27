@@ -20,7 +20,7 @@ Know which one you are touching. They propagate very differently.
 | 5 | **Fleet copies and run receipts** | A site has a version and a run left evidence | The rest of the fleet matches it | The deployment job and receipt store |
 
 **System 1 is the only canonical source.** The member install guide is the front
-door, while `https://github.com/dennisyu/blitzmetrics-skills` is the source Claude
+door, while `https://github.com/dennisyu/local-service-spotlight-skills` is the source Claude
 subscribes to. Account skills are per-person. If a capability matters to more than
 one person, put it in the marketplace and verify each target environment with a
 receipt.

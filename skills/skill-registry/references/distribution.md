@@ -10,7 +10,7 @@ Use the GitHub marketplace for shared skills:
 
 ```text
 Member-facing instructions: https://localservicespotlight.com/install/
-Marketplace source for Claude: https://github.com/dennisyu/blitzmetrics-skills
+Marketplace source for Claude: https://github.com/dennisyu/local-service-spotlight-skills
 Maintainer changes: branch → pull request → checks → merge
 ```
 
