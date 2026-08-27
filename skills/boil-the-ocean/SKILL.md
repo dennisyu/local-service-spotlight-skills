@@ -17,7 +17,7 @@ This was already the house rule. Dennis has taught "always boil the ocean — be
 
 ## How to run every skill now (Fable 5 and friends)
 
-Seven rules. They apply to every skill in this pack, on every run.
+Eight rules. They apply to every skill in this pack, on every run.
 
 1. **Loop until the Definition of done passes.** Every skill states its output or done-bar. Run, check, fix, run again — 90% is a draft, not a deliverable.
 2. **Self-verify every run.** Before reporting done, grade your own output against the skill's QA checklist or Definition of done, line by line. No gut calls.
@@ -26,6 +26,7 @@ Seven rules. They apply to every skill in this pack, on every run.
 5. **Prefer full coverage.** Handle the edge cases, write the test, write the doc. Sweep every source, not the first page of results.
 6. **Persist through obstacles.** Fix root causes, not workarounds — a workaround is a deviation you re-pay on every future run.
 7. **When blocked, surface it and keep moving.** Name the blocker, what you need, and what you did instead — then finish everything that isn't blocked.
+8. **Do it yourself — never hand a human an action you can perform.** If you have the access and the capability, execute. A numbered click-path emailed to a teammate is not a deliverable; it is the work, relabelled and queued behind someone else's inbox. Writing instructions is only correct when you genuinely cannot act: no credential, no permission, or a decision that is legitimately the human's to make. "It would be tidier if they did it," "they own that system," and "they'll want to review it" are not blockers — if you can reach it, finish it, then tell them what you changed so nobody duplicates the work. When a guardrail stops a write, that is rule 7, not rule 8: name the blocker, get authorization, then come back and finish the job yourself.
 
 ## Recursive self-improvement
 
@@ -1803,6 +1804,57 @@ Rebuilding the bundle made the published zip stale by two bytes. Republishing it
 `verify_directory_and_somba.py` caught it. **When you re-run one stage of a pipeline by hand, you have
 re-run one stage of a pipeline by hand** — the stages downstream of it are now describing the state you
 just replaced.
+
+<!-- learning:2026-08-14-do-it-yourself -->
+**August 14, 2026** (from: Ensiteful Marketing / ethanvandehey.com login triage with Dennis, August 14, 2026)
+
+### Rule 8 was written the day an agent emailed a human a to-do list it could have executed
+
+Ethan reported two things: a WordPress login that "did not work" and a personal site that "seems broken."
+Both reports were wrong about the cause, and finding the real cause required refusing to stop at the
+plausible answer.
+
+**Read the artifact, not the summary.** The two Basecamp screenshots were the whole case, and they were
+images. Fetching them cost four steps — CORS blocked a cross-origin fetch, so the images had to be
+opened same-origin, which redirected to a presigned S3 URL that could then be downloaded and decoded.
+Worth every step: screenshot one said *"Unknown email address"* (a credentials problem, not a broken
+site) and screenshot two said `ERR_CONNECTION_REFUSED` (a TCP failure, not a WordPress error). Two
+reports, two entirely different subsystems. **Guessing from the prose description would have produced two
+wrong fixes.**
+
+**Then check the thing everyone assumes is fine.** The credentials worked — verified by POSTing them and
+getting a 302 into `/wp-admin/` with a live session. So why "unknown email address"? Because the account
+had been created as `ethan@roof**ing**launchmarketing.com` while Ethan's real address is
+`ethan@rooflaunchmarketing.com`. The extra "ing" was not a variant spelling: **the domain did not exist
+at all** — NXDOMAIN on Google, Cloudflare and Quad9, no A record, no MX, no nameservers. Which meant the
+obvious fallback advice, "just use Lost your password?", would have bounced into a void. *Verify the
+identifier itself, not just whether the credential authenticates.*
+
+**Sweeping past the reported problem found the bug nobody filed.** Because the display name was never
+set, WordPress fell back to the login string and published Ethan's email address in three public places
+on his own personal-brand site — author archive title, author URL, and `/wp-json/wp/v2/users`. A
+harvestable address and a byline pointing at another company's domain, on a site being built for a
+knowledge panel. Nobody reported it because nobody was looking.
+
+### The actual lesson
+
+The first pass ended by emailing Muzamil a tidy three-item click-path — correct the email, set the
+display name, retire the generic `admin` account — after a guardrail blocked the write. Dennis's
+response: *"if you can do it, don't make a human do it."*
+
+Handing over instructions felt like diligence. It was not. It was the work, relabelled and queued behind
+someone else's inbox — and every hour it sat there, Ethan stayed blocked and the email stayed public.
+Worse, the human it was handed to passed it straight back: Ethan's reply was "Muzamil — please follow the
+steps Dennis outlined." A click-path does not distribute work, it circulates it.
+
+Once authorized, all three items took one pass: emails corrected on both sites, display names and author
+slugs fixed, the `admin` account deleted with its 4 posts and 9 pages reassigned rather than orphaned,
+then verified from outside — zero emails in the public REST on either site, `/author/admin/` returning
+404, and all four login combinations tested green.
+
+**A guardrail is rule 7, not rule 8.** Being blocked means name the blocker and get authorization. It
+does not mean convert the task into homework for a human. The finished product is the deliverable; a
+numbered list of steps is what you send only when you genuinely cannot act.
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback

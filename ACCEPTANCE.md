@@ -94,3 +94,35 @@ script, or a workflow that may play audio or video.
 Fail on audible output, playback before silence is established, missing state
 evidence, or a delegated agent that did not receive the rule. A prose claim such
 as “I kept it muted” is not an acceptance receipt.
+
+## F. Grok Build native plugin install
+
+Run the native manifest validator from the repository root:
+
+```bash
+grok plugin validate .
+```
+
+For a fresh-environment install receipt, isolate the canary from existing Grok
+plugins, install the canonical repository, and verify the stable plugin identity
+and full inventory:
+
+```bash
+grok_canary_dir=$(mktemp -d /tmp/blitzmetrics-grok-canary.XXXXXX)
+GROK_HOME="$grok_canary_dir" grok plugin install dennisyu/blitzmetrics-skills --trust
+GROK_HOME="$grok_canary_dir" grok plugin details blitzmetrics-everything
+GROK_HOME="$grok_canary_dir" grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "blitzmetrics-everything"); assert p["enabled"] and p["provides"]["skills"] == 27; print("Grok canary passed: blitzmetrics-everything, 27 skills")'
+```
+
+After installing in the account being accepted, start a fresh headless agent and
+test actual skill activation:
+
+```bash
+grok -p 'Use the skill-registry skill. In one sentence, identify the numbered registry system that is the only canonical source.'
+```
+
+Pass when `grok plugin validate .` succeeds, the inventory command prints the
+exact canary line above, and the model answer identifies **System 1, the canonical
+GitHub marketplace**. Record the Grok version, repository commit, plugin version,
+all command output, account/environment, tester, and timestamp. Installation and
+discovery do not by themselves prove activation.

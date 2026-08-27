@@ -50,6 +50,7 @@ def validate(root: Path) -> list[str]:
 
     plugin_names: set[str] = set()
     everything: list[str] | None = None
+    everything_plugin: dict[str, object] | None = None
     for index, plugin in enumerate(plugins):
         if not isinstance(plugin, dict):
             errors.append(f"plugins[{index}] must be an object")
@@ -80,6 +81,7 @@ def validate(root: Path) -> list[str]:
             if everything is not None:
                 errors.append("blitzmetrics-everything must appear exactly once")
             everything = skills
+            everything_plugin = plugin
 
     if everything is None:
         errors.append("missing required blitzmetrics-everything plugin")
@@ -95,6 +97,48 @@ def validate(root: Path) -> list[str]:
         errors.append(f"skill is not in blitzmetrics-everything: {missing}")
     for stale in sorted(everything_set - actual_refs):
         errors.append(f"blitzmetrics-everything has a stale skill path: {stale}")
+
+    grok_manifest_path = root / ".grok-plugin" / "plugin.json"
+    try:
+        grok_manifest = json.loads(grok_manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(
+            f"cannot read {grok_manifest_path.relative_to(root)}: {exc}"
+        )
+        grok_manifest = None
+
+    if not isinstance(grok_manifest, dict):
+        if grok_manifest is not None:
+            errors.append(".grok-plugin/plugin.json must contain an object")
+    elif everything_plugin is not None:
+        expected_name = everything_plugin.get("name")
+        if grok_manifest.get("name") != expected_name:
+            errors.append(
+                "Grok plugin name must match the Claude blitzmetrics-everything "
+                f"name {expected_name!r}, found {grok_manifest.get('name')!r}"
+            )
+
+        metadata = manifest.get("metadata")
+        expected_version = metadata.get("version") if isinstance(metadata, dict) else None
+        if not isinstance(expected_version, str) or not expected_version:
+            errors.append("Claude marketplace metadata.version must be a non-empty string")
+        elif grok_manifest.get("version") != expected_version:
+            errors.append(
+                "Grok plugin version must match Claude marketplace metadata.version "
+                f"{expected_version!r}, found {grok_manifest.get('version')!r}"
+            )
+
+        grok_skills = grok_manifest.get("skills")
+        if grok_skills != "./skills/":
+            errors.append(
+                "Grok plugin skills must be './skills/' so it resolves to the "
+                "Claude blitzmetrics-everything inventory, "
+                f"found {grok_skills!r}"
+            )
+        elif actual_refs != everything_set:
+            errors.append(
+                "Grok ./skills/ inventory must match Claude blitzmetrics-everything"
+            )
 
     try:
         shared_rule = (

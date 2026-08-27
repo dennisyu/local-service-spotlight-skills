@@ -1,6 +1,7 @@
 # Contributing safely
 
-This repository is the canonical source for the BlitzMetrics Claude marketplace.
+This repository is the canonical source for the BlitzMetrics Claude marketplace
+and Grok Build plugin.
 A green-looking agent report is not proof that a change reached a user or ran on
 schedule. Changes therefore move through a branch, automated checks, review, and
 an acceptance receipt.
@@ -42,6 +43,7 @@ python3 scripts/sync_shared_rules.py --check
 python3 scripts/validate_marketplace.py
 python3 -m unittest discover -s tests -v
 npx -y @anthropic-ai/claude-code@latest plugin validate .
+grok plugin validate .
 ```
 
 Shared agent rules live under `standards/`. After changing one, run
@@ -49,9 +51,9 @@ Shared agent rules live under `standards/`. After changing one, run
 every distributed skill. Never hand-edit a generated block; validation rejects
 missing or stale copies.
 
-The first check catches missing files, duplicate or unlisted skills, bad
-frontmatter, and stale local references. The final check uses Claude's official
-marketplace validator.
+The repository check also keeps the Grok plugin name, version, and shared skill
+directory aligned with Claude's `blitzmetrics-everything` bundle. The final two
+checks use Claude's and Grok's official validators.
 
 ## What status words mean
 

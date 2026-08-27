@@ -19,6 +19,7 @@
 - [ ] `python3 scripts/validate_marketplace.py`
 - [ ] `python3 -m unittest discover -s tests -v`
 - [ ] `npx -y @anthropic-ai/claude-code@latest plugin validate .`
+- [ ] `grok plugin validate .`
 - [ ] Fresh-chat activation test (if behavior changed)
 - [ ] First scheduled run observed (if a schedule changed)
 
