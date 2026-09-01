@@ -97,6 +97,21 @@ def validate(root: Path) -> list[str]:
         if not isinstance(skills, list) or not skills:
             errors.append(f"plugin {name!r} must have a non-empty skills array")
             continue
+        description = plugin.get("description")
+        advertised_count = (
+            re.search(
+                r"(?:all\s+|\()(?P<count>\d+)(?:\s+[A-Za-z-]+){0,4}\s+skills?\b",
+                description,
+                re.I,
+            )
+            if isinstance(description, str)
+            else None
+        )
+        if advertised_count and int(advertised_count.group("count")) != len(skills):
+            errors.append(
+                f"plugin {name!r} advertises {advertised_count.group('count')} skills "
+                f"but lists {len(skills)}"
+            )
         if len(skills) != len(set(skills)):
             errors.append(f"plugin {name!r} lists a skill more than once")
         for skill_ref in skills:
@@ -175,10 +190,16 @@ def validate(root: Path) -> list[str]:
                     )
 
     readme = (root / "README.md").read_text(encoding="utf-8")
-    advertised = re.search(r"all (\d+) skills", readme, flags=re.IGNORECASE)
-    if advertised and int(advertised.group(1)) != len(skill_dirs):
+    hard_coded_counts = re.findall(
+        r"\b\d+\s+(?:distributed\s+|released\s+|Local Service Spotlight\s+)?"
+        r"(?:`SKILL\.md` files|skills?)\b",
+        readme,
+        flags=re.IGNORECASE,
+    )
+    for claim in hard_coded_counts:
         errors.append(
-            f"README advertises {advertised.group(1)} skills but found {len(skill_dirs)}"
+            f"README hard-codes a derived skill count ({claim!r}); derive it from "
+            ".claude-plugin/marketplace.json instead"
         )
     return sorted(set(errors))
 

@@ -1,6 +1,6 @@
 # Local Service Spotlight Skills for Claude
 
-The canonical marketplace for the 31 Local Service Spotlight skills used across
+The canonical marketplace for the released Local Service Spotlight skills used across
 authority, content, client operations, and quality assurance.
 
 ## Install
@@ -51,7 +51,7 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 31 skills |
+| `lss-everything` | Every skill listed in the current marketplace manifest |
 | `authority-and-reputation` | Knowledge Panel, AI search, reviews, and proof |
 | `content-engine` | Articles, video, repurposing, and distribution |
 | `client-operations` | Onboarding, cadence, access, reporting, and audits |
@@ -75,8 +75,8 @@ sound, no popup on load, every link and entity claim resolves, personal-brand
 heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
-`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and all
-31 `SKILL.md` files, so the rules arrive with the pack even though `standards/`
+`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and every
+distributed `SKILL.md` file, so the rules arrive with the pack even though `standards/`
 itself is not distributed. CI rejects a pull request when even one copy is
 missing or stale.
 
