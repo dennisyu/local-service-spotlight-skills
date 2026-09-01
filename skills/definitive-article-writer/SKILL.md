@@ -1220,8 +1220,10 @@ entity-linking preflight and a live link audit.
 - **Use one visible, semantic provenance rail.** Put the audit fields in an `<aside>`
   or `<section>` marked `data-document-provenance="verified"`, with the data attributes
   enforced above and a real `<time datetime="…">` visible to readers. `datePublished`
-  stays separate. Schema `dateModified` must equal the visible `last_changed`, and only
-  one publisher/Article owner may describe the same document.
+  stays separate. Schema `dateModified` must equal the visible clock for the public
+  revision: normally `last_changed` on a static article, or `last_checked` when a
+  no-change verification itself creates a new evidence-page revision. Preserve both
+  clocks in the rail and allow only one publisher/Article owner to describe the document.
 - **Prove scheduled state with execution receipts.** “Scheduled” means a definition
   exists. “Observed” means a firing left an immutable timestamped success or failure
   receipt containing timezone, runtime, stable job/run ID, source revision, result,
