@@ -46,6 +46,24 @@ class MarketplaceValidatorTests(unittest.TestCase):
                 errors,
             )
 
+    def test_readme_cannot_reintroduce_a_remembered_skill_count(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = Path(temp_name) / "repository"
+            shutil.copytree(REPOSITORY, copied, ignore=shutil.ignore_patterns(".git"))
+            readme = copied / "README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8")
+                + "\nThe public bundle contains 31 released skills.\n",
+                encoding="utf-8",
+            )
+
+            errors = validate(copied)
+
+            self.assertTrue(
+                any("README hard-codes a derived skill count" in error for error in errors),
+                errors,
+            )
+
     def _strip_rule(self, skill_file: Path, slug: str) -> None:
         text = skill_file.read_text(encoding="utf-8")
         start = f"<!-- shared-rule:{slug}:start -->"

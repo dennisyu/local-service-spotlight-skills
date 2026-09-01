@@ -13,29 +13,30 @@
     {
       "id": "visible-provenance-rail",
       "kind": "require_regex",
-      "pattern": "<(?:aside|section)\\b(?=[^>]*\\bdata-document-provenance\\s*=\\s*[\"']verified[\"'])(?=[^>]*\\bdata-human-author\\s*=\\s*[\"'][^\"']+[\"'])(?=[^>]*\\bdata-maintainer\\s*=\\s*[\"'][^\"']+[\"'])(?=[^>]*\\bdata-last-checked\\s*=\\s*[\"'][^\"']+[\"'])(?=[^>]*\\bdata-last-changed\\s*=\\s*[\"'][^\"']+[\"'])(?=[^>]*\\bdata-source-revision\\s*=\\s*[\"'][^\"']+[\"'])[^>]*>",
-      "message": "the page has no complete, machine-readable provenance rail with author, maintainer, checked/changed timestamps, and source revision",
+      "pattern": "<(?:aside|section)\\b(?=[^>]*\\bdata-document-provenance\\s*=\\s*[\"']verified[\"'])(?=[^>]*\\bdata-human-author\\s*=\\s*[\"'](?!\\s*(?:UNKNOWN|nobody|none)\\s*[\"'])[^\"']+[\"'])(?=[^>]*\\bdata-maintainer\\s*=\\s*[\"'](?![^\"']*\\b(?:UNKNOWN|nobody)\\b)[^\"']+[\"'])(?=[^>]*\\bdata-human-reviewer\\s*=\\s*[\"'](?!\\s*(?:UNKNOWN|nobody)\\s*[\"'])[^\"']+[\"'])(?=[^>]*\\bdata-receipt-id\\s*=\\s*[\"'](?!\\s*(?:UNKNOWN|none)\\s*[\"'])[^\"']+[\"'])(?=[^>]*\\bdata-last-checked\\s*=\\s*[\"']\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})[\"'])(?=[^>]*\\bdata-last-changed\\s*=\\s*[\"']\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})[\"'])(?=[^>]*\\bdata-source-revision\\s*=\\s*[\"'](?!(?:UNKNOWN|never|none)\\b)[A-Za-z0-9][A-Za-z0-9._:/-]{5,}[\"'])[^>]*>",
+      "message": "the page has no complete, machine-readable provenance rail with a real author/maintainer, reviewer state, receipt ID, ISO checked/changed timestamps, and non-placeholder source revision",
       "examples": {
         "violating": [
           "<p>By Dennis Yu · Updated July 22, 2026</p>",
-          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\">Updated today</aside>"
+          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\">Updated today</aside>",
+          "<aside data-document-provenance=\"verified\" data-human-author=\"nobody\" data-maintainer=\"UNKNOWN\" data-human-reviewer=\"UNKNOWN\" data-receipt-id=\"UNKNOWN\" data-last-checked=\"today\" data-last-changed=\"never\" data-source-revision=\"UNKNOWN\"><time datetime=\"2026-08-31\">unrelated time</time></aside>"
         ],
         "clean": [
-          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\" data-maintainer=\"Fleet Inventory job / Codex audit\" data-last-checked=\"2026-08-31T20:00:00-05:00\" data-last-changed=\"2026-08-25T23:06:50-07:00\" data-source-revision=\"wp:110278:113449\"><p>Human author: Dennis Yu. Maintained by Fleet Inventory job; audited by Codex.</p><time datetime=\"2026-08-31T20:00:00-05:00\">Checked August 31, 2026</time></aside>"
+          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\" data-maintainer=\"Fleet Inventory job / Codex audit\" data-human-reviewer=\"not yet reviewed\" data-receipt-id=\"fleet-run-20260831\" data-last-checked=\"2026-08-31T20:00:00-05:00\" data-last-changed=\"2026-08-25T23:06:50-07:00\" data-source-revision=\"wp:110278:113449\"><p>Human author: Dennis Yu. Maintained by Fleet Inventory job; audited by Codex.</p><time datetime=\"2026-08-31T20:00:00-05:00\">Checked August 31, 2026</time><time datetime=\"2026-08-25T23:06:50-07:00\">Changed August 25, 2026</time></aside>"
         ]
       }
     },
     {
       "id": "semantic-provenance-time",
       "kind": "require_regex",
-      "pattern": "data-document-provenance\\s*=\\s*[\"']verified[\"'][^>]*>[\\s\\S]{0,5000}?<time\\b[^>]*\\bdatetime\\s*=\\s*[\"']\\d{4}-\\d{2}-\\d{2}(?:T[^\"']+)?[\"'][^>]*>",
-      "message": "the provenance rail does not expose a visible semantic time with an ISO datetime",
+      "pattern": "<(?:aside|section)\\b(?=[^>]*\\bdata-document-provenance\\s*=\\s*[\"']verified[\"'])(?=[^>]*\\bdata-last-checked\\s*=\\s*[\"'](?P<checked>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2}))[\"'])(?=[^>]*\\bdata-last-changed\\s*=\\s*[\"'](?P<changed>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2}))[\"'])[^>]*>(?:(?!</(?:aside|section)>)[\\s\\S]){0,5000}?<time\\b[^>]*\\bdatetime\\s*=\\s*[\"'](?P=checked)[\"'][^>]*>(?:(?!</(?:aside|section)>)[\\s\\S]){0,5000}?<time\\b[^>]*\\bdatetime\\s*=\\s*[\"'](?P=changed)[\"'][^>]*>",
+      "message": "the provenance rail does not expose visible semantic times matching both its ISO checked and changed clocks",
       "examples": {
         "violating": [
-          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\" data-maintainer=\"Codex\" data-last-checked=\"2026-08-31\" data-last-changed=\"2026-08-25\" data-source-revision=\"abc123\"><span>Updated recently</span></aside>"
+          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\" data-maintainer=\"Codex\" data-human-reviewer=\"not yet reviewed\" data-receipt-id=\"run-1\" data-last-checked=\"2026-08-31T20:00:00-05:00\" data-last-changed=\"2026-08-25T23:06:50-07:00\" data-source-revision=\"abc123\"><time datetime=\"2026-08-30T20:00:00-05:00\">Wrong check</time><time datetime=\"2026-08-25T23:06:50-07:00\">Changed</time></aside>"
         ],
         "clean": [
-          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\" data-maintainer=\"Codex\" data-last-checked=\"2026-08-31T20:00:00-05:00\" data-last-changed=\"2026-08-25T23:06:50-07:00\" data-source-revision=\"abc123\"><time datetime=\"2026-08-31T20:00:00-05:00\">Checked August 31, 2026</time></aside>"
+          "<aside data-document-provenance=\"verified\" data-human-author=\"Dennis Yu\" data-maintainer=\"Codex\" data-human-reviewer=\"not yet reviewed\" data-receipt-id=\"run-1\" data-last-checked=\"2026-08-31T20:00:00-05:00\" data-last-changed=\"2026-08-25T23:06:50-07:00\" data-source-revision=\"abc123\"><time datetime=\"2026-08-31T20:00:00-05:00\">Checked August 31, 2026</time><time datetime=\"2026-08-25T23:06:50-07:00\">Changed August 25, 2026</time></aside>"
         ]
       }
     }
@@ -73,7 +74,8 @@
   private receipt even when no public meta article is authorized.
 - **Use one visible, semantic provenance rail.** Put the audit fields in an `<aside>`
   or `<section>` marked `data-document-provenance="verified"`, with the data attributes
-  enforced above and a real `<time datetime="…">` visible to readers. `datePublished`
+  enforced above, a receipt ID and honest reviewer state, plus visible `<time>` elements
+  whose datetimes exactly match both checked and changed clocks. `datePublished`
   stays separate. Schema `dateModified` must equal the visible clock for the public
   revision: normally `last_changed` on a static article, or `last_checked` when a
   no-change verification itself creates a new evidence-page revision. Preserve both

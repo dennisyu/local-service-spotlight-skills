@@ -1221,7 +1221,8 @@ entity-linking preflight and a live link audit.
   private receipt even when no public meta article is authorized.
 - **Use one visible, semantic provenance rail.** Put the audit fields in an `<aside>`
   or `<section>` marked `data-document-provenance="verified"`, with the data attributes
-  enforced above and a real `<time datetime="…">` visible to readers. `datePublished`
+  enforced above, a receipt ID and honest reviewer state, plus visible `<time>` elements
+  whose datetimes exactly match both checked and changed clocks. `datePublished`
   stays separate. Schema `dateModified` must equal the visible clock for the public
   revision: normally `last_changed` on a static article, or `last_checked` when a
   no-change verification itself creates a new evidence-page revision. Preserve both

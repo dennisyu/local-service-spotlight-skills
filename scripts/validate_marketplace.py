@@ -190,10 +190,16 @@ def validate(root: Path) -> list[str]:
                     )
 
     readme = (root / "README.md").read_text(encoding="utf-8")
-    advertised = re.search(r"all (\d+) skills", readme, flags=re.IGNORECASE)
-    if advertised and int(advertised.group(1)) != len(skill_dirs):
+    hard_coded_counts = re.findall(
+        r"\b\d+\s+(?:distributed\s+|released\s+|Local Service Spotlight\s+)?"
+        r"(?:`SKILL\.md` files|skills?)\b",
+        readme,
+        flags=re.IGNORECASE,
+    )
+    for claim in hard_coded_counts:
         errors.append(
-            f"README advertises {advertised.group(1)} skills but found {len(skill_dirs)}"
+            f"README hard-codes a derived skill count ({claim!r}); derive it from "
+            ".claude-plugin/marketplace.json instead"
         )
     return sorted(set(errors))
 
