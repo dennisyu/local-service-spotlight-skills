@@ -63,7 +63,8 @@ file, one rule, plain English — the black-button rule is a page of text saying
 what to do, why, and how to check. That file is the *only* place the rule is
 written down. There is no second copy anyone maintains.
 
-**Skills are the envelopes.** The pack contains 27 skills — content factory, SEO
+**Skills are the envelopes.** The pack's current skill set is the
+`lss-everything` list in `.claude-plugin/marketplace.json` — content factory, SEO
 audit, weekly brand MAA, and so on. Each one is a self-contained folder. When
 someone installs the pack from a QR code at a conference, what lands on their
 machine is those folders. **They do not get the `standards/` directory. They do
@@ -72,7 +73,8 @@ would ride along until it reached them and then evaporate.
 
 **So we stamp the rule into every envelope.** One command —
 `python3 scripts/sync_shared_rules.py` — reads every file in `standards/` and
-copies its text, word for word, into `AGENTS.md` and into all 27 skill files. It
+copies its text, word for word, into `AGENTS.md` and into every skill selected by
+the canonical `lss-everything` manifest. It
 marks each copy with an invisible tag so it knows which text it owns:
 
 ```
@@ -81,9 +83,9 @@ marks each copy with an invisible tag so it knows which text it owns:
 <!-- shared-rule:no-black-buttons:end -->
 ```
 
-Nobody types those copies and nobody edits them. The command writes them. Today
-that is **10 rules × 28 files = 280 copies**, all generated, all identical to
-their source.
+Nobody types those copies and nobody edits them. The command writes them. The
+exact number is derived at run time from the standards directory and the manifest:
+one generated copy in `AGENTS.md` plus one in every applicable distributed skill.
 
 **The build refuses to let a copy go stale.** Every time a change is proposed,
 an automatic check re-runs the stamp and compares. If one copy differs from the
@@ -111,7 +113,7 @@ different things**, which is exactly Content · Checklist · Software:
    the rule text,           the same words,           the machine checks
    stamped into             read by a person          in the file header,
    AGENTS.md and            before they touch         compiled into the
-   all 27 skills            a site                    live fleet sweep
+   every selected skill     a site                    live fleet sweep
         │                        │                        │
         ▼                        ▼                        ▼
    every agent              every person             every published page

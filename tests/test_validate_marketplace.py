@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 import unittest
@@ -23,6 +24,25 @@ class MarketplaceValidatorTests(unittest.TestCase):
 
             self.assertTrue(
                 any("./skills/seo-audit" in error for error in errors),
+                errors,
+            )
+
+    def test_stale_bundle_count_fails(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = Path(temp_name) / "repository"
+            shutil.copytree(REPOSITORY, copied, ignore=shutil.ignore_patterns(".git"))
+            manifest_path = copied / ".claude-plugin" / "marketplace.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["plugins"][0]["description"] = (
+                "Everything we use, in one install — all 27 Local Service "
+                "Spotlight skills."
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            errors = validate(copied)
+
+            self.assertIn(
+                "plugin 'lss-everything' advertises 27 skills but lists 31",
                 errors,
             )
 

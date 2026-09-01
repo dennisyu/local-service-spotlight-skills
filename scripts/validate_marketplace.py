@@ -97,6 +97,21 @@ def validate(root: Path) -> list[str]:
         if not isinstance(skills, list) or not skills:
             errors.append(f"plugin {name!r} must have a non-empty skills array")
             continue
+        description = plugin.get("description")
+        advertised_count = (
+            re.search(
+                r"(?:all\s+|\()(?P<count>\d+)(?:\s+[A-Za-z-]+){0,4}\s+skills?\b",
+                description,
+                re.I,
+            )
+            if isinstance(description, str)
+            else None
+        )
+        if advertised_count and int(advertised_count.group("count")) != len(skills):
+            errors.append(
+                f"plugin {name!r} advertises {advertised_count.group('count')} skills "
+                f"but lists {len(skills)}"
+            )
         if len(skills) != len(set(skills)):
             errors.append(f"plugin {name!r} lists a skill more than once")
         for skill_ref in skills:

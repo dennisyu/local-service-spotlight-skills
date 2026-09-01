@@ -69,7 +69,7 @@ class StandardFileTests(unittest.TestCase):
         self.assertEqual(standard.severity, "error")
 
     def test_only_the_body_is_embedded_never_the_header(self):
-        """Machine configuration must not leak into 27 skills as guidance."""
+        """Machine configuration must not leak into every skill as guidance."""
         header = {**HEADER, "applies_to": ["published-html"], "checks": [REGEX_CHECK]}
         standard = parse_standard(self.write("example-rule.md", header))
         self.assertNotIn("captured_from", standard.block())
