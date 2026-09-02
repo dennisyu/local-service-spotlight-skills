@@ -65,7 +65,7 @@
     },
     {
       "name": "content-engine",
-      "description": "Turn one idea into everything — articles, video, repurposing, distribution, SAE. (7 skills)",
+      "description": "Turn one idea into everything — articles, video, repurposing, amplification, distribution. (7 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -80,7 +80,7 @@
     },
     {
       "name": "client-operations",
-      "description": "Run the account — onboarding, qualification, cadence, access, reporting, audits, and SAE. (11 skills)",
+      "description": "Run the account — cadence, access, reporting, audits. (10 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -93,7 +93,6 @@
         "./skills/security-audit",
         "./skills/seo-audit",
         "./skills/software-subscription-audit",
-        "./skills/social-amplification-engine",
         "./skills/weekly-brand-maa"
       ]
     },
