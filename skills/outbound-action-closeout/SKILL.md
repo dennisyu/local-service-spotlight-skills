@@ -571,6 +571,7 @@ entity-linking preflight and a live link audit.
   never as done.
 - Quote the evidence in the report: the URL, the status code, and the string you found.
 <!-- shared-rule:verify-by-opening-the-live-artifact:end -->
+
 <!-- shared-rule:visuals-above-the-fold:start -->
 ## Visual and interactive content sits above the fold
 

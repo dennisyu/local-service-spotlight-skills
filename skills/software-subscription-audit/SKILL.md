@@ -545,6 +545,7 @@ destination-naming anchor above is the reconciliation. No generic fleet regex ca
 people, ownership or the right internal training page, so enforce this through the
 entity-linking preflight and a live link audit.
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
+
 <!-- shared-rule:visuals-above-the-fold:start -->
 ## Visual and interactive content sits above the fold
 
