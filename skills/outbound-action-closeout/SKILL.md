@@ -22,9 +22,28 @@ Make the acting agent—not Dennis—the owner of execution, proof, and closeout
 
    `Agent receipt: <platform — agent> [model if known] · action: <drafted|sent|posted|published|changed> · human review: <reviewed by Dennis|authorized, not separately reviewed|no human review recorded>`
 
-3. Read back the saved result from the source system. Verify the exact
-   destination/audience, thread or record, intended content/result, and receipt.
-   A toast, tool response, sent item, commit, or private note alone is not proof.
+3. Read back the saved result from the source system, and **write what you saw
+   on the line directly above the receipt**, in exactly this shape:
+
+   `Verified: <what you opened> — <what you saw> — <when>`
+
+   or, when you cannot, honestly:
+
+   `Verified: NO — <what is missing and who can supply it>`
+
+   The definition of done is one line, the same for agents and people: *done means
+   you looked at it where it landed and attached what you saw.* Proof is something
+   a stranger could open — the comment's URL when you read the thread back, the
+   live page fetched fresh with a phrase from the new content in it, the PR
+   showing MERGED, the message in the recipient's thread. A toast, tool response,
+   sent item, commit, or private note alone is not proof. "Verified: yes" is not
+   proof. "See above" is not proof — nothing can open "above."
+
+   This line is checked by a machine, not by Dennis. A scheduled closer reads
+   every completion, opens every Verified proof, and reopens on the same thread
+   whatever carries none — miss 1 reopened, miss 2 at 48 h escalated to your
+   operator, miss 3 at 96 h flagged to Dennis once. An honest `Verified: NO` is
+   never reopened. Since 4 Sep 2026 (marker `COWORK-DEFINITION-OF-DONE-2026-09-04`).
 4. State the delivery boundary honestly. A source-system read-back proves the
    write; it does not prove that a named human read or accepted it.
 5. Leave the next action with its real owner. Do not make Dennis forward,
@@ -42,6 +61,7 @@ prompt must explicitly name this skill and carry these critical rails itself:
 
 - exact destination/thread and allowed action;
 - never use Dennis as the relay or fallback owner;
+- mandatory `Verified:` line above the receipt, naming what was opened and seen;
 - mandatory agent receipt;
 - source-system read-back assertions;
 - honest delivery boundary;
