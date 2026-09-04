@@ -1121,3 +1121,37 @@ destination-naming anchor above is the reconciliation. No generic fleet regex ca
 people, ownership or the right internal training page, so enforce this through the
 entity-linking preflight and a live link audit.
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
+
+<!-- shared-rule:visuals-above-the-fold:start -->
+## Visual and interactive content sits above the fold
+
+- **The visual is the hook, not the reward.** A chart, diagram, photograph,
+  calculator or interactive tool must be at least partly visible in the first
+  screen, *after* the site's own header and title. Two or three sentences of
+  lead-in above it is the maximum.
+- **If the page has an interactive tool, the tool leads.** The prose becomes the
+  explanation of it, not the preamble to it. Reword any copy that points "below"
+  into a back-reference to the tool at the top.
+- **No prose run longer than about two screens** without a figure, pull quote,
+  callout or list breaking it.
+- **Why:** `every-article-has-pictures` only asks whether an image exists. A page
+  can satisfy it and still bury the picture four screens down, where nobody
+  scrolls. That is the exact failure this rule closes, and it shipped on
+  dennisyu.com before anyone noticed.
+- **Server-render the initial state of any interactive block.** WP Rocket and
+  similar optimisers delay inline JavaScript until the visitor's first
+  interaction, so a block that builds its own DOM paints as an empty shell —
+  worst of all when it is now the first thing on the page. Bake the default state
+  into the markup and make the script idempotent (`el.innerHTML = ''` before it
+  populates) so it replaces that markup instead of appending a second copy.
+- **Verify by measuring on the live URL, not the local render.** Site chrome is
+  routinely 300–400px, so a layout that clears the fold locally can fail once
+  published. Check at 1440x860 and 390x844.
+- **Exemption:** a page whose whole purpose is a single block of prose — a
+  disclosure, a policy, a legal notice — is exempt. Tag it, do not silently skip
+  it.
+
+The sweep only catches the blatant case: a headline with no visual anywhere near
+it. Whether the visual actually clears the fold is a judgement call, verified by
+opening the published page — see `verify-by-opening-the-live-artifact`.
+<!-- shared-rule:visuals-above-the-fold:end -->
