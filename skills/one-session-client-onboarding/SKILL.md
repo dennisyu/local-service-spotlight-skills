@@ -653,6 +653,15 @@ opening the published page — see `verify-by-opening-the-live-artifact`.
   they went quiet. Where the rescue would cross that line, stage it and say so.
 - Rescue toward the function, not the person — see `assign-work-to-a-function`. A rescue
   aimed at an individual who is away is not a rescue.
+- **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
+  says "waiting on", "blocked on" or "pending <person>" must also say when someone
+  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
+  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
+  run of that linter found two real ones: one five days old, one thirteen days old and
+  not actually blocked on anybody.
+- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
+  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
+  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule-index:start -->
