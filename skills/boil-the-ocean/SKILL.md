@@ -22,7 +22,7 @@ This was already the house rule. Dennis has taught "always boil the ocean — be
 Eight rules. They apply to every skill in this pack, on every run.
 
 1. **Loop until the Definition of done passes.** Every skill states its output or done-bar. Run, check, fix, run again — 90% is a draft, not a deliverable.
-2. **Self-verify every run.** Before reporting done, grade your own output against the skill's QA checklist or Definition of done, line by line. No gut calls.
+2. **Self-verify every run.** Before reporting done, grade your own output against the skill's QA checklist or Definition of done, line by line. No gut calls. Then prove it in one line above your receipt — `Verified: <what you opened> — <what you saw> — <when>` — or say `Verified: NO — <what is missing>`. Done means you looked at it where it landed and attached what you saw; a completion without that line is reopened by the scheduled closer, not by Dennis.
 3. **Use memory to compound.** Read prior outputs, notes, and the upstream skills' results before starting. Never start from scratch twice — the second run begins where the first ended.
 4. **Document every run as a meta-article example.** What happened, what broke, what you'd change — the write-up is the fuel for recursive self-improvement (below).
 5. **Prefer full coverage.** Handle the edge cases, write the test, write the doc. Sweep every source, not the first page of results.
