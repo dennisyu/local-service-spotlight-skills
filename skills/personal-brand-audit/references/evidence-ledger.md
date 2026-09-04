@@ -14,6 +14,7 @@ atomic claim or relationship observation. Do not bury contradictory values in pr
 | `evidence_state` | `UNKNOWN`, `OBSERVED`, `VERIFIED`, `CONTRADICTED`, or `EXPIRED` — condition of the supporting record |
 | `result` | `MET`, `NOT_MET`, `UNKNOWN`, `HOLD`, or `N/A` when the row belongs to an exam or gate |
 | `source_class` | Government/registry, first-party, independent editorial, platform/profile, user-supplied, private, or directory/aggregator |
+| `data_classification` | PUBLIC, PRIVATE-AUTHORIZED, RESTRICTED, or SECURITY-SENSITIVE |
 | `evidence_type` | Registry row, page text, transcript, metadata, screenshot, schema, review, analytics export, social export, or other named type |
 | `source_title` | Exact displayed title, not a paraphrase |
 | `publisher` | Entity responsible for the source |
@@ -29,6 +30,8 @@ atomic claim or relationship observation. Do not bury contradictory values in pr
 | `freshness` | Current, historical, stale-risk, expired, or UNKNOWN, with reason |
 | `contradiction_group` | Shared ID for claims that cannot all be true |
 | `permission` | Public citation, internal only, reuse approved, consent required, or UNKNOWN |
+| `export_scope` | Exact artifact/audience allowed, or INTERNAL ONLY |
+| `retention_disposition` | Owner, review/deletion date, and deleted or retained state |
 | `used_in` | PDF page, score row, chart, action ID, schema draft, or other destination |
 | `notes_next_evidence` | Limitation and the exact next record needed |
 
@@ -112,3 +115,8 @@ Record what was actually searched:
 
 “No proof exists” is permitted only after the coverage receipt supports it. Otherwise the
 correct finding is UNKNOWN or “not found in the stated search scope.”
+
+For every live search or AI-model observation, also record the exact prompt, provider/product,
+model/version when surfaced, query mode, timestamp/timezone, locale/language, signed-in or
+anonymous state, location/personalization state, response or screenshot locator, citations, and
+any refusal, timeout, or access block. A remembered answer or undocumented run is not evidence.

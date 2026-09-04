@@ -2,8 +2,10 @@
 
 The audit is exactly **20 rendered pages**. The evidence ledger, raw exports, transcripts, and
 asset manifest are separate companion files, not appendix pages that change the count.
-The page titles, numbers, and order below are the locked product contract; a missing, duplicate,
-or reordered page fails acceptance.
+Pages 1, 2, and 20 are invariant. Pages 3–19 may be reordered or combined when that improves the
+subject-specific story, provided the run includes a coverage crosswalk from every default
+requirement below to the actual rendered page or pages. Missing coverage, padding, or moving
+substantive report content only into a companion file fails acceptance.
 
 ## Visual contract for every page
 
@@ -25,7 +27,7 @@ or reordered page fails acceptance.
 
 ## Pages
 
-| Page | Purpose | Required visual and evidence | Decision it enables |
+| Default page | Purpose | Required visual and evidence | Decision it enables |
 |---:|---|---|---|
 | 1 | Cover and executive snapshot | Approved real subject/context photo, scope/date/status, four headline facts, and a compact finding map with evidence IDs | What changes now, even if this is the only page read? |
 | 2 | Non-obvious executive summary | Five to eight insight → evidence → implication → action cards; distinguish finding type and evidence state | What would change the reader’s prior assumption or next decision? |
@@ -46,18 +48,20 @@ or reordered page fails acceptance.
 | 17 | Installable agent operating plan | Agent architecture with each recommended skill, input, output, cadence, human gate, handoff, and receipt; QR and printed link to `https://localservicespotlight.com/install/` | Which agents should be installed and what will each own? |
 | 18 | Dated 30/60/90-day plan | Timeline or swimlane by durable owning function; include first-seven-day moves and every action-plan field | What happens first, who owns it, and what proves completion? |
 | 19 | Risks, contradictions, and UNKNOWN/HOLD | Conflict ledger, privacy/consent and regulated-claim risks, decisions only the subject can make, and current work/delivery/install states | What cannot safely proceed yet? |
-| 20 | Method, sources, and acceptance receipt | Audit/version, source classes, evidence-workbook and correction path, artifact hash, link/QR/page-count/visual QA receipts, state summary, and next decision | Can a stranger reproduce the method and can the recipient accept the exact artifact? |
+| 20 | Method, sources, and acceptance receipt | Audit/version, source classes, evidence-workbook and correction path, acceptance-receipt locator, link/QR/page-count/visual QA states, state summary, and next decision; record the final artifact hash in the companion receipt after the PDF is closed | Can a stranger reproduce the method and can the recipient accept the exact artifact? |
 
 ## Executive-summary rule
 
-Pages 1–3 form the executive section, but page 1 stands alone. Do not open with a flattering
-bio. Use the cover’s four facts and page 2’s deeper analysis for surprising evidence: an
+Pages 1–2 form the invariant executive section, and page 1 stands alone. A subject-specific
+page 3 may extend the executive section when the coverage crosswalk says so. Do not open with a
+flattering bio. Use the cover’s four facts and page 2’s deeper analysis for surprising evidence: an
 authority asset stranded on another domain, a namesake taking the search result, an unsupported
 claim, a relationship pattern, a buyer gap, or a company opportunity that changes the plan.
 
 ## Agent-install panel
 
-Page 17 must show, at minimum, the audit’s routed skill stack:
+The installable-agent page or panel must show, at minimum, the audit’s routed skill stack and
+must be mapped in the coverage crosswalk:
 
 `evidence-verification` → `positive-mentions-harvester` →
 `reputation-gap-analyzer` → `geo-visibility-audit` →

@@ -31,6 +31,9 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
 - [ ] No private phone, email, home address, credential, token, attendee list, or unnecessary
   message text appears in the public artifact.
 - [ ] Security-sensitive public exposure is routed privately and not reproduced as brand copy.
+- [ ] Every non-public source records data classification, owner, export scope, redaction
+  decision, restricted locator, retention/deletion date, and final disposition; restricted or
+  security-sensitive fields do not appear in public artifacts.
 
 ## 3. Score and analysis integrity
 
@@ -48,15 +51,19 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   recap.
 - [ ] Recommendations distinguish a proof gap, a findability gap, a consistency gap, a
   measurement gap, and an access gap.
+- [ ] Every live model/search observation records prompt, product/provider, model/version when
+  surfaced, query mode, time/timezone, locale/language, account and personalization state,
+  response/screenshot locator, citations, and failures or refusals.
 
 ## 4. Exact PDF and visual QA
 
 - [ ] The rendered PDF has exactly **20 pages** according to a PDF parser, not a source-file
   page estimate.
-- [ ] Each of the 20 blueprint page titles appears exactly once and in the locked order.
+- [ ] Pages 1, 2, and 20 satisfy their invariant contracts; a coverage crosswalk maps every
+  default page requirement to actual pages 1–20, with no uncovered requirement or padding.
 - [ ] All 20 pages were rendered to images and visually inspected at normal desktop/print size;
   record the montage/contact-sheet path and reviewer.
-- [ ] Pages 1, 2, 7, 17, and 20 received full-size spot checks; any defect triggered review of
+- [ ] Pages 1, 2, 7, the mapped agent-install page, and 20 received full-size spot checks; any defect triggered review of
   all affected pages.
 - [ ] Every page contains a meaningful approved real photo, source screenshot, data chart, or
   evidence-backed diagram with caption/evidence IDs.
@@ -78,7 +85,7 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
 - [ ] Every external and `sameAs` link was requested anonymously. Record HTTP status, redirect
   chain, final URL, title/entity match, and check time; authentication-block responses are
   labelled rather than guessed.
-- [ ] The page-17 QR decodes from the rendered PDF—not only the source—to exactly
+- [ ] The QR on the mapped agent-install page decodes from the rendered PDF—not only the source—to exactly
   `https://localservicespotlight.com/install/`.
 - [ ] Neither `/skills/`, a legacy ZIP page, nor a model-specific local path is presented as
   the install rail.

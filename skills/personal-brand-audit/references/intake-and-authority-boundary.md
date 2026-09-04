@@ -66,10 +66,19 @@ human decision.
 
 ## Data minimization
 
+- Classify each non-public source before ingest as PRIVATE-AUTHORIZED, RESTRICTED, or
+  SECURITY-SENSITIVE. Record the owner, allowed use, export scope, storage locator, and
+  retention/deletion date.
+- Only PUBLIC or explicitly approved excerpts may enter public artifacts. PRIVATE-AUTHORIZED
+  evidence stays in the restricted ledger unless the owner approves the exact excerpt and
+  audience. RESTRICTED and SECURITY-SENSITIVE material never enters a public PDF, SOP,
+  repository, or ordinary client handoff.
 - Do not copy personal email addresses, phone numbers, home addresses, attendee lists, access
   tokens, or private-message content into a public audit unless disclosure is necessary,
   lawful, and explicitly approved.
 - Use a source locator rather than embedding private data in the ledger.
+- At handoff, record which transient copies were deleted and which access-controlled record was
+  retained, by whom, and until when.
 - Treat exposed private data as a security finding, not a marketing asset.
 - Separate allegations from adjudicated findings and include the organization’s response when
   materially relevant.
@@ -79,6 +88,19 @@ human decision.
 
 Record the most advanced state actually evidenced. States in different lanes are not
 substitutes.
+
+### Action-register lane
+
+- **PROPOSED:** a candidate action with no accountable-human commitment yet.
+- **STAGED:** inputs, destination, and human gate are ready.
+- **APPROVED:** the named human approved the exact action and destination.
+- **IN PROGRESS:** work has begun, but the acceptance test has not passed.
+- **BLOCKED:** a named dependency prevents progress.
+- **COMPLETE:** the action produced its intended output or source-system event.
+- **VERIFIED:** the row's observable acceptance test passed.
+
+An action state does not prove a document was reviewed, a message was delivered, a skill was
+installed, or a schedule was observed; use the lanes below for those claims.
 
 ### Work-product lane
 

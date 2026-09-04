@@ -37,7 +37,9 @@ or runtime and record the marketplace version. If any are missing:
 
 ## Required deliverables
 
-A complete run produces five linked artifacts:
+A complete run produces five linked components. The executive summary may live inside the PDF,
+and the action register and receipt may be dedicated workbook tabs or separate files, but every
+component needs an exact locator:
 
 1. **Evidence ledger** — the row-level system of record, using
    [references/evidence-ledger.md](references/evidence-ledger.md).
@@ -196,9 +198,13 @@ Every proposed action must include:
 | Due date | Calendar date or explicit day window |
 | Human gate | Approval needed for publish, send, spend, access, legal claim, or relationship use |
 | Acceptance test | Observable result, URL, decoded QR, metric, or source-system read-back |
-| State | One exact state from the applicable work-product, delivery/publication, or agent-lifecycle lane; never generic `executed` or `verified` |
+| State | One exact action state: PROPOSED, STAGED, APPROVED, IN PROGRESS, BLOCKED, COMPLETE, or VERIFIED |
 
 “Build awareness,” “post more,” and “improve SEO” fail this contract.
+
+These action states are a separate lane. They do not substitute for the work-product,
+delivery/publication, or agent-lifecycle states recorded in the acceptance receipt. VERIFIED is
+allowed only when the row's observable acceptance test has passed.
 
 ## Definition of done
 
