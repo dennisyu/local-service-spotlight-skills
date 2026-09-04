@@ -2386,6 +2386,62 @@ The sweep only catches the blatant case: a headline with no visual anywhere near
 it. Whether the visual actually clears the fold is a judgement call, verified by
 opening the published page — see `verify-by-opening-the-live-artifact`.
 <!-- shared-rule:visuals-above-the-fold:end -->
+<!-- shared-rule:a-rule-is-not-a-skill:start -->
+## A rule is not a skill
+
+- **Before writing a skill, answer one question: is this a job, or a constraint on
+  every job?** A job has a trigger somebody types, inputs, a procedure, a
+  deliverable and a finish line. A constraint has none of those — it has a
+  prohibition and a reason.
+- **A constraint goes in `standards/`, never in `skills/`.** One file, captured
+  with `scripts/new_standard.py`, stamped into every skill by
+  `scripts/sync_shared_rules.py`. That is what makes it reach the 31 skills and
+  everyone who installed the pack.
+- **If you find yourself writing "always", "never", or "must" as the point of the
+  document rather than as advice inside it, stop.** You are writing a rule.
+- **The tell is self-description.** A skill whose own description says "layout
+  rule for", "the standard for", or "our policy on" has told you what it is.
+  Believe it.
+- **Why it matters:** a rule filed as a skill lives in one account's skill list.
+  It is never stamped into any SKILL.md, never reaches a member who installed the
+  pack, and never gets a machine check. It looks shipped and propagates to
+  nobody — the same failure as the black button that shipped ninety days after
+  its rule was published, for the same reason.
+- **When the answer is genuinely "both"** — a rule with real craft behind it —
+  split it. The constraint goes to `standards/`; the how-to goes into the skill
+  that already owns that work, not into a new one. Adding a skill is a permanent
+  claim on the routing surface: every near-duplicate description makes activation
+  worse for both skills. Adding a standard costs nothing at run time, because
+  standards are stamped in rather than selected.
+- Enforced by `python3 scripts/check_skill_vs_rule.py` in CI over skills a pull
+  request adds. Existing skills are grandfathered and reported, never failed.
+<!-- shared-rule:a-rule-is-not-a-skill:end -->
+
+<!-- shared-rule:sameas-must-be-the-same-entity:start -->
+## A sameAs must be the same entity, not the same name
+
+- **Every `sameAs`, every entity claim, and every `@id` must point at a page that
+  is provably the same person or organisation** — not a page with a matching
+  name, and not a page you have not opened.
+- **A resolving URL proves nothing about identity.** The link sweep can only ask
+  whether a URL returns 200. `en.wikipedia.org/wiki/Dennis_Yu` returns 200 and is
+  a Hong Kong horror director. The check passed; the claim was false.
+- **Verify by a second fact, never by the name.** Occupation, employer, birth
+  year, a work you can name. If a second fact does not match, it is a different
+  entity. This is `evidence-verification`'s core discipline applied to schema.
+- **A wrong entity claim is worse than no claim.** It tells Google two people are
+  one person, which is the entity collision `knowledge-panel-entity-seo` exists to
+  repair. You are not adding a weak signal, you are adding a wrong one.
+- **A `sameAs` that 404s asserts an entity that does not exist.** Remove it. Never
+  substitute a guessed identifier — a Q-number you have not opened is a
+  fabrication, however plausible its shape.
+- **Deleted Wikidata items leave the ID valid-looking forever.** When an item is
+  deleted for notability, the URL keeps its shape and starts 404ing. Removing the
+  claim is the fix. Re-creating the item is a separate decision with its own
+  notability bar; do not make it silently as part of a schema edit.
+- The check below catches one known collision by name. The general rule cannot be
+  grepped — verification is reading the page and matching a second fact.
+<!-- shared-rule:sameas-must-be-the-same-entity:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work
