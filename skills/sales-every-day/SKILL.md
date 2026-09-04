@@ -595,6 +595,83 @@ people, ownership or the right internal training page, so enforce this through t
 entity-linking preflight and a live link audit.
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
 
+<!-- shared-rule:visuals-above-the-fold:start -->
+## Visual and interactive content sits above the fold
+
+- **The visual is the hook, not the reward.** A chart, diagram, photograph,
+  calculator or interactive tool must be at least partly visible in the first
+  screen, *after* the site's own header and title. Two or three sentences of
+  lead-in above it is the maximum.
+- **If the page has an interactive tool, the tool leads.** The prose becomes the
+  explanation of it, not the preamble to it. Reword any copy that points "below"
+  into a back-reference to the tool at the top.
+- **No prose run longer than about two screens** without a figure, pull quote,
+  callout or list breaking it.
+- **Why:** `every-article-has-pictures` only asks whether an image exists. A page
+  can satisfy it and still bury the picture four screens down, where nobody
+  scrolls. That is the exact failure this rule closes, and it shipped on
+  dennisyu.com before anyone noticed.
+- **Server-render the initial state of any interactive block.** WP Rocket and
+  similar optimisers delay inline JavaScript until the visitor's first
+  interaction, so a block that builds its own DOM paints as an empty shell —
+  worst of all when it is now the first thing on the page. Bake the default state
+  into the markup and make the script idempotent (`el.innerHTML = ''` before it
+  populates) so it replaces that markup instead of appending a second copy.
+- **Verify by measuring on the live URL, not the local render.** Site chrome is
+  routinely 300–400px, so a layout that clears the fold locally can fail once
+  published. Check at 1440x860 and 390x844.
+- **Exemption:** a page whose whole purpose is a single block of prose — a
+  disclosure, a policy, a legal notice — is exempt. Tag it, do not silently skip
+  it.
+
+The sweep only catches the blatant case: a headline with no visual anywhere near
+it. Whether the visual actually clears the fold is a judgement call, verified by
+opening the published page — see `verify-by-opening-the-live-artifact`.
+<!-- shared-rule:visuals-above-the-fold:end -->
+
+<!-- shared-rule:an-unanswered-ask-never-stops-the-work:start -->
+## An unanswered ask never stops the work
+
+- **Silence is not a blocker, it is a trigger.** When someone does not reply, the work
+  continues on the rescue path you chose before you sent the ask. "Waiting on them" is
+  never a status an agent reports twice.
+- **Try to need them less before you try to reach them harder.** In order: do it yourself;
+  route around; engineer the dependency so it cannot block again; only then ask. Most asks
+  disappear at step one once you actually test them, because "I need this from them" is
+  usually "I would prefer this from them."
+- **Only three things justify asking a human at all** — binding authority, credentials or
+  physical access nobody else holds, and a fact that exists only in their head. Preference,
+  convenience, and "they would probably want to weigh in" are not gates.
+- **Every ask ships with its rescue, decided before sending**: a deadline, a named fallback
+  action, and you as the owner of that fallback. Put it in the message. "If I do not hear
+  back by Friday I will assume X and proceed" turns silence into a decision, and usually
+  produces the reply anyway.
+- **Shrink the ask until it can be answered in ten seconds.** One question, one message, a
+  yes or no where possible, plus what you already tried. A question that makes someone
+  reconstruct context is a question that does not get answered.
+- **When the deadline passes, execute the rescue quietly.** Do not re-send the same ask.
+  Do not hand the chase to whoever is busiest. Log the miss for the periodic reliability
+  record and move on: a pattern is a management conversation, held later with evidence in
+  hand, not an interruption now.
+- **The second time the same dependency blocks, stop treating it as a people problem.**
+  Build the thing that makes their non-response harmless — a watchdog, a fallback route, a
+  second credential, a cached copy. Building it once costs less than chasing it forever.
+- This does not loosen `agents-draft-humans-send`. Rescue means doing the *work* yourself,
+  never dispatching messages, publishing, spending or deleting on someone's behalf because
+  they went quiet. Where the rescue would cross that line, stage it and say so.
+- Rescue toward the function, not the person — see `assign-work-to-a-function`. A rescue
+  aimed at an individual who is away is not a rescue.
+- **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
+  says "waiting on", "blocked on" or "pending <person>" must also say when someone
+  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
+  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
+  run of that linter found two real ones: one five days old, one thirteen days old and
+  not actually blocked on anybody.
+- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
+  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
+  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+<!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
+
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work
 
