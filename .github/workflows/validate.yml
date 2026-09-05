@@ -22,7 +22,9 @@ jobs:
         run: python3 scripts/fleet_check.py --self-test
       - name: Validate repository structure and references
         run: python3 scripts/validate_marketplace.py
-      - name: Run converter tests
+      - name: Install validation dependencies
+        run: python3 -m pip install -r requirements-validation.txt
+      - name: Run converter and bootstrap tests
         run: python3 -m unittest discover -s tests -v
       - name: Run Claude's marketplace validator
         run: npx -y @anthropic-ai/claude-code@latest plugin validate .

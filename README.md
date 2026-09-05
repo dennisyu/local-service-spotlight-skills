@@ -87,6 +87,12 @@ Most people should install `lss-everything`.
 Creating a schedule is not proof that it ran. See [ACCEPTANCE.md](ACCEPTANCE.md)
 for installation, update, and fleet-job checks.
 
+For a useful first result before installation, see the proposed
+[public first-result bootstrap contract](docs/public-first-bootstrap.md).
+It works from a business's public sources, produces a draft proof inventory, and
+keeps installation, private memory, and scheduling as separately verified steps.
+The contract is a reference and validator, not an automatic cross-model installer.
+
 ## House rules travel inside every skill
 
 Every rule the team has learned lives once, as one file, in
