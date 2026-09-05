@@ -19,11 +19,33 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   unresolved conflicts are not silently normalized.
 - [ ] Search coverage lists names, aliases, handles, languages, markets, sources, date window,
   blocks, and timeouts.
+- [ ] The canonical [LSS Knowledge Graph
+  Explorer](https://localservicespotlight.com/knowledge-graph-explorer/) was queried for the
+  resolved subject, relevant company/employer, and every ranked public-association entity used
+  in the report; the receipt records exact queries, capture time, candidates, and failures.
+- [ ] The ledger records
+  `graph_object_status=RESOLVED | AMBIGUOUS | NO_SAFE_OBJECT_RETURNED | UNKNOWN` and a separate
+  `kgmid=<identifier> | UNKNOWN`; any resolved KGMID passes the two-independent-attribute
+  identity gate. Human-facing display labels map explicitly to those enums, and a no-result is
+  not described as proof that no panel exists.
+- [ ] A normal Google name/name-plus-role query was checked separately from Explorer and forced
+  `?kgmid=` links. Its
+  `normal_google_panel_status=VISIBLE | NOT_VISIBLE_IN_THIS_CHECK | UNKNOWN` records query,
+  date/timezone, locale/language, approximate location, device/surface, signed-in and
+  personalization state, and screenshot/response locator.
+- [ ] `owner_claim_status` is `UNKNOWN` unless the authorized owner-side Google claim dashboard,
+  a screenshot/export from that dashboard, or a Google claim receipt proves `CLAIMED` or
+  `NOT_CLAIMED`; Explorer defaults and public panel controls are not treated as owner-dashboard
+  proof.
 
 ## 2. Connections, consent, and privacy
 
 - [ ] Every “top connection” has dated public association evidence or direct user-confirmed
   private evidence.
+- [ ] Every ranked public-association person or organization uses the same
+  `graph_object_status`/`kgmid` enums as the subject, with dated association evidence and
+  association-safe wording; the graph result is not presented as friendship, endorsement,
+  relationship depth, or permission.
 - [ ] Association type and relationship depth are separate; event co-presence, a follow, a
   tag, or a group photo never becomes friendship, endorsement, or warm access.
 - [ ] Permission to quote, reuse a photo, name a private client, or contact a person is explicit
@@ -142,6 +164,11 @@ QR decoded value:
 Install URL anonymous status / final URL / checked at:
 Outside-in coverage:
 Credentialed coverage:
+LSS Knowledge Graph Explorer queries / captured at:
+Graph object status (RESOLVED / AMBIGUOUS / NO_SAFE_OBJECT_RETURNED / UNKNOWN) / separate KGMID:
+Normal Google panel status / query / date / locale / location / personalization:
+Owner claim status / owner-dashboard or Google claim-receipt proof locator / UNKNOWN:
+Ranked public-association entity graph outcomes:
 Independent reviewer / context / reviewed at:
 Tests passed:
 Tests failed:
