@@ -51,13 +51,16 @@
   exact filtered Task Library route and back to every counted meta-article. A stable
   `?task=` route opens one task and a stable `?article=` route opens the complete hub.
   A count without its inspectable source URLs is decoration, not evidence.
-- **Lead with the result and the article's own evidence.** Give the 2–3 sentence
-  plain-language summary first, then a compact outcome/checklist block. Keep the most
+- **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
+  at eighth-grade reading level or below, name who this is for, what it does, why
+  it matters and the useful outcome. Keep the topic-specific visual beside that
+  short opening in the first screen; it may lead. A checklist is secondary and
+  must not push it below the fold. Keep the most
   specific primary visual or proof for that article above the fold: the actual framework
   diagram on a framework hub, the task-specific screenshot or flow on a software SOP,
   or the real photograph, artifact or result that proves the work. A generic system map
-  must never displace that evidence or push it below the fold. Move audience explanation,
-  history and secondary evidence below this primary orientation.
+  must never displace that evidence or push it below the fold. Keep the audience in
+  the opening; move extended background, history and secondary evidence below it.
 - **Use the larger system map as truthful context.** When an established framework has
   an exact relationship to the article, place its maintained detailed map after the
   article-specific primary visual and highlight only the subcomponents the article
