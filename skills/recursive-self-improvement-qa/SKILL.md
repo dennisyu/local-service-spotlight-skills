@@ -1,6 +1,6 @@
 ---
 name: recursive-self-improvement-qa
-description: Make any agent improve itself — run the task, write the run up as a meta article, QA against the definitive article, rewrite the SOP sharper, republish. The Task Library loop that compounds the whole skill set. Use after any skill runs, or to turn a recurring task into a self-improving skill.
+description: After every task execution, write a meta article with run evidence, compare it with the canonical recipe and prior runs, and propose supported improvements. Publish or change the recipe under existing authorization.
 ---
 
 # Recursive Self-Improvement QA
@@ -13,15 +13,15 @@ description: Make any agent improve itself — run the task, write the run up as
 - Previous meta articles for this skill, if any — the loop's memory.
 
 ## The loop
-1. **Do** the task exactly per the SOP. No improvising — deviations are data.
-2. **Document** the run as a *meta article*: what happened, what worked, what broke, where the agent had to guess. The agent writes its own definitive article.
-3. **QA** against the canonical instructions with the checklist below. Every deviation and gap gets flagged, not excused.
-4. **Rewrite** the SOP to remove the exact ambiguity behind each deviation. One fix per flag.
-5. **Publish** the updated definitive article — version it (v1.1, v1.2) — and run again. Every loop, the skill needs less of you.
+1. **Execute** the canonical task recipe within the authorized scope. Check its trigger, starting state, inputs and prerequisite outputs before following its ordered steps. Record necessary deviations and the reason; do not guess missing instructions.
+2. **Write** a meta article for this execution using the [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/). Link the exact canonical task, recipe/skill revision and run evidence. Include a distinct execution ID, inputs, actions, output, pass/fail checks, deviations, measured effort, lessons and downstream handoff. A failed or partial run still gets a record with that status. The recipe and the run record are separate articles.
+3. **Compare** the result with the canonical acceptance criteria and prior meta articles. Flag evidenced gaps in inputs, steps, checks and handoffs. Preserve UNKNOWN when evidence is missing.
+4. **Propose** the smallest supported recipe or skill correction for each real defect. Record the decision, version accepted changes and link them to the originating execution. A clean run may need no recipe change.
+5. **Close** the run with its written meta article, result and next owner. Publishing the meta article, merging a skill change, changing a live recipe or starting another run follows existing authorization. Keep draft, reviewed, published and verified states distinct; required writing does not authorize those actions.
 
 ## The QA checklist — run it every time
 - Did the output match what the definitive article promised? Where, exactly, did it differ?
-- Where did the agent guess? A guess means a missing instruction — write the instruction.
+- Where did the agent guess? Determine whether the cause was missing evidence, access, an instruction or a wrong assumption; propose the supported fix.
 - What input was missing or wrong at the start? Fix the Inputs section, not just this run.
 - Could a worker repeat the run from the SOP alone, without asking you anything? If not, it isn't done.
 - Does every produced asset link back to its canonical hub — no content vandalism?
@@ -30,7 +30,7 @@ description: Make any agent improve itself — run the task, write the run up as
 - Did this run produce anything worth productizing — a reusable template, prompt, or standard?
 
 ## The Task Library model
-This loop at scale is the Local Service Spotlight Task Library: 1,000+ tasks, each one a skill.md tied to a definitive article with an SOP and a QA checklist.
+The [Task Library](https://blitzmetrics.com/the-task-library/) maps each repeatable task to its canonical recipe and skill. Link prerequisites and the downstream handoff, with observable acceptance checks. Topic hubs, references, comparisons and supporting stories have separate roles; an opening audit does not turn them into task recipes.
 - **Workers** execute the checklist. **Managers** enforce it. **The architect** revises the system when flags repeat.
 - One page per task, one URL per page — and every run makes the page better.
 - That's how a library compounds instead of rotting: the documentation IS the asset.
@@ -41,9 +41,9 @@ This loop at scale is the Local Service Spotlight Task Library: 1,000+ tasks, ea
 - Before a sale or audit: the sharpened library is what the buyer is actually paying for.
 
 ## Output
-- A meta article for the run — what happened, with every deviation flagged.
+- A written meta article for the run, linked to the canonical task/revision and evidence, with a distinct execution ID and accurate publication status.
 - A QA punch-list: one fix per flag, each assigned.
-- The improved skill.md, versioned and republished.
+- Any supported recipe/skill change, with its review decision, version and actual release status. No defect means no forced rewrite.
 
 ## For DealCon — agency owners & acquirers
 **If you run an agency:** delivery quality that improves without you is the difference between selling a job and selling a company — a self-improving task library is the asset a buyer pays the multiple for.
@@ -51,21 +51,21 @@ This loop at scale is the Local Service Spotlight Task Library: 1,000+ tasks, ea
 **Your edge:** name the task you've redone from scratch three times this quarter — that's the first skill.md to put in the loop.
 
 ## Run on a persistent agent (Fable 5)
-- **Loop to done:** this skill is the loop the other nine run inside — on a persistent agent it fires automatically after every skill execution, not when someone remembers to ask. Done = every flag has a fix and the SOP is republished, versioned.
+- **Loop to done:** run this review after every task execution. Done means the meta article is written, acceptance results are evidenced and gaps have a supported next action/owner. Publication or another execution requires the existing authority. Meta writing is part of this run, not an endless series of meta-of-meta executions.
 - **Self-verify:** run the QA checklist completely, every time — a skipped line is tomorrow's deviation, and the checklist audits you too.
 - **Compound with memory:** prior meta articles are the loop's memory — read them before judging this run, so versions compound (v1.1, v1.2) instead of resetting.
-- **Log the run:** the meta article isn't overhead here, it IS the output — each one is a worked example added to the library.
+- **Log the run:** count distinct execution IDs per canonical task, not drafts, edits, retries or derivative pages. Keep failed/partial and unpublished history separate from the verified public completed-example count.
 
 See `boil-the-ocean.md` for the full operating principles.
 
 ## Notes — Dennis's method
-- One page per agent: each agent IS a definitive article that documents and improves itself. The meta article is the agent inspecting its own work.
+- One canonical recipe per task; one meta article per execution. The recipe teaches the work, and accumulated run evidence guides its improvement.
 - This is recursive self-improvement applied to marketing ops. The library you installed today should be measurably sharper in 90 days — if it isn't, the loop isn't running.
 - Boil the ocean on the checklist. Completeness beats good-enough, because every unwritten rule becomes tomorrow's deviation.
 - Standardize, then improve: you can't sharpen a process that changes shape every run. SOP first, loop second.
 
 ## Definitive article & pairings
-- Reference: https://blitzmetrics.com/how-my-ai-agents-document-and-improve-themselves-meta-articles-definitive-articles/ · https://blitzmetrics.com/task-library/ · https://blitzmetrics.com/always-boil-the-ocean-because-good-enough-is-not-enough/
+- Reference: https://localservicespotlight.com/meta-articles/ · https://blitzmetrics.com/meta-article-prompt/ · https://blitzmetrics.com/the-task-library/ · https://blitzmetrics.com/always-boil-the-ocean-because-good-enough-is-not-enough/
 - Pairs with: definitive-article-writer → **recursive-self-improvement-qa** → loop back through all nine, starting at personal-brand-strategist
 
 ## Learned in the field
@@ -2898,6 +2898,28 @@ Learned August 3, 2026.
 <!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:start -->
 ## Definitive articles show what they are, their evidence strength, and where they fit
 
+- **Name the kind of canonical page before judging it.** A task-definitive article
+  is the maintained recipe for one repeatable task. A topic, entity or framework hub
+  explains its subject and links to the task recipes it owns; it need not pretend to
+  execute one task. Supporting stories, opinion pieces, tool comparisons, references,
+  historical posts and meta-articles remain distinct. A repaired opening, lead visual,
+  incoming link or prior fleet-audit label does not promote any of them to a task SOP.
+- **A task recipe must let another worker repeat and check the work.** Require all of:
+  the trigger and starting state; required inputs and access; linked prerequisite tasks
+  and their expected outputs; ordered steps with decision points; the measurable output
+  and observable pass/fail criteria; and the downstream task, receiving owner/function
+  and handoff artifact. Link the canonical task in the
+  [Task Library](https://blitzmetrics.com/the-task-library/) and its parent in the
+  [Content Factory](https://blitzmetrics.com/content-factory/). Do not invent a task,
+  prerequisite, threshold or relationship to fill a box. Mark a missing required field
+  as a gap and hold task-definitive certification until the source supports it.
+- **Keep the recipe separate from each execution record.** Every task execution writes
+  a [meta article recording the run](https://localservicespotlight.com/meta-articles/)
+  using the [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/).
+  It links to the exact canonical task, the recipe revision used and the run evidence.
+  Writing is required; publishing the meta article and changing the canonical recipe
+  follow the existing authorization for those actions. The run record feeds reviewed
+  improvements back into the recipe and skill; it never becomes a second recipe.
 - **The marker is a reviewed semantic claim, not a workflow status.** Mark a page as a
   Definitive Article, Definitive SOP or Definitive Framework only after a reviewer has
   confirmed that its labels, steps, links, evidence and canonical ownership agree with
@@ -2914,10 +2936,16 @@ Learned August 3, 2026.
   meta-articles behind the hub. None of the three may be used as a proxy for another.
 - **Derive the meta count from evidence; never type it into two sources.** One generated
   manifest owns the exact hub URL, mapped Task Library tasks, every counted and held
-  evidence record, audit time, count and strength band. The article badge/footer and the
-  Task Library render from that manifest. If the corpus cannot be checked, report
+  evidence record with a distinct execution ID, audit time, count and strength band.
+  The article badge/footer and the Task Library render from that manifest. If the corpus cannot be checked, report
   `unknown`; if only a lower bound is proved, report `partial`. Never turn either into
   zero.
+- **Count distinct task executions, not pages or edits.** Deduplicate each canonical
+  task's evidence by execution ID. Revisions, retries within the same run, translations,
+  clips and syndicated copies do not create new executions. A separately scoped rerun
+  has its own ID and evidence. Keep internal run history, including failed/partial runs
+  and unpublished drafts, separate from the public completed-example count. Where older
+  evidence lacks a reliable run identity, hold the count for review rather than guess.
 - **Count a primary worked example, not a generic cross-link.** A counted meta-article
   must be published, explicitly classified as a meta-article, document a completed run,
   materially execute the hub's task, and link to the exact canonical hub in its
@@ -2945,6 +2973,14 @@ Learned August 3, 2026.
   or the real photograph, artifact or result that proves the work. A generic system map
   must never displace that evidence or push it below the fold. Keep the audience in
   the opening; move extended background, history and secondary evidence below it.
+- **Show where a task fits after its first-screen orientation.** A Content Factory task
+  needs a responsive context diagram lower in the article: Produce → Process → Post →
+  Promote in the maintained order, only the work this task performs highlighted, and
+  linked prerequisites → this task → the next task. Show the meta-record feedback into
+  the canonical recipe. This context map is additional to the topic-specific lead
+  visual. Keep access/tracking before the factory and measurement after it when those
+  boundaries apply. An unverified placement stays a stated gap; it is not permission
+  to invent a station or certify a task with an unknown handoff.
 - **Use the larger system map as truthful context.** When an established framework has
   an exact relationship to the article, place its maintained detailed map after the
   article-specific primary visual and highlight only the subcomponents the article
@@ -3119,6 +3155,14 @@ opening the published page — see `verify-by-opening-the-live-artifact`.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Explain jargon on its first meaningful mention and link the owned explainer.**
+  Give the familiar phrase before the specialist label: “the result we want, the
+  material we will use, and who it serves — our
+  [Goals, Content, Targeting (GCT) brief](https://blitzmetrics.com/gct-business-strategy/).”
+  Apply this to other frameworks, acronyms and unfamiliar task terms. Verify the owned
+  destination teaches the term; use honest descriptive anchors. If no suitable owned
+  explanation exists, define the term in place and record the gap instead of inventing
+  a link. Keep this explanation short so it does not bury the lead visual.
 - **Make the opening specific enough to judge.** For a shared-memory guide:
   “Use this guide if you work with more than one AI assistant and keep repeating
   the same facts. It shows how to give them one set of notes, so each assistant
@@ -3141,6 +3185,49 @@ is https://blitzmetrics.com/definitive-article-guide/. The older
 in place rather than publishing a competing guideline. No regex can honestly
 certify a specific GCT or human comprehension; enforce this in editorial review.
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:end -->
+
+<!-- shared-rule:every-task-execution-writes-a-meta-article:start -->
+## Every task execution writes a meta article
+
+- **Write the run record every time the task is executed.** Follow the
+  [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/) and the
+  [recipe and run-record relationship](https://localservicespotlight.com/meta-articles/).
+  A task's definitive article is the reusable recipe. Its meta article records one
+  actual execution. Writing the meta article is required even when publication is
+  pending or the run ends failed, partial or blocked after work began. A plan that
+  never executes is a plan, not an execution example.
+- **Make the record checkable.** Include a stable execution ID; canonical task URL and
+  recipe/skill revision; trigger and starting state; date and operator; inputs and
+  prerequisite outputs; steps taken and deviations; output and pass/fail results;
+  evidence links; lessons; and the next action, artifact and receiving function. Record
+  steps, time, token use and cost when measured; preserve UNKNOWN when unavailable.
+  Protect credentials and private data, and retain the full record in an authorized
+  location when a public-safe version cannot include them.
+- **Writing and publishing are different states.** Write and save the meta draft under
+  the task's existing authority. Publish or send it only through the applicable
+  authorized rail. Preserve draft, reviewed, published and verified states accurately.
+  An internal agent note, task comment or publication receipt is useful evidence but
+  does not replace the structured meta article. Required writing grants no new send,
+  publish, merge, spend or access authority.
+- **Close the learning loop with evidence.** Compare this run and prior meta articles
+  with the canonical recipe. Propose the smallest supported correction for a missing
+  input, ambiguous step, failed check or handoff. Record the decision and version any
+  accepted recipe/skill change, using the existing review and publishing authority.
+  Link the change back to the run evidence. No improvement is needed when the evidence
+  reveals no defect; do not rewrite a working recipe just to show activity.
+- **Count distinct executions once per canonical task.** Use the execution ID to
+  deduplicate drafts, edits, derivatives and retries within a run. A separately scoped
+  rerun has a new ID and its own evidence. Keep failed/partial and unpublished records
+  in internal history, with their status, while the public evidence badge counts only
+  verified, published, completed examples under the definitive-article standard.
+  Count uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
+- **Do not create a documentation loop with no end.** Writing and revising the meta
+  article is part of the original execution. It does not recursively require another
+  meta article unless a separate documentation task is explicitly scoped and executed.
+
+No text pattern can prove that a task ran, an artifact passed, or two pages describe
+separate executions. Enforce this through the run record, evidence manifest and review.
+<!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

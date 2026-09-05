@@ -2258,6 +2258,28 @@ numbered list of steps is what you send only when you genuinely cannot act.
 <!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:start -->
 ## Definitive articles show what they are, their evidence strength, and where they fit
 
+- **Name the kind of canonical page before judging it.** A task-definitive article
+  is the maintained recipe for one repeatable task. A topic, entity or framework hub
+  explains its subject and links to the task recipes it owns; it need not pretend to
+  execute one task. Supporting stories, opinion pieces, tool comparisons, references,
+  historical posts and meta-articles remain distinct. A repaired opening, lead visual,
+  incoming link or prior fleet-audit label does not promote any of them to a task SOP.
+- **A task recipe must let another worker repeat and check the work.** Require all of:
+  the trigger and starting state; required inputs and access; linked prerequisite tasks
+  and their expected outputs; ordered steps with decision points; the measurable output
+  and observable pass/fail criteria; and the downstream task, receiving owner/function
+  and handoff artifact. Link the canonical task in the
+  [Task Library](https://blitzmetrics.com/the-task-library/) and its parent in the
+  [Content Factory](https://blitzmetrics.com/content-factory/). Do not invent a task,
+  prerequisite, threshold or relationship to fill a box. Mark a missing required field
+  as a gap and hold task-definitive certification until the source supports it.
+- **Keep the recipe separate from each execution record.** Every task execution writes
+  a [meta article recording the run](https://localservicespotlight.com/meta-articles/)
+  using the [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/).
+  It links to the exact canonical task, the recipe revision used and the run evidence.
+  Writing is required; publishing the meta article and changing the canonical recipe
+  follow the existing authorization for those actions. The run record feeds reviewed
+  improvements back into the recipe and skill; it never becomes a second recipe.
 - **The marker is a reviewed semantic claim, not a workflow status.** Mark a page as a
   Definitive Article, Definitive SOP or Definitive Framework only after a reviewer has
   confirmed that its labels, steps, links, evidence and canonical ownership agree with
@@ -2274,10 +2296,16 @@ numbered list of steps is what you send only when you genuinely cannot act.
   meta-articles behind the hub. None of the three may be used as a proxy for another.
 - **Derive the meta count from evidence; never type it into two sources.** One generated
   manifest owns the exact hub URL, mapped Task Library tasks, every counted and held
-  evidence record, audit time, count and strength band. The article badge/footer and the
-  Task Library render from that manifest. If the corpus cannot be checked, report
+  evidence record with a distinct execution ID, audit time, count and strength band.
+  The article badge/footer and the Task Library render from that manifest. If the corpus cannot be checked, report
   `unknown`; if only a lower bound is proved, report `partial`. Never turn either into
   zero.
+- **Count distinct task executions, not pages or edits.** Deduplicate each canonical
+  task's evidence by execution ID. Revisions, retries within the same run, translations,
+  clips and syndicated copies do not create new executions. A separately scoped rerun
+  has its own ID and evidence. Keep internal run history, including failed/partial runs
+  and unpublished drafts, separate from the public completed-example count. Where older
+  evidence lacks a reliable run identity, hold the count for review rather than guess.
 - **Count a primary worked example, not a generic cross-link.** A counted meta-article
   must be published, explicitly classified as a meta-article, document a completed run,
   materially execute the hub's task, and link to the exact canonical hub in its
@@ -2305,6 +2333,14 @@ numbered list of steps is what you send only when you genuinely cannot act.
   or the real photograph, artifact or result that proves the work. A generic system map
   must never displace that evidence or push it below the fold. Keep the audience in
   the opening; move extended background, history and secondary evidence below it.
+- **Show where a task fits after its first-screen orientation.** A Content Factory task
+  needs a responsive context diagram lower in the article: Produce → Process → Post →
+  Promote in the maintained order, only the work this task performs highlighted, and
+  linked prerequisites → this task → the next task. Show the meta-record feedback into
+  the canonical recipe. This context map is additional to the topic-specific lead
+  visual. Keep access/tracking before the factory and measurement after it when those
+  boundaries apply. An unverified placement stays a stated gap; it is not permission
+  to invent a station or certify a task with an unknown handoff.
 - **Use the larger system map as truthful context.** When an established framework has
   an exact relationship to the article, place its maintained detailed map after the
   article-specific primary visual and highlight only the subcomponents the article
@@ -2479,6 +2515,14 @@ opening the published page — see `verify-by-opening-the-live-artifact`.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Explain jargon on its first meaningful mention and link the owned explainer.**
+  Give the familiar phrase before the specialist label: “the result we want, the
+  material we will use, and who it serves — our
+  [Goals, Content, Targeting (GCT) brief](https://blitzmetrics.com/gct-business-strategy/).”
+  Apply this to other frameworks, acronyms and unfamiliar task terms. Verify the owned
+  destination teaches the term; use honest descriptive anchors. If no suitable owned
+  explanation exists, define the term in place and record the gap instead of inventing
+  a link. Keep this explanation short so it does not bury the lead visual.
 - **Make the opening specific enough to judge.** For a shared-memory guide:
   “Use this guide if you work with more than one AI assistant and keep repeating
   the same facts. It shows how to give them one set of notes, so each assistant
@@ -2501,6 +2545,49 @@ is https://blitzmetrics.com/definitive-article-guide/. The older
 in place rather than publishing a competing guideline. No regex can honestly
 certify a specific GCT or human comprehension; enforce this in editorial review.
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:end -->
+
+<!-- shared-rule:every-task-execution-writes-a-meta-article:start -->
+## Every task execution writes a meta article
+
+- **Write the run record every time the task is executed.** Follow the
+  [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/) and the
+  [recipe and run-record relationship](https://localservicespotlight.com/meta-articles/).
+  A task's definitive article is the reusable recipe. Its meta article records one
+  actual execution. Writing the meta article is required even when publication is
+  pending or the run ends failed, partial or blocked after work began. A plan that
+  never executes is a plan, not an execution example.
+- **Make the record checkable.** Include a stable execution ID; canonical task URL and
+  recipe/skill revision; trigger and starting state; date and operator; inputs and
+  prerequisite outputs; steps taken and deviations; output and pass/fail results;
+  evidence links; lessons; and the next action, artifact and receiving function. Record
+  steps, time, token use and cost when measured; preserve UNKNOWN when unavailable.
+  Protect credentials and private data, and retain the full record in an authorized
+  location when a public-safe version cannot include them.
+- **Writing and publishing are different states.** Write and save the meta draft under
+  the task's existing authority. Publish or send it only through the applicable
+  authorized rail. Preserve draft, reviewed, published and verified states accurately.
+  An internal agent note, task comment or publication receipt is useful evidence but
+  does not replace the structured meta article. Required writing grants no new send,
+  publish, merge, spend or access authority.
+- **Close the learning loop with evidence.** Compare this run and prior meta articles
+  with the canonical recipe. Propose the smallest supported correction for a missing
+  input, ambiguous step, failed check or handoff. Record the decision and version any
+  accepted recipe/skill change, using the existing review and publishing authority.
+  Link the change back to the run evidence. No improvement is needed when the evidence
+  reveals no defect; do not rewrite a working recipe just to show activity.
+- **Count distinct executions once per canonical task.** Use the execution ID to
+  deduplicate drafts, edits, derivatives and retries within a run. A separately scoped
+  rerun has a new ID and its own evidence. Keep failed/partial and unpublished records
+  in internal history, with their status, while the public evidence badge counts only
+  verified, published, completed examples under the definitive-article standard.
+  Count uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
+- **Do not create a documentation loop with no end.** Writing and revising the meta
+  article is part of the original execution. It does not recursively require another
+  meta article unless a separate documentation task is explicitly scoped and executed.
+
+No text pattern can prove that a task ran, an artifact passed, or two pages describe
+separate executions. Enforce this through the run record, evidence manifest and review.
+<!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

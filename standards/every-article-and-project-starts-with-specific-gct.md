@@ -3,7 +3,7 @@
   "title": "Every article and project starts with specific GCT in plain language",
   "severity": "error",
   "captured": "2026-09-04",
-  "captured_from": "Dennis Yu, Codex task, 2026-09-04: repair cross-agent shared-memory documentation and apply the grade-8 opening, meaningful above-the-fold visual, and SEO Tree rules to all definitive articles and projects.",
+  "captured_from": "Dennis Yu, Codex task, 2026-09-04: repair cross-agent shared-memory documentation and apply the grade-8 opening, meaningful above-the-fold visual, and SEO Tree rules to all definitive articles and projects. Refined by Dennis Yu follow-up 2026-09-05: explain jargon and link its owned explainer on first mention.",
   "source": "https://localservicespotlight.com/article-guidelines/",
   "applies_to": [
     "agent-behaviour",
@@ -24,6 +24,14 @@
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Explain jargon on its first meaningful mention and link the owned explainer.**
+  Give the familiar phrase before the specialist label: “the result we want, the
+  material we will use, and who it serves — our
+  [Goals, Content, Targeting (GCT) brief](https://blitzmetrics.com/gct-business-strategy/).”
+  Apply this to other frameworks, acronyms and unfamiliar task terms. Verify the owned
+  destination teaches the term; use honest descriptive anchors. If no suitable owned
+  explanation exists, define the term in place and record the gap instead of inventing
+  a link. Keep this explanation short so it does not bury the lead visual.
 - **Make the opening specific enough to judge.** For a shared-memory guide:
   “Use this guide if you work with more than one AI assistant and keep repeating
   the same facts. It shows how to give them one set of notes, so each assistant
