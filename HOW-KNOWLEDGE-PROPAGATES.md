@@ -63,7 +63,7 @@ file, one rule, plain English — the black-button rule is a page of text saying
 what to do, why, and how to check. That file is the *only* place the rule is
 written down. There is no second copy anyone maintains.
 
-**Skills are the envelopes.** The pack contains 27 skills — content factory, SEO
+**Skills are the envelopes.** The pack contains 32 skills — content factory, SEO
 audit, weekly brand MAA, and so on. Each one is a self-contained folder. When
 someone installs the pack from a QR code at a conference, what lands on their
 machine is those folders. **They do not get the `standards/` directory. They do
@@ -72,7 +72,8 @@ would ride along until it reached them and then evaporate.
 
 **So we stamp the rule into every envelope.** One command —
 `python3 scripts/sync_shared_rules.py` — reads every file in `standards/` and
-copies its text, word for word, into `AGENTS.md` and into all 27 skill files. It
+copies its text, word for word, into `AGENTS.md` and into every skill whose declared
+scope matches the rule. Agent-behavior rules reach all 32 skill files. It
 marks each copy with an invisible tag so it knows which text it owns:
 
 ```
@@ -82,8 +83,10 @@ marks each copy with an invisible tag so it knows which text it owns:
 ```
 
 Nobody types those copies and nobody edits them. The command writes them. Today
-that is **10 rules × 28 files = 280 copies**, all generated, all identical to
-their source.
+there are **37 standards**. Every one appears in `AGENTS.md`; each skill receives
+the agent-behavior rules plus the published-HTML and design-review rules in its
+declared scope. The validator derives the expected copies instead of relying on a
+remembered multiplication.
 
 **The build refuses to let a copy go stale.** Every time a change is proposed,
 an automatic check re-runs the stamp and compares. If one copy differs from the
@@ -92,7 +95,8 @@ Drift is not caught late; it is impossible.
 
 **The result:** adding a house rule to the entire fleet — and to every person who
 ever installed the pack — is *dropping one markdown file into `standards/` and
-running one command.* No code change. No editing 27 files. Nothing to remember.
+running one command.* No code change. No hand-editing generated copies. Nothing to
+remember.
 
 ---
 
@@ -103,20 +107,19 @@ recursive rather than merely tidy. **A single standard file generates three
 different things**, which is exactly Content · Checklist · Software:
 
 ```
-                    standards/no-black-buttons.md
+                       standards/<one-rule>.md
                                  │
         ┌────────────────────────┼────────────────────────┐
         ▼                        ▼                        ▼
    CONTENT                  CHECKLIST                 SOFTWARE
    the rule text,           the same words,           the machine checks
-   stamped into             read by a person          in the file header,
-   AGENTS.md and            before they touch         compiled into the
-   all 27 skills            a site                    live fleet sweep
+   stamped into             read by a person          when declared in
+   AGENTS.md and            before applicable         the file header,
+   scope-matched skills     work                      compiled into a sweep
         │                        │                        │
         ▼                        ▼                        ▼
-   every agent              every person             every published page
-   that reads any           doing site work          swept on a schedule
-   skill, anywhere
+   each applicable          each applicable          each matching artifact
+   agent                    reviewer                 swept on a schedule
 ```
 
 The header of each standard carries the patterns that detect a violation in real
@@ -218,9 +221,10 @@ problem it claims to solve.
 - **The sweep is not yet scheduled.** The code runs and the findings are real,
   but until it is wired into the Friday fleet audit it only runs when someone
   types the command. *Available is not Scheduled, and Scheduled is not Observed.*
-- **Enforcement stops at published HTML.** Rules about how an agent behaves — mute
-  before playback, capture what you learn — reach every skill but nothing verifies
-  obedience. Distribution is solved; verification is not.
+- **Some enforcement stops at the artifact boundary.** Agent-behavior rules —
+  mute before playback, capture what you learn — reach every skill, while scoped
+  design and publishing rules reach only applicable skills. Nothing verifies
+  runtime obedience. Distribution is solved; verification is not.
 - **A rule can still be wrong.** Nothing here makes a rule correct, only
   consistent. `no-autoplay-with-sound` narrows a published rule to reconcile it
   with the hero standard, and it says so in the file and needs confirming.
@@ -230,9 +234,10 @@ problem it claims to solve.
 ## The short version, for the stage
 
 > We keep every rule we have learned in one folder, one file per rule. A script
-> stamps every one of those rules into every skill we ship, so when you install
-> the pack the rules come with it — you do not have to know they exist. The build
-> refuses to merge if any copy has drifted. And the same file that states the rule
+> stamps each rule into every skill whose declared scope matches it; agent-
+> behavior rules reach all skills. So when you install the pack, every applicable
+> rule comes with it — you do not have to know it exists. The build refuses to
+> merge if any required copy has drifted. And the same file that states the rule
 > also contains the test for it, so the rule and the thing that checks the rule
 > can never disagree.
 >

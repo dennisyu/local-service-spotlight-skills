@@ -54,7 +54,7 @@ Then write the rule, add machine checks if an honest one exists, and sync:
 
 ```bash
 python3 scripts/fleet_check.py --self-test    # proves the checks actually fire
-python3 scripts/sync_shared_rules.py          # stamps it into all 27 skills
+python3 scripts/sync_shared_rules.py          # stamps generated rules into scoped skills
 ```
 
 `--from` is required. Provenance is how we see which channels leak: if a source
@@ -75,8 +75,9 @@ npx -y @anthropic-ai/claude-code@latest plugin validate .
 
 Shared house rules live under `standards/`, one file per rule. After changing
 one, run `python3 scripts/sync_shared_rules.py` to update the self-contained copy
-inside every distributed skill. Never hand-edit a generated block; validation
-rejects missing or stale copies, for every rule, in every skill.
+inside every applicable distributed skill. Never hand-edit a generated block;
+validation rejects missing or stale copies of every applicable rule according
+to each skill's declared scope.
 
 `--self-test` runs each rule's machine checks against the passing and failing
 samples in its own header. A check with no bite is the failure mode that matters:
