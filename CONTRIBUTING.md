@@ -66,6 +66,7 @@ walkthrough: [HOW-KNOWLEDGE-PROPAGATES.md](HOW-KNOWLEDGE-PROPAGATES.md).
 ## Local checks
 
 ```bash
+python3 -m pip install -r requirements-validation.txt
 python3 scripts/sync_shared_rules.py --check
 python3 scripts/fleet_check.py --self-test
 python3 scripts/validate_marketplace.py
@@ -94,6 +95,14 @@ it reports every site clean forever and looks exactly like a working check.
 
 Never substitute one state for another. In particular, `Scheduled` does not mean
 `Observed`, and `Available` does not mean `Installed`.
+
+## Optional public bootstrap metadata
+
+[The public first-result contract](docs/public-first-bootstrap.md) describes a
+portable, public-only entry point. Its schema and offline validator check proposed
+release metadata; they do not install skills, fetch evidence, connect accounts, or
+create schedules. The checked-in fixture is synthetic and tests use a frozen
+clock. Never publish it as a live release manifest.
 
 ## Release notes for members
 
