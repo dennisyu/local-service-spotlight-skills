@@ -42,9 +42,11 @@
 - **Count distinct executions once per canonical task.** Use the execution ID to
   deduplicate drafts, edits, derivatives and retries within a run. A separately scoped
   rerun has a new ID and its own evidence. Keep failed/partial and unpublished records
-  in internal history, with their status, while the public evidence badge counts only
-  verified, published, completed examples under the definitive-article standard.
-  Count uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
+  in internal history with their status. Verified execution frequency and dated public
+  example volume are separate metrics. Existing reviewed public-article counts remain
+  valid as historical article volume even when those articles lack execution IDs; they
+  do not establish task frequency. Preserve the evidence and audit date. Execution
+  uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
 - **Do not create a documentation loop with no end.** Writing and revising the meta
   article is part of the original execution. It does not recursively require another
   meta article unless a separate documentation task is explicitly scoped and executed.

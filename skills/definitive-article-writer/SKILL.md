@@ -19,7 +19,7 @@ rule-scopes: published-html, design-review
 1. **Audit first.** If a canonical hub already exists on your site, improve it. Never publish a second page on the same topic — that's content vandalism; you'd split your own authority.
 2. **Classify and outline.** A task guide is a repeatable recipe; a topic/entity/framework hub explains its subject and links to the relevant task recipes. A supporting story, opinion, tool comparison, reference or historical post does not become task-definitive because its opening was repaired. For a task recipe, outline the trigger/starting state, inputs and linked prerequisite tasks, ordered steps, measurable output/pass criteria, and downstream task/owner/handoff. Hold unsupported fields as gaps. For a hub, outline the questions its declared scope must answer.
 3. **Write facts, not fluff.** Open with 2–3 sentences at eighth-grade reading level or below: who this is for, what it does, why it matters and the useful outcome. Keep the meaningful topic-specific visual with that short opening; it may come first. Verify it renders in the first screen on desktop and mobile. Every claim carries a number, a name, or a source link. Publish nothing you couldn't defend in diligence.
-4. **Explain terms and placement.** On first mention, give the plain meaning and link the verified owned explainer, including the result, material and audience behind [Goals, Content, Targeting](https://blitzmetrics.com/gct-business-strategy/). Link the task's [Task Library record](https://blitzmetrics.com/the-task-library/) and [Content Factory parent](https://blitzmetrics.com/content-factory/). Lower in a Content Factory task article, show its responsive context map with the true Produce → Process → Post → Promote placement, prerequisites, next task and meta feedback into the recipe. The map supplements the lead visual.
+4. **Explain terms and placement.** On first mention, give the plain meaning and link the verified owned explainer, including the result, material and audience behind [Goals, Content, Targeting](https://blitzmetrics.com/gct-business-strategy/). Link the task's [Task Library record](https://local-service-spotlight.github.io/task-library/) and [Content Factory parent](https://blitzmetrics.com/content-factory/). Lower in a Content Factory task article, show its responsive context map with the true Produce → Process → Post → Promote placement, prerequisites, next task and meta feedback into the recipe. The map supplements the lead visual.
 5. **Structure for machines.** H2s phrased as the questions people actually ask. Schema markup (Person, Article, FAQ). The entity's name spelled identically everywhere. A stable URL that never changes.
 6. **Build the orbit.** Internal-link every related thin post INTO this page; link this page out to its sources and sibling hubs. Thin posts orbit the hub — they feed it, never compete with it.
 7. **Make it the target.** Every clip, social post, podcast show-note, bio, and profile points at this URL. One topic, one URL — the Task Library principle.
@@ -1114,7 +1114,7 @@ review. Never add the marker merely to make the sweep pass.
   and their expected outputs; ordered steps with decision points; the measurable output
   and observable pass/fail criteria; and the downstream task, receiving owner/function
   and handoff artifact. Link the canonical task in the
-  [Task Library](https://blitzmetrics.com/the-task-library/) and its parent in the
+  [Task Library](https://local-service-spotlight.github.io/task-library/) and its parent in the
   [Content Factory](https://blitzmetrics.com/content-factory/). Do not invent a task,
   prerequisite, threshold or relationship to fill a box. Mark a missing required field
   as a gap and hold task-definitive certification until the source supports it.
@@ -1139,18 +1139,25 @@ review. Never add the marker merely to make the sweep pass.
   says the page is the reviewed canonical owner. Task importance decides which gap to
   work first. Meta-orbit strength measures only the number of verified completed-run
   meta-articles behind the hub. None of the three may be used as a proxy for another.
-- **Derive the meta count from evidence; never type it into two sources.** One generated
-  manifest owns the exact hub URL, mapped Task Library tasks, every counted and held
-  evidence record with a distinct execution ID, audit time, count and strength band.
-  The article badge/footer and the Task Library render from that manifest. If the corpus cannot be checked, report
-  `unknown`; if only a lower bound is proved, report `partial`. Never turn either into
-  zero.
-- **Count distinct task executions, not pages or edits.** Deduplicate each canonical
-  task's evidence by execution ID. Revisions, retries within the same run, translations,
-  clips and syndicated copies do not create new executions. A separately scoped rerun
-  has its own ID and evidence. Keep internal run history, including failed/partial runs
-  and unpublished drafts, separate from the public completed-example count. Where older
-  evidence lacks a reliable run identity, hold the count for review rather than guess.
+- **Derive each named metric from evidence; never type it into two sources.** One
+  generated manifest owns the exact hub URL, mapped Task Library tasks, counted and held
+  evidence records, known execution IDs or explicit missing-ID states, audit time,
+  metric names, counts and strength bands. The article and Task Library render from
+  that manifest. Keep historical public-example volume separate from verified task
+  execution frequency. If a metric cannot be checked, report `unknown`; if only a lower
+  bound is proved, report `partial`. Never turn either into zero.
+- **Preserve dated public-example counts as article volume.** An earlier review may
+  establish that a hub had a stated number of qualifying public meta articles on its
+  audit date without establishing execution IDs. Keep that dated evidence and its
+  inspectable sources. It remains historical public-example volume; it is not a claim
+  of that many distinct task runs. Missing IDs do not erase verified article evidence.
+- **Count task execution frequency separately.** Deduplicate each canonical task's
+  executions by ID and state the reporting period and result statuses. Revisions,
+  retries within one run, translations, clips and syndicated copies do not create
+  executions. A separately scoped rerun has its own ID and evidence. Keep failed/partial
+  and unpublished runs in internal history with their statuses. Older articles without
+  a reliable run identity cannot establish execution frequency; that metric remains
+  UNKNOWN or PARTIAL even when their dated article-volume count is valid.
 - **Count a primary worked example, not a generic cross-link.** A counted meta-article
   must be published, explicitly classified as a meta-article, document a completed run,
   materially execute the hub's task, and link to the exact canonical hub in its
@@ -1423,9 +1430,11 @@ certify a specific GCT or human comprehension; enforce this in editorial review.
 - **Count distinct executions once per canonical task.** Use the execution ID to
   deduplicate drafts, edits, derivatives and retries within a run. A separately scoped
   rerun has a new ID and its own evidence. Keep failed/partial and unpublished records
-  in internal history, with their status, while the public evidence badge counts only
-  verified, published, completed examples under the definitive-article standard.
-  Count uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
+  in internal history with their status. Verified execution frequency and dated public
+  example volume are separate metrics. Existing reviewed public-article counts remain
+  valid as historical article volume even when those articles lack execution IDs; they
+  do not establish task frequency. Preserve the evidence and audit date. Execution
+  uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
 - **Do not create a documentation loop with no end.** Writing and revising the meta
   article is part of the original execution. It does not recursively require another
   meta article unless a separate documentation task is explicitly scoped and executed.
