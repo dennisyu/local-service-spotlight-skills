@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Embed every shared house rule in every self-contained distributed skill.
+"""Embed every shared house rule in every applicable distributed skill.
 
 Each file in ``standards/`` becomes one generated block, keyed by its filename
-stem, inside ``AGENTS.md`` and every ``skills/*/SKILL.md``.
+stem, inside ``AGENTS.md``. Universal agent-behaviour rules enter every
+``skills/*/SKILL.md``; other rules follow the skill's declared ``rule-scopes``.
 
 Adding a house rule is therefore a file drop:
 
@@ -28,6 +29,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -53,17 +55,37 @@ INDEX_START = "<!-- shared-rule-index:start -->"
 INDEX_END = "<!-- shared-rule-index:end -->"
 
 
+def _comparable_marker_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    normalized = "".join(
+        ""
+        if unicodedata.category(character) == "Cf"
+        else "-"
+        if character == "_"
+        or unicodedata.category(character) == "Pd"
+        or character in {"\u2212", "\ufe58"}
+        else ":"
+        if character in {"∶", "꞉", "ː", "︰", "ꓽ", "։"}
+        else character
+        for character in normalized
+    )
+    normalized = re.sub(r"\s*:\s*", ":", normalized)
+    normalized = re.sub(r"\s+", "", normalized)
+    return normalized.strip()
+
+
 def standards() -> list[tuple[str, str]]:
     """Return [(slug, rendered block)] for every standard, sorted by slug."""
     return [(s.slug, s.block()) for s in load_standards(STANDARDS_DIR)]
 
 
 def plan() -> list[tuple[Path, list, list]]:
-    """(target, rules to embed in full, rules to name in the index) per file.
+    """Return (target, applicable rules, intentionally out-of-scope rules).
 
     AGENTS.md carries everything. A skill carries the universal agent rules plus
-    whatever scopes it declares in its frontmatter, and an index naming the rest
-    so a rule can never be invisible — only elsewhere.
+    whatever scopes it declares in its frontmatter. The third value lets sync
+    remove a block when a skill drops a scope; out-of-scope rules are not linked
+    from standalone distributions that do not contain ``AGENTS.md``/``standards``.
     """
     all_rules = load_standards(STANDARDS_DIR)
     out = [(ROOT / "AGENTS.md", all_rules, [])]
@@ -72,21 +94,6 @@ def plan() -> list[tuple[Path, list, list]]:
         rest = [s for s in all_rules if s not in keep]
         out.append((skill, keep, rest))
     return out
-
-
-def index_block(rest: list) -> str:
-    if not rest:
-        return ""
-    lines = "\n".join(f"- **{s.title}** (`{s.slug}`)" for s in rest)
-    return (
-        f"{INDEX_START}\n"
-        "## Other house rules that apply to this work\n\n"
-        "These are not repeated here because they govern published pages rather "
-        "than agent behaviour. They are binding all the same — read the full text "
-        "in `AGENTS.md` or `standards/` before touching a website.\n\n"
-        f"{lines}\n"
-        f"{INDEX_END}"
-    )
 
 
 def targets() -> list[Path]:
@@ -112,8 +119,68 @@ def upsert(text: str, slug: str, block: str) -> str:
 
 def orphan_blocks(text: str, known: set[str]) -> list[str]:
     """Rule blocks present in a file whose standards/ source no longer exists."""
-    found = set(re.findall(r"<!-- shared-rule:([a-z0-9-]+):start -->", text))
+    found = set(
+        re.findall(r"<!-- shared-rule:([a-z0-9-]+):(?:start|end) -->", text)
+    )
     return sorted(found - known)
+
+
+def validate_generated_markers(text: str) -> None:
+    """Reject missing, duplicate, or reversed generated-marker pairs."""
+    # Canonical markers are single-line HTML comments.  Scan comment openers
+    # separately so a missing final ``-->`` cannot hide stale teaching.
+    cursor = 0
+    while True:
+        opener = text.find("<!--", cursor)
+        if opener < 0:
+            break
+        closer = text.find("-->", opener + 4)
+        if closer < 0:
+            candidate = text[opener + 4 :]
+            comparable = _comparable_marker_text(candidate.rstrip(" >-"))
+            if "shared-rule:" in comparable or "shared-rule-index:" in comparable:
+                raise StandardError(
+                    f"confusable or malformed shared-rule marker {candidate.strip()!r}"
+                )
+            break
+        cursor = closer + 3
+    for raw_comment in re.findall(r"<!--(.*?)-->", text, re.DOTALL):
+        stripped = raw_comment.strip()
+        comparable = _comparable_marker_text(stripped)
+        if "shared-rule:" in comparable or "shared-rule-index:" in comparable:
+            exact_rule = re.fullmatch(
+                r"shared-rule:[a-z0-9]+(?:-[a-z0-9]+)*:(?:start|end)",
+                stripped,
+            )
+            exact_index = stripped in {
+                "shared-rule-index:start",
+                "shared-rule-index:end",
+            }
+            if (
+                exact_rule is None
+                and not exact_index
+            ) or comparable != stripped:
+                raise StandardError(
+                    f"confusable or malformed shared-rule marker {stripped!r}"
+                )
+    slugs = set(
+        re.findall(r"<!-- shared-rule:([a-z0-9-]+):(?:start|end) -->", text)
+    )
+    for slug in sorted(slugs):
+        start, end = marker(slug)
+        if text.count(start) != 1 or text.count(end) != 1:
+            raise StandardError(
+                f"shared-rule markers for {slug!r} are missing or duplicated"
+            )
+        if text.index(start) >= text.index(end):
+            raise StandardError(f"shared-rule markers for {slug!r} are reversed")
+    start_count = text.count(INDEX_START)
+    end_count = text.count(INDEX_END)
+    if start_count or end_count:
+        if start_count != 1 or end_count != 1:
+            raise StandardError("shared-rule-index markers are missing or duplicated")
+        if text.index(INDEX_START) >= text.index(INDEX_END):
+            raise StandardError("shared-rule-index markers are reversed")
 
 
 def drop_block(text: str, slug: str) -> str:
@@ -127,8 +194,14 @@ def drop_block(text: str, slug: str) -> str:
 
 
 def drop_index(text: str) -> str:
-    if INDEX_START not in text or INDEX_END not in text:
+    start_count = text.count(INDEX_START)
+    end_count = text.count(INDEX_END)
+    if not start_count and not end_count:
         return text
+    if start_count != 1 or end_count != 1:
+        raise StandardError("shared-rule-index markers are missing or duplicated")
+    if text.index(INDEX_START) >= text.index(INDEX_END):
+        raise StandardError("shared-rule-index markers are reversed")
     before, rest = text.split(INDEX_START, 1)
     _, after = rest.split(INDEX_END, 1)
     return (before.rstrip() + "\n" + after.lstrip("\n")).rstrip() + "\n"
@@ -140,6 +213,7 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
 
     for path, keep, rest in plan():
         current = path.read_text(encoding="utf-8") if path.exists() else ""
+        validate_generated_markers(current)
         expected = current
         wanted = {s.slug for s in keep}
 
@@ -153,10 +227,10 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
         for standard in keep:
             expected = upsert(expected, standard.slug, standard.block())
 
+        # Remove the legacy out-of-scope index. Standalone skill installs do not
+        # include the repository paths it linked, and an out-of-scope rule is not
+        # secretly binding on work the skill does not govern.
         expected = drop_index(expected)
-        block = index_block(rest)
-        if block:
-            expected = expected.rstrip() + "\n\n" + block + "\n"
 
         if current == expected:
             continue

@@ -19,7 +19,8 @@ Do not record passwords, tokens, or private client data here.
 
 1. Start with an account or workspace that does not already have this marketplace.
 2. Add `https://github.com/dennisyu/local-service-spotlight-skills` as a marketplace.
-3. Confirm all five bundles appear.
+3. Read the plugin names from `.claude-plugin/marketplace.json`; confirm that exact
+   derived set appears, without relying on a remembered bundle count or README list.
 4. Install `lss-everything`.
 5. Read the expected skill paths from the `lss-everything` entry in
    `.claude-plugin/marketplace.json`; confirm that exact set is listed and enabled.
@@ -104,11 +105,13 @@ Run after adding or amending anything in `standards/`.
 
 1. `python3 scripts/sync_shared_rules.py --check` exits 0.
 2. `python3 scripts/validate_marketplace.py` exits 0 — this checks *every* rule
-   in *every* skill, not one hardcoded rule.
-3. Count the copies and record the number. Confirm
-   `grep -rl "shared-rule:<slug>:start" skills/ | wc -l` equals the number of
-   skill paths in the manifest's `lss-everything` bundle; never paste yesterday's
-   expected count into this checklist.
+   in `AGENTS.md` and every *applicable* skill, not one hardcoded rule. Universal
+   agent-behaviour rules apply to every distributed skill; other rules apply only
+   where `rule-scopes` matches.
+3. If the receipt needs marker counts, derive each standard's target set with
+   `standards_for(...)` and `skill_scopes(...)` from `scripts/standards_lib.py`,
+   then add the `AGENTS.md` copy. Do not compare a scoped rule with every manifest
+   skill, and never paste yesterday's skill or marker count into this checklist.
 4. On a canary account, sync the commit and start a fresh chat. Ask the agent to
    state the house rule without naming the file. Record the reply verbatim.
 

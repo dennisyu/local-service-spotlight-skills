@@ -1,6 +1,7 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last canonical repository audit: 24 August 2026.
+Canonical state is commit-bound. Record the exact commit in each acceptance
+receipt; a remembered audit date is not a release identity.
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,8 +13,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 31 after merge of `outbound-action-closeout` |
-| Topical bundles | 4 |
+| Skill and bundle membership | Derived from the manifest at the recorded commit |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
 
@@ -29,15 +29,9 @@ accepted engagement and roster gate.
 
 ## Available bundles
 
-| Bundle | Skills available |
-|---|---:|
-| `lss-everything` | 31 |
-| `authority-and-reputation` | 7 |
-| `content-engine` | 7 |
-| `client-operations` | 11 |
-| `quality-and-standards` | 7 |
-
-The topical totals overlap. They are selections over the same 31 directories.
+The manifest is the only bundle inventory. Its `plugins` array owns every bundle
+name and each bundle's `skills` array; the validator checks those references and
+the description's derived count. Do not copy that list or its totals here.
 
 ## Per-account installation register
 

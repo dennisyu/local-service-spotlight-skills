@@ -54,7 +54,7 @@ Then write the rule, add machine checks if an honest one exists, and sync:
 
 ```bash
 python3 scripts/fleet_check.py --self-test    # proves the checks actually fire
-python3 scripts/sync_shared_rules.py          # stamps it into every distributed skill
+python3 scripts/sync_shared_rules.py          # stamps it into every applicable skill
 ```
 
 `--from` is required. Provenance is how we see which channels leak: if a source
@@ -75,8 +75,10 @@ npx -y @anthropic-ai/claude-code@latest plugin validate .
 
 Shared house rules live under `standards/`, one file per rule. After changing
 one, run `python3 scripts/sync_shared_rules.py` to update the self-contained copy
-inside every distributed skill. Never hand-edit a generated block; validation
-rejects missing or stale copies, for every rule, in every skill.
+inside every applicable distributed skill. Agent-behaviour rules are universal;
+published-page and design rules follow each skill's declared `rule-scopes`.
+Never hand-edit a generated block; validation derives the applicable target set
+and rejects every missing or stale copy.
 
 `--self-test` runs each rule's machine checks against the passing and failing
 samples in its own header. A check with no bite is the failure mode that matters:

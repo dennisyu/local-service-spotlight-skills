@@ -11,18 +11,33 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
       - name: Check shared house rules are current in every skill
         run: python3 scripts/sync_shared_rules.py --check
       - name: Prove every house rule's checks actually fire
         run: python3 scripts/fleet_check.py --self-test
       - name: Validate repository structure and references
         run: python3 scripts/validate_marketplace.py
+      - name: Validate sanitized public receipt schema and envelopes
+        run: python3 scripts/validate_agent_fleet_receipts.py
+      - name: Enforce append-only public receipts against the pull-request base
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/validate_agent_fleet_receipts.py --base-ref "${{ github.event.pull_request.base.sha }}"
+      - name: Enforce append-only public receipts against the pre-push revision
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: python3 scripts/validate_agent_fleet_receipts.py --base-ref "${{ github.event.before }}"
       - name: Run converter tests
         run: python3 -m unittest discover -s tests -v
       - name: Run Claude's marketplace validator
+        if: matrix.python-version == '3.12'
         run: npx -y @anthropic-ai/claude-code@latest plugin validate .

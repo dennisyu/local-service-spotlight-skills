@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -35,13 +36,24 @@ class SyncSharedRulesTests(unittest.TestCase):
         (self.root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
         for name in ("alpha", "beta"):
             (self.root / "skills" / name / "SKILL.md").write_text(
-                f"---\nname: {name}\ndescription: test\n---\n\n# {name}\n",
+                f"---\nname: {name}\ndescription: test\n"
+                f"rule-scopes: agent-behaviour\n---\n\n# {name}\n",
                 encoding="utf-8",
             )
         self.addCleanup(self._tmp.cleanup)
 
     def write_standard(self, slug: str, body: str):
-        (self.root / "standards" / f"{slug}.md").write_text(body, encoding="utf-8")
+        heading = body.splitlines()[0].removeprefix("## ").strip()
+        header = {
+            "title": heading,
+            "severity": "error",
+            "captured": "2026-08-16",
+            "captured_from": "test",
+        }
+        (self.root / "standards" / f"{slug}.md").write_text(
+            "---\n" + json.dumps(header) + "\n---\n\n" + body,
+            encoding="utf-8",
+        )
 
     def test_every_standard_reaches_every_skill(self):
         """N standards land in AGENTS.md and all SKILL.md files."""
@@ -123,18 +135,72 @@ class SyncSharedRulesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.standards()
 
+    def test_lone_or_duplicate_shared_rule_markers_fail_closed(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        for malformed in (
+            "<!-- shared-rule:orphan:end -->",
+            "<!-- shared-rule:rule-one:start -->\n"
+            "<!-- shared-rule:rule-one:start -->\n"
+            "<!-- shared-rule:rule-one:end -->",
+            "<!-- shared-rule:rule-one:end -->\n"
+            "<!-- shared-rule:rule-one:start -->",
+        ):
+            with self.subTest(malformed=malformed):
+                (self.root / "AGENTS.md").write_text(malformed, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    mod.sync(check=True)
+
+    def test_confusable_shared_rule_markers_cannot_leave_stale_teaching(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- current")
+        malformed_pairs = (
+            "<!-- shared-rule:rule-one:START -->\n- stale\n"
+            "<!-- shared-rule:rule-one:END -->",
+            "<!-- shared-rule : rule-one : start -->\n- stale\n"
+            "<!-- shared-rule : rule-one : end -->",
+            "<!-- ｓｈａｒｅｄ-rule:rule-one:start -->\n- stale\n"
+            "<!-- ｓｈａｒｅｄ-rule:rule-one:end -->",
+            "<!-- shared-\u200brule:rule-one:start -->\n- stale\n"
+            "<!-- shared-\u200brule:rule-one:end -->",
+            "<!-- shared‐rule:rule-one:start -->\n- stale\n"
+            "<!-- shared‐rule:rule-one:end -->",
+            "<!-- shared_rule:rule-one:start -->\n- stale\n"
+            "<!-- shared_rule:rule-one:end -->",
+            "<!-- shared-rule:rule-one:start >\n- stale\n",
+            "<!-- benign --> <!-- shared-rule:rule-one:start >",
+            "<!-- benign --><!-- shared_\u200brule:rule-one:start >",
+            "<!-- benign shared‐rule:rule-one:start -->\n- stale",
+            "<!--prefix shared-rule:rule-one:start -->\n- stale",
+            "<!-- benign <!-- shared‐rule:rule-one:start -->\n- stale",
+            "<!-- shared-rule∶rule-one∶start -->\n- stale",
+            "<!-- shared-rule꞉rule-one꞉start -->\n- stale",
+        )
+        for malformed in malformed_pairs:
+            with self.subTest(malformed=malformed[:50]):
+                (self.root / "AGENTS.md").write_text(malformed, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    mod.sync(check=True)
+
+    def test_legacy_index_markers_must_be_one_ordered_pair(self):
+        mod = load_module(self.root)
+        for malformed in (
+            mod.INDEX_START,
+            mod.INDEX_END,
+            mod.INDEX_START + mod.INDEX_START + mod.INDEX_END,
+            mod.INDEX_END + mod.INDEX_START,
+        ):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(ValueError):
+                    mod.drop_index(malformed)
+
 
 if __name__ == "__main__":
     unittest.main()
 
 
 class ScopedEmbeddingTests(unittest.TestCase):
-    """Rules reach every agent that needs them, and no further.
-
-    Embedding every rule in every skill made the rules larger than the skills
-    carrying them. Scoping is only safe if nothing becomes invisible — so a rule
-    a skill does not carry must still be named in its index.
-    """
+    """Rules reach every agent that needs them, and no further."""
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
@@ -146,7 +212,7 @@ class ScopedEmbeddingTests(unittest.TestCase):
     def skill(self, name: str, scopes: str | None = None):
         directory = self.root / "skills" / name
         directory.mkdir(parents=True)
-        scope_line = f"rule-scopes: {scopes}\n" if scopes else ""
+        scope_line = f"rule-scopes: {scopes or 'agent-behaviour'}\n"
         (directory / "SKILL.md").write_text(
             f"---\nname: {name}\ndescription: test\n{scope_line}---\n\n# {name}\n",
             encoding="utf-8",
@@ -164,7 +230,7 @@ class ScopedEmbeddingTests(unittest.TestCase):
             "applies_to": applies_to,
         }
         (self.root / "standards" / f"{slug}.md").write_text(
-            "---\n" + _json.dumps(header) + f"\n---\n\n## {slug}\n\n- {body}\n",
+            "---\n" + _json.dumps(header) + f"\n---\n\n## {header['title']}\n\n- {body}\n",
             encoding="utf-8",
         )
 
@@ -186,7 +252,7 @@ class ScopedEmbeddingTests(unittest.TestCase):
         self.assertNotIn("<!-- shared-rule:no-black-buttons:start -->", plain_text)
         self.assertIn("<!-- shared-rule:no-black-buttons:start -->", web_text)
 
-    def test_a_rule_a_skill_does_not_carry_is_still_named_in_its_index(self):
+    def test_out_of_scope_rule_does_not_leave_an_evaporating_repository_link(self):
         mod = load_module(self.root)
         plain = self.skill("subscription-audit")
         self.standard("no-black-buttons", ["published-html"], "never black")
@@ -194,9 +260,9 @@ class ScopedEmbeddingTests(unittest.TestCase):
         mod.sync()
         text = plain.read_text(encoding="utf-8")
 
-        self.assertIn(mod.INDEX_START, text)
-        self.assertIn("`no-black-buttons`", text)
-        self.assertIn("AGENTS.md", text)
+        self.assertNotIn(mod.INDEX_START, text)
+        self.assertNotIn("`no-black-buttons`", text)
+        self.assertNotIn("AGENTS.md", text)
 
     def test_agents_md_always_carries_every_rule(self):
         mod = load_module(self.root)
@@ -221,7 +287,7 @@ class ScopedEmbeddingTests(unittest.TestCase):
 
         skill.write_text(
             skill.read_text(encoding="utf-8").replace(
-                "rule-scopes: published-html\n", ""
+                "rule-scopes: published-html\n", "rule-scopes: agent-behaviour\n"
             ),
             encoding="utf-8",
         )
@@ -230,7 +296,7 @@ class ScopedEmbeddingTests(unittest.TestCase):
         self.assertEqual(orphans, [])
         text = skill.read_text(encoding="utf-8")
         self.assertNotIn("<!-- shared-rule:no-black-buttons:start -->", text)
-        self.assertIn("`no-black-buttons`", text)
+        self.assertNotIn(mod.INDEX_START, text)
 
     def test_an_unknown_scope_is_rejected(self):
         mod = load_module(self.root)

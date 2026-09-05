@@ -29,9 +29,10 @@
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies every rule into `AGENTS.md`; universal agent-behaviour rules
+  enter every distributed `SKILL.md`, while published-page/design rules enter only the
+  skills declaring their scope. That makes each standalone skill carry the full rules
+  that actually govern its work without links to repository files it does not ship.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
   header compiles straight into the live fleet sweep, so a violation on a published page
   is caught by a schedule instead of by a person noticing. Every check must carry

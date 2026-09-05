@@ -70,9 +70,19 @@ def scaffold(
     guidance = ""
     if "published-html" in applies_to:
         guidance = f"""
-Fill in `checks` so the live sweep enforces this. Each check needs `id`, `kind`
-(`forbid_regex`, `require_regex`, `resolve_urls`), `message`, `pattern`, and
-`examples` with at least one `violating` and one `clean` sample. Then:
+Fill in `checks` so the live sweep enforces this. Every check needs `id`, `kind`,
+and `message`; the remaining fields depend on the kind:
+
+- `forbid_regex` / `require_regex`: `pattern` plus non-empty
+  `examples.violating` and `examples.clean`.
+- `resolve_urls`: either structural `extractor` (`html-anchors` or
+  `jsonld-sameas`) or one-capture-group `extract`, plus `examples.extracts`.
+- `require_paths`: non-empty absolute `paths` plus `examples.builds`.
+- `provenance_contract`: non-empty HTML `examples.violating` and
+  `examples.clean`; the separately reviewed structural implementation owns its
+  DOM/privacy/visibility semantics.
+
+See `scripts/standards_lib.py` for the authoritative per-kind schema. Then:
 
     python3 scripts/fleet_check.py --self-test
 
@@ -148,8 +158,8 @@ def main() -> int:
         print("  2. python3 scripts/sync_shared_rules.py")
         print("  3. Commit on a branch and open a pull request")
     print()
-    print("The sync copies this rule into AGENTS.md and every distributed SKILL.md,")
-    print("so it reaches every agent and every member who installed the pack.")
+    print("The sync copies this rule into AGENTS.md and every applicable SKILL.md,")
+    print("so it reaches every agent and pack member whose declared scope applies.")
     return 0
 
 

@@ -32,7 +32,7 @@ Skip any one and the chain breaks silently.
 | | Step | What it means | Was it working? |
 |---|---|---|---|
 | 1 | **Capture** | The lesson gets written down once, in the one place that counts | **No** |
-| 2 | **Distribute** | That writing physically reaches every place an agent reads | Only for one rule |
+| 2 | **Distribute** | That writing physically reaches every place where it applies | Only for one rule |
 | 3 | **Enforce** | An agent or a page that ignores it gets caught | Partly |
 | 4 | **Feed back** | A violation found in the wild sharpens the rule | No |
 
@@ -71,11 +71,13 @@ machine is those folders. **They do not get the `standards/` directory. They do
 not get this repository.** So a rule that merely *links* to the standards folder
 would ride along until it reached them and then evaporate.
 
-**So we stamp the rule into every envelope.** One command —
+**So we stamp the rule into every applicable envelope.** One command —
 `python3 scripts/sync_shared_rules.py` — reads every file in `standards/` and
-copies its text, word for word, into `AGENTS.md` and into every skill selected by
-the canonical `lss-everything` manifest. It
-marks each copy with an invisible tag so it knows which text it owns:
+copies its text, word for word, into `AGENTS.md`. Agent-behaviour rules go into
+every skill selected by the canonical `lss-everything` manifest. Published-page
+and design rules go only into skills whose frontmatter opts into the matching
+`rule-scopes`. The command marks each copy with an invisible tag so it knows
+which text it owns:
 
 ```
 <!-- shared-rule:no-black-buttons:start -->
@@ -92,9 +94,9 @@ an automatic check re-runs the stamp and compares. If one copy differs from the
 source by a single character, the check fails and the change cannot be merged.
 Drift is not caught late; it is impossible.
 
-**The result:** adding a house rule to the entire fleet — and to every person who
-ever installed the pack — is *dropping one markdown file into `standards/` and
-running one command.* No code change. No editing 27 files. Nothing to remember.
+**The result:** adding a house rule everywhere it applies is *dropping one
+markdown file into `standards/` and running one command.* No code change. No
+hand-editing generated copies. Nothing to remember.
 
 ---
 
@@ -113,7 +115,7 @@ different things**, which is exactly Content · Checklist · Software:
    the rule text,           the same words,           the machine checks
    stamped into             read by a person          in the file header,
    AGENTS.md and            before they touch         compiled into the
-   every selected skill     a site                    live fleet sweep
+   every applicable skill   a site                    live fleet sweep
         │                        │                        │
         ▼                        ▼                        ▼
    every agent              every person             every published page
@@ -121,12 +123,12 @@ different things**, which is exactly Content · Checklist · Software:
    skill, anywhere
 ```
 
-The header of each standard carries the patterns that detect a violation in real
-HTML. `scripts/fleet_check.py` compiles those into the sweep. **The sweep is
-generated from the rule — never written next to it.** That distinction is the
-whole point: the moment the checker is a separate hand-written script, the two
-drift, and you get a checker that passes sites which break the rule, which is
-worse than having no checker, because now you trust it.
+The header of each standard carries its machine-check configuration and paired
+passing/failing examples. `scripts/fleet_check.py` compiles simple checks and
+dispatches structural check kinds to shared implementation code. That shared code
+is separately reviewed and can still drift from the prose. The self-tests prove
+the tracked examples, reducing—not eliminating—that risk; independent adversarial
+review is part of maintaining the checker.
 
 ---
 
@@ -232,13 +234,15 @@ problem it claims to solve.
 ## The short version, for the stage
 
 > We keep every rule we have learned in one folder, one file per rule. A script
-> stamps every one of those rules into every skill we ship, so when you install
-> the pack the rules come with it — you do not have to know they exist. The build
-> refuses to merge if any copy has drifted. And the same file that states the rule
-> also contains the test for it, so the rule and the thing that checks the rule
-> can never disagree.
+> stamps universal rules into every skill and scoped rules into every applicable
+> skill, so when you install the pack the rules come with the work they govern —
+> you do not have to know they exist. The build
+> refuses to merge if any generated copy has drifted. The same file carries the
+> check configuration and passing/failing examples. Self-tests and independent
+> review use those examples to catch implementation drift; they do not make
+> disagreement impossible.
 >
-> Adding a new rule to everyone, everywhere, is dropping one file in a folder.
+> Adding a new rule to everyone doing the governed work is dropping one file in a folder.
 
 ---
 

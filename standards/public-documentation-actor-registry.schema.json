@@ -1,0 +1,38 @@
+{
+  "$id": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/public-documentation-actor-registry.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actorRegistries": {
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^public-documentation-actors-v[1-9][0-9]*$": {
+          "items": {
+            "pattern": "^(?:agent|job):[a-z0-9][a-z0-9._-]{2,119}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "type": "object"
+    },
+    "currentActorRegistry": {
+      "pattern": "^public-documentation-actors-v[1-9][0-9]*$",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "currentActorRegistry",
+    "actorRegistries"
+  ],
+  "title": "Public documentation actor registry",
+  "type": "object"
+}

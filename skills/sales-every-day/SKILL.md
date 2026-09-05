@@ -1,6 +1,7 @@
 ---
 name: sales-every-day
 description: The Sales Every Day Agent — the capstone. Runs on a schedule (that's the point), reads YOUR funnel and YOUR weekly MAA, and comes back each morning with ONE staged selling action - the email drafted, the post written, the follow-up list ready. You review over coffee and click send. Nothing invented, nothing sent without you.
+rule-scopes: agent-behaviour
 ---
 
 # Sales Every Day Agent
@@ -187,9 +188,10 @@ template, it does not send a campaign.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies every rule into `AGENTS.md`; universal agent-behaviour rules
+  enter every distributed `SKILL.md`, while published-page/design rules enter only the
+  skills declaring their scope. That makes each standalone skill carry the full rules
+  that actually govern its work without links to repository files it does not ship.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
   header compiles straight into the live fleet sweep, so a violation on a published page
   is caught by a schedule instead of by a person noticing. Every check must carry
@@ -617,21 +619,121 @@ entity-linking preflight and a live link audit.
   only `last_checked` and still leaves a receipt. A generator write that changes only
   an inventory block does not advance the surrounding article's `last_changed` unless
   every dependent claim was reconciled.
+  The live `https://blitzmetrics.com/scheduled-jobs-fleet/` target has a concrete
+  daily-refresh SLA: its structural fleet sweep blocks when `last_checked` is more
+  than 36 hours old. Other live public targets explicitly tagged `current-live`
+  have a 30-day re-verification SLA. Immutable receipt/history targets and pages
+  without that live-target policy have no inferred max-age rule; their freshness
+  remains an explicit target policy or judgment check, never a guess from old HTML.
 - **Sign the document without replacing the expert.** Keep the human subject/author,
-  and add the maintaining agent or scheduled job, exact model when the runtime exposes
-  it (otherwise `UNKNOWN`), actual human reviewer or `not yet reviewed`, source URL and
-  revision/commit, and a success or failure receipt. Never invent a reviewer or imply
-  that an agent is the human expert. Public receipts and operational details still
-  require the normal privacy and publication gate; every substantive run keeps a
-  private receipt even when no public meta article is authorized.
+  and separately name the maintaining function/job, namespaced public agent identity
+  (`agent:<slug>` or `job:<slug>`), exact runtime-reported model
+  (otherwise the literal `UNKNOWN`), actual human reviewer or an honest pending-review
+  state, public-safe source URL and revision, public-safe capture alias, and success or
+  failure result. Never invent a reviewer or imply that an agent is the human expert.
+  `data-source-url` points to an approved public source or sanitized source manifest;
+  `data-capture-run-id` is a public alias, never a private scheduler/job ID. Private
+  prompts, schedules, paths, tokens and source records stay in the private receipt. If
+  no truthful public-safe source can be linked, the page does not satisfy this public
+  contract. Generic pages use the tracked append-only public documentation actor
+  registry and a concrete public human name rather than a role/team phrase. Its
+  canonical discovery artifact is
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/public-documentation-actor-registry.json>
+  and its machine schema is
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/public-documentation-actor-registry.schema.json>.
+  Published registry versions are immutable; the numerically newest current
+  selection authorizes fresh generic-page audits and may revoke an old actor.
+  The fleet
+  scope additionally uses hash-selected versioned actor, reviewed-human, and model
+  registries; raw strings must exactly equal a registered member.
+  Multi-part and culturally unspaced Unicode names are valid; fleet
+  publication separately restricts that name to its reviewed source-controlled roster.
+  For the fleet, the source is the resolving sanitized manifest at
+  `receipts/agent-fleet/sources/<sourceRevision>.json`, not the receipt-contract README.
+  Standalone agents discover the source ledger at
+  <https://github.com/dennisyu/local-service-spotlight-skills/tree/main/receipts/agent-fleet/sources>,
+  the public receipt/registry contract at
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/receipts/agent-fleet/README.md>,
+  the fleet identity-registry schema at
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/receipts/agent-fleet/identity-registry.schema.json>,
+  and the definitive live article at
+  <https://blitzmetrics.com/scheduled-jobs-fleet/>.
+  The source-only manifest is stable across retries: it binds the canonical source
+  repository, full revision, generator-contract version, configured, archived,
+  invalid, and public-definition counts, plus the selected actor/human/model registry
+  versions and exact identity-registry SHA-256, but no candidate hash, run identity,
+  or clock. The content-addressed identity-registry artifact is committed before the
+  source manifest; published registry versions remain immutable, while a newer current
+  version may revoke an identity for new fleet evidence without invalidating old
+  hash/version-bound receipts.
+  Multiple candidates from one source revision reuse its exact URL/bytes; a new source
+  revision gets a new append-only manifest. If a current fleet identity-registry
+  pointer advances, fresh evidence may not reuse a same-revision manifest that selected
+  the prior current registry: create a reviewed source commit and new source manifest
+  bound to the current registry. Historical receipts still resolve their old
+  hash-selected immutable version. The candidate remains blocked until that
+  manifest resolves. Every substantive
+  run keeps a private receipt even when no public meta
+  article is authorized.
 - **Use one visible, semantic provenance rail.** Put the audit fields in an `<aside>`
-  or `<section>` marked `data-document-provenance="verified"`, with the data attributes
-  enforced above, a receipt ID and honest reviewer state, plus visible `<time>` elements
-  whose datetimes exactly match both checked and changed clocks. `datePublished`
-  stays separate. Schema `dateModified` must equal the visible clock for the public
-  revision: normally `last_changed` on a static article, or `last_checked` when a
-  no-change verification itself creates a new evidence-page revision. Preserve both
-  clocks in the rail and allow only one publisher/Article owner to describe the document.
+  or `<section>`. Before the deterministic publication receipt resolves, mark it
+  `data-document-provenance="pending-external-verification"`; use
+  `data-document-provenance="receipt-linked"` only when the named committed receipt
+  already exists at render time and the rail names the real human reviewer. Exact
+  candidate bytes emitted pending remain intrinsically pending after their URL later
+  resolves; consumers read the external verdict. Re-rendering them linked creates a
+  new candidate. `receipt-linked` means only that the receipt exists. Keep the two
+  result layers separate:
+  `data-scheduler-capture-result` reports only the upstream scheduler capture, while
+  `data-publication-verification-result` is `pending` on a pending candidate and is
+  `success` or `failure` only on a receipt-linked rendering that mirrors the receipt.
+  An exact fleet candidate is not rewritten merely to certify itself; consumers resolve
+  its deterministic external receipt. Reject the legacy generic `data-capture-result`
+  because it cannot say which layer it describes. Use
+  `data-verification-scope="external-exact-live-bytes"` for an exact response contract.
+  The fleet's concrete value is
+  `external-exact-raw-wp-body-and-inclusive-marker-slice`: the verifier separately
+  proves the exact raw owned WordPress post-content body (including outside whitespace)
+  and the unique inclusive anonymous slice from the exact
+  `<!-- BM-FLEET-PAGE:START -->` through `<!-- BM-FLEET-PAGE:END -->` byte markers.
+  It records the SHA-256 and byte length of the whole anonymous response and checks the
+  single Article owner and its `dateModified`. The local candidate permits only
+  whitespace outside its sole ordered marker pair.
+  Put every enforced attribute on the rail itself: author, maintaining function, agent,
+  model, reviewer, public scheduler-capture ID/result, publication-verification result,
+  deterministic publication receipt ID, public ledger index and mutable discovery URL,
+  public source URL/revision, and both clocks. Expose those values in reader-visible
+  text. Make the source and resolving ledger index actual visible links; expose the
+  expected discovery URL as text rather than a knowingly unresolved anchor while the
+  receipt is pending. Once the state is `receipt-linked`, expose exactly one visible
+  link whose `href` is that discovery URL, so ordinary link resolution can prove the
+  named receipt exists. The fleet also puts the receipt-contract README in
+  `data-source-contract-url` and exposes that exact URL through a distinct visible link
+  with a non-empty reader-facing label. Use visible `<time>` elements that render the corresponding dates,
+  whose `datetime` values exactly match the clocks in either order, and whose
+  `Checked`/`Changed` labels are inside, immediately before, or immediately after the time.
+- **Let the external verifier own the verdict.** The page never certifies its own bytes.
+  The committed public receipt is one envelope; a separate local/private verification
+  wrapper pins that receipt's ledger commit, path, immutable commit/blob URL and SHA-256,
+  fetches the exact blob, then compares it with the candidate fields. The public receipt
+  cannot contain its own commit hash. Publishing a second “verified” rendering would
+  change the candidate bytes, so consumers resolve the pending/linked state at the
+  external receipt. The mutable discovery URL is only a deterministic lookup; only the
+  private wrapper's exact-commit URL plus blob SHA-256 is immutable proof.
+  A verified fleet receipt binds the already-committed companion source manifest's exact
+  SHA-256 from the later receipt commit's tree. It also carries an external browser attestation:
+  `browserVisibilityVerified=true`, a public-safe browser verifier and run-receipt ID,
+  and `browserCheckedAt`. The browser check must occur no earlier than Article/WordPress
+  modification and no later than the receipt's `checkedAt`; the generator never writes
+  that attestation for itself.
+  `datePublished` stays separate. Schema `dateModified` is the actual WordPress
+  publication-modified instant, not an alias for either visible evidence clock. The
+  external verifier requires the single Article `dateModified` to equal the WordPress
+  modified instant and to fall no earlier than the candidate's `last_checked` and no
+  later than browser verification, which is no later than the receipt's `checkedAt`.
+  The public-ledger validator can independently
+  enforce the upper bound; the candidate-bound external verifier proves the lower one.
+  Preserve all three clocks and allow only one publisher/Article owner.
 - **Prove scheduled state with execution receipts.** “Scheduled” means a definition
   exists. “Observed” means a firing left an immutable timestamped success or failure
   receipt containing timezone, runtime, stable job/run ID, source revision, result,
@@ -647,29 +749,19 @@ entity-linking preflight and a live link audit.
   spine: The System · Content Factory · Task Library · canonical skills/install ·
   Scheduled Jobs · receipt/meta policy · changelog.
 
-The sweep proves that the required rail and semantic timestamp exist. It cannot prove
-that the named person reviewed the page, that the source revision is genuine, or that
-two numbers mean the same unit. Those assertions require source comparison and receipt
-readback during the audit; passing the regex is necessary, never sufficient.
+The source sweep proves one structurally renderable rail has the required same-element
+fields, real ISO instants, visible labels/links, and matching semantic timestamps. It
+ignores comments and inert/closed containers and evaluates inline plus ordinary,
+unconditional same-document CSS for the supported tag/class/id/attribute selector
+subset, including common explicit offscreen, zero-clip, zero-filter, transparent-text,
+and extreme text-indent hiding declarations. It deliberately does not pretend to compute
+external stylesheets, conditional media/container rules, layers, animation, occlusion,
+or the complete browser cascade. The deterministic publication readback must therefore
+inspect the rendered browser's computed `display`, `visibility`, `content-visibility`,
+`opacity`, clipping, filter, mask, transform, position, text paint, non-empty client boxes,
+viewport intersection, and sampled occlusion for the rail, both times, source, ledger,
+and fleet receipt-contract links. Neither check can prove
+that the named person reviewed the page, the source revision is genuine, or two numbers
+mean the same unit. Those assertions require source comparison and immutable receipt
+readback; the structural contract is necessary, never sufficient.
 <!-- shared-rule:public-documentation-auditable-truth:end -->
-
-<!-- shared-rule-index:start -->
-## Other house rules that apply to this work
-
-These are not repeated here because they govern published pages rather than agent behaviour. They are binding all the same — read the full text in `AGENTS.md` or `standards/` before touching a website.
-
-- **Analytics goes on before anything gets optimised** (`analytics-on-every-page`)
-- **A button must contrast with what it sits on** (`buttons-must-contrast-with-their-background`)
-- **Every article has pictures** (`every-article-has-pictures`)
-- **Every public page shows real people or real work** (`every-public-page-has-real-imagery`)
-- **Personal-brand heroes are immersive, not boxed** (`immersive-hero-standard`)
-- **Every link and every entity claim resolves** (`links-must-resolve`)
-- **Never ship a black button** (`no-black-buttons`)
-- **Placeholder copy never reaches production** (`no-placeholder-copy`)
-- **No popup on page load** (`no-popup-on-load`)
-- **No unnamed link text** (`no-unnamed-link-text`)
-- **Nothing plays at the visitor uninvited** (`nothing-plays-uninvited`)
-- **Order proof by authority, strongest first** (`order-proof-by-authority`)
-- **A photograph has to earn full bleed** (`photo-earns-full-bleed`)
-- **Every URL we say out loud resolves** (`spoken-urls-must-resolve`)
-<!-- shared-rule-index:end -->

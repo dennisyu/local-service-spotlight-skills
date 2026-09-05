@@ -1,0 +1,85 @@
+{
+  "$id": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/receipts/agent-fleet/identity-registry.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actorRegistries": {
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^fleet-public-actors-v[1-9][0-9]*$": {
+          "items": {
+            "pattern": "^(?:agent|job):[a-z0-9][a-z0-9._-]{2,119}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "type": "object"
+    },
+    "currentActorRegistry": {
+      "pattern": "^fleet-public-actors-v[1-9][0-9]*$",
+      "type": "string"
+    },
+    "currentHumanReviewerRegistry": {
+      "pattern": "^fleet-public-human-reviewers-v[1-9][0-9]*$",
+      "type": "string"
+    },
+    "currentModelRegistry": {
+      "pattern": "^fleet-public-models-v[1-9][0-9]*$",
+      "type": "string"
+    },
+    "humanReviewerRegistries": {
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^fleet-public-human-reviewers-v[1-9][0-9]*$": {
+          "items": {
+            "maxLength": 120,
+            "minLength": 3,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "type": "object"
+    },
+    "modelRegistries": {
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^fleet-public-models-v[1-9][0-9]*$": {
+          "items": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._:+-]{0,119}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "type": "object"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "currentActorRegistry",
+    "currentHumanReviewerRegistry",
+    "currentModelRegistry",
+    "actorRegistries",
+    "humanReviewerRegistries",
+    "modelRegistries"
+  ],
+  "title": "Agent-fleet public identity registry",
+  "type": "object"
+}

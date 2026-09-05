@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/receipts/agent-fleet/receipt.schema.json",
+  "title": "Sanitized agent-fleet publication receipt",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "receiptId",
+    "contentHash",
+    "verificationHash",
+    "sourceRevision",
+    "model",
+    "humanReviewer",
+    "humanReviewerRole",
+    "runId",
+    "liveUrl",
+    "checkedAt",
+    "checkedBy"
+  ],
+  "properties": {
+    "schemaVersion": {"type": "integer", "const": 1},
+    "status": {"enum": ["verified", "verification-failed"]},
+    "receiptId": {"type": "string", "pattern": "^fleet-page-[0-9a-f]{20}$"},
+    "postContentHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "extractedPostContentSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "anonymousResponseSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "anonymousContentLength": {"type": "integer", "minimum": 1},
+    "extractionStart": {"const": "<!-- BM-FLEET-PAGE:START -->"},
+    "extractionEnd": {"const": "<!-- BM-FLEET-PAGE:END -->"},
+    "contentHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verificationHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sourceManifestSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model": {"type": "string", "minLength": 2},
+    "humanReviewer": {"type": "string", "minLength": 2, "maxLength": 200, "pattern": "^\\S(?:.*\\S)?$"},
+    "humanReviewerRole": {"const": "human"},
+    "runId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,199}$"},
+    "configuredCount": {"type": "integer", "minimum": 0},
+    "publicDefinitionCount": {"type": "integer", "minimum": 0},
+    "itemListCount": {"type": "integer", "minimum": 0},
+    "linkContentHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "linkReceiptId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,199}$"},
+    "liveUrl": {"const": "https://blitzmetrics.com/scheduled-jobs-fleet/"},
+    "finalAnonymousReadback": {"type": "boolean"},
+    "browserVisibilityVerified": {"type": "boolean"},
+    "browserCheckedAt": {"type": "string", "format": "date-time"},
+    "browserCheckedBy": {"type": "string", "pattern": "^(?:agent|job):[a-z0-9][a-z0-9._-]{2,119}$"},
+    "browserRunReceiptId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,199}$"},
+    "httpStatus": {"type": "integer", "minimum": 100, "maximum": 599},
+    "cacheBuster": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,199}$"},
+    "checkedAt": {"type": "string", "format": "date-time"},
+    "checkedBy": {"type": "string", "pattern": "^(?:agent|job):[a-z0-9][a-z0-9._-]{2,119}$"},
+    "wordpressRevision": {"type": "string", "pattern": "^wp:110278:[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"},
+    "articleSchemaCount": {"type": "integer", "minimum": 0},
+    "articleDateModified": {"type": "string", "format": "date-time"},
+    "wordpressModifiedAt": {"type": "string", "format": "date-time"},
+    "failureStage": {
+      "enum": [
+        "anonymous-readback",
+        "candidate-validation",
+        "link-verification",
+        "publication-validation",
+        "schema-validation",
+        "wordpress-readback"
+      ]
+    },
+    "failureCode": {
+      "enum": [
+        "ARTICLE_SCHEMA_INVALID",
+        "CANDIDATE_INVALID",
+        "COUNT_MISMATCH",
+        "HASH_MISMATCH",
+        "HTTP_ERROR",
+        "LINK_VERIFICATION_FAILED",
+        "MARKER_CONTRACT_FAILED",
+        "WORDPRESS_READBACK_FAILED"
+      ]
+    },
+    "failureDetail": {
+      "enum": [
+        "Published fleet counts did not match the configured public definitions.",
+        "Required public links did not pass verification.",
+        "The anonymous publication readback did not return HTTP 200.",
+        "The anonymous response did not contain exactly one valid Article owner.",
+        "The anonymous response did not contain one ordered marker pair.",
+        "The exact WordPress post-content body could not be verified.",
+        "The publication candidate failed the public contract.",
+        "The published bytes did not match the expected hashes."
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "verified"}}, "required": ["status"]},
+      "then": {
+        "required": [
+          "postContentHash",
+          "extractedPostContentSha256",
+          "anonymousResponseSha256",
+          "anonymousContentLength",
+          "extractionStart",
+          "extractionEnd",
+          "sourceManifestSha256",
+          "configuredCount",
+          "publicDefinitionCount",
+          "itemListCount",
+          "linkContentHash",
+          "linkReceiptId",
+          "finalAnonymousReadback",
+          "browserVisibilityVerified",
+          "browserCheckedAt",
+          "browserCheckedBy",
+          "browserRunReceiptId",
+          "httpStatus",
+          "cacheBuster",
+          "wordpressRevision",
+          "articleSchemaCount",
+          "articleDateModified",
+          "wordpressModifiedAt"
+        ],
+        "properties": {
+          "finalAnonymousReadback": {"const": true},
+          "browserVisibilityVerified": {"const": true},
+          "httpStatus": {"const": 200},
+          "articleSchemaCount": {"const": 1}
+        },
+        "not": {
+          "anyOf": [
+            {"required": ["failureStage"]},
+            {"required": ["failureCode"]},
+            {"required": ["failureDetail"]}
+          ]
+        }
+      },
+      "else": {
+        "required": ["failureStage", "failureCode", "failureDetail"],
+        "oneOf": [
+          {
+            "properties": {
+              "failureStage": {"const": "candidate-validation"},
+              "failureCode": {"const": "CANDIDATE_INVALID"},
+              "failureDetail": {"const": "The publication candidate failed the public contract."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "link-verification"},
+              "failureCode": {"const": "LINK_VERIFICATION_FAILED"},
+              "failureDetail": {"const": "Required public links did not pass verification."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "wordpress-readback"},
+              "failureCode": {"const": "WORDPRESS_READBACK_FAILED"},
+              "failureDetail": {"const": "The exact WordPress post-content body could not be verified."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "anonymous-readback"},
+              "failureCode": {"const": "HTTP_ERROR"},
+              "failureDetail": {"const": "The anonymous publication readback did not return HTTP 200."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "anonymous-readback"},
+              "failureCode": {"const": "HASH_MISMATCH"},
+              "failureDetail": {"const": "The published bytes did not match the expected hashes."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "anonymous-readback"},
+              "failureCode": {"const": "MARKER_CONTRACT_FAILED"},
+              "failureDetail": {"const": "The anonymous response did not contain one ordered marker pair."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "schema-validation"},
+              "failureCode": {"const": "ARTICLE_SCHEMA_INVALID"},
+              "failureDetail": {"const": "The anonymous response did not contain exactly one valid Article owner."}
+            }
+          },
+          {
+            "properties": {
+              "failureStage": {"const": "publication-validation"},
+              "failureCode": {"const": "COUNT_MISMATCH"},
+              "failureDetail": {"const": "Published fleet counts did not match the configured public definitions."}
+            }
+          }
+        ],
+        "not": {
+          "anyOf": [
+            {"required": ["postContentHash"]},
+            {"required": ["extractedPostContentSha256"]},
+            {"required": ["anonymousResponseSha256"]},
+            {"required": ["anonymousContentLength"]},
+            {"required": ["extractionStart"]},
+            {"required": ["extractionEnd"]},
+            {"required": ["sourceManifestSha256"]},
+            {"required": ["configuredCount"]},
+            {"required": ["publicDefinitionCount"]},
+            {"required": ["itemListCount"]},
+            {"required": ["linkContentHash"]},
+            {"required": ["linkReceiptId"]},
+            {"required": ["finalAnonymousReadback"]},
+            {"required": ["browserVisibilityVerified"]},
+            {"required": ["browserCheckedAt"]},
+            {"required": ["browserCheckedBy"]},
+            {"required": ["browserRunReceiptId"]},
+            {"required": ["httpStatus"]},
+            {"required": ["cacheBuster"]},
+            {"required": ["wordpressRevision"]},
+            {"required": ["articleSchemaCount"]},
+            {"required": ["articleDateModified"]},
+            {"required": ["wordpressModifiedAt"]}
+          ]
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

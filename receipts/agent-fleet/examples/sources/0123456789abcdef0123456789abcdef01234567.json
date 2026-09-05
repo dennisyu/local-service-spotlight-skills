@@ -1,0 +1,15 @@
+{
+  "archivedCount": 21,
+  "actorRegistryVersion": "fleet-public-actors-v1",
+  "configuredCount": 53,
+  "generatorContract": "fleet-public-render-v3",
+  "humanReviewerRegistryVersion": "fleet-public-human-reviewers-v1",
+  "identityRegistrySha256": "91e15547842fbdde1bc612587437ca5d74c6c7e9f0c8b365d8c927fb67122a91",
+  "invalidDefinitionCount": 0,
+  "modelRegistryVersion": "fleet-public-models-v1",
+  "publicDefinitionCount": 31,
+  "schemaVersion": 1,
+  "sourceRepository": "https://github.com/Local-Service-Spotlight/agent-fleet",
+  "sourceRevision": "0123456789abcdef0123456789abcdef01234567",
+  "status": "sanitized-source-manifest"
+}

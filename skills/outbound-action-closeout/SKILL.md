@@ -1,6 +1,7 @@
 ---
 name: outbound-action-closeout
 description: Verify and close out agent-authored email, Basecamp, DM, support, publishing, and other human-visible actions. Use when an agent drafts, sends, posts, publishes, writes a routine that may do so, or fixes a misrouted, unattributed, or unverified action.
+rule-scopes: published-html
 ---
 
 # Outbound action closeout
@@ -163,9 +164,10 @@ ownership that was not independently proved.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies every rule into `AGENTS.md`; universal agent-behaviour rules
+  enter every distributed `SKILL.md`, while published-page/design rules enter only the
+  skills declaring their scope. That makes each standalone skill carry the full rules
+  that actually govern its work without links to repository files it does not ship.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
   header compiles straight into the live fleet sweep, so a violation on a published page
   is caught by a schedule instead of by a person noticing. Every check must carry
@@ -574,21 +576,121 @@ entity-linking preflight and a live link audit.
   only `last_checked` and still leaves a receipt. A generator write that changes only
   an inventory block does not advance the surrounding article's `last_changed` unless
   every dependent claim was reconciled.
+  The live `https://blitzmetrics.com/scheduled-jobs-fleet/` target has a concrete
+  daily-refresh SLA: its structural fleet sweep blocks when `last_checked` is more
+  than 36 hours old. Other live public targets explicitly tagged `current-live`
+  have a 30-day re-verification SLA. Immutable receipt/history targets and pages
+  without that live-target policy have no inferred max-age rule; their freshness
+  remains an explicit target policy or judgment check, never a guess from old HTML.
 - **Sign the document without replacing the expert.** Keep the human subject/author,
-  and add the maintaining agent or scheduled job, exact model when the runtime exposes
-  it (otherwise `UNKNOWN`), actual human reviewer or `not yet reviewed`, source URL and
-  revision/commit, and a success or failure receipt. Never invent a reviewer or imply
-  that an agent is the human expert. Public receipts and operational details still
-  require the normal privacy and publication gate; every substantive run keeps a
-  private receipt even when no public meta article is authorized.
+  and separately name the maintaining function/job, namespaced public agent identity
+  (`agent:<slug>` or `job:<slug>`), exact runtime-reported model
+  (otherwise the literal `UNKNOWN`), actual human reviewer or an honest pending-review
+  state, public-safe source URL and revision, public-safe capture alias, and success or
+  failure result. Never invent a reviewer or imply that an agent is the human expert.
+  `data-source-url` points to an approved public source or sanitized source manifest;
+  `data-capture-run-id` is a public alias, never a private scheduler/job ID. Private
+  prompts, schedules, paths, tokens and source records stay in the private receipt. If
+  no truthful public-safe source can be linked, the page does not satisfy this public
+  contract. Generic pages use the tracked append-only public documentation actor
+  registry and a concrete public human name rather than a role/team phrase. Its
+  canonical discovery artifact is
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/public-documentation-actor-registry.json>
+  and its machine schema is
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/public-documentation-actor-registry.schema.json>.
+  Published registry versions are immutable; the numerically newest current
+  selection authorizes fresh generic-page audits and may revoke an old actor.
+  The fleet
+  scope additionally uses hash-selected versioned actor, reviewed-human, and model
+  registries; raw strings must exactly equal a registered member.
+  Multi-part and culturally unspaced Unicode names are valid; fleet
+  publication separately restricts that name to its reviewed source-controlled roster.
+  For the fleet, the source is the resolving sanitized manifest at
+  `receipts/agent-fleet/sources/<sourceRevision>.json`, not the receipt-contract README.
+  Standalone agents discover the source ledger at
+  <https://github.com/dennisyu/local-service-spotlight-skills/tree/main/receipts/agent-fleet/sources>,
+  the public receipt/registry contract at
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/receipts/agent-fleet/README.md>,
+  the fleet identity-registry schema at
+  <https://github.com/dennisyu/local-service-spotlight-skills/blob/main/receipts/agent-fleet/identity-registry.schema.json>,
+  and the definitive live article at
+  <https://blitzmetrics.com/scheduled-jobs-fleet/>.
+  The source-only manifest is stable across retries: it binds the canonical source
+  repository, full revision, generator-contract version, configured, archived,
+  invalid, and public-definition counts, plus the selected actor/human/model registry
+  versions and exact identity-registry SHA-256, but no candidate hash, run identity,
+  or clock. The content-addressed identity-registry artifact is committed before the
+  source manifest; published registry versions remain immutable, while a newer current
+  version may revoke an identity for new fleet evidence without invalidating old
+  hash/version-bound receipts.
+  Multiple candidates from one source revision reuse its exact URL/bytes; a new source
+  revision gets a new append-only manifest. If a current fleet identity-registry
+  pointer advances, fresh evidence may not reuse a same-revision manifest that selected
+  the prior current registry: create a reviewed source commit and new source manifest
+  bound to the current registry. Historical receipts still resolve their old
+  hash-selected immutable version. The candidate remains blocked until that
+  manifest resolves. Every substantive
+  run keeps a private receipt even when no public meta
+  article is authorized.
 - **Use one visible, semantic provenance rail.** Put the audit fields in an `<aside>`
-  or `<section>` marked `data-document-provenance="verified"`, with the data attributes
-  enforced above, a receipt ID and honest reviewer state, plus visible `<time>` elements
-  whose datetimes exactly match both checked and changed clocks. `datePublished`
-  stays separate. Schema `dateModified` must equal the visible clock for the public
-  revision: normally `last_changed` on a static article, or `last_checked` when a
-  no-change verification itself creates a new evidence-page revision. Preserve both
-  clocks in the rail and allow only one publisher/Article owner to describe the document.
+  or `<section>`. Before the deterministic publication receipt resolves, mark it
+  `data-document-provenance="pending-external-verification"`; use
+  `data-document-provenance="receipt-linked"` only when the named committed receipt
+  already exists at render time and the rail names the real human reviewer. Exact
+  candidate bytes emitted pending remain intrinsically pending after their URL later
+  resolves; consumers read the external verdict. Re-rendering them linked creates a
+  new candidate. `receipt-linked` means only that the receipt exists. Keep the two
+  result layers separate:
+  `data-scheduler-capture-result` reports only the upstream scheduler capture, while
+  `data-publication-verification-result` is `pending` on a pending candidate and is
+  `success` or `failure` only on a receipt-linked rendering that mirrors the receipt.
+  An exact fleet candidate is not rewritten merely to certify itself; consumers resolve
+  its deterministic external receipt. Reject the legacy generic `data-capture-result`
+  because it cannot say which layer it describes. Use
+  `data-verification-scope="external-exact-live-bytes"` for an exact response contract.
+  The fleet's concrete value is
+  `external-exact-raw-wp-body-and-inclusive-marker-slice`: the verifier separately
+  proves the exact raw owned WordPress post-content body (including outside whitespace)
+  and the unique inclusive anonymous slice from the exact
+  `<!-- BM-FLEET-PAGE:START -->` through `<!-- BM-FLEET-PAGE:END -->` byte markers.
+  It records the SHA-256 and byte length of the whole anonymous response and checks the
+  single Article owner and its `dateModified`. The local candidate permits only
+  whitespace outside its sole ordered marker pair.
+  Put every enforced attribute on the rail itself: author, maintaining function, agent,
+  model, reviewer, public scheduler-capture ID/result, publication-verification result,
+  deterministic publication receipt ID, public ledger index and mutable discovery URL,
+  public source URL/revision, and both clocks. Expose those values in reader-visible
+  text. Make the source and resolving ledger index actual visible links; expose the
+  expected discovery URL as text rather than a knowingly unresolved anchor while the
+  receipt is pending. Once the state is `receipt-linked`, expose exactly one visible
+  link whose `href` is that discovery URL, so ordinary link resolution can prove the
+  named receipt exists. The fleet also puts the receipt-contract README in
+  `data-source-contract-url` and exposes that exact URL through a distinct visible link
+  with a non-empty reader-facing label. Use visible `<time>` elements that render the corresponding dates,
+  whose `datetime` values exactly match the clocks in either order, and whose
+  `Checked`/`Changed` labels are inside, immediately before, or immediately after the time.
+- **Let the external verifier own the verdict.** The page never certifies its own bytes.
+  The committed public receipt is one envelope; a separate local/private verification
+  wrapper pins that receipt's ledger commit, path, immutable commit/blob URL and SHA-256,
+  fetches the exact blob, then compares it with the candidate fields. The public receipt
+  cannot contain its own commit hash. Publishing a second “verified” rendering would
+  change the candidate bytes, so consumers resolve the pending/linked state at the
+  external receipt. The mutable discovery URL is only a deterministic lookup; only the
+  private wrapper's exact-commit URL plus blob SHA-256 is immutable proof.
+  A verified fleet receipt binds the already-committed companion source manifest's exact
+  SHA-256 from the later receipt commit's tree. It also carries an external browser attestation:
+  `browserVisibilityVerified=true`, a public-safe browser verifier and run-receipt ID,
+  and `browserCheckedAt`. The browser check must occur no earlier than Article/WordPress
+  modification and no later than the receipt's `checkedAt`; the generator never writes
+  that attestation for itself.
+  `datePublished` stays separate. Schema `dateModified` is the actual WordPress
+  publication-modified instant, not an alias for either visible evidence clock. The
+  external verifier requires the single Article `dateModified` to equal the WordPress
+  modified instant and to fall no earlier than the candidate's `last_checked` and no
+  later than browser verification, which is no later than the receipt's `checkedAt`.
+  The public-ledger validator can independently
+  enforce the upper bound; the candidate-bound external verifier proves the lower one.
+  Preserve all three clocks and allow only one publisher/Article owner.
 - **Prove scheduled state with execution receipts.** “Scheduled” means a definition
   exists. “Observed” means a firing left an immutable timestamped success or failure
   receipt containing timezone, runtime, stable job/run ID, source revision, result,
@@ -604,29 +706,284 @@ entity-linking preflight and a live link audit.
   spine: The System · Content Factory · Task Library · canonical skills/install ·
   Scheduled Jobs · receipt/meta policy · changelog.
 
-The sweep proves that the required rail and semantic timestamp exist. It cannot prove
-that the named person reviewed the page, that the source revision is genuine, or that
-two numbers mean the same unit. Those assertions require source comparison and receipt
-readback during the audit; passing the regex is necessary, never sufficient.
+The source sweep proves one structurally renderable rail has the required same-element
+fields, real ISO instants, visible labels/links, and matching semantic timestamps. It
+ignores comments and inert/closed containers and evaluates inline plus ordinary,
+unconditional same-document CSS for the supported tag/class/id/attribute selector
+subset, including common explicit offscreen, zero-clip, zero-filter, transparent-text,
+and extreme text-indent hiding declarations. It deliberately does not pretend to compute
+external stylesheets, conditional media/container rules, layers, animation, occlusion,
+or the complete browser cascade. The deterministic publication readback must therefore
+inspect the rendered browser's computed `display`, `visibility`, `content-visibility`,
+`opacity`, clipping, filter, mask, transform, position, text paint, non-empty client boxes,
+viewport intersection, and sampled occlusion for the rail, both times, source, ledger,
+and fleet receipt-contract links. Neither check can prove
+that the named person reviewed the page, the source revision is genuine, or two numbers
+mean the same unit. Those assertions require source comparison and immutable receipt
+readback; the structural contract is necessary, never sufficient.
 <!-- shared-rule:public-documentation-auditable-truth:end -->
 
-<!-- shared-rule-index:start -->
-## Other house rules that apply to this work
+<!-- shared-rule:analytics-on-every-page:start -->
+## Analytics goes on before anything gets optimised
 
-These are not repeated here because they govern published pages rather than agent behaviour. They are binding all the same — read the full text in `AGENTS.md` or `standards/` before touching a website.
+- **Measurement is the first build step, not the last.** A page with no analytics cannot
+  be improved, only redecorated, and every argument about it becomes a matter of taste.
+- **The invisible plumbing outranks the visual design** — tracking, CRM connection,
+  conversion events, schema and page structure come before fonts and colours.
+- **Confirm the tag actually fires on the live page**, not that it exists in a settings
+  screen. See `verify-by-opening-the-live-artifact`.
+- Instrument the business outcome, not the vanity metric: calls, booked jobs and revenue,
+  not impressions.
+<!-- shared-rule:analytics-on-every-page:end -->
 
-- **Analytics goes on before anything gets optimised** (`analytics-on-every-page`)
-- **A button must contrast with what it sits on** (`buttons-must-contrast-with-their-background`)
-- **Every article has pictures** (`every-article-has-pictures`)
-- **Every public page shows real people or real work** (`every-public-page-has-real-imagery`)
-- **Personal-brand heroes are immersive, not boxed** (`immersive-hero-standard`)
-- **Every link and every entity claim resolves** (`links-must-resolve`)
-- **Never ship a black button** (`no-black-buttons`)
-- **Placeholder copy never reaches production** (`no-placeholder-copy`)
-- **No popup on page load** (`no-popup-on-load`)
-- **No unnamed link text** (`no-unnamed-link-text`)
-- **Nothing plays at the visitor uninvited** (`nothing-plays-uninvited`)
-- **Order proof by authority, strongest first** (`order-proof-by-authority`)
-- **A photograph has to earn full bleed** (`photo-earns-full-bleed`)
-- **Every URL we say out loud resolves** (`spoken-urls-must-resolve`)
-<!-- shared-rule-index:end -->
+<!-- shared-rule:every-article-has-pictures:start -->
+## Every article has pictures
+
+- **No article ships as a wall of text.** Every published piece carries images — real
+  photographs, screenshots, or diagrams that carry meaning, not decorative stock.
+- **A diagram beats a paragraph** wherever the point is a structure, a sequence or a
+  comparison.
+- Caption them. An uncaptioned image is decoration; a captioned one is evidence.
+- Images also carry the provenance required by `process-real-content-never-generate` —
+  a photograph of the work actually done proves more than any sentence about it.
+<!-- shared-rule:every-article-has-pictures:end -->
+
+<!-- shared-rule:every-public-page-has-real-imagery:start -->
+## Every public page shows real people or real work
+
+- **Every visitor-facing content page must contain at least one meaningful image
+  of the actual business: its people, its work, its customers with permission,
+  its product, or its place.** This includes conversion and utility pages such as
+  Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
+  ship a wall of text.
+- A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
+  photograph does not satisfy the rule. Neither does an unrelated real photo
+  added merely to pass a count. The image must help a visitor understand or trust
+  the page.
+- Use the business's approved source library. Give the image honest alt text and,
+  when useful, a caption that explains what it proves. Describe only what the
+  source establishes: never relabel one project photo as work completed in every
+  city, and never infer a person, location, service, or result from a filename.
+- If no suitable approved image exists, request one and block that page from
+  publication. Do not manufacture evidence with image generation or stock.
+- Build QA must inventory every rendered content route and fail when any route
+  lacks a verified real image. Keep a provenance allowlist or equivalent asset
+  record so logos and decorative images cannot make the check pass. Mark at least
+  one qualifying `<img>` per page with `data-lss-real-image="verified"` only
+  after that provenance check. Also inspect the rendered desktop and mobile page;
+  a hidden, broken, or contextless image does not count.
+- Machine-only documents and routes that never render as visitor content—such as
+  `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
+  browser-rendered redirect placeholder is not exempt; replace it with a real
+  redirect or make the page comply.
+
+The fleet check proves only that a page declares the verified marker and supplies
+a nonblank, non-data source plus nonblank alt text. It cannot prove that the
+source loads, is visible, is meaningfully sized, or is truthful. Enforce those
+claims with each site's provenance-aware build validator plus a human visual
+review. Never add the marker merely to make the sweep pass.
+<!-- shared-rule:every-public-page-has-real-imagery:end -->
+
+<!-- shared-rule:immersive-hero-standard:start -->
+## Personal-brand heroes are immersive, not boxed
+
+A public figure's hero is the whole first screen, not a card with a headshot in it. The
+standard, fleet-wide:
+
+- **Full bleed and viewport height.** The hero occupies the first screen: `height:94svh`
+  with `min-height:600px` and `max-height:1000px`. Use `svh`, not `vh` — mobile browser
+  chrome makes `vh` overshoot and push the call to action below the fold.
+- **The subject is the background, not a thumbnail.** No small boxed portrait, no framed
+  inset, no stock-photo collage. The photograph is edge-to-edge and the type sits on it.
+- **Join the image to the type with a mask, not a hard edge.** A horizontal
+  `mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.35) 16%, #000 42%)`
+  dissolves the photo into the text column so the two read as one composition.
+  **Override it to a vertical mask on mobile** — a horizontal mask on a narrow screen
+  fades the subject's face.
+- **Control the crop with a focal variable**, e.g. `--focal: 56% 4%`, so the frame can be
+  nudged per person without rewriting the block. Check the top of the head is not clipped.
+- **Reset `box-sizing` on your own block.** These themes scope `border-box` to a theme
+  wrapper, not `*`. A new hero inherits `content-box`, so `height:100%` plus padding
+  overflows an `overflow:hidden` section and silently clips the calls to action out of
+  frame — the page looks fine and the buttons are simply gone.
+- **One primary call to action, in the brand colour, above the fold on a 1366×768
+  laptop.** Verify at desktop, laptop and mobile widths before calling it done.
+- **A proof rail under the fold, not claims inside the hero** — credentials, logos, or
+  named results on a solid brand-colour band.
+- **Motion is optional and must be silent.** A background video is permitted only when it
+  is `muted`, `playsinline` and `loop`, with a poster image; see `nothing-plays-uninvited`.
+- **The photograph has to earn full bleed.** Composed portraits and documentary
+  photography can carry a hero; selfies cannot, at any resolution. When the only assets
+  are selfies, use the typographic hero — it never looks cheap. See
+  `photo-earns-full-bleed`.
+<!-- shared-rule:immersive-hero-standard:end -->
+
+<!-- shared-rule:links-must-resolve:start -->
+## Every link and every entity claim resolves
+
+- **A broken entity claim is worse than no claim.** `sameAs` is how a site tells Google,
+  Bing and every AI answer engine "this person is that entity". Pointed at a deleted or
+  wrong target, it does not merely fail — it actively teaches the wrong association.
+- **Verify every `sameAs` target returns 200 before publishing schema, and re-verify
+  quarterly.** Entities get deleted. A Wikidata item asserted on a client site was
+  deleted on 7 July 2026 and the claim stood until an audit found it five weeks later.
+- **Only anchors count.** `preconnect`, `dns-prefetch`, `canonical` and `alternate`
+  hints are not links a visitor can follow, and treating them as links reports
+  `googletagmanager.com` as a dead link on every site that loads analytics — noise that
+  teaches people to ignore the sweep.
+- **Request every outbound link before publishing.** A dead social link in a footer
+  appears on every page of the site, which makes one careless paste a site-wide defect.
+- Treat `401`, `403`, `405` and `429` from Instagram, Facebook, X and LinkedIn as *pass*;
+  LinkedIn's non-standard bot-block `999` is also a pass only on LinkedIn hosts.
+  Those platforms block automated requests by policy; that is not a broken link, and
+  reporting it as one trains people to ignore the sweep. `404`, `410`, `5xx`, DNS
+  failure and connection timeout are real.
+- When a target is genuinely gone, remove the claim rather than leaving it. An honest
+  smaller `sameAs` set outperforms a larger one containing a lie.
+<!-- shared-rule:links-must-resolve:end -->
+
+<!-- shared-rule:no-black-buttons:start -->
+## Never ship a black button
+
+- A call-to-action button must use the site's brand colour, never black. Black buttons
+  camouflage against dark heroes, navigation and footers, carry no brand signal, and
+  measurably lose conversions. This is the single most repeated finding across hundreds
+  of Local Service Spotlight website audits.
+- Nobody ships a black button on purpose. It is the default in every builder —
+  Gutenberg's `has-black-background-color` preset, Elementor's dark fill, Astra starter
+  themes, any Bootstrap-derived `btn-dark`. It looks correct on the white editor canvas
+  and disappears on the dark section it ships into. Assume the default is wrong and
+  override it deliberately.
+- Determine the brand colour, do not guess it: fetch the live pages, count hex values,
+  and take the most-used non-neutral. Where a site has two strong non-neutrals, the
+  darker is usually navigation and the brighter is the CTA — as gold `#f5a623` is to
+  teal `#22698a` on Local Service Spotlight.
+- Verify contrast before publishing. Text on a CTA needs at least 4.5:1. A gold or
+  yellow button needs dark text, not white.
+- Before reporting any site work as done, confirm the published HTML contains none of:
+  `background:#000`, `background-color:#000`, `btn-dark`, `btn-black`, `button-black`,
+  `bg-black`, or an applied `has-black-background-color` class.
+- An element may keep a black fill only with a documented exemption class where black
+  genuinely belongs — a logo lockup, an icon button on a dark rail. Mark it with the
+  fleet's existing exemption class, `bm-keep-black` or `lss-keep-black`,
+  so the sweep can see the exemption was
+  deliberate. Exempt one element, never a default.
+- Full reasoning and the enforcement-plugin pattern:
+  https://blitzmetrics.com/why-we-dont-use-black-buttons/
+<!-- shared-rule:no-black-buttons:end -->
+
+<!-- shared-rule:no-placeholder-copy:start -->
+## Placeholder copy never reaches production
+
+- **A number on a page is a claim.** Every stat needs a definition, a date, and someone
+  who can say where it came from. If the same figure appears twice on a site it has to be
+  the same figure.
+- **Builder placeholder text is a defect, not a cosmetic issue.** "Lorem ipsum", "Your
+  photo here", `xxx-xxx-xxxx`, `example@example.com` — each one tells a visitor the page
+  was never finished, on the page where you are asking them to trust you.
+- **A testimonial needs a real, nameable person.** No initials-only quotes, no
+  "a client in Minneapolis".
+- **The sweep only catches the obvious half, and you need to know which half.** A
+  placeholder that looks like a real number — a hero stat reading "$34K Monthly MRR" that
+  nobody can source — is indistinguishable from a true one to any regex. That exact
+  string sat live on a paying client's site. The only defence is that whoever publishes a
+  number can name its source before it goes up.
+<!-- shared-rule:no-placeholder-copy:end -->
+
+<!-- shared-rule:no-popup-on-load:start -->
+## No popup on page load
+
+- **Nothing covers the page before the visitor has read anything.** A modal that opens on
+  load, on a timer, or on scroll-depth before the first section is finished interrupts
+  the only moment you had their full attention, and it is the single most common reason a
+  first-time visitor closes the tab.
+- The permitted triggers are **click** and **exit intent on desktop**. A newsletter offer
+  earns its place in the page, after the proof, as a section — not as an ambush.
+- This applies to cookie and consent banners too: they may be present, but they must not
+  block the content or be dismissable only by accepting.
+- **Coverage is partial and you should know it.** These checks catch the three signatures
+  that cover most of the fleet — Elementor's `page_load` trigger, the `auto_open` popup
+  type, and load triggers declared in markup. A popup wired up in custom JavaScript will
+  pass the sweep. When you touch a site, look at it once with a fresh session and no
+  cookies; that is the only reliable test.
+<!-- shared-rule:no-popup-on-load:end -->
+
+<!-- shared-rule:no-unnamed-link-text:start -->
+## No unnamed link text
+
+- **Link text must name its destination when read on its own.** Screen readers and search
+  engines both pull links out of context; "read more" out of context is nothing. Write
+  "Read George's story", not "Read more".
+- The banned set in practice: *click here, read more, learn more, continue reading,
+  download, more, here, this, link.* If the anchor text is one of those words and nothing
+  else, rewrite it.
+- **An image-only link still needs a name.** A logo or social icon wrapped in an anchor
+  needs meaningful `alt` text on the image or an `aria-label` on the link. `alt=""` is
+  correct for decoration and wrong for a link — a link with no name is a link nobody can
+  follow by voice or by ear.
+- **An anchor points at the thing it names.** If the text says a company, the link goes to
+  that company; if it says "LinkedIn", it goes to linkedin.com. Two links with identical
+  anchor text going to different destinations on the same page is always a defect — one of
+  them is lying.
+- Expect the first sweep of an existing WordPress site to report this on archive and
+  blog templates, where "Read more" is the theme default. That is one template edit, not
+  a per-post fix, and it is why this rule reports rather than blocks.
+<!-- shared-rule:no-unnamed-link-text:end -->
+
+<!-- shared-rule:nothing-plays-uninvited:start -->
+## Nothing plays at the visitor uninvited
+
+The test is not "is there a video." The test is **would this irritate someone who
+just arrived.** Motion the visitor chose to look at is atmosphere; sound and
+motion that grab at them are an ambush, and the first thing they learn about you
+is that your site did that.
+
+- **Background video in a hero is encouraged.** It is how the immersive standard
+  gets met. Ship it with all four of `muted`, `playsinline`, `loop` and a `poster`
+  image. `playsinline` is not optional — without it, iOS yanks the video full
+  screen the moment it starts, which is the loudest version of the thing this rule
+  exists to prevent.
+- **Sound never starts on its own.** A hero film may absolutely have an audio
+  track. It loads muted with a visible, labelled unmute control, and the visitor
+  decides. That satisfies both halves: the video is there, the ambush is not.
+- **`<audio>` never autoplays**, muted or not. There is no case for it.
+- **Embedded players count.** `?autoplay=1` on a YouTube or Vimeo iframe must be
+  paired with `mute=1`, or dropped.
+- **Anything that cannot meet the muted conditions ships without `autoplay`**,
+  behind a poster frame and a play control.
+- Judge the rest by the same intent, even where no regex covers it: a video that
+  covers the content, one that cannot be paused, one that restarts on every scroll,
+  or one that pushes the call to action off the screen is irritating whether or not
+  it makes a sound.
+- This is the published-page half of `silent-media-playback`. That rule stops an
+  agent putting sound through *your* speakers while it tests; this one stops a site
+  putting sound through a *visitor's* speakers.
+<!-- shared-rule:nothing-plays-uninvited:end -->
+
+<!-- shared-rule:spoken-urls-must-resolve:start -->
+## Every URL we say out loud resolves
+
+- **A URL spoken from a stage, printed on a QR code, or read into a podcast has no
+  inbound link.** No crawler finds it, no internal link audit sees it, and no analytics
+  records it until a human types it and fails. It is the one class of URL that dies
+  completely silently, and the people who hit the 404 are the warmest audience we ever
+  get.
+- **Every hub domain answers the same short paths.** `/install/`, `/skills/` and
+  `/activate/` resolve on every site we tell an audience to visit — 200, or a 301 to the
+  page that actually serves that intent. Never a 404.
+- **Say it once, spell it the same way everywhere.** If the talk says "slash install",
+  every hub answers `/install/`. Do not rely on one domain having a page while another
+  has a redirect and a third has nothing.
+- **A short path is a promise, so keep it even after the page moves.** When the
+  destination is renamed, repoint the redirect in the same change. The short path
+  outlives every page it has ever pointed at.
+- **Redirect within the domain the audience was told to visit** where a suitable page
+  exists. A cross-domain hop from a QR code loses the brand impression at the exact
+  moment it was earned.
+- **Check it from outside, logged out.** An editor screen saying "saved" is not a
+  resolving URL, and a page cache can serve a stale 404 long after the rule exists.
+  See `verify-by-opening-the-live-artifact`.
+- Adding a spoken path to a talk, a slide or a business card means adding it to this
+  rule's `paths` list in the same week. That is the whole maintenance cost, and it is
+  what stops this being rediscovered every few months.
+<!-- shared-rule:spoken-urls-must-resolve:end -->

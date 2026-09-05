@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/receipts/agent-fleet/sources/source.schema.json",
+  "title": "Sanitized agent-fleet source manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "sourceRepository",
+    "sourceRevision",
+    "generatorContract",
+    "configuredCount",
+    "archivedCount",
+    "invalidDefinitionCount",
+    "publicDefinitionCount",
+    "actorRegistryVersion",
+    "humanReviewerRegistryVersion",
+    "modelRegistryVersion",
+    "identityRegistrySha256"
+  ],
+  "properties": {
+    "schemaVersion": {"type": "integer", "const": 1},
+    "status": {"const": "sanitized-source-manifest"},
+    "sourceRepository": {"const": "https://github.com/Local-Service-Spotlight/agent-fleet"},
+    "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "generatorContract": {"const": "fleet-public-render-v3"},
+    "configuredCount": {"type": "integer", "minimum": 0},
+    "archivedCount": {"type": "integer", "minimum": 0},
+    "invalidDefinitionCount": {"type": "integer", "minimum": 0},
+    "publicDefinitionCount": {"type": "integer", "minimum": 0},
+    "actorRegistryVersion": {"type": "string", "pattern": "^fleet-public-actors-v[1-9][0-9]*$"},
+    "humanReviewerRegistryVersion": {"type": "string", "pattern": "^fleet-public-human-reviewers-v[1-9][0-9]*$"},
+    "modelRegistryVersion": {"type": "string", "pattern": "^fleet-public-models-v[1-9][0-9]*$"},
+    "identityRegistrySha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

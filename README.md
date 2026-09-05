@@ -49,13 +49,10 @@ installed; a successful fresh-chat trigger proves that skill is working.
 
 Most people should install `lss-everything`.
 
-| Bundle | What it covers |
-|---|---|
-| `lss-everything` | Every skill listed in the current marketplace manifest |
-| `authority-and-reputation` | Knowledge Panel, AI search, reviews, and proof |
-| `content-engine` | Articles, video, repurposing, and distribution |
-| `client-operations` | Onboarding, cadence, access, reporting, and audits |
-| `quality-and-standards` | Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
+The canonical bundle names and memberships live only in
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json). Read that
+manifest when auditing what should appear; do not maintain a second bundle list
+in documentation.
 
 ## Skills, agents, and scheduled jobs
 
@@ -65,9 +62,12 @@ Most people should install `lss-everything`.
 - A **receipt** is timestamped evidence that a run succeeded or failed.
 
 Creating a schedule is not proof that it ran. See [ACCEPTANCE.md](ACCEPTANCE.md)
-for installation, update, and fleet-job checks.
+for installation, update, and fleet-job checks. Sanitized exact-byte publication
+evidence for public fleet pages follows the tracked
+[agent-fleet receipt contract](receipts/agent-fleet/README.md); private scheduler
+details never belong there.
 
-## House rules travel inside every skill
+## House rules travel inside every applicable skill
 
 Every rule the team has learned lives once, as one file, in
 [`standards/`](standards/) — never ship a black button, nothing autoplays with
@@ -75,22 +75,32 @@ sound, no popup on load, every link and entity claim resolves, personal-brand
 heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
-`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and every
-distributed `SKILL.md` file, so the rules arrive with the pack even though `standards/`
-itself is not distributed. CI rejects a pull request when even one copy is
-missing or stale.
+`scripts/sync_shared_rules.py` stamps every rule into `AGENTS.md`. Universal
+agent-behaviour rules also enter every distributed `SKILL.md`; published-page and
+design rules enter the skills whose frontmatter declares the matching
+`rule-scopes`. The rules therefore arrive where they apply even though
+`standards/` itself is not distributed. CI derives the applicable target set and
+rejects a pull request when any required copy is missing or stale.
 
-The same file also carries the patterns that detect a violation in real HTML, and
-`scripts/fleet_check.py` compiles them into a live sweep:
+The same file also carries machine-check configuration and paired examples;
+`scripts/fleet_check.py` compiles simple checks and dispatches structural kinds
+to separately reviewed shared code:
 
 ```bash
 python3 scripts/fleet_check.py --self-test          # prove the checks bite
 python3 scripts/fleet_check.py --targets fleet.example.txt
 ```
 
-One file therefore produces the agent instruction, the human checklist, and the
-automated check — Content · Checklist · Software from a single source, so the
-rule and the thing that enforces it cannot disagree.
+Fleet-file targets tagged `current-live` enforce the generic 30-day
+re-verification SLA. Use that tag only for the canonical current page; omit it
+for immutable receipts, archived HTML, and other historical evidence. The
+scheduled-jobs fleet has its stricter 36-hour SLA by canonical URL regardless
+of tags.
+
+One file therefore produces the agent instruction, human checklist, check
+configuration, and examples — Content · Checklist · Software with less room for
+drift. Self-tests and independent hostile review reduce drift between structural
+implementations and their prose; they cannot make disagreement impossible.
 
 **Adding a house rule to the whole fleet is dropping one markdown file into
 `standards/`.** How and why, in plain language:

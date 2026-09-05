@@ -1,0 +1,67 @@
+{
+  "actorRegistries": {
+    "fleet-public-actors-v1": [
+      "agent:cloud-scheduler-export",
+      "agent:codex-browser-verifier",
+      "agent:codex-fleet-audit",
+      "agent:codex-fleet-qa",
+      "agent:codex-lss-verifier",
+      "agent:fleet-browser-verifier",
+      "agent:fleet-link-verifier",
+      "job:fleet-browser-verification",
+      "job:fleet-inventory-refresh",
+      "job:fleet-link-verification"
+    ]
+  },
+  "currentActorRegistry": "fleet-public-actors-v1",
+  "currentHumanReviewerRegistry": "fleet-public-human-reviewers-v1",
+  "currentModelRegistry": "fleet-public-models-v1",
+  "humanReviewerRegistries": {
+    "fleet-public-human-reviewers-v1": [
+      "Dennis Yu"
+    ]
+  },
+  "modelRegistries": {
+    "fleet-public-models-v1": [
+      "GPT-5",
+      "GPT-5.4",
+      "GPT-5.5",
+      "GPT-5.6-luna",
+      "GPT-5.6-sol",
+      "GPT-5.6-terra",
+      "Qwen3.8-27B-oQ6",
+      "aya-expanse",
+      "claude-haiku",
+      "claude-opus",
+      "claude-sonnet",
+      "codestral",
+      "codestral:latest",
+      "command-r-plus",
+      "deepseek-chat",
+      "devstral",
+      "devstral:latest",
+      "falcon",
+      "gemma-3",
+      "glm-4",
+      "gpt-5",
+      "granite3.3:8b",
+      "grok-4",
+      "kimi-k2",
+      "local Qwen3.8-27B-oQ6",
+      "mistral-large",
+      "mixtral-8x7b",
+      "nemotron-mini",
+      "o3",
+      "o4-mini",
+      "olmo2",
+      "phi-4",
+      "smollm2",
+      "stable-code",
+      "starcoder2:7b",
+      "vicuna",
+      "wizardlm2",
+      "yi-large"
+    ]
+  },
+  "schemaVersion": 1
+}

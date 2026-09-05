@@ -9,18 +9,17 @@
     {
       "id": "schema-sameas-resolves",
       "kind": "resolve_urls",
-      "within": "\"sameAs\"\\s*:\\s*\\[[^\\]]*\\]",
-      "extract": "\"(https?://[^\"]+)\"",
+      "extractor": "jsonld-sameas",
       "limit": 25,
       "message": "sameAs target does not resolve — the entity claim points at nothing",
       "examples": {
         "extracts": [
           {
-            "html": "{\"@type\":\"Person\",\"name\":\"A\",\"sameAs\":[\"https://x.com/a\",\"https://www.linkedin.com/in/b\"],\"url\":\"https://site.com\"}",
+            "html": "<script type=\"application/ld+json\">{\"@type\":\"Person\",\"name\":\"A\",\"sameAs\":[\"https://x.com/a\",\"https://www.linkedin.com/in/b\"],\"url\":\"https://site.com\"}</script>",
             "urls": ["https://x.com/a", "https://www.linkedin.com/in/b"]
           },
           {
-            "html": "{\"sameAs\":[\"https:\\/\\/www.wikidata.org\\/wiki\\/Q1\"]}",
+            "html": "<script type=\"application/ld+json\">{\"sameAs\":\"\\u0068ttps://www.wikidata.org/wiki/Q1\"}</script>",
             "urls": ["https://www.wikidata.org/wiki/Q1"]
           }
         ]
@@ -29,15 +28,23 @@
     {
       "id": "outbound-links-resolve",
       "kind": "resolve_urls",
-      "extract": "<a\\b[^>]*href=\"(https?://[^\"]+)\"",
-      "skip_same_host": true,
+      "extractor": "html-anchors",
+      "skip_same_host": false,
       "limit": 40,
       "message": "outbound link does not resolve",
       "examples": {
         "extracts": [
           {
             "html": "<a href=\"https://www.linkedin.com/in/x\">LinkedIn</a> <a href=\"/about/\">About</a>",
-            "urls": ["https://www.linkedin.com/in/x"]
+            "urls": ["https://www.linkedin.com/in/x", "https://self-test.invalid/about/"]
+          },
+          {
+            "html": "<a href='https://example.test/single'>Single</a> <a href=https://example.test/bare>Bare</a>",
+            "urls": ["https://example.test/single", "https://example.test/bare"]
+          },
+          {
+            "html": "<!-- <a href='https://ignore.test/'> --><template><a href=https://ignore-2.test/></template><a href=' //external.example/x '>External</a>",
+            "urls": ["https://external.example/x"]
           }
         ]
       }
@@ -60,7 +67,8 @@
   teaches people to ignore the sweep.
 - **Request every outbound link before publishing.** A dead social link in a footer
   appears on every page of the site, which makes one careless paste a site-wide defect.
-- Treat `401`, `403`, `405` and `429` from Instagram, Facebook, X and LinkedIn as *pass*.
+- Treat `401`, `403`, `405` and `429` from Instagram, Facebook, X and LinkedIn as *pass*;
+  LinkedIn's non-standard bot-block `999` is also a pass only on LinkedIn hosts.
   Those platforms block automated requests by policy; that is not a broken link, and
   reporting it as one trains people to ignore the sweep. `404`, `410`, `5xx`, DNS
   failure and connection timeout are real.
