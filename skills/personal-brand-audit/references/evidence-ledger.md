@@ -75,6 +75,30 @@ If identity is `AMBIGUOUS`, facts can be inventoried as candidates but cannot be
 the PDF. A prior namesake warning remains dated evidence, not an immortal conclusion; re-test
 it against newer primary records.
 
+## Knowledge Graph Explorer and panel receipt
+
+Every audit must query the canonical [Local Service Spotlight Knowledge Graph
+Explorer](https://localservicespotlight.com/knowledge-graph-explorer/) and keep these records
+separate. Do not compress them into one “Knowledge Panel” field.
+
+| Record | Required value and context |
+|---|---|
+| `graph_object_status` | `RESOLVED`, `AMBIGUOUS`, `NO_SAFE_OBJECT_RETURNED`, or `UNKNOWN`; include every exact Explorer query, candidate KGMID/result type/description, capture timestamp, and failure. A resolved object cites the two independent identity attributes. Use `UNKNOWN` when the Explorer was blocked or not validly queried. |
+| `kgmid` | Exact safely resolved identifier or `UNKNOWN`; never assign the first plausible result by score or name alone. |
+| `normal_google_panel_status` | `VISIBLE`, `NOT_VISIBLE_IN_THIS_CHECK`, or `UNKNOWN`, from an ordinary name/name-plus-role query—not a forced `?kgmid=` link—with query, date/timezone, locale/language, approximate location, device/surface, signed-in/personalization state, and screenshot/response locator. |
+| `owner_claim_status` | `CLAIMED`, `NOT_CLAIMED`, or `UNKNOWN`; remain `UNKNOWN` without the authorized owner-side Google claim dashboard, a screenshot/export from that dashboard, or a Google claim receipt. Explorer defaults and public controls are not owner-dashboard proof. |
+| `association_entity_graph_status` | For each ranked public-association entity, reuse `graph_object_status` and `kgmid`; add identity attributes, dated association evidence, association type, and `relationship_depth=UNKNOWN` unless separately established. |
+
+Human-facing copy may render `NO_SAFE_OBJECT_RETURNED` as `NO SAFE OBJECT RETURNED`,
+`NOT_VISIBLE_IN_THIS_CHECK` as `NOT VISIBLE IN THIS CHECK`, and `NOT_CLAIMED` as
+`NOT CLAIMED`. The ledger keeps the underscore enums above; the display layer never invents a
+different state.
+
+Explorer `resultScore` measures match to that query, not authority and not a percentage. An
+Explorer object is not evidence that a normal query renders a panel; a visible panel is not
+evidence the owner claimed it. If either surface is blocked or untested, preserve the failed
+query/context and mark the corresponding record `UNKNOWN`.
+
 ## Connection map rules
 
 Each edge must have `from`, `to`, `association_type`, evidence ID, date, and

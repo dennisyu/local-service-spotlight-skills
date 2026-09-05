@@ -107,6 +107,48 @@ Keep these two fields separate in the connection map:
 Co-presence is not friendship. A follow, tag, group photo, podcast appearance, testimonial,
 or event roster does not grant permission to imply endorsement or use someone’s likeness.
 
+## Mandatory Knowledge Graph Explorer and panel receipt
+
+Every run must query the canonical
+[Local Service Spotlight Knowledge Graph Explorer](https://localservicespotlight.com/knowledge-graph-explorer/)
+for the resolved subject, the current company/employer when relevant, and the ranked
+public-association entities used in the report. Use disambiguated query variants and the
+same two-attribute identity gate above. A returned `result.@id` is a candidate Knowledge
+Graph object and its `resultScore` is query-match strength; neither proves authority, a
+normally visible Google Knowledge Panel, or owner claim status.
+
+Write four separate receipts to the evidence ledger:
+
+1. **Graph object / KGMID** — record the exact Explorer queries, capture time, candidates,
+   `graph_object_status=RESOLVED | AMBIGUOUS | NO_SAFE_OBJECT_RETURNED | UNKNOWN`, and a
+   separate `kgmid=<identifier> | UNKNOWN`. The report may display these as
+   `RESOLVED: <KGMID>`, `AMBIGUOUS — DO NOT ASSIGN`, `NO SAFE OBJECT RETURNED`, or
+   `UNKNOWN — <reason>`. Resolve a KGMID only when at least two independent attributes
+   identify the intended entity. A no-result is not proof that no panel can render.
+2. **Normal Google visible panel** — separately run the ordinary name or name-plus-role
+   query, not a forced `?kgmid=` lookup. Record
+   `normal_google_panel_status=VISIBLE | NOT_VISIBLE_IN_THIS_CHECK | UNKNOWN`, plus the
+   exact query, date/timezone, locale/language, approximate search location,
+   device/surface, signed-in and personalization state, and screenshot/response locator.
+   The report may display `NOT_VISIBLE_IN_THIS_CHECK` as `NOT VISIBLE IN THIS CHECK`; the
+   result is bounded to that query context and date.
+3. **Owner claim status** — record
+   `owner_claim_status=CLAIMED | NOT_CLAIMED | UNKNOWN`, but keep it `UNKNOWN` unless the
+   authorized owner-side Google claim dashboard, a screenshot/export from that dashboard,
+   or a Google claim receipt proves the state. The report may display `NOT_CLAIMED` as
+   `NOT CLAIMED`. Explorer UI/database defaults and public panel controls are not
+   owner-dashboard proof.
+4. **Related public-association entities** — for each ranked person or organization used in
+   the connection map, use the same `graph_object_status` and `kgmid` fields and record the
+   dated association evidence. Describe only the observed association type—such as host,
+   guest, colleague, speaker, or co-presence—and keep relationship depth `UNKNOWN` unless
+   a direct record establishes it.
+
+If the Explorer or ordinary Google surface is unavailable or blocked, record the failed
+query, context, time, and error, and keep the affected field `UNKNOWN`; do not substitute a
+generic graph search, remembered result, or `?kgmid=` link without labeling it as a separate
+test.
+
 ## Orchestration sequence
 
 Use `model-judgment` to route mechanical collection and deduplication to the cheapest capable
@@ -126,8 +168,8 @@ Then run the specialist sequence:
    discovery prompts live and capture the cited sources. If it is not available, mark the
    lane UNKNOWN; do not substitute remembered model answers or an indexed mention count.
 5. **`knowledge-panel-entity-seo`** — audit the entity home, namesake collisions, Person
-   schema, `sameAs` targets, corroboration, and Knowledge Graph state. Draft fixes; publishing
-   and profile changes remain separately authorized.
+   schema, `sameAs` targets, corroboration, and the four-part Explorer/panel receipt above.
+   Draft fixes; publishing and profile changes remain separately authorized.
 6. **`content-factory`** — turn real recordings, interviews, talks, photos, customer stories,
    and transcripts through **Produce → Process → Post → Promote**. Never invent source
    material to fill a content gap.
@@ -210,6 +252,11 @@ allowed only when the row's observable acceptance test has passed.
 
 - Identity is resolved with two independent attributes, or the audit is visibly blocked from
   attribution.
+- The canonical LSS Knowledge Graph Explorer was queried and the receipt separately records
+  `RESOLVED`, `AMBIGUOUS`, `NO_SAFE_OBJECT_RETURNED`, or `UNKNOWN` graph-object status and a
+  separate safe KGMID, normal-query visible-panel state with query/date/location context,
+  owner claim state backed by owner-dashboard/Google claim-receipt proof or `UNKNOWN`, and
+  the same identity-safe graph fields for ranked public-association entities.
 - Every substantive claim and every connection has an evidence ID; inferences name their
   supporting IDs.
 - Contradictions remain visible until a source of truth resolves them.

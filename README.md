@@ -55,6 +55,16 @@ The complete workflow routes through eight skills and therefore requires
 `lss-everything`; the smaller authority bundle supports intake and its installed
 authority/reputation lanes, but is not a complete audit installation.
 
+Every full run also queries the canonical [Local Service Spotlight Knowledge Graph
+Explorer](https://localservicespotlight.com/knowledge-graph-explorer/) and keeps four
+receipts separate: `RESOLVED`, `AMBIGUOUS`, `NO_SAFE_OBJECT_RETURNED`, or `UNKNOWN` graph
+object status with a separate safe KGMID; a normal Google name-query panel observation
+with date, locale, location, and personalization caveats; owner claim status, which remains
+`UNKNOWN` without the owner-side Google claim dashboard or a Google claim receipt; and the
+same identity-safe graph fields for the report's related public-association entities. An
+Explorer object is not a visible or claimed Knowledge Panel, and a public association is
+not friendship or endorsement.
+
 ## Bundles
 
 Most people should install `lss-everything`.
