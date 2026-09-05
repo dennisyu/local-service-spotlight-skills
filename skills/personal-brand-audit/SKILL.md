@@ -496,13 +496,16 @@ allowed only when the row's observable acceptance test has passed.
   exact filtered Task Library route and back to every counted meta-article. A stable
   `?task=` route opens one task and a stable `?article=` route opens the complete hub.
   A count without its inspectable source URLs is decoration, not evidence.
-- **Lead with the result and the article's own evidence.** Give the 2–3 sentence
-  plain-language summary first, then a compact outcome/checklist block. Keep the most
+- **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
+  at eighth-grade reading level or below, name who this is for, what it does, why
+  it matters and the useful outcome. Keep the topic-specific visual beside that
+  short opening in the first screen; it may lead. A checklist is secondary and
+  must not push it below the fold. Keep the most
   specific primary visual or proof for that article above the fold: the actual framework
   diagram on a framework hub, the task-specific screenshot or flow on a software SOP,
   or the real photograph, artifact or result that proves the work. A generic system map
-  must never displace that evidence or push it below the fold. Move audience explanation,
-  history and secondary evidence below this primary orientation.
+  must never displace that evidence or push it below the fold. Keep the audience in
+  the opening; move extended background, history and secondary evidence below it.
 - **Use the larger system map as truthful context.** When an established framework has
   an exact relationship to the article, place its maintained detailed map after the
   article-specific primary visual and highlight only the subcomponents the article
@@ -722,6 +725,24 @@ standard, fleet-wide:
   product's natural name and official website on the execution step where the reader
   actually opens it. This preserves both education and a direct path to action without
   making the anchor lie about where it goes.
+- **Search our article inventory before choosing a provider help page.** Look up
+  the object in the Canonical Directory, Task Library and site search, then read
+  the candidate to verify that it answers this reader's question. For Obsidian,
+  use “our Obsidian setup guide” when that guide is the relevant lesson. Record
+  the entity, chosen URL and reason in the link audit. If no suitable owned
+  guide exists, keep a conceptual mention plain or cite the precise primary
+  source needed for the claim; record the content gap instead of inventing a URL.
+- **Give the page a place in the SEO Tree.** Name the canonical parent topic,
+  link supporting articles up to it, connect the hub to useful supporting proof,
+  and link across only to related guides that help the next task. Verify those
+  links in the article body; a catalog listing or sitewide footer is insufficient.
+  One topic keeps one owner across our sites. Do not mass-add unrelated links or
+  use a quota to turn every provider citation into an internal link.
+- **Keep primary citations and execution links when they do a different job.**
+  A provider's API reference can substantiate a technical claim; its download or
+  sign-in page can be the required action. Label those links by their purpose
+  and retain them alongside our training when useful. A provider citation does
+  not replace the internal explanation of how we use the tool.
 - **Verify every destination before publishing.** The name, page title and live content
   must identify the intended entity. SEO value is a by-product of a truthful,
   reader-helpful relationship; it is never a reason to guess a domain.
@@ -1136,6 +1157,11 @@ is that your site did that.
   calculator or interactive tool must be at least partly visible in the first
   screen, *after* the site's own header and title. Two or three sentences of
   lead-in above it is the maximum.
+- **A blank or hidden block is a failed visual.** A colored shell, empty SVG,
+  broken image, loading placeholder, clipped labels or content visible only after
+  scrolling does not pass. The first screen must show a meaningful part of the
+  picture or diagram with readable labels, not just its border or a thin strip.
+  Give the figure an honest caption or accessible description of what it teaches.
 - **If the page has an interactive tool, the tool leads.** The prose becomes the
   explanation of it, not the preamble to it. Reword any copy that points "below"
   into a back-reference to the tool at the top.
@@ -1153,7 +1179,17 @@ is that your site did that.
   populates) so it replaces that markup instead of appending a second copy.
 - **Verify by measuring on the live URL, not the local render.** Site chrome is
   routinely 300–400px, so a layout that clears the fold locally can fail once
-  published. Check at 1440x860 and 390x844.
+  published. Check at 1440x860 and 390x844 as an anonymous first visit, before
+  any click, scroll or other interaction. Capture the viewport and record the
+  visible content and its position, working media/labels, and overflow. Also
+  confirm the initial figure survives delayed or unavailable JavaScript.
+  Verify the saved source separately from the served page: source equality,
+  HTTP 200 and an image tag alone do not prove a working above-fold visual.
+- **Check what WordPress serves, including the CSS.** Paragraph formatting can
+  insert markup into an unprotected inline style block and discard its first
+  rule. Use a valid Custom HTML block (`wp:html`) and avoid blank lines inside
+  inline CSS. Compare the served markup and applied browser styles after the
+  save; a correct editor source does not prove the browser received valid CSS.
 - **Exemption:** a page whose whole purpose is a single block of prose — a
   disclosure, a policy, a legal notice — is exempt. Tag it, do not silently skip
   it.
@@ -1162,3 +1198,39 @@ The sweep only catches the blatant case: a headline with no visual anywhere near
 it. Whether the visual actually clears the fold is a judgement call, verified by
 opening the published page — see `verify-by-opening-the-live-artifact`.
 <!-- shared-rule:visuals-above-the-fold:end -->
+
+<!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
+## Every article and project starts with specific GCT in plain language
+
+- **Write the specific Goals, Content, Targeting before work begins.** Goals name
+  the change the reader or project needs; Content names the source-backed lesson,
+  proof or deliverable that will produce that change; Targeting names the people
+  and situation it serves. “Publish an article” or “use AI” is an activity, not
+  the desired outcome. Use the same brief for the article and the project behind it.
+- **Put who, what, why and the useful outcome in the first 2–3 sentences.** Write
+  the opening and initial orientation at US eighth-grade reading level or below.
+  Use familiar words and short sentences; explain unavoidable terms on first use.
+  Put commands, architecture details and specialist terms after this orientation.
+  Readers should not have to know the acronym GCT to understand the page.
+- **Make the opening specific enough to judge.** For a shared-memory guide:
+  “Use this guide if you work with more than one AI assistant and keep repeating
+  the same facts. It shows how to give them one set of notes, so each assistant
+  can pick up where the last one stopped.” The project brief also names the
+  source files, checks and expected handoff; never invent facts to fill the brief.
+- **Check meaning as well as a reading score.** Save the exact opening text and
+  its readability result in the audit. A score is a diagnostic, not proof that
+  the prose makes sense. A reviewer must still identify the audience, task,
+  reason and outcome from those sentences. Unchecked readability stays UNKNOWN.
+- **Keep the useful visual with the short opening.** Follow
+  `visuals-above-the-fold`: the topic-specific picture or diagram may come first,
+  or immediately after the short opening, whichever makes the first screen
+  useful. A long GCT card, checklist, changelog or navigation block must not bury
+  that visual.
+
+The maintained public writing standard is
+https://localservicespotlight.com/article-guidelines/; the definitive-hub method
+is https://blitzmetrics.com/definitive-article-guide/. The older
+`/blog-posting-guidelines/` page is an archive and SEO leaf. Improve these owners
+in place rather than publishing a competing guideline. No regex can honestly
+certify a specific GCT or human comprehension; enforce this in editorial review.
+<!-- shared-rule:every-article-and-project-starts-with-specific-gct:end -->
