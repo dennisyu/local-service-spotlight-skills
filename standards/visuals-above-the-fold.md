@@ -2,8 +2,8 @@
 {
   "title": "Visual and interactive content sits above the fold",
   "severity": "error",
-  "captured": "2026-09-04",
-  "captured_from": "Dennis Yu, Cowork session, 2026-09-04: 'I think it's a general problem we have with articles written by AI where there's a ton of text, and the photos, the visual stuff, and the interactive bits are below the fold, so they don't get seen. Can we make this a global rule?' Traced to dennisyu.com/the-unwritable-part/, where the calculator sat at 20% scroll depth behind four screens of prose.",
+  "captured": "2026-09-05",
+  "captured_from": "Dennis Yu, Cowork session, 2026-09-04: 'I think it's a general problem we have with articles written by AI where there's a ton of text, and the photos, the visual stuff, and the interactive bits are below the fold, so they don't get seen. Can we make this a global rule?' Traced to dennisyu.com/the-unwritable-part/, where the calculator sat at 20% scroll depth behind four screens of prose. Dennis Yu, September 5 2026: all web pages on all sites, not just blogs; use a big meaningful visual above the fold with less whitespace.",
   "source": "https://dennisyu.com/the-unwritable-part/",
   "applies_to": [
     "published-html",
@@ -27,14 +27,14 @@
         ]
       }
     }
-  ],
-  "target_tags": [
-    "article"
   ]
 }
 ---
 
 ## Visual and interactive content sits above the fold
+
+- **These rules apply to every web page on every site.** Homepages, landing pages, service pages, person and network pages, product and tool pages, and documentation follow the same article guidelines as blog posts. Start with the reader, the reason to care, and the useful outcome in language an eighth grader can understand.
+- **Make good use of the first screen.** Place a large, meaningful diagram, video, or real picture beside or directly after the short opening. Trim excessive header, hero, card, and section whitespace so visitors see useful visual content on desktop and mobile. A small decorative icon, face chip, or sliver of an image does not satisfy this requirement. Keep names beside faces; prefer real people, shared work, and playable conversations where they help explain the subject.
 
 - **The visual is the hook, not the reward.** A chart, diagram, photograph,
   calculator or interactive tool must be at least partly visible in the first

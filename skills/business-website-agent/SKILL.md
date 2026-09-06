@@ -948,6 +948,9 @@ entity-linking preflight and a live link audit.
 <!-- shared-rule:visuals-above-the-fold:start -->
 ## Visual and interactive content sits above the fold
 
+- **These rules apply to every web page on every site.** Homepages, landing pages, service pages, person and network pages, product and tool pages, and documentation follow the same article guidelines as blog posts. Start with the reader, the reason to care, and the useful outcome in language an eighth grader can understand.
+- **Make good use of the first screen.** Place a large, meaningful diagram, video, or real picture beside or directly after the short opening. Trim excessive header, hero, card, and section whitespace so visitors see useful visual content on desktop and mobile. A small decorative icon, face chip, or sliver of an image does not satisfy this requirement. Keep names beside faces; prefer real people, shared work, and playable conversations where they help explain the subject.
+
 - **The visual is the hook, not the reward.** A chart, diagram, photograph,
   calculator or interactive tool must be at least partly visible in the first
   screen, *after* the site's own header and title. Two or three sentences of
@@ -1039,6 +1042,9 @@ opening the published page — see `verify-by-opening-the-live-artifact`.
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
 ## Every article and project starts with specific GCT in plain language
+
+- **These rules apply to every web page on every site.** Homepages, landing pages, service pages, person and network pages, product and tool pages, and documentation follow the same article guidelines as blog posts. Start with the reader, the reason to care, and the useful outcome in language an eighth grader can understand.
+- **Make good use of the first screen.** Place a large, meaningful diagram, video, or real picture beside or directly after the short opening. Trim excessive header, hero, card, and section whitespace so visitors see useful visual content on desktop and mobile. A small decorative icon, face chip, or sliver of an image does not satisfy this requirement. Keep names beside faces; prefer real people, shared work, and playable conversations where they help explain the subject.
 
 - **Write the specific Goals, Content, Targeting before work begins.** Goals name
   the change the reader or project needs; Content names the source-backed lesson,
