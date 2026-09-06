@@ -18,7 +18,7 @@ rule-scopes: published-html, design-review
 ## Steps
 1. **Audit first.** If a canonical hub already exists on your site, improve it. Never publish a second page on the same topic — that's content vandalism; you'd split your own authority.
 2. **Classify and outline.** A task guide is a repeatable recipe; a topic/entity/framework hub explains its subject and links to the relevant task recipes. A supporting story, opinion, tool comparison, reference or historical post does not become task-definitive because its opening was repaired. For a task recipe, outline the trigger/starting state, inputs and linked prerequisite tasks, ordered steps, measurable output/pass criteria, and downstream task/owner/handoff. Hold unsupported fields as gaps. For a hub, outline the questions its declared scope must answer.
-3. **Write facts, not fluff.** Open with 2–3 sentences at eighth-grade reading level or below: the reader's actual situation, why it matters, the useful outcome and how this article helps them get there. Earn attention with a concrete problem, consequential finding or true moment; connect it to the reader's decision immediately. Follow the shared specific-GCT opening standard. Keep the meaningful topic-specific visual with that short opening; it may come first. Verify it renders in the first screen on desktop and mobile. Every factual claim carries a number, a name, or a source link. When proof involves another person, show the true moment: scene, meaning, relevant person, human beat, then a compact source receipt. Publish nothing you couldn't defend in diligence, but do not turn the public page into the diligence memo.
+3. **Write facts, not fluff.** Open with 2–3 sentences at fifth-grade reading level or below: the reader's actual situation, why it matters, the useful outcome and how this article helps them get there. Earn attention with a concrete problem, consequential finding or true moment; connect it to the reader's decision immediately. Follow the shared specific-GCT opening standard. Keep the meaningful topic-specific visual with that short opening; it may come first. Verify it renders in the first screen on desktop and mobile. Every factual claim carries a number, a name, or a source link. When proof involves another person, show the true moment: scene, meaning, relevant person, human beat, then a compact source receipt. Publish nothing you couldn't defend in diligence, but do not turn the public page into the diligence memo.
 4. **Explain terms and placement.** On first mention, give the plain meaning and link the verified owned explainer, including the result, material and audience behind [Goals, Content, Targeting](https://blitzmetrics.com/gct-business-strategy/). Link the task's [Task Library record](https://local-service-spotlight.github.io/task-library/) and [Content Factory parent](https://blitzmetrics.com/content-factory/). Lower in a Content Factory task article, show its responsive context map with the true Produce → Process → Post → Promote placement, prerequisites, next task and meta feedback into the recipe. The map supplements the lead visual.
 5. **Structure for machines.** H2s phrased as the questions people actually ask. Schema markup (Person, Article, FAQ). The entity's name spelled identically everywhere. A stable URL that never changes.
 6. **Build the orbit.** Internal-link every related thin post INTO this page; link this page out to its sources and sibling hubs. Thin posts orbit the hub — they feed it, never compete with it.
@@ -27,7 +27,7 @@ rule-scopes: published-html, design-review
 8. **Verify and document this execution.** Check the declared recipe or hub scope, preserved source/media, live links and rendered desktop/mobile opening. In the existing receipt, retain the exact opening and reviewer-quoted evidence for reader/situation, reason to care, useful outcome and supporting mechanism. Confirm the body delivers its promise; a grade or word count cannot pass meaning. Write the run's meta article using the [meta guidelines](https://blitzmetrics.com/meta-article-prompt/), with the canonical task, recipe revision, execution ID, results and evidence. Propose supported improvements. Publication and source changes follow existing authorization.
 
 ## Anatomy — what belongs on the page
-- Specific GCT in plain language (2–3 sentences at eighth-grade level or below).
+- Specific GCT in plain language (2–3 sentences at fifth-grade level or below).
 - A meaningful topic-specific picture or diagram, readable in the first screen without JavaScript interaction.
 - The facts: numbers, dates, names, each tied to its source.
 - The story and strongest quotes from the recording. For relationship proof, use the
@@ -448,8 +448,9 @@ just replaced.
   raised at minute ninety costs them the whole ninety minutes.
 - **Do not guess to avoid asking.** A guess that turns out wrong is discovered at the end,
   when it is most expensive to undo.
-- Open every plan with an explicit **open questions and missing access** block. If the
-  list is empty, say so — that is information too.
+- After the short plain-language context, put an explicit **open questions and
+  missing access** block near the start of every plan. If the list is empty, say
+  so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
@@ -1224,7 +1225,7 @@ merely to satisfy the older marker check.
   `?task=` route opens one task and a stable `?article=` route opens the complete hub.
   A count without its inspectable source URLs is decoration, not evidence.
 - **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
-  at eighth-grade reading level or below, name who this is for, what it does, why
+  at fifth-grade reading level or below, name who this is for, what it does, why
   it matters and the useful outcome. Use the reader's actual situation and the
   mechanism or evidence that makes the outcome useful; follow
   `every-article-and-project-starts-with-specific-gct`. A generic benefit claim
@@ -1481,7 +1482,7 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   offered method, evidence or tool helps. The reader may be named directly or
   made unmistakable through their situation. They should not have to scroll
   through history, credentials, an abstract definition or a system description
-  to find the point. Write the opening at US eighth-grade reading level or below.
+  to find the point. Write the opening at US fifth-grade reading level or below.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
@@ -1721,3 +1722,17 @@ responsive visibility, overflow, or every valid accessible-name relationship. Th
 remain browser measurements on the rendered page; broad class-name or inline-style
 regexes would create fragile false positives across different themes and builders.
 <!-- shared-rule:icon-only-social-controls-stay-tappable:end -->
+
+<!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:start -->
+## Skills, packs, plugins, workers and jobs have distinct states
+
+Use these terms to choose the setup your business needs. Start with one guide and one job. Check the result before you add more tools.
+
+- A **skill** is a written recipe for a kind of task. A **skill pack** is a selected group of skills. A **plugin** is a package for a particular app; it may contain skills, tool connections or other components. Name only what the reviewed package contains. Use the [owned explainer](https://localservicespotlight.com/plugin/) and [pack library](https://localservicespotlight.com/skill-packs/).
+- An **agent** is the AI worker doing an assigned task with approved tools and access. A **job** is an assigned run with inputs, checks and a result. A **scheduled job** adds a saved time or supported event; installing instructions does not create a worker or schedule. Link the [agent guide](https://blitzmetrics.com/build-agents/) and [job guide](https://blitzmetrics.com/persistent-agents/).
+- **Access** is permission to reach a source or tool in the named account and environment. Record required access, granted scope, observed connection and remaining human action separately. A downloaded ZIP, installed plugin or ready document proves none of them. Never infer approval from a package, task status or connected account.
+- **Document-ready** means the recipe has its required content and review. Task Library `complete` is a contributor-supplied document-status claim. It does not by itself prove that the guide meets the required content and review standard, or that a client task ran. Record independent document review, installed-skill activation, source access, scheduled firing, business success and semantic certification separately. Record actual executions separately with their IDs, outputs and checks.
+- Make the ZIP a useful first start: include a short start file, a one-task draft prompt, a manifest and dated source information. Say whether it is a guide archive or a platform-installable package. A downloaded snapshot does not update itself. Do not tell readers to delete old copies without considering their rollback and active-job dependencies.
+- Use the current maintained marketplace URL and exact package name. Derive any counts from its manifest, with a revision/date; do not equate the broad Task Library with the smaller curated marketplace. Mark older names and installation receipts as historical, and verify actual installed copies before claiming parity.
+- Check external platform claims against current official docs for that product, surface, plan and environment. Keep package format, installation, activation, connectors, local-file access and scheduling separate. No blanket promise that every job works on a free plan, on a phone, or while the laptop sleeps. Confirm the actual first run, output and failure handling before calling a schedule observed.
+<!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:end -->

@@ -87,7 +87,7 @@
   `?task=` route opens one task and a stable `?article=` route opens the complete hub.
   A count without its inspectable source URLs is decoration, not evidence.
 - **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
-  at eighth-grade reading level or below, name who this is for, what it does, why
+  at fifth-grade reading level or below, name who this is for, what it does, why
   it matters and the useful outcome. Use the reader's actual situation and the
   mechanism or evidence that makes the outcome useful; follow
   `every-article-and-project-starts-with-specific-gct`. A generic benefit claim

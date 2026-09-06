@@ -85,6 +85,17 @@ class SyncSharedRulesTests(unittest.TestCase):
         stale, _ = mod.sync(check=True)
         self.assertEqual(stale, [])
 
+    def test_new_rule_after_existing_scoped_index_is_immediately_stable(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        self.write_standard("visual-rule", '---\n{"title":"Visual rule","severity":"error","captured":"2026-09-06","captured_from":"test","applies_to":["design-review"]}\n---\n\n## Visual\n\n- inspect')
+        mod.sync()
+        self.write_standard("rule-two", "## Two\n\n- added after an index exists")
+        mod.sync()
+        stale, orphans = mod.sync(check=True)
+        self.assertEqual(stale, [])
+        self.assertEqual(orphans, [])
+
     def test_adding_a_standard_does_not_clobber_an_existing_one(self):
         """The regression that matters: rule two must not eat rule one."""
         mod = load_module(self.root)
