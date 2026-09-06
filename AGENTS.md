@@ -188,6 +188,11 @@ standard, fleet-wide:
   photography can carry a hero; selfies cannot, at any resolution. When the only assets
   are selfies, use the typographic hero — it never looks cheap. See
   `photo-earns-full-bleed`.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.
 <!-- shared-rule:immersive-hero-standard:end -->
 
 <!-- shared-rule:keep-the-system-of-record-outside-the-model:start -->
@@ -423,6 +428,11 @@ is that your site did that.
   mixed colour temperature are all invisible in a thumbnail and unmissable at full width.
 - Related: `immersive-hero-standard` for the construction; this rule is only about
   whether a given photograph is allowed to be the hero at all.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.
 <!-- shared-rule:photo-earns-full-bleed:end -->
 
 <!-- shared-rule:pre-audit-before-the-client-does:start -->
@@ -530,9 +540,9 @@ is that your site did that.
 <!-- shared-rule:every-public-page-has-real-imagery:start -->
 ## Every public page shows real people or real work
 
-- **Every visitor-facing content page must contain at least one meaningful image
+- **Every visitor-facing content page must contain at least one meaningful visual
   of the actual business: its people, its work, its customers with permission,
-  its product, or its place.** This includes conversion and utility pages such as
+  its product, its place, or an accurate diagram of its actual process.** This includes conversion and utility pages such as
   Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
   ship a wall of text.
 - A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
@@ -543,13 +553,18 @@ is that your site did that.
   when useful, a caption that explains what it proves. Describe only what the
   source establishes: never relabel one project photo as work completed in every
   city, and never infer a person, location, service, or result from a filename.
-- If no suitable approved image exists, request one and block that page from
-  publication. Do not manufacture evidence with image generation or stock.
+- If no suitable approved photograph exists, use a useful evidence-backed
+  diagram or verified source-video poster under `visuals-above-the-fold`. Do not
+  manufacture evidence with image generation or stock. If none is available,
+  hold publication and record the specific source gap and next action.
 - Build QA must inventory every rendered content route and fail when any route
-  lacks a verified real image. Keep a provenance allowlist or equivalent asset
+  lacks source-verified meaningful visual proof. Keep a provenance allowlist or equivalent asset
   record so logos and decorative images cannot make the check pass. Mark at least
   one qualifying `<img>` per page with `data-lss-real-image="verified"` only
-  after that provenance check. Also inspect the rendered desktop and mobile page;
+  after that provenance check. For a diagram, video or photographic background,
+  use `data-lss-visual-proof="verified"` with an honest aria-label/title after
+  source review. This alternate marker never makes an empty shell or unrelated
+  image pass. Also inspect the rendered desktop and mobile page;
   a hidden, broken, or contextless image does not count.
 - Machine-only documents and routes that never render as visitor content—such as
   `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
@@ -557,10 +572,16 @@ is that your site did that.
   redirect or make the page comply.
 
 The fleet check proves only that a page declares the verified marker and supplies
-a nonblank, non-data source plus nonblank alt text. It cannot prove that the
+the required description (plus a non-data source and alt for img). It cannot prove that the
 source loads, is visible, is meaningfully sized, or is truthful. Enforce those
 claims with each site's provenance-aware build validator plus a human visual
 review. Never add the marker merely to make the sweep pass.
+
+Dennis's 2026-09-05 instruction explicitly accepts diagrams, pictures or embedded
+video above the fold. That supersedes the earlier photo-only fallback without
+weakening authenticity: an accurate process diagram is useful proof, and a
+video poster must belong to the verified source. Do not add an unrelated photo
+merely to satisfy the older marker check.
 <!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
@@ -886,8 +907,9 @@ entity-linking preflight and a live link audit.
 ## Visual and interactive content sits above the fold
 
 - **The visual is the hook, not the reward.** A chart, diagram, photograph,
-  calculator or interactive tool must be at least partly visible in the first
-  screen, *after* the site's own header and title. Two or three sentences of
+  calculator or interactive tool must be substantially visible in the first
+  screen alongside the page title. This applies to every fleet page, including
+  home, money, relationship, article, archive, resource and policy pages. Two or three sentences of
   lead-in above it is the maximum.
 - **A blank or hidden block is a failed visual.** A colored shell, empty SVG,
   broken image, loading placeholder, clipped labels or content visible only after
@@ -911,7 +933,7 @@ entity-linking preflight and a live link audit.
   populates) so it replaces that markup instead of appending a second copy.
 - **Verify by measuring on the live URL, not the local render.** Site chrome is
   routinely 300–400px, so a layout that clears the fold locally can fail once
-  published. Check at 1440x860 and 390x844 as an anonymous first visit, before
+  published. Check at 1280x800 and 390x844 as an anonymous first visit, before
   any click, scroll or other interaction. Capture the viewport and record the
   visible content and its position, working media/labels, and overflow. Also
   confirm the initial figure survives delayed or unavailable JavaScript.
@@ -922,13 +944,49 @@ entity-linking preflight and a live link audit.
   rule. Use a valid Custom HTML block (`wp:html`) and avoid blank lines inside
   inline CSS. Compare the served markup and applied browser styles after the
   save; a correct editor source does not prove the browser received valid CSS.
-- **Exemption:** a page whose whole purpose is a single block of prose — a
-  disclosure, a policy, a legal notice — is exempt. Tag it, do not silently skip
-  it.
+- **Minimum visible proof:** on both required viewports, the loaded visual must
+  expose at least 220px of width and 160px of height, at least 40% of its own area,
+  and 8% of the viewport area. At least 90% of sampled visible points must be
+  unobscured by navigation, sticky bars or overlays. These are minimum acceptance
+  limits, not a design target. Show the face, action or diagram's useful labels;
+  geometric success cannot approve an irrelevant crop.
+- **The content earns the space.** A logo, social icon, navigation, cookie banner,
+  decorative gradient, generic stock photo or unrelated portrait does not count.
+  Use an authentic relevant moment, playable captioned source video with a loaded
+  poster, or a specific diagram that teaches the page's point. Open the source
+  and the rendered screenshot. A coappearance alone never proves endorsement.
+- **Every page means every page.** The former prose/policy exemption is removed
+  by Dennis's 2026-09-05 instruction. A short policy can use a concise diagram
+  explaining its actual process. Do not invent a person or pad a page with stock.
+- **Keep media invited and silent during QA.** First paint must not autoplay.
+  YouTube uses youtube-nocookie.com, rel=0, cc_load_policy=1 and a page-language
+  cc_lang_pref. A click-to-play poster counts only when the real relevant image
+  loads and its destination/player is verified. An iframe rectangle, thumbnail
+  URL or screenshot of a broken player is not playable video proof. Follow
+  youtube-captions-on-by-default; never invent missing caption tracks. During
+  testing mute and set volume zero before any playback; use silent metadata and
+  posters if playback cannot be safely controlled.
+- **Use the browser gate in every builder and publisher.** After generating the
+  actual source, run scripts/rendered_visual_check.mjs on its preview and again
+  on the ordinary anonymous live URL after publication, with fresh screenshot
+  receipts for both viewports and JavaScript-disabled first paint. No selector,
+  geometry failure, missing image or measurement error is a pass. The checker
+  reads the numeric limits from this standard's rendered_gate header. Store the
+  selected visual, source/permission receipt, relevant lesson, crop/label review,
+  URL, timestamp and screenshot hashes in the existing proof inventory. Review
+  those actual screenshots before marking a page compliant; the script reports
+  geometry only and never invents a semantic or playback verdict.
+- **Reconcile hero style with this rule.** A composed full-bleed hero is welcome
+  where it works. If the usable evidence is a selfie or small authentic moment,
+  pair a restrained type layout with that image at an honest size above the fold,
+  or use a useful diagram. The older typographic-only fallback does not authorize
+  a first screen without a meaningful visual.
 
-The sweep only catches the blatant case: a headline with no visual anywhere near
-it. Whether the visual actually clears the fold is a judgement call, verified by
-opening the published page — see `verify-by-opening-the-live-artifact`.
+The HTML sweep remains an early source-order warning; it cannot measure the
+fold. The rendered browser gate plus source-backed editorial review is the
+publication acceptance gate. A merged standard, a regenerated skill, an installed
+pack and a live-page pass are separate receipts. No whole-fleet success claim is
+valid while unsampled URLs, Not Active stops or per-site holds are omitted.
 <!-- shared-rule:visuals-above-the-fold:end -->
 
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:start -->
@@ -1105,6 +1163,40 @@ doing all the persuasive work. Phrase bans would also flag quotations, legal dis
 and accurate criticism. Enforce this standard through the source-backed editorial
 preflight, the canonical proof inventory, and a rendered-page review using the two tests
 above.
+
+
+### Money pages and the site's Money Tree
+
+- Each eligible site keeps a current public-safe Money Tree: the site's actual
+  home/domain is the trunk, its buying/service destinations are branches, and
+  relevant published stories, videos and other supporting pages are leaves.
+  Link each real node to its canonical page. Do not manufacture branch traffic,
+  customers or results. Use the existing agent-runtime money-tree renderer,
+  source truth tables and cadence; do not create a competing client roster or clock.
+- Put that diagram where a visitor can find it, and use its relevant branch or
+  useful full tree on the money page when it explains the offer. Every money
+  page still has meaningful above-fold proof; the full tree need not replace a
+  better authentic opening moment. Link the supporting leaf to the relevant
+  buying branch and to the practical how-to where it helps the reader.
+- Spread useful proof through the decision: one relevant visual at the opening,
+  attributable example or demonstration beside each material outcome claim, and
+  another relevant proof moment near the primary buying action. A purchase page
+  cannot pass with one generic testimonial block at the bottom. If the evidence
+  does not support a claim, narrow or remove the claim; never invent a result or
+  count duplicated cards as additional proof.
+- Public trees show only public structure and content evidence. Sessions, leads,
+  booked jobs, conversion rates, revenue, client finances and private priorities
+  stay in the authenticated client version, including in alt text, hidden HTML,
+  JSON-LD, images and metadata. NOT_CONNECTED is not zero. Follow the existing
+  agent-runtime money-tree public/private boundary and canonical Money Tree
+  method at https://blitzmetrics.com/money-tree/.
+- A relationship refresh adds a newly verified moment, useful lesson or relevant
+  next step. It does not simply rotate names or strengthen the relationship word.
+  Review priority connections and money pages weekly and all other eligible
+  sites/pages monthly through existing owners and reconciled schedules. Record
+  the actual next due date; unknown ownership or publication rails remain HOLD.
+  Keep audit categories and review notes internal, with one compact public source
+  line when useful. Never make the reader defend the author's legitimacy.
 <!-- shared-rule:show-the-moment-not-the-resume:end -->
 
 <!-- shared-rule:icon-only-social-controls-stay-tappable:start -->

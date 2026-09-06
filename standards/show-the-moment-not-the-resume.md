@@ -51,3 +51,37 @@ doing all the persuasive work. Phrase bans would also flag quotations, legal dis
 and accurate criticism. Enforce this standard through the source-backed editorial
 preflight, the canonical proof inventory, and a rendered-page review using the two tests
 above.
+
+
+### Money pages and the site's Money Tree
+
+- Each eligible site keeps a current public-safe Money Tree: the site's actual
+  home/domain is the trunk, its buying/service destinations are branches, and
+  relevant published stories, videos and other supporting pages are leaves.
+  Link each real node to its canonical page. Do not manufacture branch traffic,
+  customers or results. Use the existing agent-runtime money-tree renderer,
+  source truth tables and cadence; do not create a competing client roster or clock.
+- Put that diagram where a visitor can find it, and use its relevant branch or
+  useful full tree on the money page when it explains the offer. Every money
+  page still has meaningful above-fold proof; the full tree need not replace a
+  better authentic opening moment. Link the supporting leaf to the relevant
+  buying branch and to the practical how-to where it helps the reader.
+- Spread useful proof through the decision: one relevant visual at the opening,
+  attributable example or demonstration beside each material outcome claim, and
+  another relevant proof moment near the primary buying action. A purchase page
+  cannot pass with one generic testimonial block at the bottom. If the evidence
+  does not support a claim, narrow or remove the claim; never invent a result or
+  count duplicated cards as additional proof.
+- Public trees show only public structure and content evidence. Sessions, leads,
+  booked jobs, conversion rates, revenue, client finances and private priorities
+  stay in the authenticated client version, including in alt text, hidden HTML,
+  JSON-LD, images and metadata. NOT_CONNECTED is not zero. Follow the existing
+  agent-runtime money-tree public/private boundary and canonical Money Tree
+  method at https://blitzmetrics.com/money-tree/.
+- A relationship refresh adds a newly verified moment, useful lesson or relevant
+  next step. It does not simply rotate names or strengthen the relationship word.
+  Review priority connections and money pages weekly and all other eligible
+  sites/pages monthly through existing owners and reconciled schedules. Record
+  the actual next due date; unknown ownership or publication rails remain HOLD.
+  Keep audit categories and review notes internal, with one compact public source
+  line when useful. Never make the reader defend the author's legitimacy.
