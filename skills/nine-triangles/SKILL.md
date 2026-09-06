@@ -653,9 +653,10 @@ entity-linking preflight and a live link audit.
   rule. Use a valid Custom HTML block (`wp:html`) and avoid blank lines inside
   inline CSS. Compare the served markup and applied browser styles after the
   save; a correct editor source does not prove the browser received valid CSS.
-- **Exemption:** a page whose whole purpose is a single block of prose — a
-  disclosure, a policy, a legal notice — is exempt. Tag it, do not silently skip
-  it.
+- **Page type does not create an exemption.** On a brief disclosure, policy,
+  or legal-notice page, use a relevant compact diagram or image that helps explain
+  the subject while keeping the required text easy to read. Never add filler
+  imagery merely to satisfy a markup check.
 
 The sweep only catches the blatant case: a headline with no visual anywhere near
 it. Whether the visual actually clears the fold is a judgement call, verified by
