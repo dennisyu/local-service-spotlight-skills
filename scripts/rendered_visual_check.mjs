@@ -116,7 +116,14 @@ export async function measureVisual({ selector, policy }) {
   } else {
     const background = getComputedStyle(el).backgroundImage;
     const match = /^url\(["']?(.*?)["']?\)$/.exec(background);
-    if (match) { kind = 'css-background'; src = match[1]; loaded = await imageReady(src); }
+    if (match) {
+      kind = 'css-background'; src = match[1]; loaded = await imageReady(src);
+      // Only cover guarantees that the single image fills this element's box.
+      // contain/auto/explicit sizes can leave vast blank areas; until their
+      // painted geometry is measured, never promote the container box to PASS.
+      if (getComputedStyle(el).backgroundSize.trim() !== 'cover')
+        reasons.push('CSS background painted bounds are unmeasured for non-cover sizing; explicit rendered review required');
+    }
     else reasons.push('select the actual image, diagram, video poster or single photographic background');
   }
   // Hit testing alone ignores pointer-events:none and returns a parent for its

@@ -124,6 +124,17 @@ try {
       assert.equal(result.imagePaint.width,180); assert.equal(result.geometry,'FAIL');
     }
   });
+  await test('non-cover CSS backgrounds cannot use empty container area as measured photo proof', async () => {
+    const narrow='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="1600"><rect width="160" height="1600" fill="navy"/><text x="10" y="70" fill="white">Real source</text></svg>');
+    for (const size of ['contain','auto','50px 500px','auto 100%']) {
+      const photo=`<section id="proof" aria-label="Documented source moment" style="width:820px;height:500px;background-image:url('${narrow}');background-size:${size};background-repeat:no-repeat"></section>`;
+      const result=await check(photo,{width:1280,height:800});
+      assert.equal(result.loaded,true); assert.equal(result.geometry,'FAIL');
+      assert.ok(result.reasons.some(reason=>reason.includes('painted bounds are unmeasured')));
+    }
+    const cover=`<section id="proof" aria-label="Documented source moment" style="width:820px;height:500px;background-image:url('${image}');background-size:cover;background-repeat:no-repeat"></section>`;
+    assert.equal((await check(cover,{width:1280,height:800})).geometry,'PASS');
+  });
   await test('publisher adapter records four screenshots and never upgrades geometry to compliance', async () => {
     const html = `<style>*{box-sizing:border-box}body{margin:0}main{width:min(100%,800px);margin:auto}</style><main><h1>Roof inspection</h1>${img}</main>`;
     const server = http.createServer((req,res) => {res.writeHead(200,{'Content-Type':'text/html'});res.end(html);});

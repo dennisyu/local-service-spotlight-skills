@@ -812,6 +812,9 @@ entity-linking preflight and a live link audit.
   images, use intrinsic aspect ratio, content-box dimensions and object-position
   to measure the photo pixels that are actually displayed. Empty padding and
   letterboxing cannot meet the visible-area or minimum-width requirement.
+  CSS backgrounds currently require background-size:cover for an automated
+  geometry pass. Contain, auto and explicit sizes stay unmeasured and fail that
+  gate until their painted bounds receive a dedicated measurement/review.
 - **Keep the title readable in that same first screen.** At least one natural
   H1 (or level-one accessible heading) text line must be visible at 18px or
   larger, with at least 90% of its text-line area visible and unobscured. A long
