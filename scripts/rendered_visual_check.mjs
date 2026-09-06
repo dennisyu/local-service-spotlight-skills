@@ -50,13 +50,6 @@ export async function measureVisual({ selector, policy }) {
   if (width < policy.min_visible_width || height < policy.min_visible_height) reasons.push('visible width/height below the minimum');
   if (fraction < policy.min_visible_fraction) reasons.push('too little of the visual is visible');
   if (viewportFraction < policy.min_viewport_fraction) reasons.push('visual occupies too little of the viewport');
-  let unobscured = 0;
-  for (let row = 0; row < 10; row++) for (let col = 0; col < 10; col++) {
-    const top = document.elementFromPoint(clip.left + width * (col + 0.5) / 10, clip.top + height * (row + 0.5) / 10);
-    if (top && (top === el || el.contains(top))) unobscured++;
-  }
-  const unoccludedFraction = unobscured / 100;
-  if (unoccludedFraction < policy.min_unoccluded_fraction) reasons.push('visual is covered or clipped by other content');
   const tag = el.tagName.toLowerCase();
   let loaded = false, src = '', kind = tag;
   const imageReady = async (src) => {
@@ -83,6 +76,102 @@ export async function measureVisual({ selector, policy }) {
     if (match) { kind = 'css-background'; src = match[1]; loaded = await imageReady(src); }
     else reasons.push('select the actual image, diagram, video poster or single photographic background');
   }
+  // Hit testing alone ignores pointer-events:none and returns a parent for its
+  // pseudo-elements. Inspect painted descendant layers for photographic backgrounds.
+  const alpha = color => {
+    if (color === 'transparent') return 0;
+    const slash = color.match(/\/\s*([\d.]+)(%)?\s*\)/);
+    if (slash) return Number(slash[1]) / (slash[2] ? 100 : 1);
+    const rgba = color.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
+    return rgba ? Number(rgba[1]) : 1;
+  };
+  const paintAlpha = css => css.backgroundImage !== 'none' ? 1 : alpha(css.backgroundColor);
+  const pointIn = (box, x, y) => x >= box.left && x < box.right && y >= box.top && y < box.bottom;
+  const effectiveOpacity = (node, boundary) => {
+    let opacity = 1;
+    for (; node && node !== boundary; node = node.parentElement) {
+      const css = getComputedStyle(node);
+      if (css.display === 'none' || css.visibility !== 'visible') return 0;
+      opacity *= Number(css.opacity);
+    }
+    return opacity;
+  };
+  const paintedLayers = boundary => {
+    const layers = [];
+    for (const node of [boundary, ...boundary.querySelectorAll('*')]) {
+      const css = getComputedStyle(node), opacity = effectiveOpacity(node, boundary);
+      if (opacity === 0) continue;
+      if (node !== boundary && !(Number(css.zIndex) < 0)) {
+        const replaced = /^(IMG|VIDEO|CANVAS|IFRAME|SVG)$/.test(node.tagName);
+        const amount = opacity * (replaced ? 1 : paintAlpha(css));
+        if (amount) layers.push({ box: node.getBoundingClientRect(), alpha: amount });
+      }
+      for (const pseudo of ['::before', '::after']) {
+        const ps = getComputedStyle(node, pseudo);
+        if (ps.content === 'none' || ps.content === 'normal' || ps.display === 'none' || ps.visibility !== 'visible' || Number(ps.zIndex) < 0) continue;
+        const amount = opacity * Number(ps.opacity) * paintAlpha(ps);
+        if (!amount) continue;
+        // Absolute/fixed overlays have resolved dimensions; do not invent a box
+        // for inline generated text. Unknown clipping/crops still need image review.
+        if (!['absolute', 'fixed'].includes(ps.position)) continue;
+        const base = ps.position === 'fixed' ? {left:0,top:0,width:innerWidth,height:innerHeight} : node.getBoundingClientRect();
+        const w = Number.parseFloat(ps.width), h = Number.parseFloat(ps.height);
+        const left = ps.left !== 'auto' ? base.left + Number.parseFloat(ps.left) : base.left + base.width - Number.parseFloat(ps.right) - w;
+        const top = ps.top !== 'auto' ? base.top + Number.parseFloat(ps.top) : base.top + base.height - Number.parseFloat(ps.bottom) - h;
+        if ([w,h,left,top].every(Number.isFinite)) layers.push({ box: {left,top,right:left+w,bottom:top+h}, alpha: amount });
+      }
+    }
+    return layers;
+  };
+  const backgroundLayers = kind === 'css-background' ? paintedLayers(el) : [];
+  let unobscured = 0;
+  for (let row = 0; row < 10; row++) for (let col = 0; col < 10; col++) {
+    const x = clip.left + width * (col + 0.5) / 10, y = clip.top + height * (row + 0.5) / 10;
+    const top = document.elementFromPoint(x,y);
+    let transmitted = 1;
+    for (const layer of backgroundLayers) if (pointIn(layer.box,x,y)) transmitted *= 1 - layer.alpha;
+    if (top && (top === el || el.contains(top)) && transmitted > 0.1) unobscured++;
+  }
+  const unoccludedFraction = unobscured / 100;
+  if (unoccludedFraction < policy.min_unoccluded_fraction) reasons.push('visual is covered or clipped by other content');
+
+  // Require one readable title line beside the first-screen visual. Measure text
+  // ranges, not the full H1 box: a natural multiline heading can clear this gate.
+  const headings = [];
+  for (const heading of document.querySelectorAll('h1,[role="heading"][aria-level="1"]')) {
+    if (heading.closest('nav,footer,[role="banner"],[role="navigation"]')) continue;
+    const record = { text: heading.textContent.trim(), readableLine: false, lines: [] };
+    if (!record.text || effectiveOpacity(heading, null) < 0.1) { headings.push(record); continue; }
+    const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+    for (let textNode = walker.nextNode(); textNode; textNode = walker.nextNode()) {
+      if (!textNode.textContent.trim()) continue;
+      const textParent = textNode.parentElement;
+      const textCss = getComputedStyle(textParent);
+      if (effectiveOpacity(textParent, null) < 0.1 || alpha(textCss.color) < 0.1) continue;
+      const fontSize = Number.parseFloat(textCss.fontSize);
+      const range = document.createRange(); range.selectNodeContents(textNode);
+      for (const line of range.getClientRects()) {
+        const box = {left:Math.max(0,line.left),top:Math.max(0,line.top),right:Math.min(innerWidth,line.right),bottom:Math.min(innerHeight,line.bottom)};
+        for (let ancestor = textParent; ancestor; ancestor = ancestor.parentElement) {
+          const css = getComputedStyle(ancestor), rect = ancestor.getBoundingClientRect();
+          if (/(hidden|clip|scroll|auto)/.test(css.overflowX)) {box.left=Math.max(box.left,rect.left);box.right=Math.min(box.right,rect.right);}
+          if (/(hidden|clip|scroll|auto)/.test(css.overflowY)) {box.top=Math.max(box.top,rect.top);box.bottom=Math.min(box.bottom,rect.bottom);}
+        }
+        const visibleFraction = Math.max(0,box.right-box.left)*Math.max(0,box.bottom-box.top)/Math.max(1,line.width*line.height);
+        let clear = 0;
+        for (let point=0;point<10;point++) {
+          const top=document.elementFromPoint(box.left+(box.right-box.left)*(point+0.5)/10,(box.top+box.bottom)/2);
+          if (top===textParent || (top && heading.contains(top) &&
+            (effectiveOpacity(top,heading)<0.1 || (!top.textContent.trim() && paintAlpha(getComputedStyle(top))<0.1)))) clear++;
+        }
+        const readable = fontSize >= policy.min_heading_font_size && visibleFraction >= policy.min_heading_line_visible_fraction && clear/10 >= policy.min_unoccluded_fraction;
+        record.lines.push({x:line.x,y:line.y,width:line.width,height:line.height,fontSize,visibleFraction,unoccludedFraction:clear/10,readable});
+        if (readable) record.readableLine = true;
+      }
+    }
+    headings.push(record);
+  }
+  if (!headings.some(heading => heading.readableLine)) reasons.push('no readable page-title line is visible above the fold');
   const label = el.getAttribute('alt') || el.getAttribute('aria-label') ||
     (el.getAttribute('aria-labelledby') || '').split(/\s+/).map(id => document.getElementById(id)?.textContent || '').join(' ').trim() ||
     el.querySelector('title')?.textContent || el.closest('figure')?.querySelector('figcaption')?.textContent || '';
@@ -103,7 +192,7 @@ export async function measureVisual({ selector, policy }) {
   if (document.querySelector('video[autoplay],audio[autoplay]')) mediaViolations.push('native media autoplays before a click');
   reasons.push(...mediaViolations);
   return { geometry: reasons.length ? 'FAIL' : 'PASS', semanticReview: 'REQUIRED', reasons: [...new Set(reasons)],
-    selector, kind, src, label: label.trim(), loaded, bbox, visible: { width, height, fraction, viewportFraction, unoccludedFraction }, overflow,
+    selector, kind, src, label: label.trim(), loaded, bbox, visible: { width, height, fraction, viewportFraction, unoccludedFraction }, headings, overflow,
     viewport: { width: innerWidth, height: innerHeight }, finalUrl: location.href };
 }
 

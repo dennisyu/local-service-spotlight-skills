@@ -12,10 +12,10 @@ const policy = await loadPolicy();
 const browser = await chromium.launch({ headless: true, args: ['--mute-audio', '--autoplay-policy=user-gesture-required'], ...(process.env.CHROMIUM_EXECUTABLE ? { executablePath: process.env.CHROMIUM_EXECUTABLE } : {}) });
 const image = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="800" height="500" fill="navy"/><text x="50" y="150" fill="white" font-size="42">Actual roof inspection</text></svg>');
 const img = `<img id="proof" src="${image}" alt="A documented roof inspection" style="display:block;width:100%;height:250px;object-fit:cover">`;
-async function check(body, { width=390, height=844, js=true }={}) {
+async function check(body, { width=390, height=844, js=true, heading='<h1>How the inspection works</h1>' }={}) {
   const page = await browser.newPage({ viewport:{width,height}, javaScriptEnabled:js });
   await page.route('**/*', route => /^https?:/.test(route.request().url()) ? route.abort() : route.continue());
-  await page.setContent(`<style>*{box-sizing:border-box}body{margin:0}main{width:min(100%,800px);margin:auto}</style><main><h1>How the inspection works</h1>${body}</main>`);
+  await page.setContent(`<style>*{box-sizing:border-box}body{margin:0}main{width:min(100%,800px);margin:auto}</style><main>${heading}${body}</main>`);
   await page.locator('#proof').first().evaluate(async el => { if(el.tagName==='IMG') try { await el.decode(); } catch {} });
   try { return await page.evaluate(measureVisual, {selector:'#proof',policy}); } finally { await page.close(); }
 }
@@ -65,6 +65,45 @@ try {
     const photo = `<section id="proof" aria-label="Documented roof inspection" style="height:250px;background-image:url('${image}');background-size:cover"></section>`;
     assert.equal((await check(photo)).geometry,'PASS');
     assert.equal((await check('<section id="proof" aria-label="Decorative gradient" style="height:250px;background:linear-gradient(red,blue)"></section>')).geometry,'FAIL');
+  });
+  await test('opaque descendant hides a loaded CSS photo even with pointer events disabled', async () => {
+    for (const pointer of ['auto','none']) {
+      const photo = `<section id="proof" aria-label="Documented inspection" style="position:relative;height:300px;background-image:url('${image}');background-size:cover"><div style="position:absolute;inset:0;background:white;z-index:1;pointer-events:${pointer}"></div></section>`;
+      const result = await check(photo);
+      assert.equal(result.loaded,true); assert.equal(result.geometry,'FAIL'); assert.equal(result.visible.unoccludedFraction,0);
+    }
+  });
+  await test('opaque pseudo-element covers the photo although hit testing returns its parent', async () => {
+    for (const pseudo of ['before','after']) {
+      const photo = `<style>#proof::${pseudo}{content:"";position:absolute;inset:0;background:white;z-index:1;pointer-events:none}</style><section id="proof" aria-label="Documented inspection" style="position:relative;height:300px;background-image:url('${image}');background-size:cover"></section>`;
+      const result = await check(photo);
+      assert.equal(result.geometry,'FAIL'); assert.equal(result.visible.unoccludedFraction,0);
+    }
+  });
+  await test('transparent text, invisible overlay and a light tint preserve the actual photo', async () => {
+    for (const overlay of ['<div style="position:absolute;inset:0;background:white;opacity:0"></div>','<div style="position:absolute;inset:0;background:rgba(0,0,0,.2)"><span style="color:white">The inspection moment</span></div>']) {
+      const photo = `<section id="proof" aria-label="Documented inspection" style="position:relative;height:300px;background-image:url('${image}');background-size:cover">${overlay}</section>`;
+      assert.equal((await check(photo)).geometry,'PASS');
+    }
+  });
+  await test('large visible photo does not pass when the title is missing, hidden or below the fold', async () => {
+    for (const heading of ['', '<h1 style="display:none">Roof inspection</h1>', '<h1 style="position:absolute;top:900px">Roof inspection</h1>', '<h1 style="font-size:8px">Roof inspection</h1>']) {
+      const result = await check(img,{heading});
+      assert.equal(result.geometry,'FAIL'); assert.ok(result.reasons.some(reason=>reason.includes('page-title')));
+    }
+  });
+  await test('natural multiline title passes with one complete visible text line', async () => {
+    const heading = '<h1 style="font-size:32px;line-height:36px;position:absolute;top:788px;margin:0;width:390px">Inspecting the roof<br>with the homeowner</h1>';
+    const result=await check(img,{heading});
+    assert.equal(result.geometry,'PASS',JSON.stringify(result));
+    assert.equal(result.headings[0].readableLine,true);
+    assert.ok(result.headings[0].lines.some(line=>!line.readable));
+  });
+  await test('title line hidden by an unrelated panel or clipped to a thin strip fails', async () => {
+    for (const heading of ['<h1 style="position:relative">Roof inspection<div style="position:absolute;inset:0;background:white"></div></h1>', '<div style="height:8px;overflow:hidden"><h1>Roof inspection</h1></div>']) {
+      const result=await check(img,{heading}); assert.equal(result.geometry,'FAIL');
+      assert.ok(result.reasons.some(reason=>reason.includes('page-title')));
+    }
   });
   await test('publisher adapter records four screenshots and never upgrades geometry to compliance', async () => {
     const html = `<style>*{box-sizing:border-box}body{margin:0}main{width:min(100%,800px);margin:auto}</style><main><h1>Roof inspection</h1>${img}</main>`;

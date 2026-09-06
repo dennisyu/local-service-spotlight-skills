@@ -44,11 +44,12 @@
     "min_visible_width": 220,
     "min_visible_fraction": 0.4,
     "min_viewport_fraction": 0.08,
-    "min_unoccluded_fraction": 0.9
+    "min_unoccluded_fraction": 0.9,
+    "min_heading_font_size": 18,
+    "min_heading_line_visible_fraction": 0.9
   }
 }
 ---
-
 
 ## Visual and interactive content sits above the fold
 
@@ -96,6 +97,15 @@
   unobscured by navigation, sticky bars or overlays. These are minimum acceptance
   limits, not a design target. Show the face, action or diagram's useful labels;
   geometric success cannot approve an irrelevant crop.
+- **Keep the title readable in that same first screen.** At least one natural
+  H1 (or level-one accessible heading) text line must be visible at 18px or
+  larger, with at least 90% of its text-line area visible and unobscured. A long
+  title may wrap; the visual may sit beside, above or below it. Do not fill the
+  viewport with a photo that hides the entire page title.
+- **A background must actually show through.** Loading the photo URL is not
+  enough. Opaque descendant panels and before/after overlays count as covers,
+  including pointer-events:none. Transparent text or a light tint can coexist
+  with the photo, but the useful visible crop still needs screenshot review.
 - **The content earns the space.** A logo, social icon, navigation, cookie banner,
   decorative gradient, generic stock photo or unrelated portrait does not count.
   Use an authentic relevant moment, playable captioned source video with a loaded

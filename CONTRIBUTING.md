@@ -139,3 +139,9 @@ and public Money Tree verdict. Opaque iframe boxes and consent-blocked players
 require a verified visible poster or explicit screenshot/player review; a CSS
 background must be a real relevant photo. All media testing remains muted with
 volume zero, including any separate playback test.
+
+The same first-screen pass requires one readable H1/level-one heading line
+(18px minimum, 90% visible). CSS background measurements account for opaque
+descendant and before/after layers, including overlays that ignore pointer
+events. Transparent text and light tints may coexist with the photo; retain
+the actual screenshot review for crop, legibility and complicated compositing.

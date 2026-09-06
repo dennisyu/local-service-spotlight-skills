@@ -420,7 +420,8 @@ def parse_standard(path: Path) -> Standard:
     rendered_gate = header.get("rendered_gate")
     if rendered_gate is not None:
         required = {"version", "viewports", "min_visible_height", "min_visible_width",
-                    "min_visible_fraction", "min_viewport_fraction", "min_unoccluded_fraction"}
+                    "min_visible_fraction", "min_viewport_fraction", "min_unoccluded_fraction",
+                    "min_heading_font_size", "min_heading_line_visible_fraction"}
         if not isinstance(rendered_gate, dict) or set(rendered_gate) != required:
             raise StandardError(f"{where}: malformed rendered_gate fields")
         if rendered_gate["version"] != 1 or rendered_gate["viewports"] != [
