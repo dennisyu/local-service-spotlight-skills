@@ -1217,3 +1217,41 @@ and accurate criticism. Enforce this standard through the source-backed editoria
 preflight, the canonical proof inventory, and a rendered-page review using the two tests
 above.
 <!-- shared-rule:show-the-moment-not-the-resume:end -->
+
+<!-- shared-rule:icon-only-social-controls-stay-tappable:start -->
+## Icon-only social controls stay tappable and separate
+
+- **Make every icon-only social link a real control, not a glyph-sized target.** Its
+  computed hit area is at least 44 by 44 CSS pixels, and adjacent hit areas have a
+  deliberate gap of at least 8 CSS pixels. The visible icon may be smaller inside that
+  area. Do not use transparent overlap or negative margins to simulate spacing.
+- **Give every control an accessible name.** Prefer a concise name on the link such as
+  `aria-label="LinkedIn"`; visible or visually hidden text and a valid
+  `aria-labelledby` relationship also work. Inspect the accessibility tree and confirm
+  the computed name. A platform-shaped glyph, tooltip on hover, URL, or empty label does
+  not name the control.
+- **Fix the owning template first.** Trace the rendered control to the root header,
+  footer, reusable block, or component and correct it there. Find and verify every
+  responsive copy; builders often keep separate desktop, tablet, and mobile widgets,
+  and a page-level override can leave another copy broken. Rebuild generated CSS and
+  refresh static or caching layers through their supported path, then compare stored
+  source with what an anonymous visitor receives.
+- **Measure the rendered page at 390px wide and at desktop width.** Record each control's
+  computed width, height, accessible name, and gap to its neighbour. Confirm controls do
+  not overlap or clip and `document.documentElement.scrollWidth` is no greater than the
+  viewport width. Check keyboard focus on desktop and touch layout on mobile. A source
+  value, editor preview, or successful save is not rendered QA.
+- **Do not copy a selector or patch blindly across sites.** Before a fleet change, match
+  the exact site status and publishing authority, CMS/theme, builder or header renderer,
+  owning template/component identifier, and the defective rendered signature. Back up
+  each target, record before/after hashes and a rollback action, publish through that
+  site's supported rail, and read it back. A mismatched fingerprint, unknown status,
+  explicit hold, abnormal document, or missing rollback stays `HOLD`; it is not evidence
+  that the rest of the fleet is fixed.
+
+The fleet check deliberately catches only the unambiguous empty-`<i>` form of an unnamed
+icon link. Static HTML cannot honestly prove computed hit-area size, separation,
+responsive visibility, overflow, or every valid accessible-name relationship. Those
+remain browser measurements on the rendered page; broad class-name or inline-style
+regexes would create fragile false positives across different themes and builders.
+<!-- shared-rule:icon-only-social-controls-stay-tappable:end -->

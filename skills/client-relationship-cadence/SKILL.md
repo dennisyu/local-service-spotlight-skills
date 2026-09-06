@@ -951,6 +951,7 @@ These are not repeated here because they govern published pages rather than agen
 - **A button must contrast with what it sits on** (`buttons-must-contrast-with-their-background`)
 - **Every article has pictures** (`every-article-has-pictures`)
 - **Every public page shows real people or real work** (`every-public-page-has-real-imagery`)
+- **Icon-only social controls stay tappable and separate** (`icon-only-social-controls-stay-tappable`)
 - **Personal-brand heroes are immersive, not boxed** (`immersive-hero-standard`)
 - **Every link and every entity claim resolves** (`links-must-resolve`)
 - **Never ship a black button** (`no-black-buttons`)
