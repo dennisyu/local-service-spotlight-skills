@@ -105,6 +105,25 @@ try {
       assert.ok(result.reasons.some(reason=>reason.includes('page-title')));
     }
   });
+  await test('contain geometry excludes letterboxing and respects object-position', async () => {
+    const source = (w,h) => 'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="navy"/><text x="10" y="70" fill="white">Real source</text></svg>`);
+    const photo=(w,h,position='50% 50%')=>`<img id="proof" alt="Documented real portrait" src="${source(w,h)}" style="display:block;width:820px;height:430px;object-fit:contain;object-position:${position}">`;
+    const normal=await check(photo(644,860),{width:1280,height:800});
+    assert.equal(normal.geometry,'PASS',JSON.stringify(normal)); assert.equal(normal.bbox.width,820);
+    assert.equal(normal.imagePaint.width,322); assert.equal(normal.visible.width,322);
+    const narrow=await check(photo(200,860),{width:1280,height:800});
+    assert.equal(narrow.loaded,true); assert.equal(narrow.imagePaint.width,100);
+    assert.equal(narrow.visible.width,100); assert.equal(narrow.geometry,'FAIL');
+    const right=await check(photo(644,860,'100% 50%'),{width:1280,height:800});
+    assert.equal(right.geometry,'PASS'); assert.equal(right.imagePaint.x,right.bbox.x+498);
+  });
+  await test('scale-down and none cannot borrow their empty CSS image box', async () => {
+    const small='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="300"><rect width="180" height="300" fill="navy"/><text x="10" y="70">Real source</text></svg>');
+    for (const fit of ['none','scale-down']) {
+      const result=await check(`<img id="proof" src="${small}" alt="Actual portrait" style="width:820px;height:430px;object-fit:${fit}">`,{width:1280,height:800});
+      assert.equal(result.imagePaint.width,180); assert.equal(result.geometry,'FAIL');
+    }
+  });
   await test('publisher adapter records four screenshots and never upgrades geometry to compliance', async () => {
     const html = `<style>*{box-sizing:border-box}body{margin:0}main{width:min(100%,800px);margin:auto}</style><main><h1>Roof inspection</h1>${img}</main>`;
     const server = http.createServer((req,res) => {res.writeHead(200,{'Content-Type':'text/html'});res.end(html);});

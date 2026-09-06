@@ -1152,6 +1152,10 @@ entity-linking preflight and a live link audit.
   unobscured by navigation, sticky bars or overlays. These are minimum acceptance
   limits, not a design target. Show the face, action or diagram's useful labels;
   geometric success cannot approve an irrelevant crop.
+- **Measure painted content, not letterboxing.** For contain/scale-down/none
+  images, use intrinsic aspect ratio, content-box dimensions and object-position
+  to measure the photo pixels that are actually displayed. Empty padding and
+  letterboxing cannot meet the visible-area or minimum-width requirement.
 - **Keep the title readable in that same first screen.** At least one natural
   H1 (or level-one accessible heading) text line must be visible at 18px or
   larger, with at least 90% of its text-line area visible and unobscured. A long

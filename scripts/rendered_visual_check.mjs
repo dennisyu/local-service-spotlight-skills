@@ -26,8 +26,51 @@ export async function measureVisual({ selector, policy }) {
   const el = nodes[0];
   if (scrollX || scrollY) return fail('measurement requires the unscrolled first visit');
   const reasons = [];
-  const rect = el.getBoundingClientRect();
-  const bbox = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  const elementRect = el.getBoundingClientRect();
+  const bbox = { x: elementRect.x, y: elementRect.y, width: elementRect.width, height: elementRect.height };
+  let rect = elementRect;
+  let imagePaint = null;
+  if (el.tagName === 'IMG' && el.naturalWidth && el.naturalHeight) {
+    const css = getComputedStyle(el);
+    const px = name => Number.parseFloat(css[name]) || 0;
+    const scaleX = elementRect.width / Math.max(1, el.offsetWidth), scaleY = elementRect.height / Math.max(1, el.offsetHeight);
+    const insetLeft = (px('borderLeftWidth') + px('paddingLeft')) * scaleX;
+    const insetTop = (px('borderTopWidth') + px('paddingTop')) * scaleY;
+    const contentWidth = Math.max(0, elementRect.width - insetLeft - (px('borderRightWidth') + px('paddingRight')) * scaleX);
+    const contentHeight = Math.max(0, elementRect.height - insetTop - (px('borderBottomWidth') + px('paddingBottom')) * scaleY);
+    const content = {left:elementRect.left+insetLeft,top:elementRect.top+insetTop,width:contentWidth,height:contentHeight};
+    const intrinsicWidth = el.naturalWidth * scaleX, intrinsicHeight = el.naturalHeight * scaleY;
+    let width = contentWidth, height = contentHeight;
+    if (['contain','cover','scale-down','none'].includes(css.objectFit)) {
+      let scale = Math.min(contentWidth/intrinsicWidth,contentHeight/intrinsicHeight);
+      if (css.objectFit === 'cover') scale = Math.max(contentWidth/intrinsicWidth,contentHeight/intrinsicHeight);
+      if (css.objectFit === 'none') scale = 1;
+      if (css.objectFit === 'scale-down') scale = Math.min(1,scale);
+      width = intrinsicWidth * scale; height = intrinsicHeight * scale;
+    }
+    const positions = css.objectPosition.match(/calc\([^)]*\)|[^\s]+/g) || [];
+    const position = (value, freeSpace, unitScale) => {
+      const simple = /^(-?[\d.]+)(%|px)$/.exec(value || '');
+      if (simple) return Number(simple[1]) * (simple[2] === '%' ? freeSpace/100 : unitScale);
+      const calculated = /^calc\(\s*(-?[\d.]+)%\s*([+-])\s*([\d.]+)px\s*\)$/.exec(value || '');
+      if (calculated) return Number(calculated[1])*freeSpace/100 + Number(calculated[3])*unitScale*(calculated[2] === '+' ? 1 : -1);
+      if (value === 'center') return freeSpace/2;
+      if (['left','top'].includes(value)) return 0;
+      if (['right','bottom'].includes(value)) return freeSpace;
+      return null;
+    };
+    const x = position(positions[0],contentWidth-width,scaleX), y = position(positions[1],contentHeight-height,scaleY);
+    if (x === null || y === null) reasons.push('unsupported image object-position; painted bounds need explicit review');
+    else {
+      // Replaced content is clipped to its content box, including object-fit:none
+      // or object-position values that intentionally push some pixels out of it.
+      const left=Math.max(content.left,content.left+x),top=Math.max(content.top,content.top+y);
+      const right=Math.min(content.left+contentWidth,content.left+x+width),bottom=Math.min(content.top+contentHeight,content.top+y+height);
+      rect={left,top,right,bottom,x:left,y:top,width:Math.max(0,right-left),height:Math.max(0,bottom-top)};
+    }
+    imagePaint = {objectFit:css.objectFit,objectPosition:css.objectPosition,naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight,
+      x:rect.x,y:rect.y,width:rect.width,height:rect.height};
+  }
   if (el.closest('nav,footer,[role="banner"],[role="navigation"],[role="dialog"],[aria-modal="true"]'))
     reasons.push('navigation, footer, banner or overlay does not count as page proof');
   const identity = `${el.id} ${el.className?.baseVal ?? el.className} ${el.getAttribute('alt') || ''} ${el.getAttribute('aria-label') || ''}`;
@@ -192,7 +235,7 @@ export async function measureVisual({ selector, policy }) {
   if (document.querySelector('video[autoplay],audio[autoplay]')) mediaViolations.push('native media autoplays before a click');
   reasons.push(...mediaViolations);
   return { geometry: reasons.length ? 'FAIL' : 'PASS', semanticReview: 'REQUIRED', reasons: [...new Set(reasons)],
-    selector, kind, src, label: label.trim(), loaded, bbox, visible: { width, height, fraction, viewportFraction, unoccludedFraction }, headings, overflow,
+    selector, kind, src, label: label.trim(), loaded, bbox, imagePaint, visible: { width, height, fraction, viewportFraction, unoccludedFraction }, headings, overflow,
     viewport: { width: innerWidth, height: innerHeight }, finalUrl: location.href };
 }
 
