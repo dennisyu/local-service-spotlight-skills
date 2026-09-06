@@ -673,8 +673,9 @@ Learned August 2, 2026.
   raised at minute ninety costs them the whole ninety minutes.
 - **Do not guess to avoid asking.** A guess that turns out wrong is discovered at the end,
   when it is most expensive to undo.
-- Open every plan with an explicit **open questions and missing access** block. If the
-  list is empty, say so — that is information too.
+- After the short plain-language context, put an explicit **open questions and
+  missing access** block near the start of every plan. If the list is empty, say
+  so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
@@ -1122,7 +1123,7 @@ Learned August 2, 2026.
   `?task=` route opens one task and a stable `?article=` route opens the complete hub.
   A count without its inspectable source URLs is decoration, not evidence.
 - **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
-  at eighth-grade reading level or below, name who this is for, what it does, why
+  at fifth-grade reading level or below, name who this is for, what it does, why
   it matters and the useful outcome. Use the reader's actual situation and the
   mechanism or evidence that makes the outcome useful; follow
   `every-article-and-project-starts-with-specific-gct`. A generic benefit claim
@@ -1379,7 +1380,7 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   offered method, evidence or tool helps. The reader may be named directly or
   made unmistakable through their situation. They should not have to scroll
   through history, credentials, an abstract definition or a system description
-  to find the point. Write the opening at US eighth-grade reading level or below.
+  to find the point. Write the opening at US fifth-grade reading level or below.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
@@ -1490,6 +1491,20 @@ certify a specific GCT or human comprehension; enforce this in editorial review.
 No text pattern can prove that a task ran, an artifact passed, or two pages describe
 separate executions. Enforce this through the run record, evidence manifest and review.
 <!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
+
+<!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:start -->
+## Skills, packs, plugins, workers and jobs have distinct states
+
+Use these terms to choose the setup your business needs. Start with one guide and one job. Check the result before you add more tools.
+
+- A **skill** is a written recipe for a kind of task. A **skill pack** is a selected group of skills. A **plugin** is a package for a particular app; it may contain skills, tool connections or other components. Name only what the reviewed package contains. Use the [owned explainer](https://localservicespotlight.com/plugin/) and [pack library](https://localservicespotlight.com/skill-packs/).
+- An **agent** is the AI worker doing an assigned task with approved tools and access. A **job** is an assigned run with inputs, checks and a result. A **scheduled job** adds a saved time or supported event; installing instructions does not create a worker or schedule. Link the [agent guide](https://blitzmetrics.com/build-agents/) and [job guide](https://blitzmetrics.com/persistent-agents/).
+- **Access** is permission to reach a source or tool in the named account and environment. Record required access, granted scope, observed connection and remaining human action separately. A downloaded ZIP, installed plugin or ready document proves none of them. Never infer approval from a package, task status or connected account.
+- **Document-ready** means the recipe has its required content and review. Task Library `complete` is a contributor-supplied document-status claim. It does not by itself prove that the guide meets the required content and review standard, or that a client task ran. Record independent document review, installed-skill activation, source access, scheduled firing, business success and semantic certification separately. Record actual executions separately with their IDs, outputs and checks.
+- Make the ZIP a useful first start: include a short start file, a one-task draft prompt, a manifest and dated source information. Say whether it is a guide archive or a platform-installable package. A downloaded snapshot does not update itself. Do not tell readers to delete old copies without considering their rollback and active-job dependencies.
+- Use the current maintained marketplace URL and exact package name. Derive any counts from its manifest, with a revision/date; do not equate the broad Task Library with the smaller curated marketplace. Mark older names and installation receipts as historical, and verify actual installed copies before claiming parity.
+- Check external platform claims against current official docs for that product, surface, plan and environment. Keep package format, installation, activation, connectors, local-file access and scheduling separate. No blanket promise that every job works on a free plan, on a phone, or while the laptop sleeps. Confirm the actual first run, output and failure handling before calling a schedule observed.
+<!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

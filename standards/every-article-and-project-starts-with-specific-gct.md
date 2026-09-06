@@ -3,7 +3,7 @@
   "title": "Every opening makes its reader, value and purpose clear",
   "severity": "error",
   "captured": "2026-09-04",
-  "captured_from": "Dennis Yu, Codex task, 2026-09-04: repair cross-agent shared-memory documentation and apply the grade-8 opening, meaningful above-the-fold visual, and SEO Tree rules to all definitive articles and projects. Refined by Dennis Yu follow-up 2026-09-05: explain jargon and link its owned explainer on first mention. Extended by Dennis Yu, GPT-6 Money Tree correction, 2026-09-06: the beginning of any document, page, article or landing page must immediately grab attention and show relevance and value; explain how an entrepreneur can use existing proof of trust to help customers buy, instead of opening with a vague account of stories and connections.",
+  "captured_from": "Dennis Yu, Codex task, 2026-09-04: repair cross-agent shared-memory documentation and apply the grade-8 opening, meaningful above-the-fold visual, and SEO Tree rules to all definitive articles and projects. Refined by Dennis Yu follow-up 2026-09-05: explain jargon and link its owned explainer on first mention. Grade threshold tightened to fifth grade by Dennis Yu, task-library activation follow-up, 2026-09-06. Extended by Dennis Yu, GPT-6 Money Tree correction, 2026-09-06: the beginning of any document, page, article or landing page must immediately grab attention and show relevance and value; explain how an entrepreneur can use existing proof of trust to help customers buy, instead of opening with a vague account of stories and connections.",
   "source": "https://localservicespotlight.com/article-guidelines/",
   "applies_to": [
     "agent-behaviour",
@@ -34,7 +34,7 @@
   offered method, evidence or tool helps. The reader may be named directly or
   made unmistakable through their situation. They should not have to scroll
   through history, credentials, an abstract definition or a system description
-  to find the point. Write the opening at US eighth-grade reading level or below.
+  to find the point. Write the opening at US fifth-grade reading level or below.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.

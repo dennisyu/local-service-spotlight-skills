@@ -1,7 +1,11 @@
 # Local Service Spotlight Skills for Claude
 
-The canonical marketplace for the 32 Local Service Spotlight skills used across
-authority, content, client operations, and quality assurance.
+Use these guides to turn your business's proof into work you can check. Pick a
+task, such as checking a customer claim or drafting an article. Read the steps,
+make one draft, and check the result before you share it.
+
+This is the maintained source for the Local Service Spotlight Claude marketplace.
+Its current package list and skill counts come from `.claude-plugin/marketplace.json`.
 
 ## Install
 
@@ -16,9 +20,11 @@ https://github.com/dennisyu/local-service-spotlight-skills
 Then install `lss-everything`.
 
 If you already added `https://github.com/dennisyu/blitzmetrics-skills` or
-installed `blitzmetrics-everything`, remove that marketplace and add this one.
-GitHub redirects the old repository URL. Claude still needs a fresh install of
-`lss-everything` because plugin names are keyed in the account.
+installed `blitzmetrics-everything`, record the installed package, version and
+active jobs first. The old repository URL redirects here, but an old installed
+package may still be stale. Follow the current install guide to test the new
+`lss-everything` package and preserve a recovery path before retiring an exact
+obsolete copy. Do not remove an uninspected marketplace.
 
 The guide and repository have different jobs:
 
@@ -44,8 +50,10 @@ Start a new chat and ask in plain language. For example:
 >
 > “How do I show up in ChatGPT?”
 
-Claude should select the relevant skill. Seeing the plugin in a list proves it is
-installed; a successful fresh-chat trigger proves that skill is working.
+Claude may select the relevant skill, or you can use the supported skill picker.
+Record which installed skill was actually selected or loaded, then inspect its
+fresh output. A plugin in a list proves installation; a good answer alone does
+not prove that the installed skill was used.
 
 The [personal-brand-audit skill](skills/personal-brand-audit/SKILL.md) is the front
 door for the full proof inventory, exact 20-page visual PDF, top-connection map, and

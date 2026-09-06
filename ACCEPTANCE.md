@@ -1,8 +1,11 @@
 # Acceptance checks and receipts
 
-Automated validation proves the repository is internally consistent. It cannot
-prove that a particular Claude account synced the marketplace, activated a skill,
-or completed a scheduled job. Use these checks for that last mile.
+Use these checks before you trust a skill to do work for your business. Show that
+the right skill loaded, made the expected result, and used only approved access.
+Keep the proof so another person can check it.
+
+Repository checks prove source consistency. They do not prove that a named
+account installed or activated a skill, or that a scheduled job ran.
 
 Record every run with:
 
@@ -128,10 +131,13 @@ prove the repository is consistent, which is not the same claim.
 8. Confirm at least one known-bad fixture is caught. A sweep that has never
    failed has not been shown to work.
 
-**Status vocabulary applies here too.** A rule in `standards/` is **Available**.
-A rule stamped into the skills is **Installed**. A rule an agent restates on a
-canary account is **Tested**. A sweep in the Friday fleet audit is **Scheduled**.
-Only a completed run with a timestamped report is **Observed**.
+**Keep source propagation separate from account and job evidence.** A prepared
+rule is a source change; after merge it is **Available** in that repository or
+release. Stamping it into distributed skill files does not prove **Installed**
+or **Enabled** in an account. Record those states from the named runtime, and
+record **Tested** only after the selected skill loads and produces a checked
+fresh result. **Scheduled** means the job definition exists; **Observed** means
+a real firing left a timestamped output or failure.
 
 Record the commit SHA, the fleet file used, counts of blocking/warning/not-swept,
 and the tester. Do not record client URLs here if the list is not public.
