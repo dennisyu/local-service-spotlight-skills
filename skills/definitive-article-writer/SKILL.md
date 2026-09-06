@@ -18,7 +18,7 @@ rule-scopes: published-html, design-review
 ## Steps
 1. **Audit first.** If a canonical hub already exists on your site, improve it. Never publish a second page on the same topic — that's content vandalism; you'd split your own authority.
 2. **Classify and outline.** A task guide is a repeatable recipe; a topic/entity/framework hub explains its subject and links to the relevant task recipes. A supporting story, opinion, tool comparison, reference or historical post does not become task-definitive because its opening was repaired. For a task recipe, outline the trigger/starting state, inputs and linked prerequisite tasks, ordered steps, measurable output/pass criteria, and downstream task/owner/handoff. Hold unsupported fields as gaps. For a hub, outline the questions its declared scope must answer.
-3. **Write facts, not fluff.** Open with 2–3 sentences at eighth-grade reading level or below: who this is for, what it does, why it matters and the useful outcome. Keep the meaningful topic-specific visual with that short opening; it may come first. Verify it renders in the first screen on desktop and mobile. Every claim carries a number, a name, or a source link. Publish nothing you couldn't defend in diligence.
+3. **Write facts, not fluff.** Open with 2–3 sentences at eighth-grade reading level or below: who this is for, what it does, why it matters and the useful outcome. Keep the meaningful topic-specific visual with that short opening; it may come first. Verify it renders in the first screen on desktop and mobile. Every factual claim carries a number, a name, or a source link. When proof involves another person, show the true moment: scene, meaning, relevant person, human beat, then a compact source receipt. Publish nothing you couldn't defend in diligence, but do not turn the public page into the diligence memo.
 4. **Explain terms and placement.** On first mention, give the plain meaning and link the verified owned explainer, including the result, material and audience behind [Goals, Content, Targeting](https://blitzmetrics.com/gct-business-strategy/). Link the task's [Task Library record](https://local-service-spotlight.github.io/task-library/) and [Content Factory parent](https://blitzmetrics.com/content-factory/). Lower in a Content Factory task article, show its responsive context map with the true Produce → Process → Post → Promote placement, prerequisites, next task and meta feedback into the recipe. The map supplements the lead visual.
 5. **Structure for machines.** H2s phrased as the questions people actually ask. Schema markup (Person, Article, FAQ). The entity's name spelled identically everywhere. A stable URL that never changes.
 6. **Build the orbit.** Internal-link every related thin post INTO this page; link this page out to its sources and sibling hubs. Thin posts orbit the hub — they feed it, never compete with it.
@@ -30,8 +30,11 @@ rule-scopes: published-html, design-review
 - Specific GCT in plain language (2–3 sentences at eighth-grade level or below).
 - A meaningful topic-specific picture or diagram, readable in the first screen without JavaScript interaction.
 - The facts: numbers, dates, names, each tied to its source.
-- The story and strongest quotes from the recording.
+- The story and strongest quotes from the recording. For relationship proof, use the
+  narrowest supported verb and keep the useful scene and human beat around the name.
 - Embedded media — the interview or talk this came from.
+- One compact page-level evidence key when the page mixes appearances, praise, and
+  collaborations; keep row-level caveats and permission states in the source inventory.
 - FAQ — the questions you outlined, answered directly.
 - Links out to sources, across to sibling hubs.
 For a task recipe, include the trigger and starting state; inputs and linked prerequisites;
@@ -49,6 +52,12 @@ neither is certified merely by receiving a new introduction.
 ## Failure modes — what kills a definitive article
 - Publishing a second post on the same topic because writing fresh feels easier than improving the hub.
 - Adjectives instead of numbers. "Leading expert" proves nothing; "110+ locations, $310M+" does — that's how you describe Zach Peyton.
+- Trophy-name prose: removing the recognizable person's name leaves no useful scene,
+  lesson, decision, or outcome.
+- Courtroom prose: every caption argues what it does not prove, so accurate evidence
+  sounds doubtful. Keep the internal gate strict; state the supported fact once.
+- Relationship inflation: a photograph or shared event is rewritten as friendship,
+  partnership, mentorship, a client relationship, praise, or endorsement.
 - Changing the URL or title to chase keywords — you reset your own authority to zero.
 - Letting it go stale. The hub is living: every new recording, deal, or mention updates it.
 
@@ -63,7 +72,9 @@ neither is certified merely by receiving a new introduction.
 
 ## Run on a persistent agent (Fable 5)
 - **Loop to done:** verify the declared recipe or hub scope, required inputs, steps, acceptance checks and links; mark unsupported facts as gaps. Preserve useful evidence and stop when the acceptance criteria pass.
-- **Self-verify:** run the failure modes as a checklist on your own draft — no second post on the topic, no adjective without a number, URL stable, nothing stale.
+- **Self-verify:** run the failure modes as a checklist on your own draft — no second
+  post on the topic, no adjective without proof, URL stable, nothing stale. Apply the
+  trophy-name and courtroom tests to every proof section.
 - **Compound with memory:** check memory and the site for an existing hub FIRST — improve it, never duplicate it — and carry the orbit list forward so every new asset points home.
 - **Log the run:** write the required meta article with a distinct execution ID and evidence. Record unanswered questions for the next capture; do not confuse this run record with the reusable recipe.
 
@@ -73,6 +84,9 @@ See `boil-the-ocean.md` for the full operating principles.
 - Harry Gold's harryjgold.com started as one Zoom interview — one capture, one canonical hub, everything else orbits it. Dennis's podcast-appearances page runs the same play: 236+ appearances tracked on one URL that every episode links back to.
 - George Paladichuk's NaiL AI shows the niche version: own the definitive page on one tight topic — AI for roofing — and the category cites you by default.
 - Write for the diligence reader. Facts with sources survive a buyer's scrutiny and an AI's retrieval; adjectives survive neither.
+- Keep diligence discipline behind the page, then write like a person who was there.
+  One true scene and a compact receipt feel more confident than either a boast or a stack
+  of defensive disclaimers.
 - One maintained URL owns each task recipe or topic. An agent's reusable task instructions can be a definitive article; its account of one execution is a separate meta article (see `recursive-self-improvement-qa`).
 
 ## Definitive article & pairings
@@ -774,13 +788,19 @@ is that your site did that.
 <!-- shared-rule:order-proof-by-authority:start -->
 ## Order proof by authority, strongest first
 
-- **Testimonials, logos and mentions are never in random order.** Score each on the
-  30-point scale — 10 for who said it, 10 for where it was said, 10 for what they actually
-  said — and lead with the highest.
+- **Qualified testimonials, logos and mentions are never in random order.** After each
+  record passes its truth, identity, permission, and relevance gates, score it on the
+  30-point scale — 10 for who said it, 10 for where it was said, and 10 for what they
+  actually said. Lead with the strongest useful proof for this reader.
 - **A visitor reads the first two and leaves.** Whatever is in position one is, in
   practice, your entire proof section.
-- **Video beats text.** The same endorsement on camera is more persuasive and harder to
-  fake than the same words in a pull quote; capture it as video wherever it exists.
+- **Who does not substitute for What.** A recognizable person's silent appearance can
+  still be weak proof, and their name does not transfer status by proximity. The score
+  controls selection and order; `show-the-moment-not-the-resume` controls the public
+  telling. Start with what happened and why it matters, not the person's fame.
+- **Video beats text when it preserves the meaningful moment.** The same attributable
+  praise or useful exchange on camera is more persuasive and harder to fake than a pull
+  quote. A contextless clip or photograph remains appearance evidence, not endorsement.
 - Cut the bottom of the list rather than padding it. A short list of strong proof
   outperforms a long list containing weak proof.
 <!-- shared-rule:order-proof-by-authority:end -->
@@ -1442,3 +1462,47 @@ certify a specific GCT or human comprehension; enforce this in editorial review.
 No text pattern can prove that a task ran, an artifact passed, or two pages describe
 separate executions. Enforce this through the run record, evidence manifest and review.
 <!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
+
+<!-- shared-rule:show-the-moment-not-the-resume:start -->
+## Show the moment, not the resume
+
+- **Public proof should let the reader witness a true moment, not watch the subject
+  recite a resume.** Build each proof story from five parts: the scene, why it mattered,
+  the person and their relevant role, one true human beat, and a compact receipt. The
+  human beat may be funny, awkward, generous, surprising, or humble, but it must come
+  from the source. Never manufacture personality or imitate another storyteller.
+- **Use the narrowest relationship word the evidence supports.** `Interviewed`, `hosted`,
+  `shared a meal`, `spoke at the same event`, and `worked on X` describe observable
+  moments. Reserve `friend`, `partner`, `client`, `mentor`, and similar durable terms for
+  a source or owner attestation that supports them. A verified photograph proves that
+  people were together for that moment; it does not by itself prove praise, friendship,
+  or endorsement.
+- **Praise must be exact and named.** A testimonial or endorsement needs attributable
+  positive language from an identified person or organization and a reviewable source.
+  Anonymous praise, initials-only praise, and domain-only claims stay `HOLD`; do not
+  turn missing identity into warmer copy.
+- **Keep the receipt compact.** A caption or source line can name the artifact, date,
+  format, and link. Explain evidence categories once in a short page-level key instead
+  of attaching a disclaimer to every photograph and sentence. Keep a local qualifier
+  only when omitting it would materially mislead. The full classification, permission,
+  and audit trail belong in the canonical inventory, not in the reader's path.
+- **Run the trophy-name test.** Remove the recognizable name from the paragraph. If no
+  useful scene, lesson, decision, or outcome remains, the name is functioning as a trophy.
+  Reframe around what happened and what the reader can take from it, or cut the item.
+- **Run the courtroom test.** If the page repeatedly argues what each item does *not*
+  prove, it sounds as though the author doubts the evidence. Keep the underlying gate
+  strict, then state the supported fact once in ordinary language. Confidence comes from
+  precise evidence, not from louder claims or repeated self-defense.
+- **Reconciliation with `order-proof-by-authority`:** Who / Where / What scores rank
+  evidence that already passed its truth and permission gates; they do not license status
+  borrowing. Lead with the strongest *useful* moment for this reader. A high Who score
+  cannot rescue a weak What score, and video outranks text because it preserves more of a
+  meaningful moment, not because a famous face transfers authority by proximity.
+
+No honest fleet regex can determine whether a paragraph contains a lived scene, whether
+the humor is true, whether a relationship word outruns its evidence, or whether a name is
+doing all the persuasive work. Phrase bans would also flag quotations, legal disclosures,
+and accurate criticism. Enforce this standard through the source-backed editorial
+preflight, the canonical proof inventory, and a rendered-page review using the two tests
+above.
+<!-- shared-rule:show-the-moment-not-the-resume:end -->

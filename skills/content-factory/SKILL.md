@@ -11,7 +11,9 @@ rule-scopes: published-html, design-review
 ## Inputs
 - One raw recording (video or audio) + transcript. Phone quality is fine — Marko Sipila built HVAC Quote on phone-shot conference interviews.
 - The subject's positioning and proof (from `personal-brand-strategist` and `positive-mentions-harvester`).
-- Your lighthouse list — the marquee people and brands you're tied to.
+- Your proof inventory — verified stories, appearances, praise, and evidence-bounded
+  relationship terms. Rank records internally by Who / Where / What; do not use a
+  recognizable name as borrowed status.
 - Your canonical hub URLs, so nothing you publish competes with them.
 
 ## The factory line — Produce, Process, Post, Promote
@@ -20,8 +22,9 @@ Run the line in order. Each station feeds the next; skip one and the next breaks
 
 1. **Produce** — capture real source material: a recording, customer story, job,
    demonstration, review, or interview.
-2. **Process** — transcribe, verify, mine, edit, and atomize the source without inventing
-   claims, quotes, or proof.
+2. **Process** — transcribe, verify, and mine the source for claims, quotes, and complete
+   proof moments: scene, meaning, person, true human beat, and compact receipt. Edit and
+   atomize without inventing any part of them.
 3. **Post** — assemble the one canonical hub and its channel-ready derivatives. Stage by
    default; publish only under the caller's exact action authority.
 4. **Promote** — rank proven organic performers and prepare Dollar-a-Day recommendations.
@@ -42,7 +45,9 @@ system. It is not a second name for the factory assembly line.
 
 ## The assembly line — 6 stages per recording
 1. **Capture** — record once. One Zoom interview or one 60-second conference clip is a month of raw material.
-2. **Transcribe & mine** — pull the strongest quotes, claims, numbers, and stories out of the transcript.
+2. **Transcribe & mine** — pull the strongest quotes, claims, numbers, and complete
+   story moments out of the transcript. Preserve the scene and human beat around a quote;
+   a disembodied famous name is not a story.
 3. **Definitive article** — write the ONE canonical long-form hub (`definitive-article-writer`). The hub is the product; everything else is distribution.
 4. **Atomize** — cut clips, reels/shorts, and tweets from the same recording, Descript-style. One strong quote = one asset; an hour of recording yields 10–20 clips.
 5. **Distribute** — prepare channel-specific packages for YouTube/Shorts, LinkedIn,
@@ -90,7 +95,10 @@ See `boil-the-ocean.md` for the full operating principles.
 ## Notes — Dennis's method
 - The proof: Marko Sipila shot phone interviews at HVAC conferences, repurposed them onto the HVACQuote YouTube, boosted the winners at a dollar a day, and scaled HVAC Quote past 300 customers. Interview once → repurpose → boost.
 - Same three moves behind Harry Gold (harryjgold.com built from a single Zoom interview) and the Superior Fence & Rail footage with Zach Peyton (largest US fence franchise — 110+ locations, $310M+).
-- Feature your lighthouse. A clip with a marquee name converts harder than a clip alone — their authority reflects onto you.
+- Feature the moment, not the recognizable name. A clip earns attention when it carries a
+  useful scene, lesson, or true human beat. A recognizable guest does not transfer
+  authority by proximity. Rank eligible proof internally by Who / Where / What, then tell
+  it without status signaling.
 - Standardize and productize. Custom work doesn't scale and doesn't sell; a factory does. Boil the ocean on the system once, then let workers run it forever.
 - The factory is the Publish-and-Promote muscle behind your entity home (step 4) and Knowledge Panel plumbing (step 5) — corroboration at scale.
 
@@ -491,13 +499,19 @@ is that your site did that.
 <!-- shared-rule:order-proof-by-authority:start -->
 ## Order proof by authority, strongest first
 
-- **Testimonials, logos and mentions are never in random order.** Score each on the
-  30-point scale — 10 for who said it, 10 for where it was said, 10 for what they actually
-  said — and lead with the highest.
+- **Qualified testimonials, logos and mentions are never in random order.** After each
+  record passes its truth, identity, permission, and relevance gates, score it on the
+  30-point scale — 10 for who said it, 10 for where it was said, and 10 for what they
+  actually said. Lead with the strongest useful proof for this reader.
 - **A visitor reads the first two and leaves.** Whatever is in position one is, in
   practice, your entire proof section.
-- **Video beats text.** The same endorsement on camera is more persuasive and harder to
-  fake than the same words in a pull quote; capture it as video wherever it exists.
+- **Who does not substitute for What.** A recognizable person's silent appearance can
+  still be weak proof, and their name does not transfer status by proximity. The score
+  controls selection and order; `show-the-moment-not-the-resume` controls the public
+  telling. Start with what happened and why it matters, not the person's fame.
+- **Video beats text when it preserves the meaningful moment.** The same attributable
+  praise or useful exchange on camera is more persuasive and harder to fake than a pull
+  quote. A contextless clip or photograph remains appearance evidence, not endorsement.
 - Cut the bottom of the list rather than padding it. A short list of strong proof
   outperforms a long list containing weak proof.
 <!-- shared-rule:order-proof-by-authority:end -->
@@ -1159,3 +1173,47 @@ certify a specific GCT or human comprehension; enforce this in editorial review.
 No text pattern can prove that a task ran, an artifact passed, or two pages describe
 separate executions. Enforce this through the run record, evidence manifest and review.
 <!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
+
+<!-- shared-rule:show-the-moment-not-the-resume:start -->
+## Show the moment, not the resume
+
+- **Public proof should let the reader witness a true moment, not watch the subject
+  recite a resume.** Build each proof story from five parts: the scene, why it mattered,
+  the person and their relevant role, one true human beat, and a compact receipt. The
+  human beat may be funny, awkward, generous, surprising, or humble, but it must come
+  from the source. Never manufacture personality or imitate another storyteller.
+- **Use the narrowest relationship word the evidence supports.** `Interviewed`, `hosted`,
+  `shared a meal`, `spoke at the same event`, and `worked on X` describe observable
+  moments. Reserve `friend`, `partner`, `client`, `mentor`, and similar durable terms for
+  a source or owner attestation that supports them. A verified photograph proves that
+  people were together for that moment; it does not by itself prove praise, friendship,
+  or endorsement.
+- **Praise must be exact and named.** A testimonial or endorsement needs attributable
+  positive language from an identified person or organization and a reviewable source.
+  Anonymous praise, initials-only praise, and domain-only claims stay `HOLD`; do not
+  turn missing identity into warmer copy.
+- **Keep the receipt compact.** A caption or source line can name the artifact, date,
+  format, and link. Explain evidence categories once in a short page-level key instead
+  of attaching a disclaimer to every photograph and sentence. Keep a local qualifier
+  only when omitting it would materially mislead. The full classification, permission,
+  and audit trail belong in the canonical inventory, not in the reader's path.
+- **Run the trophy-name test.** Remove the recognizable name from the paragraph. If no
+  useful scene, lesson, decision, or outcome remains, the name is functioning as a trophy.
+  Reframe around what happened and what the reader can take from it, or cut the item.
+- **Run the courtroom test.** If the page repeatedly argues what each item does *not*
+  prove, it sounds as though the author doubts the evidence. Keep the underlying gate
+  strict, then state the supported fact once in ordinary language. Confidence comes from
+  precise evidence, not from louder claims or repeated self-defense.
+- **Reconciliation with `order-proof-by-authority`:** Who / Where / What scores rank
+  evidence that already passed its truth and permission gates; they do not license status
+  borrowing. Lead with the strongest *useful* moment for this reader. A high Who score
+  cannot rescue a weak What score, and video outranks text because it preserves more of a
+  meaningful moment, not because a famous face transfers authority by proximity.
+
+No honest fleet regex can determine whether a paragraph contains a lived scene, whether
+the humor is true, whether a relationship word outruns its evidence, or whether a name is
+doing all the persuasive work. Phrase bans would also flag quotations, legal disclosures,
+and accurate criticism. Enforce this standard through the source-backed editorial
+preflight, the canonical proof inventory, and a rendered-page review using the two tests
+above.
+<!-- shared-rule:show-the-moment-not-the-resume:end -->
