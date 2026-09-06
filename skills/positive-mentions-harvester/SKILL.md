@@ -1,10 +1,16 @@
 ---
 name: positive-mentions-harvester
-description: Find, verify, deduplicate, record permission for, and score positive mentions on the Who / Where / What 30-point scale, then maintain one canonical proof inventory that feeds public authority pages, schema, and amplification. Run after the positioning brief and before reputation-gap analysis.
+description: Find and check praise for a person or firm. Use when reviews, press, talks or kind words are spread across sources. Keep one proof list and choose what is safe to share.
 rule-scopes: published-html, design-review
 ---
 
 # Positive Mentions Harvester
+
+Show people the real proof behind your good name. This guide puts praise and mentions in one checked list, so you can choose what to share. Start with the source links and any proof list you already use.
+
+**The path:** Source proof → Correct person → Clear class and score → Safe reuse queue.
+
+Use the [owned positive-mentions guide](https://blitzmetrics.com/how-to-collect-organize-positive-mentions-to-build-authority/) for the full method. A mention records what a named source says; appearing on a show does not by itself establish praise.
 
 **Use this when** a person or company has scattered testimonials, third-party praise,
 press, reviews, speaking clips, or social shoutouts and needs one evidence-backed system
@@ -12,8 +18,8 @@ of record. This skill collects and processes existing proof; it does not invent 
 treat every appearance as an endorsement, or publish private evidence.
 
 ## Inputs
-- Positioning brief from `business-brand-strategist`, including the buy box and the
-  claims the proof must support.
+- Positioning brief from `business-brand-strategist`, including the intended customers (the buy box) and the
+  claims the proof must support. Use the [positioning task](https://local-service-spotlight.github.io/task-library/?task=business-brand-strategist#task-business-brand-strategist) to supply that checked brief.
 - The existing canonical mentions inventory. If one exists, update it in place; do not
   start a second tracker.
 - Verified entity names, aliases, languages, profile links, clients, podcasts, events,
@@ -147,6 +153,8 @@ absence would materially mislead.
 
 ## Definition of done (QA checklist)
 
+Quality assurance (QA) means checking the actual output against the source and agreed requirements; use the [Article Guidelines](https://localservicespotlight.com/article-guidelines/) for any public-facing proof page.
+
 - [ ] The existing canonical inventory was updated in place, or one governed inventory
       was created; no competing row-level list remains.
 - [ ] Every promoted mention names the correct source and subject and includes the exact
@@ -168,6 +176,8 @@ absence would materially mislead.
 
 ## Example(s)
 
+These are the source owner’s dated examples and serving destinations. Preserve their reported scope; this source update does not independently recertify their current contents, count a new run or promote the inherited Task Library contributor status.
+
 - **Dennis Yu is the worked example.** The private team workbook named *Dennis Yu
   Positive Mentions — Canonical Inventory* is the single row-level operational ledger;
   its access-controlled locator is deliberately not published in this skill.
@@ -182,7 +192,7 @@ absence would materially mislead.
   podcast participation. An appearance becomes a positive mention only when the source
   contains attributable positive language.
 
-## Run on a persistent agent (Fable 5)
+## Run with an agent
 - **Loop to coverage:** keep sweeping until the defined names, languages, sources, and
   date ranges are exhausted. Never claim “complete” when a known source is inaccessible.
 - **Self-verify:** no record enters the serving queue without passing the promotion gate;
@@ -195,7 +205,25 @@ absence would materially mislead.
   a documented job design, not Activated or Observed until a scheduler definition and a
   successful timestamped run receipt exist.
 
+A [skill is a written recipe](https://localservicespotlight.com/plugin/); an [agent is the AI worker](https://blitzmetrics.com/build-agents/) using it with actual tools and access. Give the worker this file, the existing inventory, the source scope and the allowed actions. Ask for the checked rows, evidence, holds and next owner. The [installation guide](https://localservicespotlight.com/install/) covers reusable setup. A ZIP or plugin does not grant source access or activate a schedule.
+
 See `boil-the-ocean.md` for the full operating principles.
+
+## Handoff and Content Factory context
+
+Pass the canonical row changes, search coverage and unresolved evidence to the actual inventory owner. The [reputation gap task](https://local-service-spotlight.github.io/task-library/?task=reputation-gap-analyzer#task-reputation-gap-analyzer) receives the unmet proof needs. The public-page or promotion owner receives only the approved source-backed reuse queue with its rights and destinations; routing a record is not publishing or spending.
+
+This supports the [Content Factory: Produce, Process, Post and Promote](https://blitzmetrics.com/content-factory/). Real sources are gathered in Produce, checked and shaped in Process, released only with authority in Post, and selected proven work may enter Promote. This harvest supplies checked proof; it does not claim that every row became a public page or ad.
+
+## Record the real execution
+
+Open one execution ID when work begins, with the exact starting recipe revision and actual search scope. Write the [meta article, the record of this execution](https://blitzmetrics.com/meta-article-prompt/) with the sources inspected, rows changed, checks, failures and next owner. Writing is required; public release follows existing authority. Link this recipe and its Task Library record.
+
+Keep internal research passes, QA, retries, revisions and meta writing on that same ID. A blocked run stays open with the missing source or permission and its owner, without an invented finish time. The dated public example counts below remain historical volume, not a new execution or an ID-deduplicated run count. Use the evidence to propose the smallest supported recipe improvement.
+
+### Fictional teaching example
+
+This example illustrates the method and is not a real client result. A workshop photo shows a founder on stage, while an interview includes a host's exact praise of her work. The first row remains an appearance; the second can become a mention only after its identity, evidence, permission, dedupe and score gates pass. An inaccessible private note stays on HOLD. The public queue contains only the checked permitted records.
 
 ## Notes — Dennis's method
 - The more material you paste in, the better this gets. Boil the ocean: every podcast, every event, every thank-you email.
