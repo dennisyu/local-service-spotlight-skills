@@ -101,3 +101,56 @@ Every member-facing notice must name the source commit/version, changed skills,
 required sync action, a fresh-chat verification phrase, and the failure route. If a
 legacy ZIP is supplied, label it as a snapshot and include the source commit. Never
 call a reconstructed or article-derived pack canonical.
+
+
+## Rendered first-screen acceptance
+
+For a builder or publisher, first select the actual meaningful image, SVG,
+video poster or photographic CSS background from source-backed editorial review.
+Run the shared checker against the complete preview including site chrome, then
+against the anonymous ordinary URL after the authorized release:
+
+```bash
+node scripts/rendered_visual_check.mjs --url https://example.com/ \
+  --selector 'main .opening-proof img' --output work/first-screen-receipt
+```
+
+Use an installed Playwright runtime, or set `PLAYWRIGHT_MODULE` to its absolute
+module entrypoint and `CHROMIUM_EXECUTABLE` to a compatible installed browser.
+The checker measures 390x844 and 1280x800 with JavaScript on and off, writes four
+viewport screenshots and a hashed JSON receipt, blocks media bytes, and never
+clicks or scrolls. It returns 0 for geometry pass, 1 for a measured failure and 2
+for command/setup failure. **Exit 0 still says REVIEW_REQUIRED.** It does not
+prove authenticity, rights, useful crop, diagram correctness or video playback.
+Read the actual screenshots and source evidence before accepting the page.
+
+Review the opening separately from geometry. The maintained rule is
+`standards/every-article-and-project-starts-with-specific-gct.md`; it covers
+documents, reports, articles and all page types. Save the exact first 2–3
+sentences and artifact revision in the existing receipt, with quoted evidence
+for the reader/situation, reason to care, useful outcome and supporting mechanism.
+Confirm the artifact delivers its promise. A phrase match, score, audience label
+or screenshot measurement cannot approve meaning. Do not create a second opener
+registry or put this review metadata into the reader's path.
+
+A generator can import `loadPolicy`, `measureVisual` and `auditPage` from the
+same module. Keep its source and live receipts separately; invalid source, a
+provider save, static refresh, cache state and public acceptance are different
+states. Do not make source-order regex output the production success flag.
+`standards/visuals-above-the-fold.md` holds the numeric gate so every adapter
+uses the same thresholds. A stylesheet may not replace this with a logo count.
+No deployment adapter is activated merely by merging this module; record its
+exact version and first observed preview/live run in the existing inventory.
+
+The independent reviewer records screenshot hashes, selected visual, authentic
+source and permission receipt, relevance/crop/label verdict, money-page proof
+and public Money Tree verdict. Opaque iframe boxes and consent-blocked players
+require a verified visible poster or explicit screenshot/player review; a CSS
+background must be a real relevant photo. All media testing remains muted with
+volume zero, including any separate playback test.
+
+The same first-screen pass requires one readable H1/level-one heading line
+(18px minimum, 90% visible). CSS background measurements account for opaque
+descendant and before/after layers, including overlays that ignore pointer
+events. Transparent text and light tints may coexist with the photo; retain
+the actual screenshot review for crop, legibility and complicated compositing.

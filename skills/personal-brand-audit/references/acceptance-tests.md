@@ -71,6 +71,10 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
 - [ ] Page 1 contains four evidence-backed headline facts and stands alone; page 2 contains
   five to eight non-obvious findings that lead to decisions, not generic praise or a biography
   recap.
+- [ ] The exact opening is saved with its revision. A reviewer quotes the words establishing
+  the reader's situation, reason to care, useful decision/outcome and supporting evidence or
+  mechanism. The audit delivers that promise. A short paragraph or readability score alone
+  cannot pass meaning; unchecked fields remain UNKNOWN. Later pages lead with their takeaway.
 - [ ] Recommendations distinguish a proof gap, a findability gap, a consistency gap, a
   measurement gap, and an access gap.
 - [ ] Every live model/search observation records prompt, product/provider, model/version when

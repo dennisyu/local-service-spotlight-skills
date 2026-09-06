@@ -390,6 +390,11 @@ standard, fleet-wide:
   photography can carry a hero; selfies cannot, at any resolution. When the only assets
   are selfies, use the typographic hero — it never looks cheap. See
   `photo-earns-full-bleed`.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.
 <!-- shared-rule:immersive-hero-standard:end -->
 
 <!-- shared-rule:keep-the-system-of-record-outside-the-model:start -->
@@ -411,6 +416,13 @@ standard, fleet-wide:
 
 - **Page one answers the question**, for someone who will read only page one. The most
   important and least obvious findings, up front.
+- **Open with the reader's decision and the value of this deliverable.** In the
+  first two or three sentences, connect the strongest supported finding to the
+  reader's situation and the action it enables. Follow
+  `every-article-and-project-starts-with-specific-gct`; a title, biography,
+  table of contents or methodology paragraph alone does not orient the reader.
+  On a multi-page document or deck, each later page or section also leads with
+  its useful takeaway, without repeating the whole introductory pitch.
 - **Interesting and non-obvious, not a restatement.** A summary that repeats what the
   reader already assumed has told them nothing; lead with what would change their mind.
 - **Use colour, diagrams and tables to carry the point.** A wall of text on page one is a
@@ -625,6 +637,11 @@ is that your site did that.
   mixed colour temperature are all invisible in a thumbnail and unmissable at full width.
 - Related: `immersive-hero-standard` for the construction; this rule is only about
   whether a given photograph is allowed to be the hero at all.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.
 <!-- shared-rule:photo-earns-full-bleed:end -->
 
 <!-- shared-rule:pre-audit-before-the-client-does:start -->
@@ -732,9 +749,9 @@ is that your site did that.
 <!-- shared-rule:every-public-page-has-real-imagery:start -->
 ## Every public page shows real people or real work
 
-- **Every visitor-facing content page must contain at least one meaningful image
+- **Every visitor-facing content page must contain at least one meaningful visual
   of the actual business: its people, its work, its customers with permission,
-  its product, or its place.** This includes conversion and utility pages such as
+  its product, its place, or an accurate diagram of its actual process.** This includes conversion and utility pages such as
   Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
   ship a wall of text.
 - A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
@@ -745,13 +762,18 @@ is that your site did that.
   when useful, a caption that explains what it proves. Describe only what the
   source establishes: never relabel one project photo as work completed in every
   city, and never infer a person, location, service, or result from a filename.
-- If no suitable approved image exists, request one and block that page from
-  publication. Do not manufacture evidence with image generation or stock.
+- If no suitable approved photograph exists, use a useful evidence-backed
+  diagram or verified source-video poster under `visuals-above-the-fold`. Do not
+  manufacture evidence with image generation or stock. If none is available,
+  hold publication and record the specific source gap and next action.
 - Build QA must inventory every rendered content route and fail when any route
-  lacks a verified real image. Keep a provenance allowlist or equivalent asset
+  lacks source-verified meaningful visual proof. Keep a provenance allowlist or equivalent asset
   record so logos and decorative images cannot make the check pass. Mark at least
   one qualifying `<img>` per page with `data-lss-real-image="verified"` only
-  after that provenance check. Also inspect the rendered desktop and mobile page;
+  after that provenance check. For a diagram, video or photographic background,
+  use `data-lss-visual-proof="verified"` with an honest aria-label/title after
+  source review. This alternate marker never makes an empty shell or unrelated
+  image pass. Also inspect the rendered desktop and mobile page;
   a hidden, broken, or contextless image does not count.
 - Machine-only documents and routes that never render as visitor content—such as
   `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
@@ -759,10 +781,16 @@ is that your site did that.
   redirect or make the page comply.
 
 The fleet check proves only that a page declares the verified marker and supplies
-a nonblank, non-data source plus nonblank alt text. It cannot prove that the
+the required description (plus a non-data source and alt for img). It cannot prove that the
 source loads, is visible, is meaningfully sized, or is truthful. Enforce those
 claims with each site's provenance-aware build validator plus a human visual
 review. Never add the marker merely to make the sweep pass.
+
+Dennis's 2026-09-05 instruction explicitly accepts diagrams, pictures or embedded
+video above the fold. That supersedes the earlier photo-only fallback without
+weakening authenticity: an accurate process diagram is useful proof, and a
+video poster must belong to the verified source. Do not add an unrelated photo
+merely to satisfy the older marker check.
 <!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
@@ -999,7 +1027,10 @@ review. Never add the marker merely to make the sweep pass.
   A count without its inspectable source URLs is decoration, not evidence.
 - **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
   at eighth-grade reading level or below, name who this is for, what it does, why
-  it matters and the useful outcome. Keep the topic-specific visual beside that
+  it matters and the useful outcome. Use the reader's actual situation and the
+  mechanism or evidence that makes the outcome useful; follow
+  `every-article-and-project-starts-with-specific-gct`. A generic benefit claim
+  or an acronym definition is not a passing opening. Keep the topic-specific visual beside that
   short opening in the first screen; it may lead. A checklist is secondary and
   must not push it below the fold. Keep the most
   specific primary visual or proof for that article above the fold: the actual framework
@@ -1088,8 +1119,9 @@ entity-linking preflight and a live link audit.
 ## Visual and interactive content sits above the fold
 
 - **The visual is the hook, not the reward.** A chart, diagram, photograph,
-  calculator or interactive tool must be at least partly visible in the first
-  screen, *after* the site's own header and title. Two or three sentences of
+  calculator or interactive tool must be substantially visible in the first
+  screen alongside the page title. This applies to every fleet page, including
+  home, money, relationship, article, archive, resource and policy pages. Two or three sentences of
   lead-in above it is the maximum.
 - **A blank or hidden block is a failed visual.** A colored shell, empty SVG,
   broken image, loading placeholder, clipped labels or content visible only after
@@ -1113,7 +1145,7 @@ entity-linking preflight and a live link audit.
   populates) so it replaces that markup instead of appending a second copy.
 - **Verify by measuring on the live URL, not the local render.** Site chrome is
   routinely 300–400px, so a layout that clears the fold locally can fail once
-  published. Check at 1440x860 and 390x844 as an anonymous first visit, before
+  published. Check at 1280x800 and 390x844 as an anonymous first visit, before
   any click, scroll or other interaction. Capture the viewport and record the
   visible content and its position, working media/labels, and overflow. Also
   confirm the initial figure survives delayed or unavailable JavaScript.
@@ -1124,13 +1156,65 @@ entity-linking preflight and a live link audit.
   rule. Use a valid Custom HTML block (`wp:html`) and avoid blank lines inside
   inline CSS. Compare the served markup and applied browser styles after the
   save; a correct editor source does not prove the browser received valid CSS.
-- **Exemption:** a page whose whole purpose is a single block of prose — a
-  disclosure, a policy, a legal notice — is exempt. Tag it, do not silently skip
-  it.
+- **Minimum visible proof:** on both required viewports, the loaded visual must
+  expose at least 220px of width and 160px of height, at least 40% of its own area,
+  and 8% of the viewport area. At least 90% of sampled visible points must be
+  unobscured by navigation, sticky bars or overlays. These are minimum acceptance
+  limits, not a design target. Show the face, action or diagram's useful labels;
+  geometric success cannot approve an irrelevant crop.
+- **Measure painted content, not letterboxing.** For contain/scale-down/none
+  images, use intrinsic aspect ratio, content-box dimensions and object-position
+  to measure the photo pixels that are actually displayed. Empty padding and
+  letterboxing cannot meet the visible-area or minimum-width requirement.
+  CSS backgrounds currently require background-size:cover for an automated
+  geometry pass. Contain, auto and explicit sizes stay unmeasured and fail that
+  gate until their painted bounds receive a dedicated measurement/review.
+- **Keep the title readable in that same first screen.** At least one natural
+  H1 (or level-one accessible heading) text line must be visible at 18px or
+  larger, with at least 90% of its text-line area visible and unobscured. A long
+  title may wrap; the visual may sit beside, above or below it. Do not fill the
+  viewport with a photo that hides the entire page title.
+- **A background must actually show through.** Loading the photo URL is not
+  enough. Opaque descendant panels and before/after overlays count as covers,
+  including pointer-events:none. Transparent text or a light tint can coexist
+  with the photo, but the useful visible crop still needs screenshot review.
+- **The content earns the space.** A logo, social icon, navigation, cookie banner,
+  decorative gradient, generic stock photo or unrelated portrait does not count.
+  Use an authentic relevant moment, playable captioned source video with a loaded
+  poster, or a specific diagram that teaches the page's point. Open the source
+  and the rendered screenshot. A coappearance alone never proves endorsement.
+- **Every page means every page.** The former prose/policy exemption is removed
+  by Dennis's 2026-09-05 instruction. A short policy can use a concise diagram
+  explaining its actual process. Do not invent a person or pad a page with stock.
+- **Keep media invited and silent during QA.** First paint must not autoplay.
+  YouTube uses youtube-nocookie.com, rel=0, cc_load_policy=1 and a page-language
+  cc_lang_pref. A click-to-play poster counts only when the real relevant image
+  loads and its destination/player is verified. An iframe rectangle, thumbnail
+  URL or screenshot of a broken player is not playable video proof. Follow
+  youtube-captions-on-by-default; never invent missing caption tracks. During
+  testing mute and set volume zero before any playback; use silent metadata and
+  posters if playback cannot be safely controlled.
+- **Use the browser gate in every builder and publisher.** After generating the
+  actual source, run scripts/rendered_visual_check.mjs on its preview and again
+  on the ordinary anonymous live URL after publication, with fresh screenshot
+  receipts for both viewports and JavaScript-disabled first paint. No selector,
+  geometry failure, missing image or measurement error is a pass. The checker
+  reads the numeric limits from this standard's rendered_gate header. Store the
+  selected visual, source/permission receipt, relevant lesson, crop/label review,
+  URL, timestamp and screenshot hashes in the existing proof inventory. Review
+  those actual screenshots before marking a page compliant; the script reports
+  geometry only and never invents a semantic or playback verdict.
+- **Reconcile hero style with this rule.** A composed full-bleed hero is welcome
+  where it works. If the usable evidence is a selfie or small authentic moment,
+  pair a restrained type layout with that image at an honest size above the fold,
+  or use a useful diagram. The older typographic-only fallback does not authorize
+  a first screen without a meaningful visual.
 
-The sweep only catches the blatant case: a headline with no visual anywhere near
-it. Whether the visual actually clears the fold is a judgement call, verified by
-opening the published page — see `verify-by-opening-the-live-artifact`.
+The HTML sweep remains an early source-order warning; it cannot measure the
+fold. The rendered browser gate plus source-backed editorial review is the
+publication acceptance gate. A merged standard, a regenerated skill, an installed
+pack and a live-page pass are separate receipts. No whole-fleet success claim is
+valid while unsampled URLs, Not Active stops or per-site holds are omitted.
 <!-- shared-rule:visuals-above-the-fold:end -->
 
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:start -->
@@ -1177,18 +1261,45 @@ opening the published page — see `verify-by-opening-the-live-artifact`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
-## Every article and project starts with specific GCT in plain language
+## Every opening makes its reader, value and purpose clear
 
 - **Write the specific Goals, Content, Targeting before work begins.** Goals name
   the change the reader or project needs; Content names the source-backed lesson,
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
-- **Put who, what, why and the useful outcome in the first 2–3 sentences.** Write
-  the opening and initial orientation at US eighth-grade reading level or below.
+- **Apply the same opening standard to every format.** Documents, reports, PDFs,
+  presentations, articles, homepages, landing pages, service pages, relationship
+  pages and task guides must earn attention at the beginning. Improve their
+  maintained owner in place. A report leads with the decision its evidence
+  enables; a guide leads with the task the reader can accomplish; a buying page
+  leads with the relevant customer need and the offer's supported value. Do not
+  paste a sales pitch or "for entrepreneurs" onto a page whose reader needs
+  something else.
+- **Put the reader's situation, why it matters and the useful outcome in the
+  first 2–3 sentences.** The first line offers a specific reason to continue:
+  a recognizable problem, a consequential finding or a true moment with a clear
+  lesson. Explain what this page or document helps the reader do and how the
+  offered method, evidence or tool helps. The reader may be named directly or
+  made unmistakable through their situation. They should not have to scroll
+  through history, credentials, an abstract definition or a system description
+  to find the point. Write the opening at US eighth-grade reading level or below.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Make the value concrete without inflating the promise.** On an entrepreneur's
+  Money Tree page, explain how existing customer stories, interviews and useful
+  articles connect to what customers can buy. That gives a prospect relevant
+  proof and a clear next step. On another page, name that reader's actual useful
+  outcome: choose a service, check a result, prepare for a workshop or complete
+  a task. "Build authority," "unlock potential" and "follow the stories" alone
+  do not explain the benefit. Do not claim increased conversions, revenue,
+  speed or certainty unless the evidence supports that exact claim.
+- **Use confident, source-backed language.** State the supported value directly.
+  Keep authentic moments and compact receipts; do not add doubt, reassurance,
+  hype, false urgency, invented statistics or status borrowing. A necessary
+  disclosure stays next to its claim. A true story may lead, but its relevance
+  and takeaway must become clear in that same short opening.
 - **Explain jargon on its first meaningful mention and link the owned explainer.**
   Give the familiar phrase before the specialist label: “the result we want, the
   material we will use, and who it serves — our
@@ -1202,15 +1313,34 @@ opening the published page — see `verify-by-opening-the-live-artifact`.
   the same facts. It shows how to give them one set of notes, so each assistant
   can pick up where the last one stopped.” The project brief also names the
   source files, checks and expected handoff; never invent facts to fill the brief.
-- **Check meaning as well as a reading score.** Save the exact opening text and
-  its readability result in the audit. A score is a diagnostic, not proof that
-  the prose makes sense. A reviewer must still identify the audience, task,
-  reason and outcome from those sentences. Unchecked readability stays UNKNOWN.
+- **Review meaning before accepting a score.** Save the exact opening and its
+  artifact revision in the existing editorial or proof inventory. Have a
+  reviewer identify the reader/situation, the reason to care, the useful outcome
+  and the mechanism or evidence supporting it, quoting the actual words. Then
+  check that the promised outcome is delivered by the body and next step.
+  Record PASS, FAIL or UNKNOWN with a concrete reason and the readability
+  diagnostic. A short paragraph, keyword, grade score, audience label or
+  conversion word alone never passes this gate. If the opening could be moved
+  unchanged to an unrelated subject, rewrite it. Unchecked meaning or readability
+  stays UNKNOWN; the check belongs in the internal receipt, not public copy.
 - **Keep the useful visual with the short opening.** Follow
   `visuals-above-the-fold`: the topic-specific picture or diagram may come first,
   or immediately after the short opening, whichever makes the first screen
   useful. A long GCT card, checklist, changelog or navigation block must not bury
   that visual.
+
+### Money Tree opening example
+
+Before: "A useful conversation becomes a story. The story points to something
+you can learn, build or do with us. Here is how those connections look on my site."
+
+After: "Your best customer stories should help your next customer decide to buy.
+A Money Tree connects those stories, interviews and useful articles to the
+services you sell, so people can see your work and take the next step. Explore
+mine to see how the same approach can work on your site."
+
+This is a writing example, not a measured conversion claim. Adapt it to the real
+reader, proof and contents of the artifact; do not duplicate it across the fleet.
 
 The maintained public writing standard is
 https://localservicespotlight.com/article-guidelines/; the definitive-hub method
@@ -1307,6 +1437,53 @@ doing all the persuasive work. Phrase bans would also flag quotations, legal dis
 and accurate criticism. Enforce this standard through the source-backed editorial
 preflight, the canonical proof inventory, and a rendered-page review using the two tests
 above.
+
+
+### Money pages and the site's Money Tree
+
+- Each eligible site keeps a current public-safe Money Tree: the site's actual
+  home/domain is the trunk, its buying/service destinations are branches, and
+  relevant published stories, videos and other supporting pages are leaves.
+  Link each real node to its canonical page. Do not manufacture branch traffic,
+  customers or results. Use the existing agent-runtime money-tree renderer,
+  source truth tables and cadence; do not create a competing client roster or clock.
+- A small opening diagram is a navigation overview, not the whole inventory.
+  Show the real breadth of the scoped tree through meaningful groups, readable
+  branches and inspectable leaves. State the selection and coverage beside an
+  overview, with a clear route to the complete map and text outline. Do not
+  flatten a large tree into a handful of cards that imply those are all its
+  offers, topics or proof. Do not add decorative leaves or fictitious nodes to
+  make it look abundant. The full map and useful initial state remain available
+  without interaction or JavaScript.
+- Name exactly what each count measures and date it. "Published posts linking
+  to this offer" is different from total relevant stories, customers, examples
+  or all pages on the site. Deduplicate body links under the existing method;
+  show a narrow count as a narrow count. Never disguise sparse link coverage by
+  relabeling it as total proof, or expand the count without source evidence.
+- Put that diagram where a visitor can find it, and use its relevant branch or
+  useful full tree on the money page when it explains the offer. Every money
+  page still has meaningful above-fold proof; the full tree need not replace a
+  better authentic opening moment. Link the supporting leaf to the relevant
+  buying branch and to the practical how-to where it helps the reader.
+- Spread useful proof through the decision: one relevant visual at the opening,
+  attributable example or demonstration beside each material outcome claim, and
+  another relevant proof moment near the primary buying action. A purchase page
+  cannot pass with one generic testimonial block at the bottom. If the evidence
+  does not support a claim, narrow or remove the claim; never invent a result or
+  count duplicated cards as additional proof.
+- Public trees show only public structure and content evidence. Sessions, leads,
+  booked jobs, conversion rates, revenue, client finances and private priorities
+  stay in the authenticated client version, including in alt text, hidden HTML,
+  JSON-LD, images and metadata. NOT_CONNECTED is not zero. Follow the existing
+  agent-runtime money-tree public/private boundary and canonical Money Tree
+  method at https://blitzmetrics.com/money-tree/.
+- A relationship refresh adds a newly verified moment, useful lesson or relevant
+  next step. It does not simply rotate names or strengthen the relationship word.
+  Review priority connections and money pages weekly and all other eligible
+  sites/pages monthly through existing owners and reconciled schedules. Record
+  the actual next due date; unknown ownership or publication rails remain HOLD.
+  Keep audit categories and review notes internal, with one compact public source
+  line when useful. Never make the reader defend the author's legitimacy.
 <!-- shared-rule:show-the-moment-not-the-resume:end -->
 
 <!-- shared-rule:icon-only-social-controls-stay-tappable:start -->

@@ -62,6 +62,17 @@ class StandardFileTests(unittest.TestCase):
         self.assertEqual(standard.captured_from, "Test fixture")
         self.assertFalse(standard.machine_checkable)
 
+    def test_rendered_gate_rejects_missing_bad_or_unbounded_thresholds(self):
+        from scripts.standards_lib import split_front_matter
+        header, _ = split_front_matter((REPOSITORY / "standards/visuals-above-the-fold.md").read_text(), "fixture")
+        policy = header["rendered_gate"]
+        parse_standard(self.write("valid-rendered.md", {**HEADER, "rendered_gate": policy}))
+        for change in ({"min_visible_fraction": 2}, {"min_visible_height": 0},
+                       {"min_visible_height": True}, {"version": 99},
+                       {"viewports": []}, {"min_visible_width": float("inf")}):
+            with self.assertRaises(StandardError):
+                parse_standard(self.write("invalid-rendered.md", {**HEADER, "rendered_gate": {**policy, **change}}))
+
     def test_a_file_with_no_header_is_still_a_valid_rule(self):
         """Rules written before the header existed must keep working."""
         standard = parse_standard(self.write("legacy-rule.md", None))

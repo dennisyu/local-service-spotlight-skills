@@ -88,7 +88,10 @@
   A count without its inspectable source URLs is decoration, not evidence.
 - **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
   at eighth-grade reading level or below, name who this is for, what it does, why
-  it matters and the useful outcome. Keep the topic-specific visual beside that
+  it matters and the useful outcome. Use the reader's actual situation and the
+  mechanism or evidence that makes the outcome useful; follow
+  `every-article-and-project-starts-with-specific-gct`. A generic benefit claim
+  or an acronym definition is not a passing opening. Keep the topic-specific visual beside that
   short opening in the first screen; it may lead. A checklist is secondary and
   must not push it below the fold. Keep the most
   specific primary visual or proof for that article above the fold: the actual framework
