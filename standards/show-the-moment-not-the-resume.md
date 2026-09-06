@@ -61,6 +61,19 @@ above.
   Link each real node to its canonical page. Do not manufacture branch traffic,
   customers or results. Use the existing agent-runtime money-tree renderer,
   source truth tables and cadence; do not create a competing client roster or clock.
+- A small opening diagram is a navigation overview, not the whole inventory.
+  Show the real breadth of the scoped tree through meaningful groups, readable
+  branches and inspectable leaves. State the selection and coverage beside an
+  overview, with a clear route to the complete map and text outline. Do not
+  flatten a large tree into a handful of cards that imply those are all its
+  offers, topics or proof. Do not add decorative leaves or fictitious nodes to
+  make it look abundant. The full map and useful initial state remain available
+  without interaction or JavaScript.
+- Name exactly what each count measures and date it. "Published posts linking
+  to this offer" is different from total relevant stories, customers, examples
+  or all pages on the site. Deduplicate body links under the existing method;
+  show a narrow count as a narrow count. Never disguise sparse link coverage by
+  relabeling it as total proof, or expand the count without source evidence.
 - Put that diagram where a visitor can find it, and use its relevant branch or
   useful full tree on the money page when it explains the offer. Every money
   page still has meaningful above-fold proof; the full tree need not replace a

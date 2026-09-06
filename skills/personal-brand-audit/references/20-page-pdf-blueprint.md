@@ -58,6 +58,12 @@ flattering bio. Use the cover’s four facts and page 2’s deeper analysis for 
 authority asset stranded on another domain, a namesake taking the search result, an unsupported
 claim, a relationship pattern, a buyer gap, or a company opportunity that changes the plan.
 
+The first two or three sentences connect the subject's actual buyer or business situation,
+the most useful supported finding, and the decision this audit enables. Explain the value before
+the method. Keep the real photo and finding map beside that opening. Each subsequent page opens
+with its specific takeaway. Generic praise, a repeated entrepreneur pitch, and unmeasured promises
+of more conversions fail the shared specific-GCT opening standard.
+
 ## Agent-install panel
 
 The installable-agent page or panel must show, at minimum, the audit’s routed skill stack and

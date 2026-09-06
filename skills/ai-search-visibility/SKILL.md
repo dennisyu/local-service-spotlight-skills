@@ -545,6 +545,13 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 
 - **Page one answers the question**, for someone who will read only page one. The most
   important and least obvious findings, up front.
+- **Open with the reader's decision and the value of this deliverable.** In the
+  first two or three sentences, connect the strongest supported finding to the
+  reader's situation and the action it enables. Follow
+  `every-article-and-project-starts-with-specific-gct`; a title, biography,
+  table of contents or methodology paragraph alone does not orient the reader.
+  On a multi-page document or deck, each later page or section also leads with
+  its useful takeaway, without repeating the whole introductory pitch.
 - **Interesting and non-obvious, not a restatement.** A summary that repeats what the
   reader already assumed has told them nothing; lead with what would change their mind.
 - **Use colour, diagrams and tables to carry the point.** A wall of text on page one is a
@@ -1149,7 +1156,10 @@ merely to satisfy the older marker check.
   A count without its inspectable source URLs is decoration, not evidence.
 - **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
   at eighth-grade reading level or below, name who this is for, what it does, why
-  it matters and the useful outcome. Keep the topic-specific visual beside that
+  it matters and the useful outcome. Use the reader's actual situation and the
+  mechanism or evidence that makes the outcome useful; follow
+  `every-article-and-project-starts-with-specific-gct`. A generic benefit claim
+  or an acronym definition is not a passing opening. Keep the topic-specific visual beside that
   short opening in the first screen; it may lead. A checklist is secondary and
   must not push it below the fold. Keep the most
   specific primary visual or proof for that article above the fold: the actual framework
@@ -1380,18 +1390,45 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
-## Every article and project starts with specific GCT in plain language
+## Every opening makes its reader, value and purpose clear
 
 - **Write the specific Goals, Content, Targeting before work begins.** Goals name
   the change the reader or project needs; Content names the source-backed lesson,
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
-- **Put who, what, why and the useful outcome in the first 2–3 sentences.** Write
-  the opening and initial orientation at US eighth-grade reading level or below.
+- **Apply the same opening standard to every format.** Documents, reports, PDFs,
+  presentations, articles, homepages, landing pages, service pages, relationship
+  pages and task guides must earn attention at the beginning. Improve their
+  maintained owner in place. A report leads with the decision its evidence
+  enables; a guide leads with the task the reader can accomplish; a buying page
+  leads with the relevant customer need and the offer's supported value. Do not
+  paste a sales pitch or "for entrepreneurs" onto a page whose reader needs
+  something else.
+- **Put the reader's situation, why it matters and the useful outcome in the
+  first 2–3 sentences.** The first line offers a specific reason to continue:
+  a recognizable problem, a consequential finding or a true moment with a clear
+  lesson. Explain what this page or document helps the reader do and how the
+  offered method, evidence or tool helps. The reader may be named directly or
+  made unmistakable through their situation. They should not have to scroll
+  through history, credentials, an abstract definition or a system description
+  to find the point. Write the opening at US eighth-grade reading level or below.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Make the value concrete without inflating the promise.** On an entrepreneur's
+  Money Tree page, explain how existing customer stories, interviews and useful
+  articles connect to what customers can buy. That gives a prospect relevant
+  proof and a clear next step. On another page, name that reader's actual useful
+  outcome: choose a service, check a result, prepare for a workshop or complete
+  a task. "Build authority," "unlock potential" and "follow the stories" alone
+  do not explain the benefit. Do not claim increased conversions, revenue,
+  speed or certainty unless the evidence supports that exact claim.
+- **Use confident, source-backed language.** State the supported value directly.
+  Keep authentic moments and compact receipts; do not add doubt, reassurance,
+  hype, false urgency, invented statistics or status borrowing. A necessary
+  disclosure stays next to its claim. A true story may lead, but its relevance
+  and takeaway must become clear in that same short opening.
 - **Explain jargon on its first meaningful mention and link the owned explainer.**
   Give the familiar phrase before the specialist label: “the result we want, the
   material we will use, and who it serves — our
@@ -1405,15 +1442,34 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   the same facts. It shows how to give them one set of notes, so each assistant
   can pick up where the last one stopped.” The project brief also names the
   source files, checks and expected handoff; never invent facts to fill the brief.
-- **Check meaning as well as a reading score.** Save the exact opening text and
-  its readability result in the audit. A score is a diagnostic, not proof that
-  the prose makes sense. A reviewer must still identify the audience, task,
-  reason and outcome from those sentences. Unchecked readability stays UNKNOWN.
+- **Review meaning before accepting a score.** Save the exact opening and its
+  artifact revision in the existing editorial or proof inventory. Have a
+  reviewer identify the reader/situation, the reason to care, the useful outcome
+  and the mechanism or evidence supporting it, quoting the actual words. Then
+  check that the promised outcome is delivered by the body and next step.
+  Record PASS, FAIL or UNKNOWN with a concrete reason and the readability
+  diagnostic. A short paragraph, keyword, grade score, audience label or
+  conversion word alone never passes this gate. If the opening could be moved
+  unchanged to an unrelated subject, rewrite it. Unchecked meaning or readability
+  stays UNKNOWN; the check belongs in the internal receipt, not public copy.
 - **Keep the useful visual with the short opening.** Follow
   `visuals-above-the-fold`: the topic-specific picture or diagram may come first,
   or immediately after the short opening, whichever makes the first screen
   useful. A long GCT card, checklist, changelog or navigation block must not bury
   that visual.
+
+### Money Tree opening example
+
+Before: "A useful conversation becomes a story. The story points to something
+you can learn, build or do with us. Here is how those connections look on my site."
+
+After: "Your best customer stories should help your next customer decide to buy.
+A Money Tree connects those stories, interviews and useful articles to the
+services you sell, so people can see your work and take the next step. Explore
+mine to see how the same approach can work on your site."
+
+This is a writing example, not a measured conversion claim. Adapt it to the real
+reader, proof and contents of the artifact; do not duplicate it across the fleet.
 
 The maintained public writing standard is
 https://localservicespotlight.com/article-guidelines/; the definitive-hub method
@@ -1520,6 +1576,19 @@ above.
   Link each real node to its canonical page. Do not manufacture branch traffic,
   customers or results. Use the existing agent-runtime money-tree renderer,
   source truth tables and cadence; do not create a competing client roster or clock.
+- A small opening diagram is a navigation overview, not the whole inventory.
+  Show the real breadth of the scoped tree through meaningful groups, readable
+  branches and inspectable leaves. State the selection and coverage beside an
+  overview, with a clear route to the complete map and text outline. Do not
+  flatten a large tree into a handful of cards that imply those are all its
+  offers, topics or proof. Do not add decorative leaves or fictitious nodes to
+  make it look abundant. The full map and useful initial state remain available
+  without interaction or JavaScript.
+- Name exactly what each count measures and date it. "Published posts linking
+  to this offer" is different from total relevant stories, customers, examples
+  or all pages on the site. Deduplicate body links under the existing method;
+  show a narrow count as a narrow count. Never disguise sparse link coverage by
+  relabeling it as total proof, or expand the count without source evidence.
 - Put that diagram where a visitor can find it, and use its relevant branch or
   useful full tree on the money page when it explains the offer. Every money
   page still has meaningful above-fold proof; the full tree need not replace a

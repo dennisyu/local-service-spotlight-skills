@@ -124,6 +124,15 @@ for command/setup failure. **Exit 0 still says REVIEW_REQUIRED.** It does not
 prove authenticity, rights, useful crop, diagram correctness or video playback.
 Read the actual screenshots and source evidence before accepting the page.
 
+Review the opening separately from geometry. The maintained rule is
+`standards/every-article-and-project-starts-with-specific-gct.md`; it covers
+documents, reports, articles and all page types. Save the exact first 2–3
+sentences and artifact revision in the existing receipt, with quoted evidence
+for the reader/situation, reason to care, useful outcome and supporting mechanism.
+Confirm the artifact delivers its promise. A phrase match, score, audience label
+or screenshot measurement cannot approve meaning. Do not create a second opener
+registry or put this review metadata into the reader's path.
+
 A generator can import `loadPolicy`, `measureVisual` and `auditPage` from the
 same module. Keep its source and live receipts separately; invalid source, a
 provider save, static refresh, cache state and public acceptance are different
