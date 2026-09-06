@@ -1,6 +1,6 @@
 ---
 name: dollar-a-day-strategist
-description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1/day for 7 days, kill the bottom 90%, $30 over 30 days behind winners, lighthouse and podcast clips first. Use to turn posts with real engagement into reach, retargeting pools, and deals.
+description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1/day for 7 days, kill the bottom 90%, then recommend $30 over 30 days behind winners. Use to turn posts with real engagement into reach, retargeting pools, and deals.
 ---
 
 # Dollar-a-Day Strategist
@@ -9,7 +9,8 @@ description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1
 
 ## Inputs
 - Your organic posts/clips with REAL engagement numbers — comments, shares, watch time, not raw impressions.
-- Your lighthouse list (marquee people/brands you're tied to) and your podcast clips.
+- Your verified proof moments and podcast clips, including what happened, why it matters,
+  and the source receipt.
 - Plumbing in place: pixels, analytics, saved audiences. Boosting without a pixel is reach you can't retarget.
 - A current `gct-screen` result plus accepted engagement/roster evidence when this is
   client work. Qualification does not authorize spend.
@@ -23,7 +24,8 @@ description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1
 - At day 7, recommend killing the bottom 90%. No sunk-cost stories.
 - Recommend $30 over 30 days for winners. New audiences and bigger budgets are separate
   human-approved tests.
-- Lighthouse pieces and podcast clips jump the queue — borrowed authority converts.
+- Story-rich proof and podcast clips may jump the queue after they prove organic demand.
+  A recognizable guest alone is not proof, relevance, or a reason to spend.
 
 ## Steps
 1. **Rank** your last 60–90 days of organic by real engagement. The audience already voted; respect the vote.
@@ -38,7 +40,9 @@ description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1
 
 ## Targeting — the T in GCT (choose last)
 - Warm first: engaged viewers, profile engagers, site visitors off your pixel (the plumbing from step 5).
-- Lighthouse-adjacent: followers of the marquee people and brands in your clip.
+- Conversation-adjacent: followers of a named guest or brand only when the clip contains
+  a substantive, relevant exchange and that audience fits the GCT. Fame alone is not
+  targeting.
 - Cold last: lookalikes of converters — only after a winner proves itself warm.
 
 ## Week one, laid out
@@ -62,8 +66,8 @@ description: Amplify PROVEN organic content with Dennis Yu's Dollar-a-Day — $1
 
 ## For DealCon — agency owners & acquirers
 **If you run an agency:** Dollar-a-Day is a productized add-on with near-zero delivery cost — clients see compounding results on $30–90/month of media, and the kill/scale discipline proves stewardship better than any deck.
-**If you buy & sell companies:** put $1/day behind your deal-thesis content and lighthouse clips so sellers and brokers have been seeing you for months before the first call; post-close, boost the acquired brand's already-proven posts for immediate lift with zero new creative spend.
-**Your edge:** which one clip featuring your biggest lighthouse deserves $30 right now — and what does it say that it isn't boosted yet?
+**If you buy & sell companies:** put $1/day behind your deal-thesis content and documented proof clips so sellers and brokers have been seeing you for months before the first call; post-close, boost the acquired brand's already-proven posts for immediate lift with zero new creative spend.
+**Your edge:** which one clip carries the strongest useful moment and has already earned enough organic response to deserve a $30 test?
 
 ## Run on a persistent agent (Fable 5)
 - **Loop to done:** this is a long-horizon evidence loop — day-7 reads, recommendations,
@@ -80,7 +84,8 @@ See `boil-the-ocean.md` for the full operating principles.
 - This is how Marko Sipila scaled HVAC Quote past 300 customers: phone-shot conference interviews → the HVACQuote YouTube → $1/day on the winners. Meta wrote the method up as a case study.
 - It's a PR team that works for a dollar a day: test cheap, kill losers fast, pour fuel on unicorns.
 - Targeting comes LAST in GCT. Goals and content first — no audience can fix a post with nothing to say.
-- Prioritize podcast clips: appearances are third-party proof, and boosted proof converts to deals. Dennis tracks 236+ of his own for exactly this reason.
+- Prioritize podcast clips that contain a useful, attributable exchange and already earned
+  engagement. An appearance by itself is inventory, not positive proof.
 - You don't need the factory running to start. Boost what you've already posted; once `content-factory` (step 8) comes online, it feeds this skill every week.
 
 ## Definitive article & pairings
@@ -845,5 +850,6 @@ These are not repeated here because they govern published pages rather than agen
 - **Nothing plays at the visitor uninvited** (`nothing-plays-uninvited`)
 - **Order proof by authority, strongest first** (`order-proof-by-authority`)
 - **A photograph has to earn full bleed** (`photo-earns-full-bleed`)
+- **Show the moment, not the resume** (`show-the-moment-not-the-resume`)
 - **Every URL we say out loud resolves** (`spoken-urls-must-resolve`)
 <!-- shared-rule-index:end -->

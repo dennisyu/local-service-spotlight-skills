@@ -30,7 +30,7 @@ that inventory, not a second ledger.
 | Role | What it owns | What it must not become |
 |---|---|---|
 | Canonical inventory | Every candidate and accepted record, evidence URL, score, permission state, dedupe key, lifecycle state, and reuse destinations | A public dump of private URLs or a collection split across personal side sheets |
-| Entity-home mentions wall | The best verified proof a person wants buyers and search engines to see | The place where unverified candidates are adjudicated |
+| Entity-home mentions wall | The best verified proof, told through useful moments rather than a status leaderboard | The place where unverified candidates are adjudicated or recognizable names are used as trophies |
 | Public serving / worked-example page | A transparent, filterable view that demonstrates the method and preserves classification | A claim that every podcast or event appearance is an endorsement |
 | Reviews page | First-party and third-party reviews with source attribution | A substitute for third-party mentions or press evidence |
 | Appearance inventory | Verified participation in podcasts, events, interviews, or media | Positive sentiment unless the source contains an actual positive statement |
@@ -47,6 +47,10 @@ Use these classes consistently:
 - **Duplicate / rejected:** a repeated, mismatched, inaccessible, contradicted, or
   otherwise unusable record retained for audit history rather than silently deleted.
 
+`HOLD` is the public-serving gate, not a replacement lifecycle class. Keep the record as
+a mention candidate or appearance candidate, preserve the reason it is held, and recheck
+it when the missing identity, evidence, or permission arrives.
+
 ## Steps
 1. **Open the canonical inventory first.** Confirm its owner, columns, current schema,
    last reviewed date, and accepted vocabulary. Append there. If no inventory exists,
@@ -59,8 +63,10 @@ Use these classes consistently:
 3. **Capture the primary evidence.** Store the exact quote or concrete claim, speaker,
    speaker role and organization, source title, platform, normalized evidence URL,
    publication date, capture date, format, timestamp when applicable, and a concise note
-   explaining what the source proves. Search snippets and AI summaries are discovery
-   aids, not primary evidence.
+   explaining what the source proves. For relationship and appearance records, also
+   preserve the scene, why it mattered, any source-backed human beat, the narrowest
+   supported relationship verb, and a compact public receipt. Search snippets and AI
+   summaries are discovery aids, not primary evidence.
 4. **Resolve identity and deduplicate.** Confirm the source and subject are the intended
    people. Use the stable dedupe key `source platform + normalized evidence URL +
    speaker + date + quote hash`; merge variants into one record while retaining aliases
@@ -77,15 +83,20 @@ Use these classes consistently:
    inventory's current notes, record the three component scores, and calculate the total.
    Do not substitute buy-box relevance for a dimension; use relevance as a routing note
    or tie-breaker after the authority score.
-8. **Apply the promotion gate.** A record may move from candidate to reusable proof only
-   when it has a named source, exact quote or concrete claim, live primary evidence,
-   resolved identity, semantic deduplication, Who / Where / What score, permission state,
-   and approved reuse destinations. Unknown permission or private evidence stays out of
+8. **Apply the promotion gate.** A mention may move from candidate to reusable praise only
+   when it has a named source, exact positive language or concrete claim, live primary
+   evidence, resolved identity, semantic deduplication, Who / Where / What score,
+   permission state, and approved reuse destinations. An appearance may be reused only as
+   an appearance when primary media proves the exact moment, identity and permission are
+   resolved, and the relationship term stays within that evidence. Anonymous, initials-
+   only, domain-only, unknown-permission, or private-source claims stay `HOLD` and out of
    public surfaces.
-9. **Rank and route.** Sort strongest first, then send approved records to the entity
-   home, topic pages, schema-supported proof, sales assets, or Dollar-a-Day testing.
-   Record every reuse destination in the canonical row so public displays remain derived
-   views, not independent lists.
+9. **Rank and route.** Sort qualified records by Who / Where / What, then send approved
+   records to the entity home, topic pages, schema-supported proof, sales assets, or
+   Dollar-a-Day testing. The score decides selection and order, not public tone: a high
+   Who score cannot rescue weak What, and a recognizable face does not transfer authority
+   by proximity. Record every reuse destination in the canonical row so public displays
+   remain derived views, not independent lists.
 10. **Log gaps and leave a receipt.** Route unsupported buy-box claims to
     `reputation-gap-analyzer`; record search coverage, additions, merges, rejections,
     unresolved blockers, and the next review date. A weekly or monthly job is only
@@ -107,10 +118,29 @@ auditable.
 - **Under 15:** retain in the archive or candidate pool; do not let weak proof dilute
   the strongest proof.
 
+## Public serving format
+
+Show the moment, not the resume. A proof card or short section should carry:
+
+1. the real scene;
+2. why the moment matters to the reader;
+3. the named person and only the role relevant to that scene;
+4. one true human beat from the source; and
+5. a compact receipt with source, date, format, and link.
+
+Use one short page-level key to distinguish appearance, collaboration, and attributable
+praise. Do not repeat a legal-sounding disclaimer under every item. Run two editorial
+checks: remove the famous name and confirm a useful story remains (the trophy-name test),
+then read the full page and confirm it states supported facts instead of repeatedly
+arguing what they do not prove (the courtroom test). Keep a local qualifier only when its
+absence would materially mislead.
+
 ## Output
 - One deduplicated canonical table with row-level provenance, lifecycle state, permission
   state, Who / Where / What components, total score, and reuse destinations.
 - A ranked lighthouse shortlist and an approved public-serving queue.
+- Story-ready serving fields for every public record: scene, meaning, relevant role,
+  source-backed human beat, evidence-bounded relationship term, and compact receipt.
 - A candidate / blocker queue that preserves appearances, unknown permissions, weak
   evidence, and identity collisions without overstating them.
 - A reputation gap list and a timestamped run receipt.
@@ -121,6 +151,8 @@ auditable.
       was created; no competing row-level list remains.
 - [ ] Every promoted mention names the correct source and subject and includes the exact
       positive statement or concrete claim.
+- [ ] Anonymous, initials-only, and domain-only praise remains `HOLD`; no appearance is
+      relabeled as praise or a durable relationship.
 - [ ] Every promoted mention has live primary evidence, a normalized URL, date, format,
       and timestamp when applicable.
 - [ ] Every record has a lifecycle class, permission state, dedupe key, Who / Where /
@@ -129,6 +161,8 @@ auditable.
 - [ ] Private evidence locators and permission receipts remain private; public pages use
       only public-safe sources.
 - [ ] Public views are derived from the canonical inventory and ordered strongest first.
+- [ ] Public proof passes the trophy-name and courtroom tests and uses one page-level key
+      instead of repeated defensive disclaimers.
 - [ ] Search coverage, unresolved gaps, next review date, and run receipt are recorded.
 - [ ] The result links back to the definitive article and the stable Task Library entry.
 
@@ -167,7 +201,9 @@ See `boil-the-ocean.md` for the full operating principles.
 - The more material you paste in, the better this gets. Boil the ocean: every podcast, every event, every thank-you email.
 - Who / Where / What decides proof strength. The buy box decides where strong proof is
   useful; do not merge those two judgments into one opaque score.
-- Lighthouse mentions are the priority output: they become the pieces you boost first with Dollar-a-Day.
+- Lighthouse moments are the priority output: after the evidence gate and Who / Where /
+  What ranking, the strongest useful stories become the pieces you test first with
+  Dollar-a-Day.
 - Re-score when sources, URLs, permissions, or the positioning brief change. A recurring
   cadence is a commitment only after it has an owner, scheduler, and observed receipt.
 
@@ -602,13 +638,19 @@ is that your site did that.
 <!-- shared-rule:order-proof-by-authority:start -->
 ## Order proof by authority, strongest first
 
-- **Testimonials, logos and mentions are never in random order.** Score each on the
-  30-point scale — 10 for who said it, 10 for where it was said, 10 for what they actually
-  said — and lead with the highest.
+- **Qualified testimonials, logos and mentions are never in random order.** After each
+  record passes its truth, identity, permission, and relevance gates, score it on the
+  30-point scale — 10 for who said it, 10 for where it was said, and 10 for what they
+  actually said. Lead with the strongest useful proof for this reader.
 - **A visitor reads the first two and leaves.** Whatever is in position one is, in
   practice, your entire proof section.
-- **Video beats text.** The same endorsement on camera is more persuasive and harder to
-  fake than the same words in a pull quote; capture it as video wherever it exists.
+- **Who does not substitute for What.** A recognizable person's silent appearance can
+  still be weak proof, and their name does not transfer status by proximity. The score
+  controls selection and order; `show-the-moment-not-the-resume` controls the public
+  telling. Start with what happened and why it matters, not the person's fame.
+- **Video beats text when it preserves the meaningful moment.** The same attributable
+  praise or useful exchange on camera is more persuasive and harder to fake than a pull
+  quote. A contextless clip or photograph remains appearance evidence, not endorsement.
 - Cut the bottom of the list rather than padding it. A short list of strong proof
   outperforms a long list containing weak proof.
 <!-- shared-rule:order-proof-by-authority:end -->
@@ -1270,3 +1312,47 @@ certify a specific GCT or human comprehension; enforce this in editorial review.
 No text pattern can prove that a task ran, an artifact passed, or two pages describe
 separate executions. Enforce this through the run record, evidence manifest and review.
 <!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
+
+<!-- shared-rule:show-the-moment-not-the-resume:start -->
+## Show the moment, not the resume
+
+- **Public proof should let the reader witness a true moment, not watch the subject
+  recite a resume.** Build each proof story from five parts: the scene, why it mattered,
+  the person and their relevant role, one true human beat, and a compact receipt. The
+  human beat may be funny, awkward, generous, surprising, or humble, but it must come
+  from the source. Never manufacture personality or imitate another storyteller.
+- **Use the narrowest relationship word the evidence supports.** `Interviewed`, `hosted`,
+  `shared a meal`, `spoke at the same event`, and `worked on X` describe observable
+  moments. Reserve `friend`, `partner`, `client`, `mentor`, and similar durable terms for
+  a source or owner attestation that supports them. A verified photograph proves that
+  people were together for that moment; it does not by itself prove praise, friendship,
+  or endorsement.
+- **Praise must be exact and named.** A testimonial or endorsement needs attributable
+  positive language from an identified person or organization and a reviewable source.
+  Anonymous praise, initials-only praise, and domain-only claims stay `HOLD`; do not
+  turn missing identity into warmer copy.
+- **Keep the receipt compact.** A caption or source line can name the artifact, date,
+  format, and link. Explain evidence categories once in a short page-level key instead
+  of attaching a disclaimer to every photograph and sentence. Keep a local qualifier
+  only when omitting it would materially mislead. The full classification, permission,
+  and audit trail belong in the canonical inventory, not in the reader's path.
+- **Run the trophy-name test.** Remove the recognizable name from the paragraph. If no
+  useful scene, lesson, decision, or outcome remains, the name is functioning as a trophy.
+  Reframe around what happened and what the reader can take from it, or cut the item.
+- **Run the courtroom test.** If the page repeatedly argues what each item does *not*
+  prove, it sounds as though the author doubts the evidence. Keep the underlying gate
+  strict, then state the supported fact once in ordinary language. Confidence comes from
+  precise evidence, not from louder claims or repeated self-defense.
+- **Reconciliation with `order-proof-by-authority`:** Who / Where / What scores rank
+  evidence that already passed its truth and permission gates; they do not license status
+  borrowing. Lead with the strongest *useful* moment for this reader. A high Who score
+  cannot rescue a weak What score, and video outranks text because it preserves more of a
+  meaningful moment, not because a famous face transfers authority by proximity.
+
+No honest fleet regex can determine whether a paragraph contains a lived scene, whether
+the humor is true, whether a relationship word outruns its evidence, or whether a name is
+doing all the persuasive work. Phrase bans would also flag quotations, legal disclosures,
+and accurate criticism. Enforce this standard through the source-backed editorial
+preflight, the canonical proof inventory, and a rendered-page review using the two tests
+above.
+<!-- shared-rule:show-the-moment-not-the-resume:end -->
