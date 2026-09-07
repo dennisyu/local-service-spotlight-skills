@@ -2274,12 +2274,13 @@ above.
 
 ### Money pages and the site's Money Tree
 
-- Each eligible site keeps a current public-safe Money Tree: the site's actual
-  home/domain is the trunk, its buying/service destinations are branches, and
-  relevant published stories, videos and other supporting pages are leaves.
-  Link each real node to its canonical page. Do not manufacture branch traffic,
-  customers or results. Use the existing agent-runtime money-tree renderer,
-  source truth tables and cadence; do not create a competing client roster or clock.
+- Each eligible site keeps a current public-safe Money Tree. In the original
+  site view, the actual home/domain is the trunk, buying/service destinations
+  are branches, and relevant published stories, videos and supporting pages
+  are leaves. A personal or company view may organize the same evidence around
+  purpose, people and topics as described below. Link real nodes to their
+  canonical pages. Use the existing agent-runtime Money Tree sources, renderer
+  adapters and cadence; do not create a competing client roster or clock.
 - A small opening diagram is a navigation overview, not the whole inventory.
   Show the real breadth of the scoped tree through meaningful groups, readable
   branches and inspectable leaves. State the selection and coverage beside an
@@ -2317,6 +2318,63 @@ above.
   the actual next due date; unknown ownership or publication rails remain HOLD.
   Keep audit categories and review notes internal, with one compact public source
   line when useful. Never make the reader defend the author's legitimacy.
+
+### Purpose, relationships and published work
+
+- **Choose the view that explains the reader's decision.** In a personal or
+  company tree, roots show whom the work serves and the purpose it advances.
+  Cite an actual statement or label a faithful editorial summary; keep an
+  aspiration separate from an achieved result. The trunk carries the selected
+  organizing language, limbs connect relevant people or topics, leaves show
+  published work, and fruit marks useful offers. Dennis's requested display
+  label, "Goals, Confidence, Targeting," does not redefine the canonical
+  Goals, Content, Targeting framework. Keep each site's original domain view
+  available where it helps explain the content-to-offer structure.
+- **Keep one set of identities across views.** Tree, Connections and Results
+  use the same stable people, company, content, offer and evidence IDs. Reuse
+  the existing Second Ring identities when available; verify a new identity
+  before adding it. A change of layout, root or filter cannot create a new
+  person, published piece or relationship. Preserve company-authored content
+  as company work; featuring a founder does not make that person its author.
+- **Let the source name the connection.** Label an interview, shared event,
+  employment or dated investment as that activity. Keep its date and source
+  inspectable, including historical role qualifiers. An unavailable source
+  cannot qualify a new relationship line. A second-ring path needs a source
+  for both edges and names the intermediary; it does not assert friendship
+  between the endpoints or promise an introduction. Deduplicate the same
+  recorded activity when both participants' pages cite it.
+- **Size and color must have a stated meaning.** Limb thickness uses unique
+  supporting content count, never friendship strength. Leaf or cluster area
+  follows the number of distinct published pieces it represents; circle radius
+  follows the square root of that count, not the count itself. Keep topic/type
+  colors and text labels consistent across views, with a visible legend.
+  Only a verified public content metric with a value, unit, source and date or period
+  may replace content count as the declared size measure. Unknown views or
+  traffic remain null; do not give decorative size the appearance of data.
+- **Keep ideas and suggested routes visibly separate.** A dotted bud is an
+  editorial idea grounded in an existing sourced connection. Label it as
+  proposed and exclude it from published-content and verified-relationship
+  totals. An offer is a next step, not a sale. A published link edge must match
+  the actual source URL's destination; an external retailer link or a two-step
+  profile route is not a direct link to an offer homepage. Suggested routes
+  remain labeled suggestions until the source contains the verified link.
+- **Counts describe the selected map; outcomes require measurement.** Count
+  unique content separately from corroborating sources, branch memberships
+  and links. Keep a dated full-site census separate from a curated example.
+  Results may explain the path from content through visits, inquiries,
+  bookings and customers to collected revenue. That path is a measurement
+  plan, not a proven sequence or claim of causation. Reuse the existing Money
+  Tree snapshot and measurement-analytics contracts for actual outcomes,
+  including period, source receipt, stable joins, attribution and deduplication.
+  Preserve the public/private boundary above; unconnected public outcome rows
+  stay null and say "Not connected to this example."
+- **Review the complete first screen and its underlying outline.** Check the
+  initial tree at desktop and mobile sizes, then inspect its sources, both
+  relationship hops, labels and outcome states. Keep a useful overview and
+  linked HTML outline without JavaScript. Record visual and factual acceptance
+  against the exact data and renderer revisions in the existing inventory.
+  Carry accepted changes through the existing weekly/monthly Money Tree cycle;
+  a merged convention alone does not prove any fleet page was updated.
 <!-- shared-rule:show-the-moment-not-the-resume:end -->
 
 <!-- shared-rule:icon-only-social-controls-stay-tappable:start -->
