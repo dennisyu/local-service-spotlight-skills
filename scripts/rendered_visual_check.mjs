@@ -246,7 +246,150 @@ export async function measureVisual({ selector, policy }) {
     viewport: { width: innerWidth, height: innerHeight }, finalUrl: location.href };
 }
 
-export async function auditPage(browser, { url, selector, output }, policy) {
+// Capture every layout input that can move the selected visual or its required
+// title. This function stays self-contained so Playwright can serialize it into
+// JavaScript-disabled contexts as well as normal pages.
+export function captureLayoutState({ selector }) {
+  const rounded = value => Number.isFinite(value) ? Math.round(value * 1000) / 1000 : null;
+  const rect = node => {
+    const box = node.getBoundingClientRect();
+    return { x: rounded(box.x), y: rounded(box.y), width: rounded(box.width), height: rounded(box.height) };
+  };
+  const targets = [...document.querySelectorAll(selector)].map(node => ({
+    tag: node.tagName,
+    rect: rect(node),
+    display: getComputedStyle(node).display,
+    visibility: getComputedStyle(node).visibility,
+  }));
+  const headings = [...document.querySelectorAll('h1,[role="heading"][aria-level="1"]')].map(node => ({
+    rect: rect(node),
+    lines: [...node.getClientRects()].map(box => ({
+      x: rounded(box.x), y: rounded(box.y), width: rounded(box.width), height: rounded(box.height),
+    })),
+  }));
+  const stylesheets = [...document.querySelectorAll('link[rel~="stylesheet"],style')].map(node => ({
+    tag: node.tagName,
+    href: node.href || '',
+    media: node.media || '',
+    disabled: Boolean(node.disabled),
+    attached: Boolean(node.sheet),
+  }));
+  return {
+    readyState: document.readyState,
+    fontStatus: document.fonts?.status || 'unsupported',
+    scroll: { x: scrollX, y: scrollY },
+    viewport: { width: innerWidth, height: innerHeight },
+    document: {
+      width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight,
+      body: document.body ? rect(document.body) : null,
+    },
+    targets,
+    headings,
+    stylesheets,
+    images: [...document.images].map(image => ({
+      complete: image.complete,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      rect: rect(image),
+    })),
+  };
+}
+
+const sha256Json = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+
+export async function waitForStableLayout(page, selector, { timeoutMs = 5000, stableSamples = 4, intervalMs = 50 } = {}) {
+  const started = Date.now();
+  let previous = null, consecutive = 0, changes = 0, sampleCount = 0, lastState = null, lastSha256 = null;
+  while (Date.now() - started <= timeoutMs) {
+    lastState = await page.evaluate(captureLayoutState, { selector });
+    lastSha256 = sha256Json(lastState);
+    sampleCount++;
+    if (lastSha256 === previous) consecutive++;
+    else { if (previous !== null) changes++; consecutive = 1; }
+    if (consecutive >= stableSamples) return {
+      status: 'STABLE', elapsedMs: Date.now() - started, sampleCount, stableSamples: consecutive,
+      changes, layoutSha256: lastSha256, state: lastState,
+    };
+    previous = lastSha256;
+    await page.waitForTimeout(intervalMs);
+  }
+  return {
+    status: 'UNSTABLE', elapsedMs: Date.now() - started, sampleCount, stableSamples: consecutive,
+    changes, layoutSha256: lastSha256, state: lastState,
+  };
+}
+
+async function prepareStableLayout(page, selector) {
+  const readiness = { loadState: 'PENDING', networkIdle: false, fonts: 'PENDING', animationsSuppressed: false };
+  await page.waitForLoadState('load', { timeout: 30000 });
+  readiness.loadState = 'LOAD';
+  readiness.networkIdle = await page.waitForLoadState('networkidle', { timeout: 5000 }).then(() => true, () => false);
+  readiness.fonts = await page.evaluate(async () => {
+    if (!document.fonts?.ready) return 'UNSUPPORTED';
+    return Promise.race([
+      document.fonts.ready.then(() => document.fonts.status === 'loaded' ? 'LOADED' : document.fonts.status.toUpperCase()),
+      new Promise(resolve => setTimeout(() => resolve('TIMEOUT'), 10000)),
+    ]);
+  });
+  if (readiness.fonts === 'TIMEOUT') throw new Error('fonts did not settle before the rendered measurement');
+  await page.waitForFunction(selector => {
+    const image = document.querySelector(selector);
+    return !image || image.tagName !== 'IMG' || image.complete;
+  }, selector, { timeout: 10000 }).catch(() => {});
+  // addStyleTag waits for a synthetic load event that does not fire reliably in
+  // JavaScript-disabled contexts. Direct DOM insertion works in both contexts.
+  await page.evaluate(() => {
+    const style = document.createElement('style');
+    style.dataset.renderedVisualCheck = 'motion-suppression';
+    style.textContent = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
+    (document.head || document.documentElement).append(style);
+  });
+  readiness.animationsSuppressed = true;
+  return readiness;
+}
+
+async function captureMatchingObservation(page, { selector, policy, name, output }, options = {}) {
+  const maxCaptureAttempts = options.maxCaptureAttempts ?? 3;
+  const stability = { status: 'UNSTABLE', captureAttempts: 0, changesDetected: 0, matchingMeasurementAndScreenshot: false };
+  let lastResult = null;
+  for (let attempt = 1; attempt <= maxCaptureAttempts; attempt++) {
+    const settled = await waitForStableLayout(page, selector, options);
+    stability.captureAttempts = attempt;
+    stability.changesDetected += settled.changes;
+    stability.settle = {
+      status: settled.status, elapsedMs: settled.elapsedMs, sampleCount: settled.sampleCount,
+      stableSamples: settled.stableSamples, changes: settled.changes, layoutSha256: settled.layoutSha256,
+    };
+    if (settled.status !== 'STABLE') break;
+
+    const beforeLayout = await page.evaluate(captureLayoutState, { selector });
+    const before = await page.evaluate(measureVisual, { selector, policy });
+    const bytes = await page.screenshot({ fullPage: false, animations: 'disabled' });
+    const after = await page.evaluate(measureVisual, { selector, policy });
+    const afterLayout = await page.evaluate(captureLayoutState, { selector });
+    const beforeLayoutSha256 = sha256Json(beforeLayout), afterLayoutSha256 = sha256Json(afterLayout);
+    const beforeMeasurementSha256 = sha256Json(before), afterMeasurementSha256 = sha256Json(after);
+    const matching = beforeLayoutSha256 === afterLayoutSha256 && beforeMeasurementSha256 === afterMeasurementSha256;
+    stability.beforeLayoutSha256 = beforeLayoutSha256;
+    stability.afterLayoutSha256 = afterLayoutSha256;
+    stability.beforeMeasurementSha256 = beforeMeasurementSha256;
+    stability.afterMeasurementSha256 = afterMeasurementSha256;
+    lastResult = after;
+    if (!matching) { stability.changesDetected++; continue; }
+
+    await fs.writeFile(path.join(output, name), bytes);
+    stability.status = 'STABLE';
+    stability.matchingMeasurementAndScreenshot = true;
+    return { result: after, bytes, stability };
+  }
+  lastResult ||= await page.evaluate(measureVisual, { selector, policy });
+  lastResult.geometry = 'FAIL';
+  lastResult.reasons = [...new Set([...lastResult.reasons, 'layout did not remain stable through measurement and screenshot capture'])];
+  return { result: lastResult, bytes: null, stability };
+}
+
+export async function auditPage(browser, { url, selector, output }, policy, stabilityOptions = {}) {
   const receipt = { version: 1, requestedUrl: url, selector, observedAt: new Date().toISOString(),
     semanticReview: 'REQUIRED', sourceReview: 'REQUIRED', playbackReview: 'NOT_TESTED', policy, observations: [] };
   await fs.mkdir(output, { recursive: true });
@@ -262,16 +405,12 @@ export async function auditPage(browser, { url, selector, output }, policy) {
         document.addEventListener('play', silence, true); silence();
       });
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.evaluate(() => Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]));
-      await page.waitForFunction(selector => {
-        const image = document.querySelector(selector);
-        return !image || image.tagName !== 'IMG' || image.complete;
-      }, selector, { timeout: 10000 }).catch(() => {});
-      const result = await page.evaluate(measureVisual, { selector, policy });
+      const readiness = await prepareStableLayout(page, selector);
       const name = `${viewport.width}x${viewport.height}-js-${javaScriptEnabled ? 'on' : 'off'}.png`;
-      const bytes = await page.screenshot({ path: path.join(output, name), fullPage: false, animations: 'disabled' });
+      const { result, bytes, stability } = await captureMatchingObservation(page, { selector, policy, name, output }, stabilityOptions);
       receipt.observations.push({ ...result, httpStatus: response?.status() ?? null, javaScriptEnabled,
-        screenshot: name, screenshotSha256: createHash('sha256').update(bytes).digest('hex') });
+        screenshot: bytes ? name : null, screenshotSha256: bytes ? createHash('sha256').update(bytes).digest('hex') : null,
+        layoutStability: { ...stability, readiness } });
       if (response?.status() !== 200) { result.geometry = 'FAIL'; receipt.observations.at(-1).geometry = 'FAIL'; receipt.observations.at(-1).reasons.push('page did not return HTTP 200'); }
     } catch (error) {
       receipt.observations.push({ geometry: 'ERROR', viewport, javaScriptEnabled, reasons: [String(error.message || error)] });
