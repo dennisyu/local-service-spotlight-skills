@@ -153,6 +153,53 @@ try {
       assert.equal(JSON.parse(await fs.readFile(path.join(directory,'receipt.json'),'utf8')).playbackReview,'NOT_TESTED');
     } finally { await new Promise(resolve=>server.close(resolve)); await fs.rm(directory,{recursive:true,force:true}); }
   });
+  await test('publisher waits for delayed CSS and binds each measurement to its screenshot layout', async () => {
+    const html = `<link rel="stylesheet" href="/delayed.css"><main><div id="late-spacer" style="height:1700px"></div><h1>Roof inspection</h1>${img}</main>`;
+    const css = '*{box-sizing:border-box}body{margin:0}main{width:min(100%,800px);margin:auto}#late-spacer{display:none}';
+    let stylesheetResponses = 0;
+    const server = http.createServer((req,res) => {
+      if (req.url === '/delayed.css') return setTimeout(() => {
+        stylesheetResponses++; res.writeHead(200,{'Content-Type':'text/css'}); res.end(css);
+      },250);
+      res.writeHead(200,{'Content-Type':'text/html'}); res.end(html);
+    });
+    await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(),'lss-delayed-css-'));
+    try {
+      const oneViewportPolicy = {...policy,viewports:[{width:1280,height:800}]};
+      const receipt = await auditPage(browser, {url:`http://127.0.0.1:${server.address().port}/`,selector:'#proof',output:directory},oneViewportPolicy);
+      assert.equal(stylesheetResponses,2);
+      assert.equal(receipt.observations.length,2);
+      for (const observation of receipt.observations) {
+        assert.ok(observation.bbox.y < 200,JSON.stringify(observation));
+        assert.equal(observation.layoutStability.readiness.loadState,'LOAD');
+        assert.equal(observation.layoutStability.status,'STABLE');
+        assert.equal(observation.layoutStability.matchingMeasurementAndScreenshot,true);
+        assert.equal(observation.layoutStability.beforeLayoutSha256,observation.layoutStability.afterLayoutSha256);
+        assert.equal(observation.layoutStability.beforeMeasurementSha256,observation.layoutStability.afterMeasurementSha256);
+        const bytes=await fs.readFile(path.join(directory,observation.screenshot));
+        assert.equal(createHash('sha256').update(bytes).digest('hex'),observation.screenshotSha256);
+      }
+    } finally { await new Promise(resolve=>server.close(resolve)); await fs.rm(directory,{recursive:true,force:true}); }
+  });
+  await test('publisher records an unstable layout and does not save a mismatched screenshot', async () => {
+    const html = `<main><div id="moving-spacer"></div><h1>Roof inspection</h1>${img}</main><script>let step=0;setInterval(()=>{document.querySelector('#moving-spacer').style.height=((step++%11)*23)+'px'},20)</script>`;
+    const server = http.createServer((req,res) => {res.writeHead(200,{'Content-Type':'text/html'});res.end(html);});
+    await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(),'lss-unstable-layout-'));
+    try {
+      const oneViewportPolicy = {...policy,viewports:[{width:1280,height:800}]};
+      const receipt = await auditPage(browser, {url:`http://127.0.0.1:${server.address().port}/`,selector:'#proof',output:directory},oneViewportPolicy,
+        {timeoutMs:400,stableSamples:4,intervalMs:40,maxCaptureAttempts:1});
+      const unstable = receipt.observations.find(observation => observation.javaScriptEnabled);
+      assert.equal(unstable.geometry,'FAIL',JSON.stringify(unstable));
+      assert.equal(unstable.layoutStability.status,'UNSTABLE');
+      assert.equal(unstable.layoutStability.matchingMeasurementAndScreenshot,false);
+      assert.equal(unstable.screenshot,null);
+      assert.equal(unstable.screenshotSha256,null);
+      assert.ok(unstable.reasons.some(reason=>reason.includes('layout did not remain stable')));
+    } finally { await new Promise(resolve=>server.close(resolve)); await fs.rm(directory,{recursive:true,force:true}); }
+  });
   await test('ambiguous selector cannot silently choose the first matching image', async () => {
     assert.equal((await check(img+img)).geometry,'FAIL');
   });
