@@ -24,7 +24,7 @@ Do not record passwords, tokens, or private client data here.
 2. Add `https://github.com/dennisyu/local-service-spotlight-skills` as a marketplace.
 3. Confirm all five bundles appear.
 4. Install `lss-everything`.
-5. Confirm all 32 expected skills are listed and enabled.
+5. Confirm all 34 expected skills are listed and enabled.
 6. Start a fresh chat and use a literal trigger phrase from one selected skill.
 7. Confirm the selected skill activates and its output matches its contract.
 8. Restart Claude, return to a fresh chat, and repeat the activation check.
@@ -37,7 +37,7 @@ not a pass.
 1. Note the currently installed marketplace commit or version.
 2. Merge a harmless, identifiable canary change through a pull request. For a
    propagation check, use an agent-behavior rule such as
-   `silent-media-playback`, whose scope requires it in all 32 skills; a narrower
+   `silent-media-playback`, whose scope requires it in all 34 skills; a narrower
    rule should appear only in its applicable skills.
 3. On the test account, use the surface's **Sync** or **Update** control. If
    third-party marketplace auto-update is enabled, also record whether it arrived
@@ -112,7 +112,7 @@ Run after adding or amending anything in `standards/`.
    every skill to which its declared scope applies, not one hardcoded rule.
 3. Count the copies and record the number. For example,
    `grep -rl "shared-rule:silent-media-playback:start" skills/ | wc -l` returns
-   the current master skill count (32). Published-HTML and design-review rules may
+   the current master skill count (34). Published-HTML and design-review rules may
    have fewer copies; their count must match the scopes derived by the validator.
 4. On a canary account, sync the commit and start a fresh chat. Ask the agent to
    state the house rule without naming the file. Record the reply verbatim.

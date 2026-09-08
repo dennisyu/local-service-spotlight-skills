@@ -1,6 +1,6 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last canonical repository audit: 4 September 2026.
+Last repository audit: 7 September 2026 (PR #27 candidate, version 1.5.0; the GA4 pair becomes available after merge).
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 32 after merge of `personal-brand-audit` |
+| Skills in `lss-everything` | 34 after merge of the GA4 pair (`ga4-website-maa` + `ga4-client-view`) |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -31,13 +31,13 @@ execution authority.
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 32 |
+| `lss-everything` | 34 |
 | `authority-and-reputation` | 8 |
 | `content-engine` | 7 |
-| `client-operations` | 10 |
+| `client-operations` | 12 |
 | `quality-and-standards` | 7 |
 
-The four topical bundles partition the 32-skill master: every skill appears in exactly one
+The four topical bundles partition the 34-skill master: every skill appears in exactly one
 topical bundle. `lss-everything` remains the one complete install.
 
 ## Per-account installation register

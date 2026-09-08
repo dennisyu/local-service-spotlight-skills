@@ -79,10 +79,10 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 32 skills |
+| `lss-everything` | All 34 skills |
 | `authority-and-reputation` | Personal-brand audit intake plus its installed authority/reputation lanes; use `lss-everything` for the full workflow |
 | `content-engine` | Articles, video, repurposing, and distribution |
-| `client-operations` | Onboarding, cadence, access, reporting, and audits |
+| `client-operations` | Onboarding, cadence, access, reporting including GA4, and audits |
 | `quality-and-standards` | Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
 
 ## Skills, agents, and scheduled jobs
@@ -104,7 +104,7 @@ heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
 `scripts/sync_shared_rules.py` stamps every rule verbatim into `AGENTS.md` and
-each applicable `SKILL.md`; agent-behavior rules reach all 32 skills. The rules
+each applicable `SKILL.md`; agent-behavior rules reach all 34 skills. The rules
 arrive with the pack even though `standards/` itself is not distributed. CI
 rejects a pull request when even one required copy is missing or stale.
 

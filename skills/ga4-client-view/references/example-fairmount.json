@@ -1,0 +1,58 @@
+{
+  "eyebrow": "Website Performance · GA4",
+  "client": "Fairmount Plumbing",
+  "subline": "Plumbing · Portland metro (Willamette Valley) · GA4 property 100200300",
+  "logo": null,
+  "prepared_by": { "name": "Riley Chen", "role": "Account Lead", "photo": null },
+  "period": "Jul 16 – Aug 12, 2026",
+  "period2": "vs. prior 28 days",
+  "pulse": "We generated <b>279 leads</b> for you (163 tracking-line calls, 103 site call-clicks, 13 forms), essentially flat vs. 278. The bigger story is what happened after: <b>tracked job value jumped 105%</b> to $314,748, because the average job size nearly doubled. Same number of leads, much bigger jobs.",
+  "pills": [
+    { "lab": "Leads", "val": "279", "sub": "vs 278 last period", "delta": "▲ +0.4%", "state": "flat" },
+    { "lab": "Calls", "val": "266", "sub": "163 line + 103 clicks", "delta": "▼ −3.6%", "state": "bad" },
+    { "lab": "Forms", "val": "13", "sub": "vs 2 prior", "delta": "▲ new volume", "state": "good" },
+    { "lab": "Lead rate", "val": "7.0%", "sub": "of 3,968 visits", "delta": "▼ −0.3 pts", "state": "flat" }
+  ],
+  "callout": {
+    "k": "Half the leads have no traceable source",
+    "body": "163 of the 279 leads come in through the call-tracking line with <b>no marketing source attached</b>, so GA4 can’t yet tell us which ad, search, or listing drove them, or which channel is behind the jump in job value. Pulling the source detail from the call-tracking / job system will close that gap."
+  },
+  "left_chart": {
+    "type": "trend",
+    "title": "Weekly leads · last 13 weeks",
+    "values": [55, 43, 53, 71, 49, 63, 50, 65, 79, 89, 76, 63, 62],
+    "hi_idx": 9,
+    "last_state": "good",
+    "caption": "Climbed into mid-July (peak 89, week of Jul 13), eased into the 60s since, still well above where it started."
+  },
+  "right_chart": {
+    "type": "bars",
+    "title": "Leads by channel (traceable) · last 28 days",
+    "rows": [
+      ["Google Ads", 78, "4.2%"],
+      ["Organic search", 20, "4.1%"],
+      ["Direct", 12, "0.9%"],
+      ["Referral", 3, "4.1%"],
+      ["Organic social", 2, "1.5%"]
+    ],
+    "maxval": 78,
+    "labW": 104,
+    "barTrack": 120,
+    "caption": "Google Ads is the strongest traceable channel (~1.5× site average). Plus 163 tracking-line calls with no source."
+  },
+  "flags": [
+    { "state": "good", "text": "<b>Job value up 105%.</b> Average job nearly doubled ($1,010 → $1,897) on flat lead volume, bigger jobs at the same lead count." },
+    { "state": "good", "text": "<b>Google Ads is the best traceable channel</b>, converting ~1.5× the site average, with room to grow without losing quality." },
+    { "state": "watch", "text": "<b>Two quiet spots:</b> Layton sent 37 visits and 0 leads; a “toilet drains by itself” blog post drew 144 visits and 0 leads." }
+  ],
+  "todo": [
+    { "role": "start", "text": "<b>Confirm which system feeds calls &amp; completed jobs into GA4</b> (ServiceTitan, CallRail, or similar), the key to tracing where the leads and bigger jobs come from." },
+    { "role": "us", "text": "Pulling the source detail from the call-tracking / job system for the last two months, to match calls and closed jobs back to the marketing that drove them" },
+    { "role": "client", "text": "Keep leaning on Google Ads, it’s already converting ~1.5× the site average.", "owner": "Riley" }
+  ],
+  "citations": {
+    "project_url": "https://3.basecamp.com/0000000/buckets/00000000",
+    "ga4_url": "https://analytics.google.com/analytics/web/#/p100200300",
+    "date": "2026-08-13"
+  }
+}
