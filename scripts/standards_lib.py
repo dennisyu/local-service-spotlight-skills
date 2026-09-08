@@ -51,6 +51,9 @@ field                required  meaning
                                for personal-brand sites should not fire on a
                                product site; a sweep that cries wolf gets
                                ignored, and then the real findings go unread.
+``rendered_gate``    no        versioned browser geometry contract consumed by
+                               rendered_visual_check.mjs; source-order regex is
+                               never a substitute for this measurement.
 ``checks``           no        list of machine checks; absent means the rule is a
                                judgement call and is enforced by reading, not
                                grepping. Say so rather than faking a regex.
@@ -96,7 +99,7 @@ SCOPES = ("published-html", "agent-behaviour", "design-review")
 CHECK_KINDS = ("forbid_regex", "require_regex", "resolve_urls", "require_paths")
 
 REQUIRED_HEADER = ("title", "severity", "captured", "captured_from")
-ALLOWED_HEADER = REQUIRED_HEADER + ("source", "applies_to", "target_tags", "checks")
+ALLOWED_HEADER = REQUIRED_HEADER + ("source", "applies_to", "target_tags", "checks", "rendered_gate")
 
 DEFAULT_ALLOW_STATUS = [200, 301, 302, 400, 403, 405, 429, 999]
 
@@ -413,6 +416,24 @@ def parse_standard(path: Path) -> Standard:
         isinstance(tag, str) and SLUG_RE.match(tag) for tag in target_tags
     ):
         raise StandardError(f"{where}: 'target_tags' must be a list of kebab-case tags")
+
+    rendered_gate = header.get("rendered_gate")
+    if rendered_gate is not None:
+        required = {"version", "viewports", "min_visible_height", "min_visible_width",
+                    "min_visible_fraction", "min_viewport_fraction", "min_unoccluded_fraction",
+                    "min_heading_font_size", "min_heading_line_visible_fraction"}
+        if not isinstance(rendered_gate, dict) or set(rendered_gate) != required:
+            raise StandardError(f"{where}: malformed rendered_gate fields")
+        if rendered_gate["version"] != 1 or rendered_gate["viewports"] != [
+            {"width": 390, "height": 844}, {"width": 1280, "height": 800}
+        ]:
+            raise StandardError(f"{where}: unsupported rendered_gate version/viewports")
+        for key in required - {"version", "viewports"}:
+            value = rendered_gate[key]
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 < value < float("inf"):
+                raise StandardError(f"{where}: rendered_gate {key} must be positive and finite")
+            if "fraction" in key and value > 1:
+                raise StandardError(f"{where}: rendered_gate {key} must be at most 1")
 
     raw_checks = header.get("checks", [])
     if not isinstance(raw_checks, list):

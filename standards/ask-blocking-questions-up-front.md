@@ -17,7 +17,8 @@
   raised at minute ninety costs them the whole ninety minutes.
 - **Do not guess to avoid asking.** A guess that turns out wrong is discovered at the end,
   when it is most expensive to undo.
-- Open every plan with an explicit **open questions and missing access** block. If the
-  list is empty, say so — that is information too.
+- After the short plain-language context, put an explicit **open questions and
+  missing access** block near the start of every plan. If the list is empty, say
+  so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.

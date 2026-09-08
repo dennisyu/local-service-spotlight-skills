@@ -1,10 +1,16 @@
 ---
 name: positive-mentions-harvester
-description: Find, verify, deduplicate, record permission for, and score positive mentions on the Who / Where / What 30-point scale, then maintain one canonical proof inventory that feeds public authority pages, schema, and amplification. Run after the positioning brief and before reputation-gap analysis.
+description: Find and check praise for a person or firm. Use when reviews, press, talks or kind words are spread across sources. Keep one proof list and choose what is safe to share.
 rule-scopes: published-html, design-review
 ---
 
 # Positive Mentions Harvester
+
+Show people the real proof behind your good name. This guide puts praise and mentions in one checked list, so you can choose what to share. Start with the source links and any proof list you already use.
+
+**The path:** Source proof → Correct person → Clear class and score → Safe reuse queue.
+
+Use the [owned positive-mentions guide](https://blitzmetrics.com/how-to-collect-organize-positive-mentions-to-build-authority/) for the full method. A mention records what a named source says; appearing on a show does not by itself establish praise.
 
 **Use this when** a person or company has scattered testimonials, third-party praise,
 press, reviews, speaking clips, or social shoutouts and needs one evidence-backed system
@@ -12,8 +18,8 @@ of record. This skill collects and processes existing proof; it does not invent 
 treat every appearance as an endorsement, or publish private evidence.
 
 ## Inputs
-- Positioning brief from `business-brand-strategist`, including the buy box and the
-  claims the proof must support.
+- Positioning brief from `business-brand-strategist`, including the intended customers (the buy box) and the
+  claims the proof must support. Use the [positioning task](https://local-service-spotlight.github.io/task-library/?task=business-brand-strategist#task-business-brand-strategist) to supply that checked brief.
 - The existing canonical mentions inventory. If one exists, update it in place; do not
   start a second tracker.
 - Verified entity names, aliases, languages, profile links, clients, podcasts, events,
@@ -30,7 +36,7 @@ that inventory, not a second ledger.
 | Role | What it owns | What it must not become |
 |---|---|---|
 | Canonical inventory | Every candidate and accepted record, evidence URL, score, permission state, dedupe key, lifecycle state, and reuse destinations | A public dump of private URLs or a collection split across personal side sheets |
-| Entity-home mentions wall | The best verified proof a person wants buyers and search engines to see | The place where unverified candidates are adjudicated |
+| Entity-home mentions wall | The best verified proof, told through useful moments rather than a status leaderboard | The place where unverified candidates are adjudicated or recognizable names are used as trophies |
 | Public serving / worked-example page | A transparent, filterable view that demonstrates the method and preserves classification | A claim that every podcast or event appearance is an endorsement |
 | Reviews page | First-party and third-party reviews with source attribution | A substitute for third-party mentions or press evidence |
 | Appearance inventory | Verified participation in podcasts, events, interviews, or media | Positive sentiment unless the source contains an actual positive statement |
@@ -47,6 +53,10 @@ Use these classes consistently:
 - **Duplicate / rejected:** a repeated, mismatched, inaccessible, contradicted, or
   otherwise unusable record retained for audit history rather than silently deleted.
 
+`HOLD` is the public-serving gate, not a replacement lifecycle class. Keep the record as
+a mention candidate or appearance candidate, preserve the reason it is held, and recheck
+it when the missing identity, evidence, or permission arrives.
+
 ## Steps
 1. **Open the canonical inventory first.** Confirm its owner, columns, current schema,
    last reviewed date, and accepted vocabulary. Append there. If no inventory exists,
@@ -59,8 +69,10 @@ Use these classes consistently:
 3. **Capture the primary evidence.** Store the exact quote or concrete claim, speaker,
    speaker role and organization, source title, platform, normalized evidence URL,
    publication date, capture date, format, timestamp when applicable, and a concise note
-   explaining what the source proves. Search snippets and AI summaries are discovery
-   aids, not primary evidence.
+   explaining what the source proves. For relationship and appearance records, also
+   preserve the scene, why it mattered, any source-backed human beat, the narrowest
+   supported relationship verb, and a compact public receipt. Search snippets and AI
+   summaries are discovery aids, not primary evidence.
 4. **Resolve identity and deduplicate.** Confirm the source and subject are the intended
    people. Use the stable dedupe key `source platform + normalized evidence URL +
    speaker + date + quote hash`; merge variants into one record while retaining aliases
@@ -77,15 +89,20 @@ Use these classes consistently:
    inventory's current notes, record the three component scores, and calculate the total.
    Do not substitute buy-box relevance for a dimension; use relevance as a routing note
    or tie-breaker after the authority score.
-8. **Apply the promotion gate.** A record may move from candidate to reusable proof only
-   when it has a named source, exact quote or concrete claim, live primary evidence,
-   resolved identity, semantic deduplication, Who / Where / What score, permission state,
-   and approved reuse destinations. Unknown permission or private evidence stays out of
+8. **Apply the promotion gate.** A mention may move from candidate to reusable praise only
+   when it has a named source, exact positive language or concrete claim, live primary
+   evidence, resolved identity, semantic deduplication, Who / Where / What score,
+   permission state, and approved reuse destinations. An appearance may be reused only as
+   an appearance when primary media proves the exact moment, identity and permission are
+   resolved, and the relationship term stays within that evidence. Anonymous, initials-
+   only, domain-only, unknown-permission, or private-source claims stay `HOLD` and out of
    public surfaces.
-9. **Rank and route.** Sort strongest first, then send approved records to the entity
-   home, topic pages, schema-supported proof, sales assets, or Dollar-a-Day testing.
-   Record every reuse destination in the canonical row so public displays remain derived
-   views, not independent lists.
+9. **Rank and route.** Sort qualified records by Who / Where / What, then send approved
+   records to the entity home, topic pages, schema-supported proof, sales assets, or
+   Dollar-a-Day testing. The score decides selection and order, not public tone: a high
+   Who score cannot rescue weak What, and a recognizable face does not transfer authority
+   by proximity. Record every reuse destination in the canonical row so public displays
+   remain derived views, not independent lists.
 10. **Log gaps and leave a receipt.** Route unsupported buy-box claims to
     `reputation-gap-analyzer`; record search coverage, additions, merges, rejections,
     unresolved blockers, and the next review date. A weekly or monthly job is only
@@ -107,20 +124,43 @@ auditable.
 - **Under 15:** retain in the archive or candidate pool; do not let weak proof dilute
   the strongest proof.
 
+## Public serving format
+
+Show the moment, not the resume. A proof card or short section should carry:
+
+1. the real scene;
+2. why the moment matters to the reader;
+3. the named person and only the role relevant to that scene;
+4. one true human beat from the source; and
+5. a compact receipt with source, date, format, and link.
+
+Use one short page-level key to distinguish appearance, collaboration, and attributable
+praise. Do not repeat a legal-sounding disclaimer under every item. Run two editorial
+checks: remove the famous name and confirm a useful story remains (the trophy-name test),
+then read the full page and confirm it states supported facts instead of repeatedly
+arguing what they do not prove (the courtroom test). Keep a local qualifier only when its
+absence would materially mislead.
+
 ## Output
 - One deduplicated canonical table with row-level provenance, lifecycle state, permission
   state, Who / Where / What components, total score, and reuse destinations.
 - A ranked lighthouse shortlist and an approved public-serving queue.
+- Story-ready serving fields for every public record: scene, meaning, relevant role,
+  source-backed human beat, evidence-bounded relationship term, and compact receipt.
 - A candidate / blocker queue that preserves appearances, unknown permissions, weak
   evidence, and identity collisions without overstating them.
 - A reputation gap list and a timestamped run receipt.
 
 ## Definition of done (QA checklist)
 
+Quality assurance (QA) means checking the actual output against the source and agreed requirements; use the [Article Guidelines](https://localservicespotlight.com/article-guidelines/) for any public-facing proof page.
+
 - [ ] The existing canonical inventory was updated in place, or one governed inventory
       was created; no competing row-level list remains.
 - [ ] Every promoted mention names the correct source and subject and includes the exact
       positive statement or concrete claim.
+- [ ] Anonymous, initials-only, and domain-only praise remains `HOLD`; no appearance is
+      relabeled as praise or a durable relationship.
 - [ ] Every promoted mention has live primary evidence, a normalized URL, date, format,
       and timestamp when applicable.
 - [ ] Every record has a lifecycle class, permission state, dedupe key, Who / Where /
@@ -129,10 +169,14 @@ auditable.
 - [ ] Private evidence locators and permission receipts remain private; public pages use
       only public-safe sources.
 - [ ] Public views are derived from the canonical inventory and ordered strongest first.
+- [ ] Public proof passes the trophy-name and courtroom tests and uses one page-level key
+      instead of repeated defensive disclaimers.
 - [ ] Search coverage, unresolved gaps, next review date, and run receipt are recorded.
 - [ ] The result links back to the definitive article and the stable Task Library entry.
 
 ## Example(s)
+
+These are the source owner’s dated examples and serving destinations. Preserve their reported scope; this source update does not independently recertify their current contents, count a new run or promote the inherited Task Library contributor status.
 
 - **Dennis Yu is the worked example.** The private team workbook named *Dennis Yu
   Positive Mentions — Canonical Inventory* is the single row-level operational ledger;
@@ -148,7 +192,7 @@ auditable.
   podcast participation. An appearance becomes a positive mention only when the source
   contains attributable positive language.
 
-## Run on a persistent agent (Fable 5)
+## Run with an agent
 - **Loop to coverage:** keep sweeping until the defined names, languages, sources, and
   date ranges are exhausted. Never claim “complete” when a known source is inaccessible.
 - **Self-verify:** no record enters the serving queue without passing the promotion gate;
@@ -161,13 +205,33 @@ auditable.
   a documented job design, not Activated or Observed until a scheduler definition and a
   successful timestamped run receipt exist.
 
+A [skill is a written recipe](https://localservicespotlight.com/plugin/); an [agent is the AI worker](https://blitzmetrics.com/build-agents/) using it with actual tools and access. Give the worker this file, the existing inventory, the source scope and the allowed actions. Ask for the checked rows, evidence, holds and next owner. The [installation guide](https://localservicespotlight.com/install/) covers reusable setup. A ZIP or plugin does not grant source access or activate a schedule.
+
 See `boil-the-ocean.md` for the full operating principles.
+
+## Handoff and Content Factory context
+
+Pass the canonical row changes, search coverage and unresolved evidence to the actual inventory owner. The [reputation gap task](https://local-service-spotlight.github.io/task-library/?task=reputation-gap-analyzer#task-reputation-gap-analyzer) receives the unmet proof needs. The public-page or promotion owner receives only the approved source-backed reuse queue with its rights and destinations; routing a record is not publishing or spending.
+
+This supports the [Content Factory: Produce, Process, Post and Promote](https://blitzmetrics.com/content-factory/). Real sources are gathered in Produce, checked and shaped in Process, released only with authority in Post, and selected proven work may enter Promote. This harvest supplies checked proof; it does not claim that every row became a public page or ad.
+
+## Record the real execution
+
+Open one execution ID when work begins, with the exact starting recipe revision and actual search scope. Write the [meta article, the record of this execution](https://blitzmetrics.com/meta-article-prompt/) with the sources inspected, rows changed, checks, failures and next owner. Writing is required; public release follows existing authority. Link this recipe and its Task Library record.
+
+Keep internal research passes, QA, retries, revisions and meta writing on that same ID. A blocked run stays open with the missing source or permission and its owner, without an invented finish time. The dated public example counts below remain historical volume, not a new execution or an ID-deduplicated run count. Use the evidence to propose the smallest supported recipe improvement.
+
+### Fictional teaching example
+
+This example illustrates the method and is not a real client result. A workshop photo shows a founder on stage, while an interview includes a host's exact praise of her work. The first row remains an appearance; the second can become a mention only after its identity, evidence, permission, dedupe and score gates pass. An inaccessible private note stays on HOLD. The public queue contains only the checked permitted records.
 
 ## Notes — Dennis's method
 - The more material you paste in, the better this gets. Boil the ocean: every podcast, every event, every thank-you email.
 - Who / Where / What decides proof strength. The buy box decides where strong proof is
   useful; do not merge those two judgments into one opaque score.
-- Lighthouse mentions are the priority output: they become the pieces you boost first with Dollar-a-Day.
+- Lighthouse moments are the priority output: after the evidence gate and Who / Where /
+  What ranking, the strongest useful stories become the pieces you test first with
+  Dollar-a-Day.
 - Re-score when sources, URLs, permissions, or the positioning brief change. A recurring
   cadence is a commitment only after it has an owner, scheduler, and observed receipt.
 
@@ -262,8 +326,9 @@ person unambiguously before it reaches a published page.
   raised at minute ninety costs them the whole ninety minutes.
 - **Do not guess to avoid asking.** A guess that turns out wrong is discovered at the end,
   when it is most expensive to undo.
-- Open every plan with an explicit **open questions and missing access** block. If the
-  list is empty, say so — that is information too.
+- After the short plain-language context, put an explicit **open questions and
+  missing access** block near the start of every plan. If the list is empty, say
+  so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
@@ -402,6 +467,11 @@ standard, fleet-wide:
   photography can carry a hero; selfies cannot, at any resolution. When the only assets
   are selfies, use the typographic hero — it never looks cheap. See
   `photo-earns-full-bleed`.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.
 <!-- shared-rule:immersive-hero-standard:end -->
 
 <!-- shared-rule:keep-the-system-of-record-outside-the-model:start -->
@@ -423,6 +493,13 @@ standard, fleet-wide:
 
 - **Page one answers the question**, for someone who will read only page one. The most
   important and least obvious findings, up front.
+- **Open with the reader's decision and the value of this deliverable.** In the
+  first two or three sentences, connect the strongest supported finding to the
+  reader's situation and the action it enables. Follow
+  `every-article-and-project-starts-with-specific-gct`; a title, biography,
+  table of contents or methodology paragraph alone does not orient the reader.
+  On a multi-page document or deck, each later page or section also leads with
+  its useful takeaway, without repeating the whole introductory pitch.
 - **Interesting and non-obvious, not a restatement.** A summary that repeats what the
   reader already assumed has told them nothing; lead with what would change their mind.
 - **Use colour, diagrams and tables to carry the point.** A wall of text on page one is a
@@ -602,13 +679,19 @@ is that your site did that.
 <!-- shared-rule:order-proof-by-authority:start -->
 ## Order proof by authority, strongest first
 
-- **Testimonials, logos and mentions are never in random order.** Score each on the
-  30-point scale — 10 for who said it, 10 for where it was said, 10 for what they actually
-  said — and lead with the highest.
+- **Qualified testimonials, logos and mentions are never in random order.** After each
+  record passes its truth, identity, permission, and relevance gates, score it on the
+  30-point scale — 10 for who said it, 10 for where it was said, and 10 for what they
+  actually said. Lead with the strongest useful proof for this reader.
 - **A visitor reads the first two and leaves.** Whatever is in position one is, in
   practice, your entire proof section.
-- **Video beats text.** The same endorsement on camera is more persuasive and harder to
-  fake than the same words in a pull quote; capture it as video wherever it exists.
+- **Who does not substitute for What.** A recognizable person's silent appearance can
+  still be weak proof, and their name does not transfer status by proximity. The score
+  controls selection and order; `show-the-moment-not-the-resume` controls the public
+  telling. Start with what happened and why it matters, not the person's fame.
+- **Video beats text when it preserves the meaningful moment.** The same attributable
+  praise or useful exchange on camera is more persuasive and harder to fake than a pull
+  quote. A contextless clip or photograph remains appearance evidence, not endorsement.
 - Cut the bottom of the list rather than padding it. A short list of strong proof
   outperforms a long list containing weak proof.
 <!-- shared-rule:order-proof-by-authority:end -->
@@ -631,6 +714,11 @@ is that your site did that.
   mixed colour temperature are all invisible in a thumbnail and unmissable at full width.
 - Related: `immersive-hero-standard` for the construction; this rule is only about
   whether a given photograph is allowed to be the hero at all.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.
 <!-- shared-rule:photo-earns-full-bleed:end -->
 
 <!-- shared-rule:pre-audit-before-the-client-does:start -->
@@ -738,9 +826,9 @@ is that your site did that.
 <!-- shared-rule:every-public-page-has-real-imagery:start -->
 ## Every public page shows real people or real work
 
-- **Every visitor-facing content page must contain at least one meaningful image
+- **Every visitor-facing content page must contain at least one meaningful visual
   of the actual business: its people, its work, its customers with permission,
-  its product, or its place.** This includes conversion and utility pages such as
+  its product, its place, or an accurate diagram of its actual process.** This includes conversion and utility pages such as
   Contact, Estimate, Pricing, Financing, Warranty, Privacy, and Thank You. Do not
   ship a wall of text.
 - A logo, icon, tracking pixel, abstract decoration, AI-generated image, or stock
@@ -751,13 +839,18 @@ is that your site did that.
   when useful, a caption that explains what it proves. Describe only what the
   source establishes: never relabel one project photo as work completed in every
   city, and never infer a person, location, service, or result from a filename.
-- If no suitable approved image exists, request one and block that page from
-  publication. Do not manufacture evidence with image generation or stock.
+- If no suitable approved photograph exists, use a useful evidence-backed
+  diagram or verified source-video poster under `visuals-above-the-fold`. Do not
+  manufacture evidence with image generation or stock. If none is available,
+  hold publication and record the specific source gap and next action.
 - Build QA must inventory every rendered content route and fail when any route
-  lacks a verified real image. Keep a provenance allowlist or equivalent asset
+  lacks source-verified meaningful visual proof. Keep a provenance allowlist or equivalent asset
   record so logos and decorative images cannot make the check pass. Mark at least
   one qualifying `<img>` per page with `data-lss-real-image="verified"` only
-  after that provenance check. Also inspect the rendered desktop and mobile page;
+  after that provenance check. For a diagram, video or photographic background,
+  use `data-lss-visual-proof="verified"` with an honest aria-label/title after
+  source review. This alternate marker never makes an empty shell or unrelated
+  image pass. Also inspect the rendered desktop and mobile page;
   a hidden, broken, or contextless image does not count.
 - Machine-only documents and routes that never render as visitor content—such as
   `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
@@ -765,10 +858,16 @@ is that your site did that.
   redirect or make the page comply.
 
 The fleet check proves only that a page declares the verified marker and supplies
-a nonblank, non-data source plus nonblank alt text. It cannot prove that the
+the required description (plus a non-data source and alt for img). It cannot prove that the
 source loads, is visible, is meaningfully sized, or is truthful. Enforce those
 claims with each site's provenance-aware build validator plus a human visual
 review. Never add the marker merely to make the sweep pass.
+
+Dennis's 2026-09-05 instruction explicitly accepts diagrams, pictures or embedded
+video above the fold. That supersedes the earlier photo-only fallback without
+weakening authenticity: an accurate process diagram is useful proof, and a
+video poster must belong to the verified source. Do not add an unrelated photo
+merely to satisfy the older marker check.
 <!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
@@ -877,23 +976,82 @@ review. Never add the marker merely to make the sweep pass.
 <!-- shared-rule:lss-is-the-public-company:end -->
 
 <!-- shared-rule:outbound-email-names-the-agent:start -->
-## Outbound email names the agent
+## Every outbound agent action names the agent
 
-- Every outbound email an agent **sends** (or hands off ready-to-send) must end with a
-  one-line closer that names which agent wrote it: Grok Bot, Claude, ChatGPT, Codex,
-  Cursor, Perplexity, Gemini, or the desk name (e.g. `— Grok Bot (Ops)` /
-  `Sent via Claude`).
-- Name the agent even when `From:` is a human (Dennis). The From address is delivery;
-  the closer is transparency.
-- Place the agent line after the body and before any mail-client legal footer.
-- Do not invent a fake human VA signature to hide that an agent wrote it.
-- This does not override send-approval gates. When a desk is authorized to send, the
-  signature is mandatory. When only drafting, still include the agent name in the draft.
+- **When agent-authored content reaches another person, name the agent in the
+  message itself.** This covers sent email, Basecamp comments and messages,
+  DMs, support replies, scheduled reports, and the human-visible receipt for a
+  publish or system change. A GitHub commit or private log is supporting
+  evidence, not a substitute for visible attribution.
+- End with one compact line:
+
+  `Agent receipt: <agent> [<model if known>] · action: <drafted|sent|posted|published|changed> · human review: <reviewed by Dennis|authorized, not separately reviewed|no human review recorded>`
+
+- Put the name a human recognizes first: `Claude`, `Codex`, `Grok`, `Cursor`,
+  or the actual agent name. A persona alone is ambiguous; write `Grok — Meter
+  Maid`, not only `Meter Maid`. Include the exact model only when the runtime
+  exposes it. Otherwise omit it or say `model UNKNOWN`; never infer it from the
+  writing style, OAuth client, or vendor name.
+- State review truthfully. `Reviewed by Dennis` requires evidence that Dennis
+  reviewed that exact message or action. Permission to act is not review, so
+  use `authorized, not separately reviewed` when that is what happened. If the
+  record is missing, use `no human review recorded`.
+- Resolve the exact destination, audience, thread or record before acting. If
+  routing or authority is unclear, fail closed instead of sending to Dennis or
+  asking him to relay the work.
+- An outbound action is complete only after source-system read-back verifies
+  the destination/audience, thread or record, intended content/result, and
+  agent receipt. A toast, sent item, commit, or private note alone is not proof.
+- Leave the next action with its real owner. For completed Gmail work, archive
+  the exact thread after verified action and restore it after seven days only
+  when no human reply arrived; automation and system notices are not human
+  replies.
+- Name the agent even when `From:` or the source-system creator is Dennis. That
+  identity is the delivery account; the receipt is authorship and action
+  transparency. Place the receipt after the body and before any automatic legal
+  footer.
+- If an agent only prepared material and a human sent the final version, use
+  `Prepared with <agent>; sent by <human>` when attribution is appropriate. Do
+  not label a purely human-authored message as agent-authored, and never invent
+  a fake human assistant signature to hide agent authorship.
+- For a public page or code change, put the line in the delivery receipt or
+  source-system update; do not add operational metadata to visitor-facing copy
+  unless the publishing brief asks for it.
+- This rule grants no authority to send, post, publish, spend, merge, or change
+  access. Apply the existing approval and destination rules first. Once an
+  outbound action is separately authorized, attribution is mandatory. When only
+  drafting, include the agent name in the draft so it survives handoff.
+- Scheduled prompts that may act externally must explicitly use the
+  `outbound-action-closeout` skill and embed its routing, receipt, read-back,
+  ownership, and fail-closed rails because an unattended session may not load
+  repository rules or prior conversation.
 <!-- shared-rule:outbound-email-names-the-agent:end -->
 
 <!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:start -->
 ## Definitive articles show what they are, their evidence strength, and where they fit
 
+- **Name the kind of canonical page before judging it.** A task-definitive article
+  is the maintained recipe for one repeatable task. A topic, entity or framework hub
+  explains its subject and links to the task recipes it owns; it need not pretend to
+  execute one task. Supporting stories, opinion pieces, tool comparisons, references,
+  historical posts and meta-articles remain distinct. A repaired opening, lead visual,
+  incoming link or prior fleet-audit label does not promote any of them to a task SOP.
+- **A task recipe must let another worker repeat and check the work.** Require all of:
+  the trigger and starting state; required inputs and access; linked prerequisite tasks
+  and their expected outputs; ordered steps with decision points; the measurable output
+  and observable pass/fail criteria; and the downstream task, receiving owner/function
+  and handoff artifact. Link the canonical task in the
+  [Task Library](https://local-service-spotlight.github.io/task-library/) and its parent in the
+  [Content Factory](https://blitzmetrics.com/content-factory/). Do not invent a task,
+  prerequisite, threshold or relationship to fill a box. Mark a missing required field
+  as a gap and hold task-definitive certification until the source supports it.
+- **Keep the recipe separate from each execution record.** Every task execution writes
+  a [meta article recording the run](https://localservicespotlight.com/meta-articles/)
+  using the [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/).
+  It links to the exact canonical task, the recipe revision used and the run evidence.
+  Writing is required; publishing the meta article and changing the canonical recipe
+  follow the existing authorization for those actions. The run record feeds reviewed
+  improvements back into the recipe and skill; it never becomes a second recipe.
 - **The marker is a reviewed semantic claim, not a workflow status.** Mark a page as a
   Definitive Article, Definitive SOP or Definitive Framework only after a reviewer has
   confirmed that its labels, steps, links, evidence and canonical ownership agree with
@@ -908,12 +1066,25 @@ review. Never add the marker merely to make the sweep pass.
   says the page is the reviewed canonical owner. Task importance decides which gap to
   work first. Meta-orbit strength measures only the number of verified completed-run
   meta-articles behind the hub. None of the three may be used as a proxy for another.
-- **Derive the meta count from evidence; never type it into two sources.** One generated
-  manifest owns the exact hub URL, mapped Task Library tasks, every counted and held
-  evidence record, audit time, count and strength band. The article badge/footer and the
-  Task Library render from that manifest. If the corpus cannot be checked, report
-  `unknown`; if only a lower bound is proved, report `partial`. Never turn either into
-  zero.
+- **Derive each named metric from evidence; never type it into two sources.** One
+  generated manifest owns the exact hub URL, mapped Task Library tasks, counted and held
+  evidence records, known execution IDs or explicit missing-ID states, audit time,
+  metric names, counts and strength bands. The article and Task Library render from
+  that manifest. Keep historical public-example volume separate from verified task
+  execution frequency. If a metric cannot be checked, report `unknown`; if only a lower
+  bound is proved, report `partial`. Never turn either into zero.
+- **Preserve dated public-example counts as article volume.** An earlier review may
+  establish that a hub had a stated number of qualifying public meta articles on its
+  audit date without establishing execution IDs. Keep that dated evidence and its
+  inspectable sources. It remains historical public-example volume; it is not a claim
+  of that many distinct task runs. Missing IDs do not erase verified article evidence.
+- **Count task execution frequency separately.** Deduplicate each canonical task's
+  executions by ID and state the reporting period and result statuses. Revisions,
+  retries within one run, translations, clips and syndicated copies do not create
+  executions. A separately scoped rerun has its own ID and evidence. Keep failed/partial
+  and unpublished runs in internal history with their statuses. Older articles without
+  a reliable run identity cannot establish execution frequency; that metric remains
+  UNKNOWN or PARTIAL even when their dated article-volume count is valid.
 - **Count a primary worked example, not a generic cross-link.** A counted meta-article
   must be published, explicitly classified as a meta-article, document a completed run,
   materially execute the hub's task, and link to the exact canonical hub in its
@@ -931,13 +1102,27 @@ review. Never add the marker merely to make the sweep pass.
   exact filtered Task Library route and back to every counted meta-article. A stable
   `?task=` route opens one task and a stable `?article=` route opens the complete hub.
   A count without its inspectable source URLs is decoration, not evidence.
-- **Lead with the result and the article's own evidence.** Give the 2–3 sentence
-  plain-language summary first, then a compact outcome/checklist block. Keep the most
+- **Lead with the specific GCT and the article's own evidence.** In 2–3 sentences
+  at fifth-grade reading level or below, name who this is for, what it does, why
+  it matters and the useful outcome. Use the reader's actual situation and the
+  mechanism or evidence that makes the outcome useful; follow
+  `every-article-and-project-starts-with-specific-gct`. A generic benefit claim
+  or an acronym definition is not a passing opening. Keep the topic-specific visual beside that
+  short opening in the first screen; it may lead. A checklist is secondary and
+  must not push it below the fold. Keep the most
   specific primary visual or proof for that article above the fold: the actual framework
   diagram on a framework hub, the task-specific screenshot or flow on a software SOP,
   or the real photograph, artifact or result that proves the work. A generic system map
-  must never displace that evidence or push it below the fold. Move audience explanation,
-  history and secondary evidence below this primary orientation.
+  must never displace that evidence or push it below the fold. Keep the audience in
+  the opening; move extended background, history and secondary evidence below it.
+- **Show where a task fits after its first-screen orientation.** A Content Factory task
+  needs a responsive context diagram lower in the article: Produce → Process → Post →
+  Promote in the maintained order, only the work this task performs highlighted, and
+  linked prerequisites → this task → the next task. Show the meta-record feedback into
+  the canonical recipe. This context map is additional to the topic-specific lead
+  visual. Keep access/tracking before the factory and measurement after it when those
+  boundaries apply. An unverified placement stays a stated gap; it is not permission
+  to invent a station or certify a task with an unknown handoff.
 - **Use the larger system map as truthful context.** When an established framework has
   an exact relationship to the article, place its maintained detailed map after the
   article-specific primary visual and highlight only the subcomponents the article
@@ -978,6 +1163,24 @@ bidirectional-link verifier and rendered desktop/mobile review.
   product's natural name and official website on the execution step where the reader
   actually opens it. This preserves both education and a direct path to action without
   making the anchor lie about where it goes.
+- **Search our article inventory before choosing a provider help page.** Look up
+  the object in the Canonical Directory, Task Library and site search, then read
+  the candidate to verify that it answers this reader's question. For Obsidian,
+  use “our Obsidian setup guide” when that guide is the relevant lesson. Record
+  the entity, chosen URL and reason in the link audit. If no suitable owned
+  guide exists, keep a conceptual mention plain or cite the precise primary
+  source needed for the claim; record the content gap instead of inventing a URL.
+- **Give the page a place in the SEO Tree.** Name the canonical parent topic,
+  link supporting articles up to it, connect the hub to useful supporting proof,
+  and link across only to related guides that help the next task. Verify those
+  links in the article body; a catalog listing or sitewide footer is insufficient.
+  One topic keeps one owner across our sites. Do not mass-add unrelated links or
+  use a quota to turn every provider citation into an internal link.
+- **Keep primary citations and execution links when they do a different job.**
+  A provider's API reference can substantiate a technical claim; its download or
+  sign-in page can be the required action. Label those links by their purpose
+  and retain them alongside our training when useful. A provider citation does
+  not replace the internal explanation of how we use the tool.
 - **Verify every destination before publishing.** The name, page title and live content
   must identify the intended entity. SEO value is a by-product of a truthful,
   reader-helpful relationship; it is never a reason to guess a domain.
@@ -988,3 +1191,484 @@ destination-naming anchor above is the reconciliation. No generic fleet regex ca
 people, ownership or the right internal training page, so enforce this through the
 entity-linking preflight and a live link audit.
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
+
+<!-- shared-rule:visuals-above-the-fold:start -->
+## Visual and interactive content sits above the fold
+
+- **The visual is the hook, not the reward.** A chart, diagram, photograph,
+  calculator or interactive tool must be substantially visible in the first
+  screen alongside the page title. This applies to every fleet page, including
+  home, money, relationship, article, archive, resource and policy pages. Two or three sentences of
+  lead-in above it is the maximum.
+- **A blank or hidden block is a failed visual.** A colored shell, empty SVG,
+  broken image, loading placeholder, clipped labels or content visible only after
+  scrolling does not pass. The first screen must show a meaningful part of the
+  picture or diagram with readable labels, not just its border or a thin strip.
+  Give the figure an honest caption or accessible description of what it teaches.
+- **If the page has an interactive tool, the tool leads.** The prose becomes the
+  explanation of it, not the preamble to it. Reword any copy that points "below"
+  into a back-reference to the tool at the top.
+- **No prose run longer than about two screens** without a figure, pull quote,
+  callout or list breaking it.
+- **Why:** `every-article-has-pictures` only asks whether an image exists. A page
+  can satisfy it and still bury the picture four screens down, where nobody
+  scrolls. That is the exact failure this rule closes, and it shipped on
+  dennisyu.com before anyone noticed.
+- **Server-render the initial state of any interactive block.** WP Rocket and
+  similar optimisers delay inline JavaScript until the visitor's first
+  interaction, so a block that builds its own DOM paints as an empty shell —
+  worst of all when it is now the first thing on the page. Bake the default state
+  into the markup and make the script idempotent (`el.innerHTML = ''` before it
+  populates) so it replaces that markup instead of appending a second copy.
+- **Verify by measuring on the live URL, not the local render.** Site chrome is
+  routinely 300–400px, so a layout that clears the fold locally can fail once
+  published. Check at 1280x800 and 390x844 as an anonymous first visit, before
+  any click, scroll or other interaction. Capture the viewport and record the
+  visible content and its position, working media/labels, and overflow. Also
+  confirm the initial figure survives delayed or unavailable JavaScript.
+  Verify the saved source separately from the served page: source equality,
+  HTTP 200 and an image tag alone do not prove a working above-fold visual.
+- **Check what WordPress serves, including the CSS.** Paragraph formatting can
+  insert markup into an unprotected inline style block and discard its first
+  rule. Use a valid Custom HTML block (`wp:html`) and avoid blank lines inside
+  inline CSS. Compare the served markup and applied browser styles after the
+  save; a correct editor source does not prove the browser received valid CSS.
+- **Minimum visible proof:** on both required viewports, the loaded visual must
+  expose at least 220px of width and 160px of height, at least 40% of its own area,
+  and 8% of the viewport area. At least 90% of sampled visible points must be
+  unobscured by navigation, sticky bars or overlays. These are minimum acceptance
+  limits, not a design target. Show the face, action or diagram's useful labels;
+  geometric success cannot approve an irrelevant crop.
+- **Measure painted content, not letterboxing.** For contain/scale-down/none
+  images, use intrinsic aspect ratio, content-box dimensions and object-position
+  to measure the photo pixels that are actually displayed. Empty padding and
+  letterboxing cannot meet the visible-area or minimum-width requirement.
+  CSS backgrounds currently require background-size:cover for an automated
+  geometry pass. Contain, auto and explicit sizes stay unmeasured and fail that
+  gate until their painted bounds receive a dedicated measurement/review.
+- **Keep the title readable in that same first screen.** At least one natural
+  H1 (or level-one accessible heading) text line must be visible at 18px or
+  larger, with at least 90% of its text-line area visible and unobscured. A long
+  title may wrap; the visual may sit beside, above or below it. Do not fill the
+  viewport with a photo that hides the entire page title.
+- **A background must actually show through.** Loading the photo URL is not
+  enough. Opaque descendant panels and before/after overlays count as covers,
+  including pointer-events:none. Transparent text or a light tint can coexist
+  with the photo, but the useful visible crop still needs screenshot review.
+- **The content earns the space.** A logo, social icon, navigation, cookie banner,
+  decorative gradient, generic stock photo or unrelated portrait does not count.
+  Use an authentic relevant moment, playable captioned source video with a loaded
+  poster, or a specific diagram that teaches the page's point. Open the source
+  and the rendered screenshot. A coappearance alone never proves endorsement.
+- **Every page means every page.** The former prose/policy exemption is removed
+  by Dennis's 2026-09-05 instruction. A short policy can use a concise diagram
+  explaining its actual process. Do not invent a person or pad a page with stock.
+- **Keep media invited and silent during QA.** First paint must not autoplay.
+  YouTube uses youtube-nocookie.com, rel=0, cc_load_policy=1 and a page-language
+  cc_lang_pref. A click-to-play poster counts only when the real relevant image
+  loads and its destination/player is verified. An iframe rectangle, thumbnail
+  URL or screenshot of a broken player is not playable video proof. Follow
+  youtube-captions-on-by-default; never invent missing caption tracks. During
+  testing mute and set volume zero before any playback; use silent metadata and
+  posters if playback cannot be safely controlled.
+- **Use the browser gate in every builder and publisher.** After generating the
+  actual source, run scripts/rendered_visual_check.mjs on its preview and again
+  on the ordinary anonymous live URL after publication, with fresh screenshot
+  receipts for both viewports and JavaScript-disabled first paint. No selector,
+  geometry failure, missing image or measurement error is a pass. The checker
+  reads the numeric limits from this standard's rendered_gate header. Store the
+  selected visual, source/permission receipt, relevant lesson, crop/label review,
+  URL, timestamp and screenshot hashes in the existing proof inventory. Review
+  those actual screenshots before marking a page compliant; the script reports
+  geometry only and never invents a semantic or playback verdict.
+- **Reconcile hero style with this rule.** A composed full-bleed hero is welcome
+  where it works. If the usable evidence is a selfie or small authentic moment,
+  pair a restrained type layout with that image at an honest size above the fold,
+  or use a useful diagram. The older typographic-only fallback does not authorize
+  a first screen without a meaningful visual.
+
+The HTML sweep remains an early source-order warning; it cannot measure the
+fold. The rendered browser gate plus source-backed editorial review is the
+publication acceptance gate. A merged standard, a regenerated skill, an installed
+pack and a live-page pass are separate receipts. No whole-fleet success claim is
+valid while unsampled URLs, Not Active stops or per-site holds are omitted.
+<!-- shared-rule:visuals-above-the-fold:end -->
+
+<!-- shared-rule:an-unanswered-ask-never-stops-the-work:start -->
+## An unanswered ask never stops the work
+
+- **Silence is not a blocker, it is a trigger.** When someone does not reply, the work
+  continues on the rescue path you chose before you sent the ask. "Waiting on them" is
+  never a status an agent reports twice.
+- **Try to need them less before you try to reach them harder.** In order: do it yourself;
+  route around; engineer the dependency so it cannot block again; only then ask. Most asks
+  disappear at step one once you actually test them, because "I need this from them" is
+  usually "I would prefer this from them."
+- **Only three things justify asking a human at all** — binding authority, credentials or
+  physical access nobody else holds, and a fact that exists only in their head. Preference,
+  convenience, and "they would probably want to weigh in" are not gates.
+- **Every ask ships with its rescue, decided before sending**: a deadline, a named fallback
+  action, and you as the owner of that fallback. Put it in the message. "If I do not hear
+  back by Friday I will assume X and proceed" turns silence into a decision, and usually
+  produces the reply anyway.
+- **Shrink the ask until it can be answered in ten seconds.** One question, one message, a
+  yes or no where possible, plus what you already tried. A question that makes someone
+  reconstruct context is a question that does not get answered.
+- **When the deadline passes, execute the rescue quietly.** Do not re-send the same ask.
+  Do not hand the chase to whoever is busiest. Log the miss for the periodic reliability
+  record and move on: a pattern is a management conversation, held later with evidence in
+  hand, not an interruption now.
+- **The second time the same dependency blocks, stop treating it as a people problem.**
+  Build the thing that makes their non-response harmless — a watchdog, a fallback route, a
+  second credential, a cached copy. Building it once costs less than chasing it forever.
+- This does not loosen `agents-draft-humans-send`. Rescue means doing the *work* yourself,
+  never dispatching messages, publishing, spending or deleting on someone's behalf because
+  they went quiet. Where the rescue would cross that line, stage it and say so.
+- Rescue toward the function, not the person — see `assign-work-to-a-function`. A rescue
+  aimed at an individual who is away is not a rescue.
+- **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
+  says "waiting on", "blocked on" or "pending <person>" must also say when someone
+  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
+  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
+  run of that linter found two real ones: one five days old, one thirteen days old and
+  not actually blocked on anybody.
+- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
+  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
+  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+<!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
+
+<!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
+## Every opening makes its reader, value and purpose clear
+
+- **Write the specific Goals, Content, Targeting before work begins.** Goals name
+  the change the reader or project needs; Content names the source-backed lesson,
+  proof or deliverable that will produce that change; Targeting names the people
+  and situation it serves. “Publish an article” or “use AI” is an activity, not
+  the desired outcome. Use the same brief for the article and the project behind it.
+- **Apply the same opening standard to every format.** Documents, reports, PDFs,
+  presentations, articles, homepages, landing pages, service pages, relationship
+  pages and task guides must earn attention at the beginning. Improve their
+  maintained owner in place. A report leads with the decision its evidence
+  enables; a guide leads with the task the reader can accomplish; a buying page
+  leads with the relevant customer need and the offer's supported value. Do not
+  paste a sales pitch or "for entrepreneurs" onto a page whose reader needs
+  something else.
+- **Put the reader's situation, why it matters and the useful outcome in the
+  first 2–3 sentences.** The first line offers a specific reason to continue:
+  a recognizable problem, a consequential finding or a true moment with a clear
+  lesson. Explain what this page or document helps the reader do and how the
+  offered method, evidence or tool helps. The reader may be named directly or
+  made unmistakable through their situation. They should not have to scroll
+  through history, credentials, an abstract definition or a system description
+  to find the point. Write the opening at US fifth-grade reading level or below.
+  Use familiar words and short sentences; explain unavoidable terms on first use.
+  Put commands, architecture details and specialist terms after this orientation.
+  Readers should not have to know the acronym GCT to understand the page.
+- **Make the value concrete without inflating the promise.** On an entrepreneur's
+  Money Tree page, explain how existing customer stories, interviews and useful
+  articles connect to what customers can buy. That gives a prospect relevant
+  proof and a clear next step. On another page, name that reader's actual useful
+  outcome: choose a service, check a result, prepare for a workshop or complete
+  a task. "Build authority," "unlock potential" and "follow the stories" alone
+  do not explain the benefit. Do not claim increased conversions, revenue,
+  speed or certainty unless the evidence supports that exact claim.
+- **Use confident, source-backed language.** State the supported value directly.
+  Keep authentic moments and compact receipts; do not add doubt, reassurance,
+  hype, false urgency, invented statistics or status borrowing. A necessary
+  disclosure stays next to its claim. A true story may lead, but its relevance
+  and takeaway must become clear in that same short opening.
+- **Explain jargon on its first meaningful mention and link the owned explainer.**
+  Give the familiar phrase before the specialist label: “the result we want, the
+  material we will use, and who it serves — our
+  [Goals, Content, Targeting (GCT) brief](https://blitzmetrics.com/gct-business-strategy/).”
+  Apply this to other frameworks, acronyms and unfamiliar task terms. Verify the owned
+  destination teaches the term; use honest descriptive anchors. If no suitable owned
+  explanation exists, define the term in place and record the gap instead of inventing
+  a link. Keep this explanation short so it does not bury the lead visual.
+- **Make the opening specific enough to judge.** For a shared-memory guide:
+  “Use this guide if you work with more than one AI assistant and keep repeating
+  the same facts. It shows how to give them one set of notes, so each assistant
+  can pick up where the last one stopped.” The project brief also names the
+  source files, checks and expected handoff; never invent facts to fill the brief.
+- **Review meaning before accepting a score.** Save the exact opening and its
+  artifact revision in the existing editorial or proof inventory. Have a
+  reviewer identify the reader/situation, the reason to care, the useful outcome
+  and the mechanism or evidence supporting it, quoting the actual words. Then
+  check that the promised outcome is delivered by the body and next step.
+  Record PASS, FAIL or UNKNOWN with a concrete reason and the readability
+  diagnostic. A short paragraph, keyword, grade score, audience label or
+  conversion word alone never passes this gate. If the opening could be moved
+  unchanged to an unrelated subject, rewrite it. Unchecked meaning or readability
+  stays UNKNOWN; the check belongs in the internal receipt, not public copy.
+- **Keep the useful visual with the short opening.** Follow
+  `visuals-above-the-fold`: the topic-specific picture or diagram may come first,
+  or immediately after the short opening, whichever makes the first screen
+  useful. A long GCT card, checklist, changelog or navigation block must not bury
+  that visual.
+
+### Money Tree opening example
+
+Before: "A useful conversation becomes a story. The story points to something
+you can learn, build or do with us. Here is how those connections look on my site."
+
+After: "Your best customer stories should help your next customer decide to buy.
+A Money Tree connects those stories, interviews and useful articles to the
+services you sell, so people can see your work and take the next step. Explore
+mine to see how the same approach can work on your site."
+
+This is a writing example, not a measured conversion claim. Adapt it to the real
+reader, proof and contents of the artifact; do not duplicate it across the fleet.
+
+The maintained public writing standard is
+https://localservicespotlight.com/article-guidelines/; the definitive-hub method
+is https://blitzmetrics.com/definitive-article-guide/. The older
+`/blog-posting-guidelines/` page is an archive and SEO leaf. Improve these owners
+in place rather than publishing a competing guideline. No regex can honestly
+certify a specific GCT or human comprehension; enforce this in editorial review.
+<!-- shared-rule:every-article-and-project-starts-with-specific-gct:end -->
+
+<!-- shared-rule:every-task-execution-writes-a-meta-article:start -->
+## Every task execution writes a meta article
+
+- **Write the run record every time the task is executed.** Follow the
+  [meta-article guidelines](https://blitzmetrics.com/meta-article-prompt/) and the
+  [recipe and run-record relationship](https://localservicespotlight.com/meta-articles/).
+  A task's definitive article is the reusable recipe. Its meta article records one
+  actual execution. Writing the meta article is required even when publication is
+  pending or the run ends failed, partial or blocked after work began. A plan that
+  never executes is a plan, not an execution example.
+- **Make the record checkable.** Include a stable execution ID; canonical task URL and
+  recipe/skill revision; trigger and starting state; date and operator; inputs and
+  prerequisite outputs; steps taken and deviations; output and pass/fail results;
+  evidence links; lessons; and the next action, artifact and receiving function. Record
+  steps, time, token use and cost when measured; preserve UNKNOWN when unavailable.
+  Protect credentials and private data, and retain the full record in an authorized
+  location when a public-safe version cannot include them.
+- **Writing and publishing are different states.** Write and save the meta draft under
+  the task's existing authority. Publish or send it only through the applicable
+  authorized rail. Preserve draft, reviewed, published and verified states accurately.
+  An internal agent note, task comment or publication receipt is useful evidence but
+  does not replace the structured meta article. Required writing grants no new send,
+  publish, merge, spend or access authority.
+- **Close the learning loop with evidence.** Compare this run and prior meta articles
+  with the canonical recipe. Propose the smallest supported correction for a missing
+  input, ambiguous step, failed check or handoff. Record the decision and version any
+  accepted recipe/skill change, using the existing review and publishing authority.
+  Link the change back to the run evidence. No improvement is needed when the evidence
+  reveals no defect; do not rewrite a working recipe just to show activity.
+- **Count distinct executions once per canonical task.** Use the execution ID to
+  deduplicate drafts, edits, derivatives and retries within a run. A separately scoped
+  rerun has a new ID and its own evidence. Keep failed/partial and unpublished records
+  in internal history with their status. Verified execution frequency and dated public
+  example volume are separate metrics. Existing reviewed public-article counts remain
+  valid as historical article volume even when those articles lack execution IDs; they
+  do not establish task frequency. Preserve the evidence and audit date. Execution
+  uncertainty remains UNKNOWN or PARTIAL; do not infer a run from a mere link.
+- **Do not create a documentation loop with no end.** Writing and revising the meta
+  article is part of the original execution. It does not recursively require another
+  meta article unless a separate documentation task is explicitly scoped and executed.
+
+No text pattern can prove that a task ran, an artifact passed, or two pages describe
+separate executions. Enforce this through the run record, evidence manifest and review.
+<!-- shared-rule:every-task-execution-writes-a-meta-article:end -->
+
+<!-- shared-rule:show-the-moment-not-the-resume:start -->
+## Show the moment, not the resume
+
+- **Public proof should let the reader witness a true moment, not watch the subject
+  recite a resume.** Build each proof story from five parts: the scene, why it mattered,
+  the person and their relevant role, one true human beat, and a compact receipt. The
+  human beat may be funny, awkward, generous, surprising, or humble, but it must come
+  from the source. Never manufacture personality or imitate another storyteller.
+- **Use the narrowest relationship word the evidence supports.** `Interviewed`, `hosted`,
+  `shared a meal`, `spoke at the same event`, and `worked on X` describe observable
+  moments. Reserve `friend`, `partner`, `client`, `mentor`, and similar durable terms for
+  a source or owner attestation that supports them. A verified photograph proves that
+  people were together for that moment; it does not by itself prove praise, friendship,
+  or endorsement.
+- **Praise must be exact and named.** A testimonial or endorsement needs attributable
+  positive language from an identified person or organization and a reviewable source.
+  Anonymous praise, initials-only praise, and domain-only claims stay `HOLD`; do not
+  turn missing identity into warmer copy.
+- **Keep the receipt compact.** A caption or source line can name the artifact, date,
+  format, and link. Explain evidence categories once in a short page-level key instead
+  of attaching a disclaimer to every photograph and sentence. Keep a local qualifier
+  only when omitting it would materially mislead. The full classification, permission,
+  and audit trail belong in the canonical inventory, not in the reader's path.
+- **Run the trophy-name test.** Remove the recognizable name from the paragraph. If no
+  useful scene, lesson, decision, or outcome remains, the name is functioning as a trophy.
+  Reframe around what happened and what the reader can take from it, or cut the item.
+- **Run the courtroom test.** If the page repeatedly argues what each item does *not*
+  prove, it sounds as though the author doubts the evidence. Keep the underlying gate
+  strict, then state the supported fact once in ordinary language. Confidence comes from
+  precise evidence, not from louder claims or repeated self-defense.
+- **Reconciliation with `order-proof-by-authority`:** Who / Where / What scores rank
+  evidence that already passed its truth and permission gates; they do not license status
+  borrowing. Lead with the strongest *useful* moment for this reader. A high Who score
+  cannot rescue a weak What score, and video outranks text because it preserves more of a
+  meaningful moment, not because a famous face transfers authority by proximity.
+
+No honest fleet regex can determine whether a paragraph contains a lived scene, whether
+the humor is true, whether a relationship word outruns its evidence, or whether a name is
+doing all the persuasive work. Phrase bans would also flag quotations, legal disclosures,
+and accurate criticism. Enforce this standard through the source-backed editorial
+preflight, the canonical proof inventory, and a rendered-page review using the two tests
+above.
+
+
+### Money pages and the site's Money Tree
+
+- Each eligible site keeps a current public-safe Money Tree. In the original
+  site view, the actual home/domain is the trunk, buying/service destinations
+  are branches, and relevant published stories, videos and supporting pages
+  are leaves. A personal or company view may organize the same evidence around
+  purpose, people and topics as described below. Link real nodes to their
+  canonical pages. Use the existing agent-runtime Money Tree sources, renderer
+  adapters and cadence; do not create a competing client roster or clock.
+- A small opening diagram is a navigation overview, not the whole inventory.
+  Show the real breadth of the scoped tree through meaningful groups, readable
+  branches and inspectable leaves. State the selection and coverage beside an
+  overview, with a clear route to the complete map and text outline. Do not
+  flatten a large tree into a handful of cards that imply those are all its
+  offers, topics or proof. Do not add decorative leaves or fictitious nodes to
+  make it look abundant. The full map and useful initial state remain available
+  without interaction or JavaScript.
+- Name exactly what each count measures and date it. "Published posts linking
+  to this offer" is different from total relevant stories, customers, examples
+  or all pages on the site. Deduplicate body links under the existing method;
+  show a narrow count as a narrow count. Never disguise sparse link coverage by
+  relabeling it as total proof, or expand the count without source evidence.
+- Put that diagram where a visitor can find it, and use its relevant branch or
+  useful full tree on the money page when it explains the offer. Every money
+  page still has meaningful above-fold proof; the full tree need not replace a
+  better authentic opening moment. Link the supporting leaf to the relevant
+  buying branch and to the practical how-to where it helps the reader.
+- Spread useful proof through the decision: one relevant visual at the opening,
+  attributable example or demonstration beside each material outcome claim, and
+  another relevant proof moment near the primary buying action. A purchase page
+  cannot pass with one generic testimonial block at the bottom. If the evidence
+  does not support a claim, narrow or remove the claim; never invent a result or
+  count duplicated cards as additional proof.
+- Public trees show only public structure and content evidence. Sessions, leads,
+  booked jobs, conversion rates, revenue, client finances and private priorities
+  stay in the authenticated client version, including in alt text, hidden HTML,
+  JSON-LD, images and metadata. NOT_CONNECTED is not zero. Follow the existing
+  agent-runtime money-tree public/private boundary and canonical Money Tree
+  method at https://blitzmetrics.com/money-tree/.
+- A relationship refresh adds a newly verified moment, useful lesson or relevant
+  next step. It does not simply rotate names or strengthen the relationship word.
+  Review priority connections and money pages weekly and all other eligible
+  sites/pages monthly through existing owners and reconciled schedules. Record
+  the actual next due date; unknown ownership or publication rails remain HOLD.
+  Keep audit categories and review notes internal, with one compact public source
+  line when useful. Never make the reader defend the author's legitimacy.
+
+### Purpose, relationships and published work
+
+- **Choose the view that explains the reader's decision.** In a personal or
+  company tree, roots show whom the work serves and the purpose it advances.
+  Cite an actual statement or label a faithful editorial summary; keep an
+  aspiration separate from an achieved result. The trunk carries the selected
+  organizing language, limbs connect relevant people or topics, leaves show
+  published work, and fruit marks useful offers. Dennis's requested display
+  label, "Goals, Confidence, Targeting," does not redefine the canonical
+  Goals, Content, Targeting framework. Keep each site's original domain view
+  available where it helps explain the content-to-offer structure.
+- **Keep one set of identities across views.** Tree, Connections and Results
+  use the same stable people, company, content, offer and evidence IDs. Reuse
+  the existing Second Ring identities when available; verify a new identity
+  before adding it. A change of layout, root or filter cannot create a new
+  person, published piece or relationship. Preserve company-authored content
+  as company work; featuring a founder does not make that person its author.
+- **Let the source name the connection.** Label an interview, shared event,
+  employment or dated investment as that activity. Keep its date and source
+  inspectable, including historical role qualifiers. An unavailable source
+  cannot qualify a new relationship line. A second-ring path needs a source
+  for both edges and names the intermediary; it does not assert friendship
+  between the endpoints or promise an introduction. Deduplicate the same
+  recorded activity when both participants' pages cite it.
+- **Size and color must have a stated meaning.** Limb thickness uses unique
+  supporting content count, never friendship strength. Leaf or cluster area
+  follows the number of distinct published pieces it represents; circle radius
+  follows the square root of that count, not the count itself. Keep topic/type
+  colors and text labels consistent across views, with a visible legend.
+  Only a verified public content metric with a value, unit, source and date or period
+  may replace content count as the declared size measure. Unknown views or
+  traffic remain null; do not give decorative size the appearance of data.
+- **Keep ideas and suggested routes visibly separate.** A dotted bud is an
+  editorial idea grounded in an existing sourced connection. Label it as
+  proposed and exclude it from published-content and verified-relationship
+  totals. An offer is a next step, not a sale. A published link edge must match
+  the actual source URL's destination; an external retailer link or a two-step
+  profile route is not a direct link to an offer homepage. Suggested routes
+  remain labeled suggestions until the source contains the verified link.
+- **Counts describe the selected map; outcomes require measurement.** Count
+  unique content separately from corroborating sources, branch memberships
+  and links. Keep a dated full-site census separate from a curated example.
+  Results may explain the path from content through visits, inquiries,
+  bookings and customers to collected revenue. That path is a measurement
+  plan, not a proven sequence or claim of causation. Reuse the existing Money
+  Tree snapshot and measurement-analytics contracts for actual outcomes,
+  including period, source receipt, stable joins, attribution and deduplication.
+  Preserve the public/private boundary above; unconnected public outcome rows
+  stay null and say "Not connected to this example."
+- **Review the complete first screen and its underlying outline.** Check the
+  initial tree at desktop and mobile sizes, then inspect its sources, both
+  relationship hops, labels and outcome states. Keep a useful overview and
+  linked HTML outline without JavaScript. Record visual and factual acceptance
+  against the exact data and renderer revisions in the existing inventory.
+  Carry accepted changes through the existing weekly/monthly Money Tree cycle;
+  a merged convention alone does not prove any fleet page was updated.
+<!-- shared-rule:show-the-moment-not-the-resume:end -->
+
+<!-- shared-rule:icon-only-social-controls-stay-tappable:start -->
+## Icon-only social controls stay tappable and separate
+
+- **Make every icon-only social link a real control, not a glyph-sized target.** Its
+  computed hit area is at least 44 by 44 CSS pixels, and adjacent hit areas have a
+  deliberate gap of at least 8 CSS pixels. The visible icon may be smaller inside that
+  area. Do not use transparent overlap or negative margins to simulate spacing.
+- **Give every control an accessible name.** Prefer a concise name on the link such as
+  `aria-label="LinkedIn"`; visible or visually hidden text and a valid
+  `aria-labelledby` relationship also work. Inspect the accessibility tree and confirm
+  the computed name. A platform-shaped glyph, tooltip on hover, URL, or empty label does
+  not name the control.
+- **Fix the owning template first.** Trace the rendered control to the root header,
+  footer, reusable block, or component and correct it there. Find and verify every
+  responsive copy; builders often keep separate desktop, tablet, and mobile widgets,
+  and a page-level override can leave another copy broken. Rebuild generated CSS and
+  refresh static or caching layers through their supported path, then compare stored
+  source with what an anonymous visitor receives.
+- **Measure the rendered page at 390px wide and at desktop width.** Record each control's
+  computed width, height, accessible name, and gap to its neighbour. Confirm controls do
+  not overlap or clip and `document.documentElement.scrollWidth` is no greater than the
+  viewport width. Check keyboard focus on desktop and touch layout on mobile. A source
+  value, editor preview, or successful save is not rendered QA.
+- **Do not copy a selector or patch blindly across sites.** Before a fleet change, match
+  the exact site status and publishing authority, CMS/theme, builder or header renderer,
+  owning template/component identifier, and the defective rendered signature. Back up
+  each target, record before/after hashes and a rollback action, publish through that
+  site's supported rail, and read it back. A mismatched fingerprint, unknown status,
+  explicit hold, abnormal document, or missing rollback stays `HOLD`; it is not evidence
+  that the rest of the fleet is fixed.
+
+The fleet check deliberately catches only the unambiguous empty-`<i>` form of an unnamed
+icon link. Static HTML cannot honestly prove computed hit-area size, separation,
+responsive visibility, overflow, or every valid accessible-name relationship. Those
+remain browser measurements on the rendered page; broad class-name or inline-style
+regexes would create fragile false positives across different themes and builders.
+<!-- shared-rule:icon-only-social-controls-stay-tappable:end -->
+
+<!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:start -->
+## Skills, packs, plugins, workers and jobs have distinct states
+
+Use these terms to choose the setup your business needs. Start with one guide and one job. Check the result before you add more tools.
+
+- A **skill** is a written recipe for a kind of task. A **skill pack** is a selected group of skills. A **plugin** is a package for a particular app; it may contain skills, tool connections or other components. Name only what the reviewed package contains. Use the [owned explainer](https://localservicespotlight.com/plugin/) and [pack library](https://localservicespotlight.com/skill-packs/).
+- An **agent** is the AI worker doing an assigned task with approved tools and access. A **job** is an assigned run with inputs, checks and a result. A **scheduled job** adds a saved time or supported event; installing instructions does not create a worker or schedule. Link the [agent guide](https://blitzmetrics.com/build-agents/) and [job guide](https://blitzmetrics.com/persistent-agents/).
+- **Access** is permission to reach a source or tool in the named account and environment. Record required access, granted scope, observed connection and remaining human action separately. A downloaded ZIP, installed plugin or ready document proves none of them. Never infer approval from a package, task status or connected account.
+- **Document-ready** means the recipe has its required content and review. Task Library `complete` is a contributor-supplied document-status claim. It does not by itself prove that the guide meets the required content and review standard, or that a client task ran. Record independent document review, installed-skill activation, source access, scheduled firing, business success and semantic certification separately. Record actual executions separately with their IDs, outputs and checks.
+- Make the ZIP a useful first start: include a short start file, a one-task draft prompt, a manifest and dated source information. Say whether it is a guide archive or a platform-installable package. A downloaded snapshot does not update itself. Do not tell readers to delete old copies without considering their rollback and active-job dependencies.
+- Use the current maintained marketplace URL and exact package name. Derive any counts from its manifest, with a revision/date; do not equate the broad Task Library with the smaller curated marketplace. Mark older names and installation receipts as historical, and verify actual installed copies before claiming parity.
+- Check external platform claims against current official docs for that product, surface, plan and environment. Keep package format, installation, activation, connectors, local-file access and scheduling separate. No blanket promise that every job works on a free plan, on a phone, or while the laptop sleeps. Confirm the actual first run, output and failure handling before calling a schedule observed.
+<!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:end -->

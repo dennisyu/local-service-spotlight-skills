@@ -14,6 +14,13 @@
 
 - **Page one answers the question**, for someone who will read only page one. The most
   important and least obvious findings, up front.
+- **Open with the reader's decision and the value of this deliverable.** In the
+  first two or three sentences, connect the strongest supported finding to the
+  reader's situation and the action it enables. Follow
+  `every-article-and-project-starts-with-specific-gct`; a title, biography,
+  table of contents or methodology paragraph alone does not orient the reader.
+  On a multi-page document or deck, each later page or section also leads with
+  its useful takeaway, without repeating the whole introductory pitch.
 - **Interesting and non-obvious, not a restatement.** A summary that repeats what the
   reader already assumed has told them nothing; lead with what would change their mind.
 - **Use colour, diagrams and tables to carry the point.** A wall of text on page one is a

@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Local Service Spotlight skills for Claude — personal brand, authority, content, and client operations.",
-    "version": "1.3.0"
+    "version": "1.5.0"
   },
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install — all 32 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install — all 34 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -36,6 +36,8 @@
         "./skills/model-judgment",
         "./skills/nine-triangles",
         "./skills/one-session-client-onboarding",
+        "./skills/outbound-action-closeout",
+        "./skills/personal-brand-audit",
         "./skills/positive-mentions-harvester",
         "./skills/recursive-self-improvement-qa",
         "./skills/reputation-gap-analyzer",
@@ -51,11 +53,12 @@
     },
     {
       "name": "authority-and-reputation",
-      "description": "Get found and trusted — Knowledge Panel, AI search, reviews, proof. (7 skills)",
+      "description": "Personal-brand audit intake plus authority and reputation diagnosis. Install lss-everything for the full eight-skill audit workflow. (8 skills)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/business-brand-strategist",
+        "./skills/personal-brand-audit",
         "./skills/positive-mentions-harvester",
         "./skills/reputation-gap-analyzer",
         "./skills/knowledge-panel-entity-seo",
@@ -66,7 +69,7 @@
     },
     {
       "name": "content-engine",
-      "description": "Turn one idea into everything — articles, video, repurposing, distribution, SAE. (7 skills)",
+      "description": "Turn one idea into everything — articles, video, repurposing, amplification, distribution. (7 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -81,7 +84,7 @@
     },
     {
       "name": "client-operations",
-      "description": "Run the account — onboarding, qualification, cadence, access, reporting including GA4, audits, and SAE. (13 skills)",
+      "description": "Run the account — cadence, access, reporting including GA4, audits. (12 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -96,13 +99,12 @@
         "./skills/security-audit",
         "./skills/seo-audit",
         "./skills/software-subscription-audit",
-        "./skills/social-amplification-engine",
         "./skills/weekly-brand-maa"
       ]
     },
     {
       "name": "quality-and-standards",
-      "description": "Keep the work honest — canonical frameworks, verification, QA, judgment, the registry. (6 skills)",
+      "description": "Keep the work honest — canonical frameworks, verification, QA, judgment, closeout, and the registry. (7 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -110,6 +112,7 @@
         "./skills/recursive-self-improvement-qa",
         "./skills/model-judgment",
         "./skills/boil-the-ocean",
+        "./skills/outbound-action-closeout",
         "./skills/skill-registry",
         "./skills/nine-triangles"
       ]

@@ -12,12 +12,18 @@
 
 ## Order proof by authority, strongest first
 
-- **Testimonials, logos and mentions are never in random order.** Score each on the
-  30-point scale — 10 for who said it, 10 for where it was said, 10 for what they actually
-  said — and lead with the highest.
+- **Qualified testimonials, logos and mentions are never in random order.** After each
+  record passes its truth, identity, permission, and relevance gates, score it on the
+  30-point scale — 10 for who said it, 10 for where it was said, and 10 for what they
+  actually said. Lead with the strongest useful proof for this reader.
 - **A visitor reads the first two and leaves.** Whatever is in position one is, in
   practice, your entire proof section.
-- **Video beats text.** The same endorsement on camera is more persuasive and harder to
-  fake than the same words in a pull quote; capture it as video wherever it exists.
+- **Who does not substitute for What.** A recognizable person's silent appearance can
+  still be weak proof, and their name does not transfer status by proximity. The score
+  controls selection and order; `show-the-moment-not-the-resume` controls the public
+  telling. Start with what happened and why it matters, not the person's fame.
+- **Video beats text when it preserves the meaningful moment.** The same attributable
+  praise or useful exchange on camera is more persuasive and harder to fake than a pull
+  quote. A contextless clip or photograph remains appearance evidence, not endorsement.
 - Cut the bottom of the list rather than padding it. A short list of strong proof
   outperforms a long list containing weak proof.
