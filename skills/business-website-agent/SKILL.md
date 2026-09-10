@@ -1359,13 +1359,29 @@ above.
 - **Choose the view that explains the reader's decision.** In a personal or
   company tree, roots show whom the work serves and the purpose it advances.
   Cite an actual statement or label a faithful editorial summary; keep an
-  aspiration separate from an achieved result. Label the GCT trunk
-  "Goals, Content, and Targeting." Dennis corrected the earlier Confidence
-  label on September 8, 2026; remove that obsolete exception from new work.
+  aspiration separate from an achieved result. Spell out the specific goal, content and audience on each person’s trunk.
+  GCT means "Goals, Content, and Targeting"; the acronym belongs in the method
+  explanation, not in place of that person’s actual plan. Dennis corrected the
+  earlier Confidence label; remove that obsolete exception from new work.
   Limbs connect relevant people or topics, leaves show published work, and
   dollar apples or dollar bills mark real offer or inquiry pages.
   Keep each site's original domain view
   available where it helps explain the content-to-offer structure.
+- **One main offer is the biggest, clearly labeled apple.** Each founder or
+  company view names exactly one primary offer and links directly to its real
+  purchase, booking or inquiry page. Supporting offers appear once each as
+  smaller apples. Relationship priority cannot determine apple size. Record
+  whether the main offer was selected by the owner, is an editorial choice for
+  the example, or is supported by comparable measured revenue. Never call an
+  editorial choice the highest earner without that measurement. Keep personal
+  and company offers connected, and label different audiences clearly.
+- **Make this the foundation of the Spotlight service.** Start with the main
+  offer, the person’s specific goal/content/audience, real proof and the next
+  useful action. Teach with sourced examples for founders, contractors and
+  athletes. Show what each person wants a visitor to buy or book, how the work
+  supports it, and how inquiries and sales will be measured. Use plain words
+  on the page; link sizing rules, schemas and technical instructions at the
+  bottom. Keep mandatory disclosures near the claims they qualify.
 - **Keep one set of identities across views.** Tree, Connections and Results
   use the same stable people, company, content, offer and evidence IDs. Reuse
   the existing Second Ring identities when available; verify a new identity
@@ -1383,9 +1399,10 @@ above.
   explicit control and show the intermediary; a topic cluster is not a friend.
 - **Size and color must have a stated meaning.** Leaf or cluster area follows
   distinct published pieces; each leaf links to the exact pieces it represents.
-  A fuller canopy must come from sourced work, not invented content. Limb width,
-  portrait area and dollar-apple area may show the owner's explicitly declared
-  relationship priority when the owner authorizes that public display. Record
+  A fuller canopy must come from sourced work, not invented content. Limb width
+  may show the owner’s explicitly declared relationship priority when the owner
+  authorizes that public display. Portrait area may show selected linked content
+  or a disclosed owner priority; keep the chosen basis consistent within a view. Record
   the owner, date and basis, label it as priority, and give unrated relationships
   a neutral weight. Do not invent a ranking within a group the owner named as
   equally important. Keep priority separate from content volume: a valuable
@@ -1401,10 +1418,9 @@ above.
   the actual source URL's destination; an external retailer link or a two-step
   profile route is not a direct link to an offer homepage. Suggested routes
   remain labeled suggestions until the source contains the verified link.
-  Use a dashed dollar apple for a proposed content-to-offer route, with a real
-  destination and a useful next action on selection. A large apple with few
-  leaves highlights an opportunity to publish more from that relationship;
-  a dense canopy can reveal existing work worth connecting to a relevant offer.
+  Label proposed story-to-offer routes in the selected detail or method, with
+  a real destination and a useful next action. A dotted bud can flag a story
+  to create. Never invent a leaf to make an offer appear better supported.
 - **Counts describe the selected map; outcomes require measurement.** Count
   unique content separately from corroborating sources, branch memberships
   and links. Keep a dated full-site census separate from a curated example.
