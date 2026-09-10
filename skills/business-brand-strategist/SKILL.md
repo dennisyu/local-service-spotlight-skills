@@ -1351,11 +1351,12 @@ above.
 - **Choose the view that explains the reader's decision.** In a personal or
   company tree, roots show whom the work serves and the purpose it advances.
   Cite an actual statement or label a faithful editorial summary; keep an
-  aspiration separate from an achieved result. The trunk carries the selected
-  organizing language, limbs connect relevant people or topics, leaves show
-  published work, and fruit marks useful offers. Dennis's requested display
-  label, "Goals, Confidence, Targeting," does not redefine the canonical
-  Goals, Content, Targeting framework. Keep each site's original domain view
+  aspiration separate from an achieved result. Label the GCT trunk
+  "Goals, Content, and Targeting." Dennis corrected the earlier Confidence
+  label on September 8, 2026; remove that obsolete exception from new work.
+  Limbs connect relevant people or topics, leaves show published work, and
+  dollar apples or dollar bills mark real offer or inquiry pages.
+  Keep each site's original domain view
   available where it helps explain the content-to-offer structure.
 - **Keep one set of identities across views.** Tree, Connections and Results
   use the same stable people, company, content, offer and evidence IDs. Reuse
@@ -1369,15 +1370,22 @@ above.
   cannot qualify a new relationship line. A second-ring path needs a source
   for both edges and names the intermediary; it does not assert friendship
   between the endpoints or promise an introduction. Deduplicate the same
-  recorded activity when both participants' pages cite it.
-- **Size and color must have a stated meaning.** Limb thickness uses unique
-  supporting content count, never friendship strength. Leaf or cluster area
-  follows the number of distinct published pieces it represents; circle radius
-  follows the square root of that count, not the count itself. Keep topic/type
-  colors and text labels consistent across views, with a visible legend.
-  Only a verified public content metric with a value, unit, source and date or period
-  may replace content count as the declared size measure. Unknown views or
-  traffic remain null; do not give decorative size the appearance of data.
+  recorded activity when both participants' pages cite it. Default personal
+  views to confirmed direct relationships. Put second-ring contacts behind an
+  explicit control and show the intermediary; a topic cluster is not a friend.
+- **Size and color must have a stated meaning.** Leaf or cluster area follows
+  distinct published pieces; each leaf links to the exact pieces it represents.
+  A fuller canopy must come from sourced work, not invented content. Limb width,
+  portrait area and dollar-apple area may show the owner's explicitly declared
+  relationship priority when the owner authorizes that public display. Record
+  the owner, date and basis, label it as priority, and give unrated relationships
+  a neutral weight. Do not invent a ranking within a group the owner named as
+  equally important. Keep priority separate from content volume: a valuable
+  relationship with little published content should remain visibly important.
+  Use area, not radius, for proportional circles; keep topic colors and text
+  labels consistent with a visible legend. A measured alternative needs a
+  public value, unit, source and date or period. Priority is not measured reach,
+  endorsement, conversions or revenue; unknown metrics remain null.
 - **Keep ideas and suggested routes visibly separate.** A dotted bud is an
   editorial idea grounded in an existing sourced connection. Label it as
   proposed and exclude it from published-content and verified-relationship
@@ -1385,6 +1393,10 @@ above.
   the actual source URL's destination; an external retailer link or a two-step
   profile route is not a direct link to an offer homepage. Suggested routes
   remain labeled suggestions until the source contains the verified link.
+  Use a dashed dollar apple for a proposed content-to-offer route, with a real
+  destination and a useful next action on selection. A large apple with few
+  leaves highlights an opportunity to publish more from that relationship;
+  a dense canopy can reveal existing work worth connecting to a relevant offer.
 - **Counts describe the selected map; outcomes require measurement.** Count
   unique content separately from corroborating sources, branch memberships
   and links. Keep a dated full-site census separate from a curated example.
