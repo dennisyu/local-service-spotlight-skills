@@ -1668,3 +1668,27 @@ Use these terms to choose the setup your business needs. Start with one guide an
 - Use the current maintained marketplace URL and exact package name. Derive any counts from its manifest, with a revision/date; do not equate the broad Task Library with the smaller curated marketplace. Mark older names and installation receipts as historical, and verify actual installed copies before claiming parity.
 - Check external platform claims against current official docs for that product, surface, plan and environment. Keep package format, installation, activation, connectors, local-file access and scheduling separate. No blanket promise that every job works on a free plan, on a phone, or while the laptop sleeps. Confirm the actual first run, output and failure handling before calling a schedule observed.
 <!-- shared-rule:skills-packs-plugins-and-jobs-have-distinct-states:end -->
+
+<!-- shared-rule:lead-with-the-point-in-plain-words:start -->
+## Lead with the point, in plain words
+
+- **Write it so a fifth grader gets it, and put what matters most first, in bold.** This
+  covers every surface a human reads: email, Basecamp comments, texts, briefs, run
+  summaries, client updates.
+- **The subject line is the outcome**, not the job name, and it says whether the reader
+  has to do anything. `2 new members scored and live — nothing needs you` beats
+  `Daily scoring — ops QA: 2026-09-07`.
+- **The first line is one bold sentence**: what happened, then `Nothing needs you` or
+  `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
+  decision only the reader can make. Say what it means, not what ran.
+- **Everything technical goes below a line that reads
+  `Details (skip unless something looks wrong)`** — unchanged and complete. Above that
+  line: no file names, exit codes, IDs, hashes, timestamps, cron strings or script names.
+  Under 150 words, sentences under 15 words, fifth-grade reading level.
+- **Nothing is deleted and nothing is softened.** Detail is not the problem, order is. A
+  failure is the bold first line, not a footnote — a shorter top never means a cleaner
+  story than the run actually had.
+- This is `visuals-above-the-fold` applied to writing, and the sibling of
+  `lead-with-a-visual-executive-summary`: put the thing that matters where the eye lands.
+  A dense report is not a thorough report, it is an unread one.
+<!-- shared-rule:lead-with-the-point-in-plain-words:end -->

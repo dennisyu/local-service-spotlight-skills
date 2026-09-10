@@ -6,15 +6,16 @@
   },
   "metadata": {
     "description": "Local Service Spotlight skills for Claude — personal brand, authority, content, and client operations.",
-    "version": "1.5.0"
+    "version": "1.5.1"
   },
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install — all 34 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install — all 35 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/agents-first-reassignment",
         "./skills/ai-search-visibility",
         "./skills/boil-the-ocean",
         "./skills/business-brand-strategist",
@@ -104,10 +105,11 @@
     },
     {
       "name": "quality-and-standards",
-      "description": "Keep the work honest — canonical frameworks, verification, QA, judgment, closeout, and the registry. (7 skills)",
+      "description": "Keep the work honest — canonical frameworks, verification, QA, judgment, closeout, and the registry. (8 skills)",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/agents-first-reassignment",
         "./skills/evidence-verification",
         "./skills/recursive-self-improvement-qa",
         "./skills/model-judgment",
