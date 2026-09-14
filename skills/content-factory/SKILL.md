@@ -1197,6 +1197,18 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Explain the connection in that same short opening.** Name one useful
+  connection and say what it does: the larger process this work serves, a guide
+  whose checked result the reader needs first, or the next task that uses this
+  result. Link the maintained owned guide on its first useful mention. For
+  example: “Use this check before you publish an article, so readers can follow
+  its steps. It is the review step in our Content Factory, which turns one
+  recording into useful posts and guides.” Verify that the linked page teaches
+  the stated process. A list of related links or an unexplained framework name
+  does not explain the relationship. When no suitable guide exists, explain
+  the connection in place and record the missing guide. Keep the full workflow
+  map farther down the page; the opening needs one clear connection, not the
+  whole system.
 - **Make the value concrete without inflating the promise.** On an entrepreneur's
   Money Tree page, explain how existing customer stories, interviews and useful
   articles connect to what customers can buy. That gives a prospect relevant
@@ -1226,7 +1238,9 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
 - **Review meaning before accepting a score.** Save the exact opening and its
   artifact revision in the existing editorial or proof inventory. Have a
   reviewer identify the reader/situation, the reason to care, the useful outcome
-  and the mechanism or evidence supporting it, quoting the actual words. Then
+  and the mechanism or evidence supporting it, quoting the actual words. Also
+  quote the connection, name the linked destination when one exists, and check
+  that it supports the relationship being claimed. Then
   check that the promised outcome is delivered by the body and next step.
   Record PASS, FAIL or UNKNOWN with a concrete reason and the readability
   diagnostic. A short paragraph, keyword, grade score, audience label or
