@@ -72,9 +72,10 @@
   explanation exists, define the term in place and record the gap instead of inventing
   a link. Keep this explanation short so it does not bury the lead visual.
 - **Make the opening specific enough to judge.** For a shared-memory guide:
-  “Use this guide if you work with more than one AI assistant and keep repeating
-  the same facts. It shows how to give them one set of notes, so each assistant
-  can pick up where the last one stopped.” The project brief also names the
+  “Use this guide if your AI helpers keep asking you for the same facts. It gives
+  them one set of notes, so they can pick up where the last helper stopped. Use
+  it as part of [setting up an AI agent](https://blitzmetrics.com/build-agents/),
+  a helper that uses tools to do a job.” The project brief also names the
   source files, checks and expected handoff; never invent facts to fill the brief.
 - **Review meaning before accepting a score.** Save the exact opening and its
   artifact revision in the existing editorial or proof inventory. Have a
@@ -99,10 +100,11 @@
 Before: "A useful conversation becomes a story. The story points to something
 you can learn, build or do with us. Here is how those connections look on my site."
 
-After: "Your best customer stories should help your next customer decide to buy.
-A Money Tree connects those stories, interviews and useful articles to the
-services you sell, so people can see your work and take the next step. Explore
-mine to see how the same approach can work on your site."
+After: "Help your next customer see your work and decide what to buy. A
+[Money Tree](https://dennisyu.com/money-tree/) links real stories and guides to
+the services you sell. It adds clear buying paths to your
+[SEO Tree](https://blitzmetrics.com/seo-tree/), the map that links each page to
+its main topic."
 
 This is a writing example, not a measured conversion claim. Adapt it to the real
 reader, proof and contents of the artifact; do not duplicate it across the fleet.
