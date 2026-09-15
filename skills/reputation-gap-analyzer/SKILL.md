@@ -1225,6 +1225,18 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **Explain the connection in that same short opening.** Name one useful
+  connection and say what it does: the larger process this work serves, a guide
+  whose checked result the reader needs first, or the next task that uses this
+  result. Link the maintained owned guide on its first useful mention. For
+  example: “Use this check before you publish an article, so readers can follow
+  its steps. It is the review step in our Content Factory, which turns one
+  recording into useful posts and guides.” Verify that the linked page teaches
+  the stated process. A list of related links or an unexplained framework name
+  does not explain the relationship. When no suitable guide exists, explain
+  the connection in place and record the missing guide. Keep the full workflow
+  map farther down the page; the opening needs one clear connection, not the
+  whole system.
 - **Make the value concrete without inflating the promise.** On an entrepreneur's
   Money Tree page, explain how existing customer stories, interviews and useful
   articles connect to what customers can buy. That gives a prospect relevant
@@ -1247,14 +1259,17 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   explanation exists, define the term in place and record the gap instead of inventing
   a link. Keep this explanation short so it does not bury the lead visual.
 - **Make the opening specific enough to judge.** For a shared-memory guide:
-  “Use this guide if you work with more than one AI assistant and keep repeating
-  the same facts. It shows how to give them one set of notes, so each assistant
-  can pick up where the last one stopped.” The project brief also names the
+  “Use this guide if your AI helpers keep asking you for the same facts. It gives
+  them one set of notes, so they can pick up where the last helper stopped. Use
+  it as part of [setting up an AI agent](https://blitzmetrics.com/build-agents/),
+  a helper that uses tools to do a job.” The project brief also names the
   source files, checks and expected handoff; never invent facts to fill the brief.
 - **Review meaning before accepting a score.** Save the exact opening and its
   artifact revision in the existing editorial or proof inventory. Have a
   reviewer identify the reader/situation, the reason to care, the useful outcome
-  and the mechanism or evidence supporting it, quoting the actual words. Then
+  and the mechanism or evidence supporting it, quoting the actual words. Also
+  quote the connection, name the linked destination when one exists, and check
+  that it supports the relationship being claimed. Then
   check that the promised outcome is delivered by the body and next step.
   Record PASS, FAIL or UNKNOWN with a concrete reason and the readability
   diagnostic. A short paragraph, keyword, grade score, audience label or
@@ -1272,10 +1287,11 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
 Before: "A useful conversation becomes a story. The story points to something
 you can learn, build or do with us. Here is how those connections look on my site."
 
-After: "Your best customer stories should help your next customer decide to buy.
-A Money Tree connects those stories, interviews and useful articles to the
-services you sell, so people can see your work and take the next step. Explore
-mine to see how the same approach can work on your site."
+After: "Help your next customer see your work and decide what to buy. A
+[Money Tree](https://dennisyu.com/money-tree/) links real stories and guides to
+the services you sell. It adds clear buying paths to your
+[SEO Tree](https://blitzmetrics.com/seo-tree/), the map that links each page to
+its main topic."
 
 This is a writing example, not a measured conversion claim. Adapt it to the real
 reader, proof and contents of the artifact; do not duplicate it across the fleet.
