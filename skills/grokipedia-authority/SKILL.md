@@ -1,10 +1,20 @@
 ---
 name: grokipedia-authority
-description: Win a Grokipedia page for a person, company, podcast, or book — and keep it accurate. Scores whether Grok can already write and SOURCE a page (readiness), hardens the citable proof, submits through the Suggest-Article flow in a disciplined drip, then monitors and corrects. Runs as a STANDALONE MONTHLY agent because notability accrues on a monthly rhythm, not a weekly one. Step 6b of the Local Service Spotlight method — the AI-encyclopedia sibling of ai-search-visibility.
+description: >-
+  Win a Grokipedia page for a person, company, podcast, or book — and keep it
+  accurate. Scores readiness, hardens citable proof, then submits through
+  Suggest-Article when the queue is open. Step 6b of the Local Service Spotlight
+  method. HARD STOP 2026-09-11: pause client Suggest-Article / 6b submissions
+  until Grokipedia queue thaws — keep scoring, harden proof, monitor LIVE only.
 rule-scopes: published-html, design-review
 ---
 
 # Grokipedia Authority
+
+
+## HARD STOP — client 6b paused (11 September 2026)
+
+**Pause Grokipedia step 6b (Suggest-Article) for clients until the submit queue thaws.** Operator freeze notice: queue stuck since April; new submits dead-queue. Keep scoring readiness, harden proof on entity homes, and monitor/correct existing LIVE pages. Do not drip-submit new client Suggest-Article packets. Resume only after a confirmed thaw.
 
 **Use this when** you want your people, clients, companies, podcasts, and books to have a Grokipedia page — xAI's AI-generated encyclopedia — and you want it done at scale, honestly, without getting flagged for spam.
 
