@@ -79,11 +79,24 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 35 skills |
+| `lss-everything` | All 36 skills |
 | `authority-and-reputation` | Personal-brand audit intake plus its installed authority/reputation lanes; use `lss-everything` for the full workflow |
 | `content-engine` | Articles, video, repurposing, and distribution |
 | `client-operations` | Onboarding, cadence, access, reporting including GA4, and audits |
 | `quality-and-standards` | Agents-first reassignment, Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
+
+## Reuse access across agents
+
+If your agents keep asking you to sign in, use
+[`reuse-agent-access`](skills/reuse-agent-access/SKILL.md), included in
+`lss-everything` and `client-operations`. It checks an authorized connector or
+signed-in browser before requesting another login. The
+[product route guide](skills/reuse-agent-access/references/product-routes.md)
+explains which apps can reuse Chrome and which keep separate sessions.
+Instructions are portable; passwords, cookies and personal access inventories
+stay private. After syncing, start a fresh chat and ask the skill to verify one
+harmless read on the site you name. Record the installed revision and result;
+publication alone does not install tools or grant access.
 
 ## Skills, agents, and scheduled jobs
 
@@ -104,7 +117,7 @@ heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
 `scripts/sync_shared_rules.py` stamps every rule verbatim into `AGENTS.md` and
-each applicable `SKILL.md`; agent-behavior rules reach all 35 skills. The rules
+each applicable `SKILL.md`; agent-behavior rules reach all 36 skills. The rules
 arrive with the pack even though `standards/` itself is not distributed. CI
 rejects a pull request when even one required copy is missing or stale.
 
