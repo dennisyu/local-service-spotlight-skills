@@ -1,0 +1,143 @@
+{
+  "eyebrow": "Maps Performance \u00b7 Google Business Profile",
+  "client": "Ridgeline Injury Lawyers",
+  "subline": "Personal injury attorney \u00b7 Riverton, WV \u00b7 locations/0000000000000000001",
+  "logo": null,
+  "prepared_by": {
+    "name": "Daniel Goodrich",
+    "role": "Local Service Spotlight"
+  },
+  "period": "Jun 18 \u2013 Sep 16, 2026",
+  "period2": "vs. prior 13 weeks (Mar 19 \u2013 Jun 17)",
+  "pulse": "Calls from the Riverton profile rose to <b>329</b>, up 6.8% on the prior 13 weeks, while website clicks and direction requests eased. Total actions held at 714 (down 2%). Maps views nearly doubled, but one day in August carries most of that jump, so we are treating the underlying growth as about a third and checking what happened on Aug 17.",
+  "pills": [
+    {
+      "lab": "Calls",
+      "val": "329",
+      "sub": "primary result",
+      "delta": "\u25b2 +6.8%",
+      "state": "good"
+    },
+    {
+      "lab": "Website clicks",
+      "val": "205",
+      "sub": "",
+      "delta": "\u25bc \u221213%",
+      "state": "bad"
+    },
+    {
+      "lab": "Directions",
+      "val": "180",
+      "sub": "",
+      "delta": "\u25bc \u22123%",
+      "state": "flat"
+    },
+    {
+      "lab": "Maps views",
+      "val": "569",
+      "sub": "386 without Aug 17",
+      "delta": "\u25b2 +95%",
+      "state": "watch"
+    }
+  ],
+  "callout": {
+    "k": "Profile lists services the firm refers out",
+    "body": "The description and service list advertise medical malpractice, and the profile surfaced for that search in July. Lemon law and legal malpractice are listed too. Until the list matches what the firm takes, some calls are the wrong calls.",
+    "state": "bad"
+  },
+  "left_chart": {
+    "type": "trend",
+    "title": "Weekly calls \u00b7 last 13 weeks",
+    "values": [
+      12,
+      26,
+      25,
+      26,
+      25,
+      41,
+      27,
+      21,
+      23,
+      15,
+      34,
+      16,
+      23,
+      15
+    ],
+    "hi_idx": 5,
+    "first_lab": "Jun 15 wk*",
+    "last_lab": "Sep 14 wk*",
+    "caption": "Full weeks ran 15 to 41 calls; the busiest began July 20. *First and last buckets are partial weeks (4 and 3 days) at the window edges."
+  },
+  "right_chart": {
+    "type": "bars",
+    "title": "Actions by type \u00b7 last 13 weeks",
+    "rows": [
+      [
+        "Calls",
+        329,
+        "+6.8%"
+      ],
+      [
+        "Website clicks",
+        205,
+        "\u221213%"
+      ],
+      [
+        "Directions",
+        180,
+        "\u22123%"
+      ]
+    ],
+    "maxval": 329,
+    "labW": 104,
+    "barTrack": 120,
+    "caption": "714 total actions vs 729 in the prior 13 weeks."
+  },
+  "flags": [
+    {
+      "state": "good",
+      "text": "<b>Calls up 6.8%</b> with the same number of Maps views on a normal day, so more of the people who found the profile called."
+    },
+    {
+      "state": "watch",
+      "text": "<b>Aug 17 carried 183 desktop Maps views</b> against a normal day of 0 to 14. Without that day Maps views were up 32%. We are checking the cause before counting it as growth."
+    },
+    {
+      "state": "good",
+      "text": "<b>35 new five-star reviews</b>, same as last period, and every one has a reply."
+    },
+    {
+      "state": "bad",
+      "text": "<b>Four one-star reviews from April have no reply</b> and no text. A short reply is still worth posting."
+    },
+    {
+      "state": "watch",
+      "text": "<b>Last photo Oct 2025, last post Jun 30.</b> Fresh photos and a monthly post keep the profile active in Google's eyes."
+    }
+  ],
+  "todo": [
+    {
+      "role": "start",
+      "text": "<b>Confirm the service list.</b> Tell us which of medical malpractice, lemon law and legal malpractice the firm takes, and we will remove the rest from the profile."
+    },
+    {
+      "role": "us",
+      "text": "Check the Aug 17 Maps spike against the Fairview profile and GA4, and report back next run."
+    },
+    {
+      "role": "us",
+      "text": "Draft four Google posts and replies for the four unanswered 1-star reviews for the office manager's approval."
+    },
+    {
+      "role": "client",
+      "text": "Send 10 or more current photos of the Riverton office and team.",
+      "owner": "the office manager"
+    }
+  ],
+  "citations": {
+    "project_url": "",
+    "gbp_url": "https://maps.google.com/maps?cid=0000000000000000000",
+    "date": "Sep 22, 2026"
+  }
+}
