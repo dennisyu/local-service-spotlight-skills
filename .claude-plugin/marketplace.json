@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Local Service Spotlight skills for Claude — personal brand, authority, content, and client operations.",
-    "version": "1.6.0"
+    "version": "1.7.0"
   },
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install — all 36 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install — all 38 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -29,6 +29,8 @@
         "./skills/evidence-verification",
         "./skills/ga4-client-view",
         "./skills/ga4-website-maa",
+        "./skills/gbp-client-view",
+        "./skills/gbp-maa",
         "./skills/gct-screen",
         "./skills/geo-visibility-audit",
         "./skills/grokipedia-authority",
@@ -86,7 +88,7 @@
     },
     {
       "name": "client-operations",
-      "description": "Run the account — cadence, access, reporting including GA4, audits. (13 skills)",
+      "description": "Run the account — cadence, access, reporting including GA4 and GBP, audits. (15 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -94,6 +96,8 @@
         "./skills/client-relationship-cadence",
         "./skills/ga4-client-view",
         "./skills/ga4-website-maa",
+        "./skills/gbp-client-view",
+        "./skills/gbp-maa",
         "./skills/gct-screen",
         "./skills/measurement-analytics",
         "./skills/one-session-client-onboarding",
