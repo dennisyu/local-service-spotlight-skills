@@ -114,6 +114,7 @@ schedule or credential changes.
 
 `skill-creator` (authoring and evals) · `cowork-plugin` (packaging and publishing) · the weekly MAA cadence.
 Inventory and the current gap list: `references/inventory.md`.
+Department-to-bundle ownership for agents: `references/category-ownership.md`.
 For scheduled marketplace checks, canary rollout, locks, receipts, and rollback:
 `references/update-contract.md`.
 
