@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Public first-result bootstrap contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "release_id", "status", "entrypoint", "install_guide", "source", "permissions", "memory", "adapters"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "release_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{3,100}$"},
+    "status": {"enum": ["PROTOTYPE", "CANDIDATE", "ACCEPTED"]},
+    "entrypoint": {"$ref": "#/$defs/url"},
+    "install_guide": {"$ref": "#/$defs/url"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "commit", "bundle", "previous_accepted_commit", "skills"],
+      "properties": {
+        "repository": {"const": "https://github.com/dennisyu/local-service-spotlight-skills"},
+        "commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "bundle": {"const": "lss-everything"},
+        "previous_accepted_commit": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-f0-9]{40}$"}]},
+        "skills": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"}}
+      }
+    },
+    "permissions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["read_public_sources", "create_local_drafts", "publish", "send", "spend", "change_access", "create_schedule"],
+      "properties": {
+        "read_public_sources": {"const": true}, "create_local_drafts": {"const": true},
+        "publish": {"const": false}, "send": {"const": false}, "spend": {"const": false},
+        "change_access": {"const": false}, "create_schedule": {"const": false}
+      }
+    },
+    "memory": {
+      "type": "object", "additionalProperties": false, "required": ["audience", "sources"],
+      "properties": {
+        "audience": {"const": "public"},
+        "sources": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "url", "access", "sensitivity", "checked_at", "expires_at", "fetch_status", "sha256"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+              "url": {"$ref": "#/$defs/url"},
+              "access": {"const": "public"}, "sensitivity": {"const": "public"},
+              "checked_at": {"type": "string", "format": "date-time"},
+              "expires_at": {"type": "string", "format": "date-time"},
+              "fetch_status": {"enum": ["READ_BACK", "FETCH_BLOCKED", "NOT_CHECKED"]},
+              "sha256": {"anyOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-f0-9]{64}$"}]}
+            }
+          }
+        }
+      }
+    },
+    "adapters": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "surface", "setup", "activation_prompt", "state", "receipt"],
+        "properties": {
+          "id": {"enum": ["claude", "codex", "grok", "web-assistant"]},
+          "surface": {"type": "string", "minLength": 1},
+          "setup": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "activation_prompt": {"type": "string", "minLength": 1},
+          "state": {"enum": ["NOT_TESTED", "INSTALLED", "ACTIVATED", "OBSERVED"]},
+          "receipt": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/receipt"}]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "environment_alias", "commit", "observed_state", "recorded_at", "result", "output_url"],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "environment_alias": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "observed_state": {"enum": ["INSTALLED", "ACTIVATED", "OBSERVED"]},
+        "recorded_at": {"type": "string", "format": "date-time"},
+        "result": {"enum": ["PASS", "FAIL"]},
+        "output_url": {"$ref": "#/$defs/url"}
+      }
+    }
+  }
+}
