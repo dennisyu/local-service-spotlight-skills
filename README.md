@@ -1,9 +1,11 @@
 # Local Service Spotlight Skills for Claude
 
-The canonical marketplace for Local Service Spotlight skills used across
-authority, content, client operations, and quality assurance.
-Claude and Grok Build load the same `skills/` source, so the operating method does
-not fork by model.
+Use these guides to turn your business's proof into work you can check. Pick a
+task, such as checking a customer claim or drafting an article. Read the steps,
+make one draft, and check the result before you share it.
+
+This is the maintained source for the Local Service Spotlight Claude marketplace.
+Its current package list and skill counts come from `.claude-plugin/marketplace.json`.
 
 ## Install
 
@@ -18,9 +20,11 @@ https://github.com/dennisyu/local-service-spotlight-skills
 Then install `lss-everything`.
 
 If you already added `https://github.com/dennisyu/blitzmetrics-skills` or
-installed `blitzmetrics-everything`, remove that marketplace and add this one.
-GitHub redirects the old repository URL. Claude still needs a fresh install of
-`lss-everything` because plugin names are keyed in the account.
+installed `blitzmetrics-everything`, record the installed package, version and
+active jobs first. The old repository URL redirects here, but an old installed
+package may still be stale. Follow the current install guide to test the new
+`lss-everything` package and preserve a recovery path before retiring an exact
+obsolete copy. Do not remove an uninspected marketplace.
 
 The guide and repository have different jobs:
 
@@ -71,12 +75,34 @@ Start a new chat and ask in plain language. For example:
 >
 > “Run my weekly brand MAA.”
 >
+> “Run a full personal-brand audit.”
+>
 > “How do I show up in ChatGPT?”
 >
 > “Map my second ring from my LinkedIn connections export.”
 
-Claude should select the relevant skill. Seeing the plugin in a list proves it is
-installed; a successful fresh-chat trigger proves that skill is working.
+Claude may select the relevant skill, or you can use the supported skill picker.
+Record which installed skill was actually selected or loaded, then inspect its
+fresh output. A plugin in a list proves installation; a good answer alone does
+not prove that the installed skill was used.
+
+The [personal-brand-audit skill](skills/personal-brand-audit/SKILL.md) is the front
+door for the full proof inventory, exact 20-page visual PDF, top-connection map, and
+agent installation/action plan. Its QR and printed install link use
+`https://localservicespotlight.com/install/`, never `/skills/` or a legacy ZIP page.
+The complete workflow routes through eight skills and therefore requires
+`lss-everything`; the smaller authority bundle supports intake and its installed
+authority/reputation lanes, but is not a complete audit installation.
+
+Every full run also queries the canonical [Local Service Spotlight Knowledge Graph
+Explorer](https://localservicespotlight.com/knowledge-graph-explorer/) and keeps four
+receipts separate: `RESOLVED`, `AMBIGUOUS`, `NO_SAFE_OBJECT_RETURNED`, or `UNKNOWN` graph
+object status with a separate safe KGMID; a normal Google name-query panel observation
+with date, locale, location, and personalization caveats; owner claim status, which remains
+`UNKNOWN` without the owner-side Google claim dashboard or a Google claim receipt; and the
+same identity-safe graph fields for the report's related public-association entities. An
+Explorer object is not a visible or claimed Knowledge Panel, and a public association is
+not friendship or endorsement.
 
 ## Bundles
 
@@ -84,11 +110,24 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | The complete canonical skill set |
-| `authority-and-reputation` | Knowledge Panel, AI search, reviews, proof, and relationship paths |
+| `lss-everything` | All 38 skills |
+| `authority-and-reputation` | Personal-brand audit intake plus its installed authority/reputation lanes; use `lss-everything` for the full workflow |
 | `content-engine` | Articles, video, repurposing, and distribution |
-| `client-operations` | Onboarding, cadence, access, reporting, and audits |
-| `quality-and-standards` | Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
+| `client-operations` | Onboarding, cadence, access, reporting including GA4, and audits |
+| `quality-and-standards` | Agents-first reassignment, Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
+
+## Reuse access across agents
+
+If your agents keep asking you to sign in, use
+[`reuse-agent-access`](skills/reuse-agent-access/SKILL.md), included in
+`lss-everything` and `client-operations`. It checks an authorized connector or
+signed-in browser before requesting another login. The
+[product route guide](skills/reuse-agent-access/references/product-routes.md)
+explains which apps can reuse Chrome and which keep separate sessions.
+Instructions are portable; passwords, cookies and personal access inventories
+stay private. After syncing, start a fresh chat and ask the skill to verify one
+harmless read on the site you name. Record the installed revision and result;
+publication alone does not install tools or grant access.
 
 ## Skills, agents, and scheduled jobs
 
@@ -108,11 +147,11 @@ sound, no popup on load, every link and entity claim resolves, personal-brand
 heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
-`scripts/sync_shared_rules.py` stamps each rule verbatim into `AGENTS.md` and
-every in-scope `SKILL.md`, so the rules arrive with the pack even though
-`standards/` itself is not distributed. Some rules intentionally apply only to
-web or media skills. CI rejects a pull request when even one required copy is
-missing or stale.
+`scripts/sync_shared_rules.py` stamps every rule verbatim into `AGENTS.md` and
+each applicable `SKILL.md`; agent-behavior rules reach every skill in the
+manifest. The rules
+arrive with the pack even though `standards/` itself is not distributed. CI
+rejects a pull request when even one required copy is missing or stale.
 
 The same file also carries the patterns that detect a violation in real HTML, and
 `scripts/fleet_check.py` compiles them into a live sweep:

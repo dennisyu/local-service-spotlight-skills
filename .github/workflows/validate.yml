@@ -24,5 +24,14 @@ jobs:
         run: python3 scripts/validate_marketplace.py
       - name: Run converter tests
         run: python3 -m unittest discover -s tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Prove rendered first-screen gates on real browser fixtures
+        run: node --test tests/rendered_visual_check.test.mjs
       - name: Run Claude's marketplace validator
         run: npx -y @anthropic-ai/claude-code@latest plugin validate .

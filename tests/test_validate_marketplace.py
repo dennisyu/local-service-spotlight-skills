@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import tempfile
 import unittest
@@ -106,13 +107,22 @@ class MarketplaceValidatorTests(unittest.TestCase):
                 plugin for plugin in manifest["plugins"]
                 if plugin["name"] == "authority-and-reputation"
             )
-            bundle["description"] = bundle["description"].replace("8 skills", "999 skills")
+            bundle_count = len(bundle["skills"])
+            bundle["description"] = re.sub(
+                rf"\b{bundle_count}\s+skills\b",
+                "999 skills",
+                bundle["description"],
+                count=1,
+            )
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             errors = validate(copied)
 
             self.assertTrue(
-                any("description advertises 999 skills but lists 8" in error for error in errors),
+                any(
+                    f"description advertises 999 skills but lists {bundle_count}" in error
+                    for error in errors
+                ),
                 errors,
             )
 
@@ -122,8 +132,19 @@ class MarketplaceValidatorTests(unittest.TestCase):
             inventory_path = (
                 copied / "skills" / "skill-registry" / "references" / "inventory.md"
             )
+            manifest = json.loads(
+                (copied / ".claude-plugin" / "marketplace.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            master = next(
+                plugin for plugin in manifest["plugins"]
+                if plugin["name"] == "lss-everything"
+            )
+            master_count = len(master["skills"])
             inventory = inventory_path.read_text(encoding="utf-8").replace(
-                "| `lss-everything` | 32 |", "| `lss-everything` | 999 |"
+                f"| `lss-everything` | {master_count} |",
+                "| `lss-everything` | 999 |",
             )
             inventory_path.write_text(inventory, encoding="utf-8")
 

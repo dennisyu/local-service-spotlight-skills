@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+import zlib
 from pathlib import Path
 from unittest import mock
 
@@ -533,6 +534,82 @@ class SecondRingScanTests(unittest.TestCase):
         self.assertEqual([contact.name for contact in contacts], ["Alex Owner"])
         self.assertEqual(len(opened_sources), 2)
         self.assertTrue(all(isinstance(source, io.BytesIO) for source in opened_sources))
+
+    def test_zip_entry_corruption_is_normalized_for_library_callers(self):
+        path = self.root / "corrupt-entry.zip"
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_STORED) as archive:
+            archive.writestr(
+                "Connections.csv",
+                "First Name,Last Name\nAlex,Owner\n",
+            )
+        changed = bytearray(path.read_bytes())
+        local = changed.find(b"PK\x03\x04")
+        self.assertGreaterEqual(local, 0)
+        name_length = struct.unpack_from("<H", changed, local + 26)[0]
+        extra_length = struct.unpack_from("<H", changed, local + 28)[0]
+        data_offset = local + 30 + name_length + extra_length
+        changed[data_offset] ^= 0x01
+        path.write_bytes(changed)
+
+        raw, entries = scan.validated_zip_entries(path)
+        self.assertEqual(len(entries), 1)
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            with self.assertRaises(zipfile.BadZipFile):
+                archive.read(entries[0])
+
+        with self.assertRaisesRegex(
+            scan.ScanError,
+            "unreadable or corrupt entry data",
+        ) as raised:
+            scan.load_contacts(path)
+        self.assertIsInstance(raised.exception.__cause__, zipfile.BadZipFile)
+
+    def test_unsupported_zip_compression_is_normalized_for_library_callers(self):
+        path = self.root / "unsupported-compression.zip"
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_STORED) as archive:
+            archive.writestr(
+                "Connections.csv",
+                "First Name,Last Name\nAlex,Owner\n",
+            )
+        changed = bytearray(path.read_bytes())
+        local = changed.find(b"PK\x03\x04")
+        central = changed.find(b"PK\x01\x02")
+        self.assertGreaterEqual(local, 0)
+        self.assertGreaterEqual(central, 0)
+        struct.pack_into("<H", changed, local + 8, 99)
+        struct.pack_into("<H", changed, central + 10, 99)
+        path.write_bytes(changed)
+
+        with self.assertRaisesRegex(
+            scan.ScanError,
+            "unreadable or corrupt entry data",
+        ) as raised:
+            scan.run(self.args(path))
+        self.assertIsInstance(raised.exception.__cause__, NotImplementedError)
+
+    def test_deflate_corruption_is_normalized_for_library_callers(self):
+        path = self.root / "corrupt-deflate.zip"
+        content = "First Name,Last Name,Company\n" + "".join(
+            f"Alex{i},Owner{i},Company{i:08x}\n" for i in range(100)
+        )
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("Connections.csv", content)
+        changed = bytearray(path.read_bytes())
+        local = changed.find(b"PK\x03\x04")
+        self.assertGreaterEqual(local, 0)
+        name_length = struct.unpack_from("<H", changed, local + 26)[0]
+        extra_length = struct.unpack_from("<H", changed, local + 28)[0]
+        data_offset = local + 30 + name_length + extra_length
+        changed[data_offset + 1] ^= 0xFF
+        path.write_bytes(changed)
+
+        scan.validated_zip_entries(path)
+        with self.assertRaisesRegex(
+            scan.ScanError,
+            "unreadable or corrupt entry data",
+        ) as raised:
+            scan.load_contacts(path)
+        self.assertIsInstance(raised.exception.__cause__, zlib.error)
 
     def test_future_and_ambiguous_dates_are_not_fresh(self):
         self.assertEqual(scan.freshness_points("2099-01-01"), (0, "future date; not usable"))

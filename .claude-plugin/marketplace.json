@@ -5,16 +5,17 @@
     "email": "dennis@blitzmetrics.com"
   },
   "metadata": {
-    "description": "Local Service Spotlight skills for Claude — personal brand, authority, content, and client operations.",
-    "version": "1.4.0"
+    "description": "Local Service Spotlight skills for Claude \u2014 personal brand, authority, content, and client operations.",
+    "version": "1.8.0"
   },
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install — the complete Local Service Spotlight skill set. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 38 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/agents-first-reassignment",
         "./skills/ai-search-visibility",
         "./skills/boil-the-ocean",
         "./skills/business-brand-strategist",
@@ -26,6 +27,8 @@
         "./skills/definitive-article-writer",
         "./skills/dollar-a-day-strategist",
         "./skills/evidence-verification",
+        "./skills/ga4-client-view",
+        "./skills/ga4-website-maa",
         "./skills/gct-screen",
         "./skills/geo-visibility-audit",
         "./skills/grokipedia-authority",
@@ -35,9 +38,11 @@
         "./skills/nine-triangles",
         "./skills/one-session-client-onboarding",
         "./skills/outbound-action-closeout",
+        "./skills/personal-brand-audit",
         "./skills/positive-mentions-harvester",
         "./skills/recursive-self-improvement-qa",
         "./skills/reputation-gap-analyzer",
+        "./skills/reuse-agent-access",
         "./skills/sales-every-day",
         "./skills/second-ring-network-mapper",
         "./skills/security-audit",
@@ -46,16 +51,18 @@
         "./skills/social-amplification-engine",
         "./skills/software-subscription-audit",
         "./skills/video-repurposing-agent",
-        "./skills/weekly-brand-maa"
+        "./skills/weekly-brand-maa",
+        "./skills/shared-memory"
       ]
     },
     {
       "name": "authority-and-reputation",
-      "description": "Get found and trusted \u2014 Knowledge Panel, AI search, reviews, proof, and honest relationship paths. (8 skills)",
+      "description": "Personal-brand audit intake plus authority, reputation, and honest relationship-path diagnosis. Install lss-everything for the full workflow. (9 skills)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/business-brand-strategist",
+        "./skills/personal-brand-audit",
         "./skills/positive-mentions-harvester",
         "./skills/second-ring-network-mapper",
         "./skills/reputation-gap-analyzer",
@@ -67,7 +74,7 @@
     },
     {
       "name": "content-engine",
-      "description": "Turn one idea into everything — articles, video, repurposing, distribution, SAE. (7 skills)",
+      "description": "Turn one idea into everything \u2014 articles, video, repurposing, amplification, distribution. (7 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -82,36 +89,40 @@
     },
     {
       "name": "client-operations",
-      "description": "Run the account — onboarding, qualification, cadence, access, reporting, audits, and SAE. (11 skills)",
+      "description": "Run the account \u2014 cadence, access, reporting including GA4, audits. (13 skills)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/client-access-checklist",
         "./skills/client-relationship-cadence",
+        "./skills/ga4-client-view",
+        "./skills/ga4-website-maa",
         "./skills/gct-screen",
         "./skills/measurement-analytics",
         "./skills/one-session-client-onboarding",
+        "./skills/reuse-agent-access",
         "./skills/sales-every-day",
         "./skills/security-audit",
         "./skills/seo-audit",
         "./skills/software-subscription-audit",
-        "./skills/social-amplification-engine",
         "./skills/weekly-brand-maa"
       ]
     },
     {
       "name": "quality-and-standards",
-      "description": "Keep the work honest — canonical frameworks, verification, QA, judgment, closeout, and the registry. (7 skills)",
+      "description": "Keep the work honest \u2014 canonical frameworks, verification, QA, judgment, closeout, shared memory, and the registry.",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/agents-first-reassignment",
         "./skills/evidence-verification",
         "./skills/recursive-self-improvement-qa",
         "./skills/model-judgment",
         "./skills/boil-the-ocean",
         "./skills/outbound-action-closeout",
         "./skills/skill-registry",
-        "./skills/nine-triangles"
+        "./skills/nine-triangles",
+        "./skills/shared-memory"
       ]
     }
   ]

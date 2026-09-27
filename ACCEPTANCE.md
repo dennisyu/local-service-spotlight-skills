@@ -1,8 +1,11 @@
 # Acceptance checks and receipts
 
-Automated validation proves the repository is internally consistent. It cannot
-prove that a particular Claude account synced the marketplace, activated a skill,
-or completed a scheduled job. Use these checks for that last mile.
+Use these checks before you trust a skill to do work for your business. Show that
+the right skill loaded, made the expected result, and used only approved access.
+Keep the proof so another person can check it.
+
+Repository checks prove source consistency. They do not prove that a named
+account installed or activated a skill, or that a scheduled job ran.
 
 Record every run with:
 
@@ -33,7 +36,10 @@ not a pass.
 ## B. Update propagation
 
 1. Note the currently installed marketplace commit or version.
-2. Merge a harmless, identifiable canary change through a pull request.
+2. Merge a harmless, identifiable canary change through a pull request. For a
+   propagation check, use an agent-behavior rule such as
+   `silent-media-playback`, whose scope requires it in every skill in the tested manifest; a narrower
+   rule should appear only in its applicable skills.
 3. On the test account, use the surface's **Sync** or **Update** control. If
    third-party marketplace auto-update is enabled, also record whether it arrived
    without that manual action.
@@ -103,11 +109,11 @@ Run after adding or amending anything in `standards/`.
 **Propagation — the rule reached the skills**
 
 1. `python3 scripts/sync_shared_rules.py --check` exits 0.
-2. `python3 scripts/validate_marketplace.py` exits 0 — this checks *every* rule
-   in *every* skill, not one hardcoded rule.
-3. Count the copies and record the number, e.g.
-   `grep -rl "shared-rule:<slug>:start" skills/ | wc -l`. Compare it with the
-   rule's scope-derived skill count; scoped rules are not expected in every skill.
+2. `python3 scripts/validate_marketplace.py` exits 0 — this checks every rule in
+   every skill to which its declared scope applies, not one hardcoded rule.
+3. Count the copies and compare that result with the scope-derived skill count;
+   published-HTML and design-review rules may have fewer copies than an
+   agent-behavior rule, but every total must match the validator's derived scope.
 4. On a canary account, sync the commit and start a fresh chat. Ask the agent to
    state the house rule without naming the file. Record the reply verbatim.
 
@@ -125,10 +131,30 @@ prove the repository is consistent, which is not the same claim.
 8. Confirm at least one known-bad fixture is caught. A sweep that has never
    failed has not been shown to work.
 
-**Status vocabulary applies here too.** A rule in `standards/` is **Available**.
-A rule stamped into the skills is **Installed**. A rule an agent restates on a
-canary account is **Tested**. A sweep in the Friday fleet audit is **Scheduled**.
-Only a completed run with a timestamped report is **Observed**.
+**Keep source propagation separate from account and job evidence.** A prepared
+rule is a source change; after merge it is **Available** in that repository or
+release. Stamping it into distributed skill files does not prove **Installed**
+or **Enabled** in an account. Record those states from the named runtime, and
+record **Tested** only after the selected skill loads and produces a checked
+fresh result. **Scheduled** means the job definition exists; **Observed** means
+a real firing left a timestamped output or failure.
 
 Record the commit SHA, the fleet file used, counts of blocking/warning/not-swept,
 and the tester. Do not record client URLs here if the list is not public.
+
+## G. Existing-access reuse canary
+
+After installing or syncing `reuse-agent-access`, start a fresh session in each
+runtime being claimed. Name one service already within the user's authorized
+scope, request a harmless read, and record which installed skill loaded.
+
+Pass only when the intended app, execution device, browser profile or connector,
+non-secret account identity, task scope, and actual read result are established.
+Do not export credentials or use a write as the canary. Record platform consent
+or secure login still required as `NEEDS_USER_ACTION`, not a successful read.
+A connected extension alone does not pass; one domain does not prove all domains.
+
+Check a second fresh session for reuse when persistence is claimed. Keep the
+receipt in the existing private access register with the tested source/installed
+revision and timestamp. Publish only a redacted distribution result. No schedule,
+credential migration or fleet-wide access claim is created by this check.

@@ -26,3 +26,8 @@
   mixed colour temperature are all invisible in a thumbnail and unmissable at full width.
 - Related: `immersive-hero-standard` for the construction; this rule is only about
   whether a given photograph is allowed to be the hero at all.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.

@@ -140,7 +140,7 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
 
     for path, keep, rest in plan():
         current = path.read_text(encoding="utf-8") if path.exists() else ""
-        expected = current
+        expected = drop_index(current)
         wanted = {s.slug for s in keep}
 
         # a rule the file should no longer carry: source deleted, or now out of scope
@@ -153,7 +153,6 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
         for standard in keep:
             expected = upsert(expected, standard.slug, standard.block())
 
-        expected = drop_index(expected)
         block = index_block(rest)
         if block:
             expected = expected.rstrip() + "\n\n" + block + "\n"

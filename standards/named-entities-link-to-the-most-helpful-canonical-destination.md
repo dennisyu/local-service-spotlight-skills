@@ -30,6 +30,24 @@
   product's natural name and official website on the execution step where the reader
   actually opens it. This preserves both education and a direct path to action without
   making the anchor lie about where it goes.
+- **Search our article inventory before choosing a provider help page.** Look up
+  the object in the Canonical Directory, Task Library and site search, then read
+  the candidate to verify that it answers this reader's question. For Obsidian,
+  use “our Obsidian setup guide” when that guide is the relevant lesson. Record
+  the entity, chosen URL and reason in the link audit. If no suitable owned
+  guide exists, keep a conceptual mention plain or cite the precise primary
+  source needed for the claim; record the content gap instead of inventing a URL.
+- **Give the page a place in the SEO Tree.** Name the canonical parent topic,
+  link supporting articles up to it, connect the hub to useful supporting proof,
+  and link across only to related guides that help the next task. Verify those
+  links in the article body; a catalog listing or sitewide footer is insufficient.
+  One topic keeps one owner across our sites. Do not mass-add unrelated links or
+  use a quota to turn every provider citation into an internal link.
+- **Keep primary citations and execution links when they do a different job.**
+  A provider's API reference can substantiate a technical claim; its download or
+  sign-in page can be the required action. Label those links by their purpose
+  and retain them alongside our training when useful. A provider citation does
+  not replace the internal explanation of how we use the tool.
 - **Verify every destination before publishing.** The name, page title and live content
   must identify the intended entity. SEO value is a by-product of a truthful,
   reader-helpful relationship; it is never a reason to guess a domain.

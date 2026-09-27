@@ -57,3 +57,8 @@ standard, fleet-wide:
   photography can carry a hero; selfies cannot, at any resolution. When the only assets
   are selfies, use the typographic hero — it never looks cheap. See
   `photo-earns-full-bleed`.
+
+
+The typographic fallback still follows `visuals-above-the-fold`: pair the type
+with the authentic small-format photograph or a useful topic-specific diagram
+in the first screen. A text-only first screen is no longer an allowed fallback.

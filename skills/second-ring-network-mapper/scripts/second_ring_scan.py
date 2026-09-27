@@ -22,6 +22,7 @@ import struct
 import sys
 import unicodedata
 import zipfile
+import zlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -655,16 +656,19 @@ def load_contacts(path: Path) -> tuple[str, list[Contact], int, int]:
     candidates = exact or csv_entries
     # Parse the same immutable bytes inspected above. Reopening the pathname here
     # would allow a local replacement between validation and decompression.
-    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-        for entry in candidates:
-            try:
-                source_label, contacts, duplicates, skipped = parse_contact_csv(
-                    decode_csv(archive.read(entry))
-                )
-                return source_label, contacts, duplicates, skipped
-            except ScanError:
-                if exact:
-                    raise
+    try:
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            for entry in candidates:
+                try:
+                    source_label, contacts, duplicates, skipped = parse_contact_csv(
+                        decode_csv(archive.read(entry))
+                    )
+                    return source_label, contacts, duplicates, skipped
+                except ScanError:
+                    if exact:
+                        raise
+    except (zipfile.BadZipFile, NotImplementedError, zlib.error) as error:
+        raise ScanError("The ZIP contains unreadable or corrupt entry data.") from error
     raise ScanError("The ZIP does not contain a recognized Connections.csv or Google Contacts CSV.")
 
 
