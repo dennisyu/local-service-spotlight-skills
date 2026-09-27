@@ -77,10 +77,11 @@ Use these states:
 
 ## Open operational checks
 
-1. After merge, update the public install guide from the current production
-   `1.3.0` / 31-skill text to the merged manifest version/count, then verify the
-   repository, `lss-everything`, version, and count anonymously at
-   `https://localservicespotlight.com/install/`.
+1. After merge, update the public install guide from the merged marketplace
+   manifest. Derive the version and skill count from
+   `.claude-plugin/marketplace.json` rather than copying a production snapshot
+   into this inventory, then verify the repository, `lss-everything`, version,
+   and count anonymously at `https://localservicespotlight.com/install/`.
 2. Generate the public `personal-brand-audit` skill page from the merged source and verify
    the anonymous page, links, and install handoff. Do not use `/skills/` as the install rail.
 3. Complete the fresh-account marketplace acceptance test and attach its receipt.

@@ -1286,8 +1286,11 @@ def main() -> int:
         else:
             sys.stdout.write(report)
         return 0
-    except (OSError, ScanError, zipfile.BadZipFile, csv.Error) as error:
-        print(f"Second Ring scan stopped safely: {error}", file=sys.stderr)
+    except (OSError, ScanError, zipfile.BadZipFile, csv.Error):
+        print(
+            "Second Ring scan stopped safely. Check the input and try again.",
+            file=sys.stderr,
+        )
         return 2
 
 

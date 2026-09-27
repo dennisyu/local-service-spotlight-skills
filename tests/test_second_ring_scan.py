@@ -726,6 +726,67 @@ class SecondRingScanTests(unittest.TestCase):
         for marker in forbidden:
             self.assertNotIn(marker, source)
 
+    def test_cli_input_read_errors_do_not_expose_private_paths(self):
+        input_path = self.write("Connections.csv", LINKEDIN_CSV)
+        stderr = io.StringIO()
+        argv = [
+            "second_ring_scan.py",
+            "--input",
+            str(input_path),
+            "--owner",
+            "Test Owner",
+            "--goal",
+            "customers",
+        ]
+        with (
+            mock.patch.object(scan.sys, "argv", argv),
+            mock.patch.object(scan.sys, "stderr", stderr),
+            mock.patch.object(
+                scan.Path,
+                "open",
+                side_effect=PermissionError(f"Permission denied: {input_path}"),
+            ),
+        ):
+            exit_code = scan.main()
+
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(
+            stderr.getvalue(),
+            "Second Ring scan stopped safely. Check the input and try again.\n",
+        )
+        self.assertNotIn(str(input_path), stderr.getvalue())
+
+    def test_cli_output_write_errors_do_not_expose_private_paths(self):
+        output_path = self.root / "private" / "second-ring-report.md"
+        stderr = io.StringIO()
+        argv = [
+            "second_ring_scan.py",
+            "--demo",
+            "--owner",
+            "Test Owner",
+            "--goal",
+            "customers",
+            "--output",
+            str(output_path),
+        ]
+        with (
+            mock.patch.object(scan.sys, "argv", argv),
+            mock.patch.object(scan.sys, "stderr", stderr),
+            mock.patch.object(
+                scan.Path,
+                "write_text",
+                side_effect=PermissionError(f"Permission denied: {output_path}"),
+            ),
+        ):
+            exit_code = scan.main()
+
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(
+            stderr.getvalue(),
+            "Second Ring scan stopped safely. Check the input and try again.\n",
+        )
+        self.assertNotIn(str(output_path), stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
