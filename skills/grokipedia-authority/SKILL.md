@@ -14,7 +14,7 @@ rule-scopes: published-html, design-review
 
 ## HARD STOP — client 6b paused (11 September 2026)
 
-**Pause Grokipedia step 6b (Suggest-Article) for clients until the submit queue thaws.** Operator freeze notice: queue stuck since April; new submits dead-queue. Keep scoring readiness, harden proof on entity homes, and monitor/correct existing LIVE pages. Do not drip-submit new client Suggest-Article packets. Resume only after a confirmed thaw.
+**Pause Grokipedia step 6b (Suggest-Article) for clients until the submit queue thaws.** Operator freeze notice: queue stuck since April; new submits dead-queue. Keep scoring readiness, harden proof on entity homes, and monitor/correct existing LIVE pages. Do not drip-submit new client Suggest-Article packets. Resume only after a confirmed thaw. Full operator freeze notice: `HARD-STOP-6b-paused.md`.
 
 **Use this when** you want your people, clients, companies, podcasts, and books to have a Grokipedia page — xAI's AI-generated encyclopedia — and you want it done at scale, honestly, without getting flagged for spam.
 

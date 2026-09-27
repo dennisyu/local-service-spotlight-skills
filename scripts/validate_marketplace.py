@@ -19,6 +19,7 @@ from standards_lib import (  # noqa: E402
 
 
 EVERYTHING_PLUGIN = "lss-everything"
+ALLOWED_SUPPORT_DIRS = frozenset({"references", "scripts"})
 KEBAB = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LOCAL_REFERENCE = re.compile(
     r"(?<![\w/])((?:references|scripts|assets)/[A-Za-z0-9_.\-/]+)"
@@ -64,6 +65,23 @@ def _frontmatter(path: Path) -> dict[str, str]:
             value = value[1:-1]
         values[match.group(1)] = value
     return values
+
+
+def unreferenced_sibling_markdown(skill_dir: Path, skill_text: str) -> list[Path]:
+    """Markdown sitting beside SKILL.md must be named by SKILL.md.
+
+    Legitimate supporting files live under references/ or scripts/ only.
+    """
+    orphans: list[Path] = []
+    for markdown in sorted(skill_dir.rglob("*.md")):
+        if markdown.name == "SKILL.md":
+            continue
+        relative = markdown.relative_to(skill_dir)
+        if relative.parts[0] in ALLOWED_SUPPORT_DIRS:
+            continue
+        if markdown.name not in skill_text:
+            orphans.append(markdown)
+    return orphans
 
 
 def validate(root: Path) -> list[str]:
@@ -173,6 +191,11 @@ def validate(root: Path) -> list[str]:
                     errors.append(
                         f"{markdown.relative_to(root)} references missing {relative}"
                     )
+
+        for sibling in unreferenced_sibling_markdown(skill_dir, skill_text):
+            errors.append(
+                f"{sibling.relative_to(root)} sits beside SKILL.md but is never named"
+            )
 
     readme = (root / "README.md").read_text(encoding="utf-8")
     advertised = re.search(r"all (\d+) skills", readme, flags=re.IGNORECASE)
