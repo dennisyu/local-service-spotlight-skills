@@ -45,6 +45,15 @@ EMAIL_PATTERN = re.compile(
     r"(?<![\w.+-])[\w.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}(?![\w.-])",
     re.IGNORECASE,
 )
+EMAIL_LOCAL_PATTERN = re.compile(r"[a-z0-9!#$%&'*+/=?^_`{|}~.-]+", re.IGNORECASE)
+DNS_HOST_LABEL = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", re.IGNORECASE)
+COMMON_ROLE_MAILBOXES = {
+    "accounting", "accountspayable", "admin", "billing", "careers", "contact",
+    "contactus", "customerservice", "finance", "general", "hello", "hr", "info",
+    "jobs", "mail", "marketing", "newsletter", "noreply", "notifications", "office",
+    "recruiting", "sales", "support", "team",
+}
+RESERVED_EMAIL_DOMAINS = {"example", "example.com", "example.net", "example.org", "invalid", "localhost", "test"}
 AT_TOKEN_PATTERN = re.compile(r"\S+@\S+")
 KNOWN_PROVIDER_ID_PATTERN = re.compile(
     r"\burn:(?:li|linkedin|facebook|fb|meta|google):[^\s,;]+",
@@ -222,22 +231,94 @@ def safe_http_url(value: str) -> str:
 
 
 def safe_linkedin_profile_url(value: str) -> str:
-    candidate = safe_http_url(value)
-    if not candidate:
+    raw = value or ""
+    if any(unicodedata.category(character).startswith("C") for character in raw):
         return ""
-    parsed = urlparse(candidate)
-    hostname = (parsed.hostname or "").lower().rstrip(".")
+    candidate = raw.strip()
+    if not candidate or len(candidate) > 2_048:
+        return ""
+    try:
+        parsed = urlparse(candidate)
+        hostname_value = parsed.hostname or ""
+        port = parsed.port
+    except ValueError:
+        return ""
+    authority = parsed.netloc.rsplit("@", 1)[-1]
+    if (
+        parsed.scheme.lower() not in {"http", "https"}
+        or not parsed.netloc
+        or not hostname_value
+        or parsed.username is not None
+        or parsed.password is not None
+        or port is not None
+        or ":" in authority
+        or parsed.params
+        or parsed.query
+        or parsed.fragment
+    ):
+        return ""
+    if hostname_value.endswith(".."):
+        return ""
+    hostname = hostname_value.lower().removesuffix(".")
+    labels = hostname.split(".")
+    if (
+        not hostname
+        or len(hostname) > 253
+        or any(not DNS_HOST_LABEL.fullmatch(label) for label in labels)
+    ):
+        return ""
     parts = [part for part in parsed.path.split("/") if part]
     if not (hostname == "linkedin.com" or hostname.endswith(".linkedin.com")):
         return ""
-    if len(parts) < 2 or parts[0].lower() not in {"in", "pub"}:
+    if not parts or parts[0].lower() not in {"in", "pub"}:
         return ""
-    return candidate
+    if (parts[0].lower() == "in" and len(parts) != 2) or len(parts) < 2:
+        return ""
+    path = "/" + "/".join(parts)
+    return f"https://{hostname}{path}"
 
 
 def safe_email_identity(value: str) -> str:
-    candidate = clean_untrusted(value, 320)
-    return candidate if EMAIL_PATTERN.fullmatch(candidate) else ""
+    raw = value or ""
+    if any(unicodedata.category(character).startswith("C") for character in raw):
+        return ""
+    candidate = raw.strip().lower()
+    if not candidate or len(candidate) > 254 or candidate.count("@") != 1:
+        return ""
+    local, domain = candidate.rsplit("@", 1)
+    if (
+        not local
+        or len(local) > 64
+        or not EMAIL_LOCAL_PATTERN.fullmatch(local)
+        or local.startswith(".")
+        or local.endswith(".")
+        or ".." in local
+        or not any(character.isascii() and character.isalnum() for character in local)
+    ):
+        return ""
+    if domain.endswith(".") or len(domain) > 253:
+        return ""
+    labels = domain.split(".")
+    if (
+        len(labels) < 2
+        or len(labels[-1]) < 2
+        or any(not DNS_HOST_LABEL.fullmatch(label) for label in labels)
+    ):
+        return ""
+    top_level = labels[-1]
+    if not (
+        top_level.isascii()
+        and (top_level.isalpha() or (top_level.startswith("xn--") and len(top_level) > 4))
+    ):
+        return ""
+    if domain in RESERVED_EMAIL_DOMAINS or any(
+        domain.endswith(f".{reserved}") for reserved in RESERVED_EMAIL_DOMAINS
+    ):
+        return ""
+    semantic_local = re.sub(r"[^a-z0-9]", "", local)
+    if not semantic_local or semantic_local in COMMON_ROLE_MAILBOXES:
+        return ""
+    return candidate
 
 
 def stable_key(prefix: str, value: str) -> str:
@@ -263,9 +344,10 @@ def read_limited_csv(path: Path) -> str:
 def rows_from_text(text: str) -> list[list[str]]:
     rows: list[list[str]] = []
     for row in csv.reader(io.StringIO(text)):
-        cleaned = [cell.strip() for cell in row]
-        if any(cleaned):
-            rows.append(cleaned)
+        # Preserve raw identity cells so validation can see (and reject) control
+        # characters. Display fields are sanitized later by pick().
+        if any(cell.strip() for cell in row):
+            rows.append(row)
         if len(rows) > MAX_CONTACTS + 25:
             raise ScanError(f"The export exceeds the {MAX_CONTACTS:,}-record limit.")
     return rows
@@ -292,11 +374,11 @@ def pick(row: list[str], mapping: dict[str, int], *aliases: str) -> str:
 
 
 def pick_raw(row: list[str], mapping: dict[str, int], *aliases: str) -> str:
-    """Read a bounded private identity field that will never enter a report."""
+    """Read a private identity field verbatim; it will never enter a report."""
     for alias in aliases:
         index = mapping.get(normalize(alias))
         if index is not None and index < len(row):
-            return clean_untrusted(row[index], 2_048)
+            return row[index]
     return ""
 
 
@@ -306,9 +388,9 @@ def merge_contacts(contacts: Iterable[tuple[Contact, str, str]]) -> tuple[list[C
     duplicates = 0
     for contact, email, profile_url in contacts:
         normalized_email = normalize(email)
-        normalized_profile = normalize(safe_http_url(profile_url)).rstrip("/")
+        normalized_profile = normalize(profile_url).rstrip("/")
         identity = (
-            f"email:{normalized_email}" if normalized_email
+            f"email:{normalized_email}|name:{normalize(contact.name)}" if normalized_email
             else f"url:{normalized_profile}" if normalized_profile
             else contact.key
         )
@@ -880,6 +962,15 @@ def display_context(contact: Contact, redact: bool) -> str:
     return " · ".join(part for part in (contact.position, contact.company) if part) or "No role/company supplied"
 
 
+def relationship_display(item: ScoredPath, redact: bool) -> tuple[str, str]:
+    """Return relationship/status copy without leaking free text in redacted mode."""
+    if redact:
+        if item.supported:
+            return "Supported relationship evidence", "supported"
+        return "Relationship context to verify", "not supported"
+    return item.relationship.label, item.relationship.status or "unknown"
+
+
 def best_action(result: ScanResult, names: NameRegistry) -> tuple[str, str, str]:
     if result.direct:
         item = result.direct[0]
@@ -939,15 +1030,17 @@ def markdown_report(
     if supported:
         lines.extend(["## Supported two-hop paths", "", "| Rank | Target | Ask | Relationship | Path priority | Components |", "|---:|---|---|---|---:|---|"])
         for index, item in enumerate(supported[:10], start=1):
+            relationship, status = relationship_display(item, redact)
             lines.append(
-                f"| {index} | {markdown_cell(names.contact(item.target))} | {markdown_cell(names.contact(item.connector))} | {markdown_cell(item.relationship.label)} ({markdown_cell(item.relationship.status)}) | {item.score} | {markdown_cell('; '.join(item.factors))} |"
+                f"| {index} | {markdown_cell(names.contact(item.target))} | {markdown_cell(names.contact(item.connector))} | {markdown_cell(relationship)} ({markdown_cell(status)}) | {item.score} | {markdown_cell('; '.join(item.factors))} |"
             )
         lines.append("")
     if unsupported:
         lines.extend(["## Context to verify — not introduction paths", "", "| Target | Possible connector | Status | Why held back |", "|---|---|---|---|"])
         for item in unsupported[:10]:
+            relationship, status = relationship_display(item, redact)
             lines.append(
-                f"| {markdown_cell(names.contact(item.target))} | {markdown_cell(names.contact(item.connector))} | {markdown_cell(item.relationship.status or 'unknown')} | {markdown_cell(item.relationship.label)}; {markdown_cell(item.factors[1])} |"
+                f"| {markdown_cell(names.contact(item.target))} | {markdown_cell(names.contact(item.connector))} | {markdown_cell(status)} | {markdown_cell(relationship)}; {markdown_cell(item.factors[1])} |"
             )
         lines.append("")
     if not result.paths:
@@ -973,8 +1066,24 @@ def markdown_report(
 def html_report(result: ScanResult, redact: bool) -> str:
     names = NameRegistry(redact)
     markdown = markdown_report(result, redact, names)
-    nodes = [item.contact for item in result.direct[:6]]
     supported_paths = [item for item in result.paths if item.supported][:4]
+    context_paths = (
+        [item for item in result.paths if not item.supported][:1]
+        if result.target_state == "second_ring" and not supported_paths
+        else []
+    )
+    graph_paths = [(item, "second") for item in supported_paths] + [
+        (item, "context") for item in context_paths
+    ]
+    nodes: list[Contact] = []
+    for path, _kind in graph_paths:
+        if not any(contact.key == path.connector.key for contact in nodes):
+            nodes.append(path.connector)
+    for item in result.direct:
+        if len(nodes) >= 6:
+            break
+        if not any(contact.key == item.contact.key for contact in nodes):
+            nodes.append(item.contact)
     width, height = 920, 560
     center_x, center_y = width / 2, height / 2
     node_markup: list[str] = []
@@ -985,7 +1094,7 @@ def html_report(result: ScanResult, redact: bool) -> str:
         y = center_y + math.sin(angle) * 170
         edge_markup.append(f'<line x1="{center_x:.1f}" y1="{center_y:.1f}" x2="{x:.1f}" y2="{y:.1f}" class="edge direct"/>')
         node_markup.append(f'<g><circle cx="{x:.1f}" cy="{y:.1f}" r="48" class="node direct"/><text x="{x:.1f}" y="{y:.1f}" class="label">{html.escape(names.contact(contact))}</text></g>')
-    for index, path in enumerate(supported_paths):
+    for index, (path, kind) in enumerate(graph_paths):
         connector_index = next((i for i, contact in enumerate(nodes) if contact.key == path.connector.key), None)
         if connector_index is None:
             continue
@@ -995,8 +1104,8 @@ def html_report(result: ScanResult, redact: bool) -> str:
         target_angle = connector_angle + (0.18 if index % 2 == 0 else -0.18)
         target_x = center_x + math.cos(target_angle) * 315
         target_y = center_y + math.sin(target_angle) * 235
-        edge_markup.append(f'<line x1="{connector_x:.1f}" y1="{connector_y:.1f}" x2="{target_x:.1f}" y2="{target_y:.1f}" class="edge second"/>')
-        node_markup.append(f'<g><circle cx="{target_x:.1f}" cy="{target_y:.1f}" r="43" class="node second"/><text x="{target_x:.1f}" y="{target_y:.1f}" class="label">{html.escape(names.contact(path.target))}</text></g>')
+        edge_markup.append(f'<line x1="{connector_x:.1f}" y1="{connector_y:.1f}" x2="{target_x:.1f}" y2="{target_y:.1f}" class="edge {kind}"/>')
+        node_markup.append(f'<g><circle cx="{target_x:.1f}" cy="{target_y:.1f}" r="43" class="node {kind}"/><text x="{target_x:.1f}" y="{target_y:.1f}" class="label">{html.escape(names.contact(path.target))}</text></g>')
     graph = "".join(edge_markup) + f'<circle cx="{center_x}" cy="{center_y}" r="58" class="node owner"/><text x="{center_x}" y="{center_y}" class="label owner-label">{html.escape(names.owner(result.owner))}</text>' + "".join(node_markup)
     escaped_markdown = html.escape(markdown)
     return f"""<!doctype html>
@@ -1008,8 +1117,8 @@ main{{max-width:1080px;margin:auto;padding:40px 24px 72px}}h1{{font-size:clamp(3
 .eyebrow{{text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--coral)}}
 .trust{{padding:16px 18px;border:1px solid #b6c8c0;border-radius:14px;background:#fff}}
 .graph{{margin:28px 0;background:#17372f;border-radius:24px;overflow:auto;box-shadow:0 16px 45px #16372f26}}
-svg{{display:block;min-width:760px;width:100%;height:auto}}.edge{{stroke-width:3;opacity:.72}}.edge.direct{{stroke:var(--mint)}}.edge.second{{stroke:var(--lav);stroke-dasharray:8 7}}
-.node{{stroke:#fff;stroke-width:3}}.node.owner{{fill:var(--coral)}}.node.direct{{fill:#2d7862}}.node.second{{fill:#725f9a}}
+svg{{display:block;min-width:760px;width:100%;height:auto}}.edge{{stroke-width:3;opacity:.72}}.edge.direct{{stroke:var(--mint)}}.edge.second{{stroke:var(--lav);stroke-dasharray:8 7}}.edge.context{{stroke:#b9b3a8;stroke-dasharray:3 9}}
+.node{{stroke:#fff;stroke-width:3}}.node.owner{{fill:var(--coral)}}.node.direct{{fill:#2d7862}}.node.second{{fill:#725f9a}}.node.context{{fill:#6f6b64}}
 .label{{fill:#fff;text-anchor:middle;dominant-baseline:middle;font-size:13px;font-weight:750}}.owner-label{{font-size:14px}}
 pre{{white-space:pre-wrap;background:#fff;padding:24px;border-radius:18px;border:1px solid #d8d2c7;font:14px/1.6 ui-monospace,monospace}}
 </style></head><body><main><p class="eyebrow">Local · deterministic · no call-home</p><h1>Second Ring report</h1>
@@ -1071,8 +1180,8 @@ def json_report(result: ScanResult, redact: bool) -> str:
                 "score": item.score,
                 "scoreScope": "two_hop_path_priority",
                 "supported": item.supported,
-                "relationship": item.relationship.label,
-                "status": item.relationship.status,
+                "relationship": relationship_display(item, redact)[0],
+                "status": relationship_display(item, redact)[1],
                 "factors": item.factors,
             }
             for item in result.paths[:20]

@@ -24,8 +24,8 @@ SPEC.loader.exec_module(scan)
 
 LINKEDIN_CSV = """Notes about your connections export
 First Name,Last Name,URL,Email Address,Company,Position,Connected On
-Alex,Owner,https://linkedin.com/in/alex,alex@example.com,Bright Roof Co.,Founder,12 May 2026
-Alex,Owner,https://linkedin.com/in/alex,alex@example.com,Bright Roof Co.,Founder,12 May 2026
+Alex,Owner,https://linkedin.com/in/alex,alex@brightroof.co,Bright Roof Co.,Founder,12 May 2026
+Alex,Owner,https://linkedin.com/in/alex,alex@brightroof.co,Bright Roof Co.,Founder,12 May 2026
 Jordan,Host,javascript:alert(1),,Local Growth Show,Podcast Host,20 Nov 2025
 Sam,Lee,,,,,
 Sam,Lee,,,,,
@@ -87,7 +87,7 @@ class SecondRingScanTests(unittest.TestCase):
     def test_default_report_has_no_emails_paths_or_unsafe_urls(self):
         path = self.write("Connections.csv", LINKEDIN_CSV)
         report = scan.run(self.args(path))
-        self.assertNotIn("alex@example.com", report)
+        self.assertNotIn("alex@brightroof.co", report)
         self.assertNotIn(str(path), report)
         self.assertNotIn("javascript:", report)
         self.assertIn("Source: LinkedIn", report)
@@ -131,13 +131,107 @@ class SecondRingScanTests(unittest.TestCase):
             "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
             "Pat,One,,N/A,Company One,Owner,2026-01-01\n"
             "Pat,Two,,N/A,Company Two,Owner,2026-01-01\n"
-            "Pat,One,,pat@example.test,Company One,Owner,2026-01-01\n"
-            "Pat,One,,pat@example.test,Company One,Owner,2026-01-01\n",
+            "Pat,One,,pat@brightroof.co,Company One,Owner,2026-01-01\n"
+            "Pat,One,,pat@brightroof.co,Company One,Owner,2026-01-01\n",
         )
         _source, contacts, duplicates, _skipped = scan.load_contacts(path)
         self.assertEqual(len(contacts), 3)
         self.assertEqual(duplicates, 1)
         self.assertEqual(sum(contact.has_email for contact in contacts), 1)
+
+    def test_shared_or_reserved_emails_do_not_merge_distinct_people(self):
+        path = self.write(
+            "Connections.csv",
+            "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+            "Alice,Person,,mail@company.co,Company,Owner,2026-01-01\n"
+            "Bob,Person,,mail@company.co,Company,Manager,2026-01-01\n"
+            "Casey,Person,,finance@company.co,Company,Finance,2026-01-01\n"
+            "Dana,Person,,recruiting@company.co,Company,Recruiter,2026-01-01\n"
+            "Evan,Person,,evan@example.com,Company,Owner,2026-01-01\n"
+            "Fran,Person,,evan@example.com,Company,Manager,2026-01-01\n"
+            "Gale,Person,,workshop@community.co,Community,Host,2026-01-01\n"
+            "Harper,Person,,workshop@community.co,Community,Guest,2026-01-01\n",
+        )
+        _source, contacts, duplicates, _skipped = scan.load_contacts(path)
+        self.assertEqual(len(contacts), 8)
+        self.assertEqual(duplicates, 0)
+        self.assertEqual(sum(contact.has_email for contact in contacts), 2)
+
+    def test_same_valid_email_only_merges_when_normalized_names_agree(self):
+        path = self.write(
+            "Connections.csv",
+            "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+            "Pat,One,,pat@brightroof.co,Company,Owner,2026-01-01\n"
+            "Pát,One,,PAT@BRIGHTROOF.CO,Company,Owner,2026-01-01\n"
+            "Pat,Two,,pat@brightroof.co,Company,Manager,2026-01-01\n",
+        )
+        _source, contacts, duplicates, _skipped = scan.load_contacts(path)
+        self.assertEqual({contact.name for contact in contacts}, {"Pat One", "Pat Two"})
+        self.assertEqual(duplicates, 1)
+
+    def test_control_bearing_identity_cells_are_rejected_before_cleanup(self):
+        separator = chr(31)
+        path = self.write(
+            "Connections.csv",
+            "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+            f"Pat,One,,pat@brightroof.co{separator},Company,Owner,2026-01-01\n"
+            f"Pat,One,https://linkedin.com/in/pat{separator},,Company,Owner,2026-01-01\n",
+        )
+        _source, contacts, duplicates, _skipped = scan.load_contacts(path)
+        self.assertEqual(len(contacts), 2)
+        self.assertEqual(duplicates, 0)
+        self.assertFalse(any(contact.has_email or contact.has_profile for contact in contacts))
+
+    def test_email_identity_rejects_punctuation_overlength_and_invalid_domains(self):
+        exactly_257_characters = (
+            f"{'a' * 64}@{'b' * 63}.{'c' * 63}.{'d' * 61}.co"
+        )
+        self.assertEqual(len(exactly_257_characters), 257)
+        invalid = (
+            "...@company.co",
+            "!#$@company.co",
+            f"{'a' * 65}@company.co",
+            f"person@{'a' * 64}.co",
+            exactly_257_characters,
+            "person@-company.co",
+            "person@company_.co",
+            "person@company..co",
+            "person@company.12",
+            "person@localhost",
+            "person@sub.example.com",
+            f"person@company.co{chr(31)}",
+        )
+        for value in invalid:
+            with self.subTest(value=value[:80]):
+                self.assertEqual(scan.safe_email_identity(value), "")
+        self.assertEqual(
+            scan.safe_email_identity("  Person.Name+tag@Company.co  "),
+            "person.name+tag@company.co",
+        )
+
+    def test_malformed_linkedin_hosts_params_and_controls_are_rejected(self):
+        invalid = (
+            "https://.linkedin.com/in/a",
+            "https://foo..linkedin.com/in/b",
+            "https://-foo.linkedin.com/in/c",
+            "https://_foo.linkedin.com/in/d",
+            f"https://{'a' * 64}.linkedin.com/in/e",
+            "https://linkedin.com../in/f",
+            "https://linkedin.com/in/g;tracking",
+            "https://linkedin.com/in/h?trk=feed",
+            "https://linkedin.com/in/i#about",
+            "https://linkedin.com:/in/j",
+            "https://linkedin.com:443/in/k",
+            f"https://linkedin.com/in/l{chr(31)}",
+            "https://linkedin.com/in/m/extra",
+        )
+        for value in invalid:
+            with self.subTest(value=value[:100]):
+                self.assertEqual(scan.safe_linkedin_profile_url(value), "")
+        self.assertEqual(
+            scan.safe_linkedin_profile_url("https://www.linkedin.com./in/valid/"),
+            "https://www.linkedin.com/in/valid",
+        )
 
     def test_google_contacts_shared_website_does_not_merge_distinct_people(self):
         path = self.write(
@@ -311,6 +405,53 @@ class SecondRingScanTests(unittest.TestCase):
         for real_name in ("Connector Alpha", "Taylor Guest", "Person Golf"):
             self.assertNotIn(real_name, report)
         self.assertNotIn("<script>alert(1)</script>", report)
+
+    def test_targeted_html_graph_includes_selected_supported_second_ring_path(self):
+        report = scan.run(
+            self.args(demo=True, input=None, target="Taylor Guest", format="html")
+        )
+        self.assertIn('class="edge second"', report)
+        self.assertRegex(
+            report,
+            r'class="node second"/><text[^>]*>Taylor Guest</text>',
+        )
+        self.assertIn("Jordan Host", report)
+
+    def test_targeted_html_graph_labels_unsupported_path_as_context(self):
+        report = scan.run(
+            self.args(demo=True, input=None, target="Casey Buyer", format="html")
+        )
+        self.assertIn('class="edge context"', report)
+        self.assertRegex(
+            report,
+            r'class="node context"/><text[^>]*>Casey Buyer</text>',
+        )
+        self.assertIn("Morgan Partner", report)
+        self.assertNotIn('class="node second"/><text[^>]*>Casey Buyer</text>', report)
+
+    def test_redacted_reports_do_not_emit_relationship_free_text(self):
+        input_path = self.write("Connections.csv", LINKEDIN_CSV)
+        relation_path = self.write(
+            "relationships.csv",
+            "Source,Target,Relationship,Status\n"
+            "Jordan Host,Taylor Guest,secret client dinner,confirmed\n"
+            "Jordan Host,Casey Buyer,private acquisition note,special-secret-status\n",
+        )
+        for output_format in ("markdown", "json", "html"):
+            with self.subTest(output_format=output_format):
+                report = scan.run(
+                    self.args(
+                        input_path,
+                        relationships=relation_path,
+                        confirm_relationship_data_authorized=True,
+                        format=output_format,
+                        redact_names=True,
+                    )
+                )
+                self.assertNotIn("secret client dinner", report)
+                self.assertNotIn("private acquisition note", report)
+                self.assertNotIn("special-secret-status", report)
+                self.assertIn("relationship", report.lower())
 
     def test_redacted_aliases_keep_name_only_homonyms_distinct(self):
         path = self.write(

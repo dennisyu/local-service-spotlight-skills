@@ -53,7 +53,18 @@ overlapping, or ZIP64-dependent archives.
 
 ## Identity rules
 
-Deduplicate only on a normalized email or safe HTTP(S) profile URL. Preserve name-only rows as separate records with stable source/row identities. Normalize diacritics for matching while retaining the displayed spelling. Reject non-HTTP(S) profile URLs.
+Deduplicate only when either (a) a validated email **and** normalized displayed
+name agree or (b) a canonical LinkedIn person-profile URL agrees. Email alone is
+not treated as a unique person key because mailboxes can be shared. Preserve
+name-only rows as separate records with stable source/row identities. Normalize
+diacritics for matching while retaining the displayed spelling.
+
+Email validation rejects control-bearing, overlength, malformed, reserved-domain,
+and obvious role-mailbox values. This role list is a conservative heuristic, not
+a directory of every shared address; same-name records that share an otherwise
+valid email can still require human review. LinkedIn identity validation rejects
+credentials, ports, parameters, queries, fragments, malformed DNS labels, and
+non-person paths. Generic website URLs are never person-identity keys.
 
 If a target query matches multiple records, return ambiguity and no chosen person. Never merge on bare name, company, or title.
 
