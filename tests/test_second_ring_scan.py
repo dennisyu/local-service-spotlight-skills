@@ -787,6 +787,33 @@ class SecondRingScanTests(unittest.TestCase):
         )
         self.assertNotIn(str(output_path), stderr.getvalue())
 
+    def test_cli_preserves_path_free_recovery_message_for_controlled_scan_error(self):
+        input_path = self.root / "malformed-private-export.zip"
+        input_path.write_bytes(b"not a ZIP archive")
+        stderr = io.StringIO()
+        argv = [
+            "second_ring_scan.py",
+            "--input",
+            str(input_path),
+            "--owner",
+            "Test Owner",
+            "--goal",
+            "customers",
+        ]
+        with (
+            mock.patch.object(scan.sys, "argv", argv),
+            mock.patch.object(scan.sys, "stderr", stderr),
+        ):
+            exit_code = scan.main()
+
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(
+            stderr.getvalue(),
+            "Second Ring scan stopped safely: "
+            "The file is named ZIP but does not have a valid ZIP structure.\n",
+        )
+        self.assertNotIn(str(input_path), stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
