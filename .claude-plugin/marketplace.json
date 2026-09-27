@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Local Service Spotlight skills for Claude \u2014 personal brand, authority, content, and client operations.",
-    "version": "1.7.0"
+    "version": "1.8.0"
   },
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install \u2014 all 37 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 38 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -44,6 +44,7 @@
         "./skills/reputation-gap-analyzer",
         "./skills/reuse-agent-access",
         "./skills/sales-every-day",
+        "./skills/second-ring-network-mapper",
         "./skills/security-audit",
         "./skills/seo-audit",
         "./skills/skill-registry",
@@ -56,13 +57,14 @@
     },
     {
       "name": "authority-and-reputation",
-      "description": "Personal-brand audit intake plus authority and reputation diagnosis. Install lss-everything for the full eight-skill audit workflow. (8 skills)",
+      "description": "Personal-brand audit intake plus authority, reputation, and honest relationship-path diagnosis. Install lss-everything for the full workflow. (9 skills)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/business-brand-strategist",
         "./skills/personal-brand-audit",
         "./skills/positive-mentions-harvester",
+        "./skills/second-ring-network-mapper",
         "./skills/reputation-gap-analyzer",
         "./skills/knowledge-panel-entity-seo",
         "./skills/ai-search-visibility",

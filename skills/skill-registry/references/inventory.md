@@ -1,6 +1,6 @@
 # Skill inventory — canonical facts and per-environment evidence
 
-Last repository audit: 7 September 2026 (PR #27 candidate, version 1.5.0; the GA4 pair becomes available after merge).
+Last canonical repository audit: 27 September 2026 (Second Ring PR candidate, version 1.8.0).
 
 This file separates what the marketplace makes **available** from what is actually
 **installed, enabled, tested, scheduled, or observed**. Never infer one state from
@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 34 after merge of the GA4 pair (`ga4-website-maa` + `ga4-client-view`) |
+| Skills in `lss-everything` | 38 in this candidate; validator-derived from the manifest |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -27,17 +27,21 @@ an exact 20-page visual audit and agent action plan. Availability does not prove
 account installed, enabled, or tested it. The GCT screen still does not create client or
 execution authority.
 
+`second-ring-network-mapper` is also Available only after this candidate merges,
+not proven Installed. It locally audits owner-authorized exports; it does not
+make private relationship data public or guarantee an introduction.
+
 ## Available bundles
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 34 |
-| `authority-and-reputation` | 8 |
+| `lss-everything` | 38 |
+| `authority-and-reputation` | 9 |
 | `content-engine` | 7 |
-| `client-operations` | 12 |
-| `quality-and-standards` | 7 |
+| `client-operations` | 13 |
+| `quality-and-standards` | 9 |
 
-The four topical bundles partition the 34-skill master: every skill appears in exactly one
+The four topical bundles partition the 38-skill master: every skill appears in exactly one
 topical bundle. `lss-everything` remains the one complete install.
 
 ## Per-account installation register
@@ -73,10 +77,11 @@ Use these states:
 
 ## Open operational checks
 
-1. After merge, update the public install guide from the current production
-   `1.3.0` / 31-skill text to the merged manifest version/count, then verify the
-   repository, `lss-everything`, version, and count anonymously at
-   `https://localservicespotlight.com/install/`.
+1. After merge, update the public install guide from the merged marketplace
+   manifest. Derive the version and skill count from
+   `.claude-plugin/marketplace.json` rather than copying a production snapshot
+   into this inventory, then verify the repository, `lss-everything`, version,
+   and count anonymously at `https://localservicespotlight.com/install/`.
 2. Generate the public `personal-brand-audit` skill page from the merged source and verify
    the anonymous page, links, and install handoff. Do not use `/skills/` as the install rail.
 3. Complete the fresh-account marketplace acceptance test and attach its receipt.

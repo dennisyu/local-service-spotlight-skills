@@ -38,6 +38,35 @@ marketplace auto-update may need to be enabled, or a member may need to choose
 **Sync** or **Update**. An update is verified only after the account shows the new
 commit/version and a fresh chat passes an activation test.
 
+### Grok Build
+
+Review the repository, then install it with Grok Build's native plugin command:
+
+```bash
+grok plugin install dennisyu/local-service-spotlight-skills --trust
+grok plugin details lss-everything
+```
+
+`--trust` is required for a non-interactive install. Grok plugins can also contain
+executable hooks and MCP servers, so inspect any repository before trusting it;
+this repository currently distributes skills only.
+
+Run this deterministic inventory canary:
+
+```bash
+grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "lss-everything"); assert p["enabled"] and p["provides"]["skills"] > 0; print("Grok canary passed: lss-everything, %s skills discovered" % p["provides"]["skills"])'
+```
+
+Then prove that a fresh agent can activate one of the shared skills (this uses one
+model request):
+
+```bash
+grok -p 'Use the skill-registry skill. In one sentence, identify the numbered registry system that is the only canonical source.'
+```
+
+The answer should identify **System 1, the canonical GitHub marketplace**. A
+passing inventory command proves discovery; the model canary proves activation.
+
 ## What was installed
 
 Start a new chat and ask in plain language. For example:
@@ -49,6 +78,8 @@ Start a new chat and ask in plain language. For example:
 > “Run a full personal-brand audit.”
 >
 > “How do I show up in ChatGPT?”
+>
+> “Map my second ring from my LinkedIn connections export.”
 
 Claude may select the relevant skill, or you can use the supported skill picker.
 Record which installed skill was actually selected or loaded, then inspect its
@@ -79,7 +110,7 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 37 skills |
+| `lss-everything` | All 38 skills |
 | `authority-and-reputation` | Personal-brand audit intake plus its installed authority/reputation lanes; use `lss-everything` for the full workflow |
 | `content-engine` | Articles, video, repurposing, and distribution |
 | `client-operations` | Onboarding, cadence, access, reporting including GA4, and audits |
@@ -117,7 +148,8 @@ heroes are immersive, and the rule about rules: capture what you learn in the
 same session.
 
 `scripts/sync_shared_rules.py` stamps every rule verbatim into `AGENTS.md` and
-each applicable `SKILL.md`; agent-behavior rules reach all 37 skills. The rules
+each applicable `SKILL.md`; agent-behavior rules reach every skill in the
+manifest. The rules
 arrive with the pack even though `standards/` itself is not distributed. CI
 rejects a pull request when even one required copy is missing or stale.
 

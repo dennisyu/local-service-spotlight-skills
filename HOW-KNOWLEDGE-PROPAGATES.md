@@ -63,7 +63,7 @@ file, one rule, plain English — the black-button rule is a page of text saying
 what to do, why, and how to check. That file is the *only* place the rule is
 written down. There is no second copy anyone maintains.
 
-**Skills are the envelopes.** The pack contains 34 skills — content factory, SEO
+**Skills are the envelopes.** The pack contains a catalog of skills — content factory, SEO
 audit, weekly brand MAA, and so on. Each one is a self-contained folder. When
 someone installs the pack from a QR code at a conference, what lands on their
 machine is those folders. **They do not get the `standards/` directory. They do
@@ -73,7 +73,7 @@ would ride along until it reached them and then evaporate.
 **So we stamp the rule into every envelope.** One command —
 `python3 scripts/sync_shared_rules.py` — reads every file in `standards/` and
 copies its text, word for word, into `AGENTS.md` and into every skill whose declared
-scope matches the rule. Agent-behavior rules reach all 34 skill files. It
+scope matches the rule. Agent-behavior rules reach every skill in the manifest. It
 marks each copy with an invisible tag so it knows which text it owns:
 
 ```
@@ -82,11 +82,10 @@ marks each copy with an invisible tag so it knows which text it owns:
 <!-- shared-rule:no-black-buttons:end -->
 ```
 
-Nobody types those copies and nobody edits them. The command writes them. Today
-there are **37 standards**. Every one appears in `AGENTS.md`; each skill receives
-the agent-behavior rules plus the published-HTML and design-review rules in its
-declared scope. The validator derives the expected copies instead of relying on a
-remembered multiplication.
+Nobody types those copies and nobody edits them. The command writes the
+scope-derived copies, all generated and all identical to their source. The
+validator derives the expected set from the current standards and skills instead
+of relying on a narrative count that can drift.
 
 **The build refuses to let a copy go stale.** Every time a change is proposed,
 an automatic check re-runs the stamp and compares. If one copy differs from the
