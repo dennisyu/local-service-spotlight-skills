@@ -47,8 +47,12 @@
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
-- The order is Checklist → Content → Software. Write the checkable rule first, publish
-  the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+- **Two orderings live here; do not conflate them.** *CCS is Content → Checklist →
+  Software* — you experiment until something works, codify the checklist, then the software;
+  you cannot checklist what you have not yet discovered. Separately, at **capture time for an
+  already-proven lesson**, write the enforceable `standards/` rule *before* the teaching
+  article — the article is the artifact everyone can see, so it feels finished, and the
+  enforceable form never gets written otherwise. That orders two codification artifacts of a
+  known rule; it does **not** put a checklist ahead of the content/experimentation that
+  produced it. (An earlier version of this bullet inverted CCS; see
+  `agents-operate-on-the-nine-triangles` and `nine-triangles-no-framework-drift`.)
