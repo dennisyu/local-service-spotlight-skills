@@ -1023,8 +1023,9 @@ It supplements access and action-approval rules rather than granting new authori
   — and a fourth job mailed the same partner the same morning. Every agent
   followed every rule it could see. None could see each other, because the
   first move was a sentence in a file nobody was required to act on. The
-  partner received four messages; the founder received a mess to explain. The
-  build cost was three agents' mornings; the trust cost was higher.
+  partner received three messages and a shared folder; the founder received a
+  mess to explain. The build cost was three agents' mornings; the trust cost was
+  higher.
 - **How, in order:** (1) *Find* — search the shared job folder, both status
   boards, the newest notes, and the sent mailbox for the recipient and the
   topic. A live match means you pick it up and continue from its last
