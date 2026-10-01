@@ -373,7 +373,7 @@ def agency_svg() -> tuple[str, int, int]:
     source such as Simple Icons (CC0) and note the license here. Dashed gold ring = experimental seat.</text>
   <text x="48" y="{notes_y + 48}" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
     Seat picker: standards/pick-the-cheapest-capable-fleet-lane.md (merged 2026-10-01). Factory split per station:
-    skills/content-factory/references/fleet-orchestration.md. Sam, Data and the Buzz handoff are from the 2026-10-01 brief only.</text>
+    skills/content-factory/references/fleet-orchestration.md. Desk names confirmed against the live fleet registry on 2026-10-01.</text>
   <text x="48" y="{notes_y + 84}" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
     Locked names: Plumbing (before) · Produce · Process · Post · Promote · Perform/MAA (after). Do not rename.</text>
 </svg>

@@ -116,13 +116,11 @@ Grok desks (functions, not extra agents):
 | **Meter Maid** | AI seat usage |
 | **Data** | Fleet registry and uptime |
 
-Where each desk name is already on record: Trenton, Tanner, Q, Alex, and
-Austin in `pick-the-cheapest-capable-fleet-lane`; Mario in
-`agents-first-reassignment`; Meter Maid in `outbound-email-names-the-agent`.
-Sam, Data, the Codex/Pollen Monday catch-up, and the Buzz handoff come from
-the 2026-10-01 brief and appear nowhere else in this repo yet. Dennis
-confirms them; until he does, do not route *new* work to those names on the
-strength of this map alone.
+Where each desk name is on record: Trenton, Tanner, Q, Alex, and Austin in
+`pick-the-cheapest-capable-fleet-lane`; Mario in `agents-first-reassignment`;
+Meter Maid in `outbound-email-names-the-agent`. Sam, Data, the Codex/Pollen
+Monday catch-up, the Buzz handoff, and the Kimi/Codex crons were confirmed by
+Q (ops desk) against the live fleet registry and routines on 2026-10-01.
 
 Tools on the line, not agents: Zoom recordings, Descript, the jennifer A-
 grader, $1/day boosting.
