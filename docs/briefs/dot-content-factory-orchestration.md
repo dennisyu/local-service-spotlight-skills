@@ -57,7 +57,7 @@ Send a **critique memo**, not a rewrite of the map. Use this shape:
 3. **Where Dot must not be sole owner.** Especially publish, spend, Basecamp,
    and any MAA analysis that has to be right until a fresh second check has
    read it.
-4. **Current vs future.** What you would absorb when there are more Dots, and
+4. **Current vs future.** What you would absorb when there are many Dots, and
    what still needs a named desk this week.
 5. **X-ray.** Whether the schema is enough for you to generate a snapshot
    without inventing numbers. If a field is missing, name it.

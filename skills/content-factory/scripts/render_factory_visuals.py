@@ -350,7 +350,7 @@ def agency_svg() -> tuple[str, int, int]:
   <rect x="1255" y="136" width="1185" height="120" rx="16" fill="#3B0764"/>
   <text x="1279" y="172" fill="#F5A623" font-family="Georgia, serif" font-size="20">Future state</text>
   <text x="1279" y="200" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
-    As there are more Dots, the models absorb the harness.</text>
+    As there are many Dots, the models absorb the harness.</text>
   <text x="1279" y="222" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
     Fewer humans need to divide the work and project-manage the handoffs.</text>
   <text x="1279" y="244" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
