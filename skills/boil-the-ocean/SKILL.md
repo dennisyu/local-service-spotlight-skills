@@ -7,7 +7,7 @@ description: Operating principles for the whole skill pack. Use when running any
 
 This file is the operating layer beneath all ten skills in this pack: it changes nothing about WHAT each skill does and everything about HOW an agent runs it. Persistent agents loop, self-correct, hold memory, and finish end-to-end, so stopping at 90% stopped being a constraint and became a choice.
 
-Completeness is coverage, not model tier. Boil the ocean on COVERAGE. Never on TIER. "Max effort" means do not stop at 90%. It does NOT mean run every step on the most expensive model. Your session model is the CEILING, not the floor. Which engine runs each part is `model-judgment`: cheapest tier that still clears the bar.
+Completeness is coverage, not model tier. Boil the ocean on COVERAGE. Never on TIER. "Max effort" means do not stop at 90%. It does NOT mean run every step on the most expensive model. Your session model is the CEILING, not the floor. Which engine runs each part is `model-judgment`: cheapest tier that still clears the bar. Which seat runs the job is `pick-the-cheapest-capable-fleet-lane`: cheapest fleet lane that can actually do it.
 
 ## The principle
 
@@ -66,7 +66,7 @@ Last rewritten August 26, 2026. This block is a weekly rewrite, not a leftover h
 - **Every major vendor now ships this file's assumptions.** OpenAI's GPT-5.6 (July 9, 2026) exposes Sol, Terra, and Luna as an explicit cheap-to-flagship ladder and adds programmatic tool calling, where the model writes a small program to coordinate tools instead of round-tripping each one. Google's Gemini 3.6 Flash and 3.5 Flash-Lite (July 21, 2026) fold computer use in as a built-in tool. A tiered ladder, real tool use, long-horizon runs — that is the shape of the whole field now, not one vendor's bet. Gemini 3.5 Pro had not shipped as of this review.
 - **Managed Agents** run skills on a schedule with vault-stored secrets and browser/CLI access — this file's "persistent, looping agent" is a product surface, not just a way of working. This library is itself kept current by one.
 
-Rule of thumb after this month: pick the cheapest tier that clears the bar, turn the effort dial before you turn to a bigger model, and give every scheduled job a fallback. See `model-judgment` for the full routing ladder.
+Rule of thumb after this month: pick the cheapest tier that clears the bar, turn the effort dial before you turn to a bigger model, and give every scheduled job a fallback. See `model-judgment` for the model-tier ladder, and `pick-the-cheapest-capable-fleet-lane` for which seat should run the job.
 ## Definitive article & links
 
 - The source idea: https://garryslist.org/posts/boil-the-ocean — Garry Tan, "Boil the ocean" (Feb 2026)
@@ -2823,6 +2823,76 @@ No regex can honestly certify a handoff or a business-impact Action. Enforce
 this by reading the map before you claim a job, and by writing an X-ray when
 you need a checkable snapshot.
 <!-- shared-rule:content-factory-maa-closes-the-loop:end -->
+<!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
+## Pick the cheapest capable fleet lane
+
+- **Route each job to the cheapest fleet lane that can actually do it.** Cost
+  order: local Qwen (free) first, then Muse, then everything else. This rule
+  picks the *seat* that runs the job. `model-judgment` still picks the *model
+  tier* inside that seat. They are two ladders, not one. There is no separate
+  skill-router skill; this file is the fleet router.
+- **Muse (Meta Muse Spark) is the default for high-volume work that does not
+  need frontier intelligence.** Inbox, calendar, bookings, errands,
+  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
+  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
+  tokens **per week**, not per month. A Muse token is Meta's own meter — do
+  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
+  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
+  put disputes, must-be-right research, or code/docs that matter on it.
+
+| Lane | Takes | Hard stop |
+|---|---|---|
+| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
+| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
+| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
+| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
+| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
+| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+
+Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
+volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
+that is offline bulk text with no browser or login, and that can wait for a
+Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
+or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
+A fallback model inside one seat is fine — `model-judgment` requires one for
+unattended jobs — but a second lane for the same job is not.
+
+Lanes are seats, not desk names. Trenton appears twice because that desk has
+both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
+job needs.
+
+- **Until there are many Dots, keep dividing work across the existing
+  agents.** "Many Dots" means the models absorb the harness so humans do not
+  have to split tasks and project-manage them. Until that is true, do not
+  collapse the fleet onto Dot or Astra. Use the split in this table.
+- **Rule of thumb.** Offline bulk text with no browser or login that can wait
+  for a Mac → Qwen first (free). Other high-volume work that does not need
+  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
+  to be right, or code/docs that matter → Astra, spot-checked while Dot is
+  new and never Dot alone on anything critical. Recurring mechanical work
+  already on a Kimi or Codex cron stays there until a Muse task is live. A
+  decision or a public post that needs a Grok desk stays on that desk, in a
+  short turn. Every other seat keeps the work already assigned to it.
+- **Never run the same job on two lanes.** When a job moves, the new lane
+  must be live before the old one is turned off.
+- This rule picks the seat. It does not grant permission to send, publish,
+  spend, or delete. Those still need the existing approval rails. Do not put
+  passwords, tokens, or account inventories in this file or in any public
+  copy of it.
+
+### Worked example — weekly Google Photos person-albums
+
+On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
+Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
+from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
+runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
+browser. It is not an Astra/Dot job: it is high-volume album work, not hard
+reasoning.
+
+No regex can honestly decide which lane a job needs. Enforce this by reading
+the lane table before you schedule or claim a job, and by naming the live
+lane in the job's receipt.
+<!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work

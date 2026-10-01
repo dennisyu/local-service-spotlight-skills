@@ -22,7 +22,10 @@ Regardless of specialty, every agent also loads the shared core inside
 `quality-and-standards`:
 
 - `boil-the-ocean` — operating principles for the whole pack
-- `agents-first-reassignment` — reuse authorized access before reprovisioning
+- `model-judgment` — which model tier runs each part of a job
+- `pick-the-cheapest-capable-fleet-lane` — which seat runs the job (a house
+  rule stamped into every skill, not a separate skill)
+- `agents-first-reassignment` — agents first when a human is off assignment
 - `skill-registry` — the intake gate for new skills
 - `shared-memory` — Dennis's second brain: read before working, write back
   what you learn
