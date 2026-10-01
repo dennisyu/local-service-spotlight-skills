@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import argparse
 import html
-import shutil
-import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from png_shot import PngError, write_png  # noqa: E402
 
 AGENTS = [
     ("MU", "Muse / Happy", "#1D4E89", "Muse Maximum · 3B tokens/week", "muse"),
@@ -84,15 +87,15 @@ STAGES = [
         ],
         "handoff_in": "Drive recording",
         "handoff_out": "Hub + clips → Drive",
-        "gate": "Spot-check Dot",
+        "gate": "Fresh check on Dot's reasoning",
     },
     {
         "id": "post",
         "label": "Post",
         "tag": "FACTORY",
         "color": "#6B21A8",
-        "owner": "Claude Fleet",
-        "lane": "Muse drafts · CF posts",
+        "owner": "Trenton · Sam/Mario (web)",
+        "lane": "Muse drafts · CF Basecamp",
         "agents": ["MU", "CF", "SM", "MR", "CU"],
         "work": [
             "Stage hub on site",
@@ -125,8 +128,8 @@ STAGES = [
         "label": "Perform / MAA",
         "tag": "AFTER",
         "color": "#9F1239",
-        "owner": "Analytics function",
-        "lane": "Crons + Astra analysis",
+        "owner": "Kimi/Codex crons (Friday MAA)",
+        "lane": "Crons · Qwen tables · Astra analysis",
         "agents": ["KI", "CX", "AS", "QW", "MM", "DA"],
         "work": [
             "Metrics: $ / profit / clicks",
@@ -135,13 +138,34 @@ STAGES = [
         ],
         "handoff_in": "Connectors + Buzz",
         "handoff_out": "Action packet → Produce",
-        "gate": "Dennis if public/paid",
+        "gate": "Dennis if public/paid · Dot checked",
     },
 ]
 
 
 def _esc(text: object) -> str:
     return html.escape(str(text), quote=True)
+
+
+def _wrap(text: str, width_px: int, font_px: int) -> list[str]:
+    """Greedy word wrap using a conservative average glyph width.
+
+    Sans-serif glyphs at these sizes average a little under 0.6em; using 0.6em
+    keeps every line inside its box so nothing is clipped in the PNG.
+    """
+    max_chars = max(8, int(width_px / (font_px * 0.6)))
+    lines: list[str] = []
+    current = ""
+    for word in str(text).split():
+        trial = f"{current} {word}".strip()
+        if len(trial) > max_chars and current:
+            lines.append(current)
+            current = word
+        else:
+            current = trial
+    if current:
+        lines.append(current)
+    return lines or [""]
 
 
 def _badge(cx: int, cy: int, monogram: str, fill: str, label: str | None = None, experimental: bool = False) -> str:
@@ -159,7 +183,7 @@ def _badge(cx: int, cy: int, monogram: str, fill: str, label: str | None = None,
 
 
 def agency_svg() -> tuple[str, int, int]:
-    width, height = 2480, 1500
+    width = 2480
     agent_index = {row[0]: row for row in AGENTS}
     cols = []
     col_w = 380
@@ -230,30 +254,76 @@ def agency_svg() -> tuple[str, int, int]:
       </text>
     """
 
+    band_specs = [
+        (40, 1200, "#1D4E89", "#DBEAFE", "Muse on Spark — volume lane (cost order 2)",
+         "Inbox, calendar, bookings, Google Photos/Docs/Gmail, Meta (FB/IG/WA/Threads), "
+         "watch-and-ping, volume monitoring. Not frontier reasoning. Local Qwen (free) comes "
+         "first for offline bulk text that can wait for a Mac."),
+        (1260, 1180, "#BE185D", "#FCE7F3", "Astra — thinking lane (experimental, cost order 3)",
+         "Hard research, strategy/judgment drafts, definitive-article reasoning, MAA analysis "
+         "that must be right, code/docs that matter. Spot-check Dot; on critical work a human "
+         "or a fresh ChatGPT task checks it before anyone acts."),
+    ]
+    bands = ""
+    for bx, bw, fill, text_fill, title, blurb in band_specs:
+        lines = _wrap(blurb, bw - 48, 13)
+        band_h = 40 + 19 * len(lines)
+        bands += (
+            f'<rect x="{bx}" y="274" width="{bw}" height="{band_h}" rx="14" fill="{fill}"/>'
+            f'<text x="{bx + 24}" y="300" fill="#FFF7ED" font-family="Georgia, serif" font-size="18">{_esc(title)}</text>'
+            + "".join(
+                f'<text x="{bx + 24}" y="{322 + n * 19}" fill="{text_fill}" font-family="ui-sans-serif, sans-serif" '
+                f'font-size="13">{_esc(line)}</text>'
+                for n, line in enumerate(lines)
+            )
+        )
+
+    # Cost order from standards/pick-the-cheapest-capable-fleet-lane.md:
+    # local Qwen (free) -> Muse -> everything else. Three boxes, wrapped text,
+    # box height follows the longest blurb so nothing is clipped.
+    cost_y = y0 + 548
+    cost = [
+        (40, 560, "#1B7A4E", "1 · Free — Local Qwen",
+         "Offline bulk text only: transcript triage, first drafts, MAA/GCT first passes. "
+         "Trenton's seat on the Macs. No browser, no logins, no publishing."),
+        (620, 760, "#1D4E89", "2 · Muse — the volume lane",
+         "Muse Maximum is about 3B Muse tokens per week. Non-frontier volume: inbox, calendar, "
+         "bookings, Google/Meta chores, watch-and-ping, volume monitoring. Do not buy more Muse."),
+        (1400, 1040, "#475569", "3 · Everything else",
+         "Astra / Dot (experimental; a human or a fresh ChatGPT task checks critical work) · "
+         "Kimi and Codex crons already live · Grok desks for judgment, publishing calls, routing "
+         "(short turns) · any other seat — Cursor cloud, Claude Fleet, the rest — keeps the work "
+         "already assigned to it."),
+    ]
+    wrapped = [(x, w, fill, title, _wrap(blurb, w - 36, 12)) for x, w, fill, title, blurb in cost]
+    cost_h = 44 + 18 * max(len(lines) for *_rest, lines in wrapped)
+    cost_svg = []
+    for x, w, fill, title, lines in wrapped:
+        body = "".join(
+            f'<text x="{x + 18}" y="{cost_y + 52 + n * 18}" fill="#FEF3C7" font-size="12" '
+            f'font-family="ui-sans-serif, sans-serif">{_esc(line)}</text>'
+            for n, line in enumerate(lines)
+        )
+        cost_svg.append(
+            f'<rect x="{x}" y="{cost_y}" width="{w}" height="{cost_h}" rx="12" fill="{fill}"/>'
+            f'<text x="{x + 18}" y="{cost_y + 28}" fill="#FFF7ED" font-size="16" font-family="Georgia, serif">{_esc(title)}</text>'
+            f"{body}"
+        )
+    cost_label_y = cost_y - 14
+
+    legend_title_y = cost_y + cost_h + 54
     legend_agents = []
     for i, agent in enumerate(AGENTS):
         lx = 48 + (i % 9) * 268
-        ly = 1100 + (i // 9) * 54
+        ly = legend_title_y + 20 + (i // 9) * 54
         legend_agents.append(
             _badge(lx + 18, ly + 16, agent[0], agent[2], agent[1], experimental=agent[0] == "AS")
             + f'<text x="{lx + 44}" y="{ly + 12}" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">{_esc(agent[1])}</text>'
             + f'<text x="{lx + 44}" y="{ly + 30}" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">{_esc(agent[3])}</text>'
         )
-
-    cost = [
-        (48, "#1B7A4E", "Free", "Local Qwen — offline bulk text only"),
-        (430, "#6B21A8", "Cheap scheduled", "Kimi + Codex/Pollen crons"),
-        (860, "#1D4E89", "Muse Maximum", "3B Muse tokens per week · Spark volume lane"),
-        (1320, "#9F1239", "Premium / gated", "Grok desks, Cursor, Claude Fleet · keep Grok turns short ($1K/wk overage risk)"),
-        (1920, "#BE185D", "Experimental", "Astra / Dot — one day old, spot-check, never sole owner"),
-    ]
-    cost_svg = []
-    for x, fill, title, blurb in cost:
-        cost_svg.append(
-            f'<rect x="{x}" y="{y0 + 500}" width="360" height="70" rx="12" fill="{fill}"/>'
-            f'<text x="{x + 18}" y="{y0 + 528}" fill="#FFF7ED" font-size="16" font-family="Georgia, serif">{title}</text>'
-            f'<text x="{x + 18}" y="{y0 + 552}" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">{_esc(blurb)}</text>'
-        )
+    legend_rows = (len(AGENTS) + 8) // 9
+    notes_y = legend_title_y + 20 + legend_rows * 54 + 20
+    height = notes_y + 118
 
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"
       viewBox="0 0 {width} {height}" role="img"
@@ -285,29 +355,26 @@ def agency_svg() -> tuple[str, int, int]:
     Fewer humans need to divide the work and project-manage the handoffs.</text>
   <text x="1279" y="244" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
     The locked line does not change. Do not retire a desk because this note exists.</text>
-  <rect x="40" y="274" width="1480" height="64" rx="14" fill="#1D4E89"/>
-  <text x="64" y="300" fill="#FFF7ED" font-family="Georgia, serif" font-size="18">Muse on Spark — volume lane</text>
-  <text x="64" y="322" fill="#DBEAFE" font-family="ui-sans-serif, sans-serif" font-size="13">
-    Inbox, calendar, bookings, Google Photos/Docs/Gmail, Meta (FB/IG/WA/Threads), watch-and-ping, volume monitoring. Not frontier reasoning.</text>
-  <rect x="1540" y="274" width="900" height="64" rx="14" fill="#BE185D"/>
-  <text x="1564" y="300" fill="#FFF7ED" font-family="Georgia, serif" font-size="18">Astra — thinking lane (experimental)</text>
-  <text x="1564" y="322" fill="#FCE7F3" font-family="ui-sans-serif, sans-serif" font-size="13">
-    Hard research, strategy/judgment drafts, definitive-article reasoning, MAA analysis that must be right, code/docs that matter. Spot-check Dot.</text>
-  <text x="48" y="378" fill="#0F172A" font-family="Georgia, serif" font-size="20">
+  {bands}
+  <text x="48" y="{y0 - 44}" fill="#0F172A" font-family="Georgia, serif" font-size="20">
     Swimlanes — each badge is a named seat. Gold arrows are handoffs. Nothing public or paid without Dennis.</text>
   {''.join(cols)}
   {feedback}
+  <text x="48" y="{cost_label_y}" font-family="Georgia, serif" font-size="18" fill="#0F172A">
+    Cost order (pick-the-cheapest-capable-fleet-lane): local Qwen → Muse → everything else. Lanes are seats, not desk names.</text>
   {''.join(cost_svg)}
-  <text x="48" y="1080" font-family="Georgia, serif" font-size="20" fill="#0F172A">Named seats — do not invent agents</text>
+  <text x="48" y="{legend_title_y}" font-family="Georgia, serif" font-size="20" fill="#0F172A">Named seats — do not invent agents</text>
   {''.join(legend_agents)}
-  <text x="48" y="1228" font-family="ui-sans-serif, sans-serif" font-size="13" fill="#475569">
+  <text x="48" y="{notes_y}" font-family="ui-sans-serif, sans-serif" font-size="13" fill="#475569">
     Tools on the line, not seats: Zoom recordings · Descript · jennifer A- grader · $1/day boosting.
     Handoff places: Drive · GitHub issue · Basecamp (Claude Fleet only) · Buzz (Monday MAA catch-up).</text>
-  <text x="48" y="1254" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
+  <text x="48" y="{notes_y + 26}" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
     Badges are monograms, not official marks. If a later revision adds a vendor mark, use a permissive
-    source such as Simple Icons (CC0) and note the license here. Lane picker: PR #60 cheapest-capable-fleet-lane.
-    This picture refines Muse-on-Spark vs Astra (Dennis, 2026-10-01).</text>
-  <text x="48" y="1472" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
+    source such as Simple Icons (CC0) and note the license here. Dashed gold ring = experimental seat.</text>
+  <text x="48" y="{notes_y + 48}" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
+    Seat picker: standards/pick-the-cheapest-capable-fleet-lane.md (merged 2026-10-01). Factory split per station:
+    skills/content-factory/references/fleet-orchestration.md. Sam, Data and the Buzz handoff are from the 2026-10-01 brief only.</text>
+  <text x="48" y="{notes_y + 84}" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
     Locked names: Plumbing (before) · Produce · Process · Post · Promote · Perform/MAA (after). Do not rename.</text>
 </svg>
 """
@@ -315,7 +382,7 @@ def agency_svg() -> tuple[str, int, int]:
 
 
 def hierarchy_svg() -> tuple[str, int, int]:
-    width, height = 2480, 1680
+    width, height = 2480, 1330
     columns = [
         (
             "Plumbing",
@@ -342,7 +409,7 @@ def hierarchy_svg() -> tuple[str, int, int]:
             "#1D4ED8",
             [
                 ("Transcribe & mine", "Local Qwen", "transcript.md"),
-                ("Definitive article", "Astra + spot-check", "Hub recipe"),
+                ("Definitive article", "Qwen draft · Astra + second check", "Hub recipe"),
                 ("Atomize + grade", "Trenton · jennifer A-", "Clips + A-"),
             ],
             "Definitive hub  →  meta run record",
@@ -372,8 +439,8 @@ def hierarchy_svg() -> tuple[str, int, int]:
             "#9F1239",
             [
                 ("Metrics", "Kimi/Codex · Qwen", "Revenue, profit, clicks"),
-                ("Analysis", "Astra + spot-check", "Why it moved"),
-                ("Action", "Owning desk", "Feeds Produce"),
+                ("Analysis", "Astra + fresh second check", "Why it moved"),
+                ("Action", "Stage-owner desk · Dennis if public/paid", "Feeds Produce"),
             ],
             "Monday: Codex/Pollen from Buzz",
         ),
@@ -439,8 +506,8 @@ def hierarchy_svg() -> tuple[str, int, int]:
   <text x="48" y="168" fill="#0F172A" font-family="Georgia, serif" font-size="20">
     Six stations, left to right. Gold connectors are depth inside a stage, not a second factory line.</text>
   <text x="48" y="196" fill="#475569" font-family="ui-sans-serif, sans-serif" font-size="14">
-    Muse on Spark = volume on the task. Astra / Dot = thinking on the task, experimental, spot-checked.
-    Current state still divides these tasks across the named desks.</text>
+    Cost order: local Qwen (free) → Muse (volume) → everything else. Astra / Dot = thinking on the task, experimental,
+    with a fresh second check on critical work. Current state still divides these tasks across the named desks.</text>
   {''.join(cards)}
   {example}
   <text x="48" y="1208" fill="#0F172A" font-family="Georgia, serif" font-size="20">How to read an X-ray</text>
@@ -449,9 +516,9 @@ def hierarchy_svg() -> tuple[str, int, int]:
     (working / watch / weak / unknown) plus MAA numbers. Generate it from JSON — do not draw it by hand.</text>
   <text x="48" y="1272" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="15">
     python3 skills/content-factory/scripts/render_xray.py skills/content-factory/examples/xray-business.example.json --out /tmp/xray</text>
-  <text x="48" y="1648" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">
+  <text x="48" y="1304" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">
     Monogram badges; no official vendor marks in this file. Simple Icons (CC0) may be added later with the license noted.
-    Do not invent seats. Do not rename Produce → Process → Post → Promote.</text>
+    Do not invent seats. Do not rename Produce → Process → Post → Promote. Seat picker: standards/pick-the-cheapest-capable-fleet-lane.md.</text>
 </svg>
 """
     return svg, width, height
@@ -483,27 +550,6 @@ def wrap_html(title: str, svg: str, note: str) -> str:
 </body>
 </html>
 """
-
-
-def write_png(html_path: Path, png_path: Path, width: int, height: int) -> None:
-    chrome = shutil.which("google-chrome") or shutil.which("google-chrome-stable")
-    if not chrome:
-        raise RuntimeError("no Chromium on PATH")
-    subprocess.run(
-        [
-            chrome,
-            "--headless=new",
-            "--disable-gpu",
-            "--no-sandbox",
-            "--hide-scrollbars",
-            f"--window-size={width},{height + 80}",
-            f"--screenshot={png_path}",
-            html_path.resolve().as_uri(),
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
 
 
 def main() -> int:
@@ -538,8 +584,14 @@ def main() -> int:
                 encoding="utf-8",
             )
             png_path = args.out / f"{name}.png"
-            write_png(bare, png_path, width, height)
-            bare.unlink()
+            try:
+                write_png(bare, png_path, width, height)
+            except PngError as exc:
+                print(f"visuals png failed: {exc}", file=sys.stderr)
+                return 1
+            finally:
+                if bare.exists():
+                    bare.unlink()
             print(png_path)
     return 0
 

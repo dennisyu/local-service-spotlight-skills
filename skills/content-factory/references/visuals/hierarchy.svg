@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="1680"
-      viewBox="0 0 2480 1680" role="img"
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="1330"
+      viewBox="0 0 2480 1330" role="img"
       aria-label="Content Factory hierarchy from stage to subcomponent to task to articles">
-  <rect width="2480" height="1680" fill="#F4F1EA"/>
+  <rect width="2480" height="1330" fill="#F4F1EA"/>
   <rect x="0" y="0" width="2480" height="118" fill="#22698A"/>
   <text x="48" y="48" fill="#FFF7ED" font-family="Georgia, serif" font-size="34">
     Content Factory hierarchy</text>
@@ -10,8 +10,8 @@
   <text x="48" y="168" fill="#0F172A" font-family="Georgia, serif" font-size="20">
     Six stations, left to right. Gold connectors are depth inside a stage, not a second factory line.</text>
   <text x="48" y="196" fill="#475569" font-family="ui-sans-serif, sans-serif" font-size="14">
-    Muse on Spark = volume on the task. Astra / Dot = thinking on the task, experimental, spot-checked.
-    Current state still divides these tasks across the named desks.</text>
+    Cost order: local Qwen (free) → Muse (volume) → everything else. Astra / Dot = thinking on the task, experimental,
+    with a fresh second check on critical work. Current state still divides these tasks across the named desks.</text>
   
             <rect x="40" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
             <rect x="40" y="220" width="396" height="58" rx="18" fill="#334155"/>
@@ -78,7 +78,7 @@
                 <text x="886" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
                 <text x="886" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Definitive article</text>
                 <text x="886" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Hub recipe</text>
-                <text x="886" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Astra + spot-check</text>
+                <text x="886" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Qwen draft · Astra + second check</text>
                 <path d="M1048 586 v14" stroke="#F5A623" stroke-width="2"/>
                 <rect x="868" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
                 <text x="886" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
@@ -153,13 +153,13 @@
                 <text x="2101" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
                 <text x="2101" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Analysis</text>
                 <text x="2101" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Why it moved</text>
-                <text x="2101" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Astra + spot-check</text>
+                <text x="2101" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Astra + fresh second check</text>
                 <path d="M2263 586 v14" stroke="#F5A623" stroke-width="2"/>
                 <rect x="2083" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
                 <text x="2101" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
                 <text x="2101" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Action</text>
                 <text x="2101" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Feeds Produce</text>
-                <text x="2101" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Owning desk</text>
+                <text x="2101" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Stage-owner desk · Dennis if public/paid</text>
                 
             <text x="2085" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">Monday: Codex/Pollen from Buzz</text>
             
@@ -187,7 +187,7 @@
     (working / watch / weak / unknown) plus MAA numbers. Generate it from JSON — do not draw it by hand.</text>
   <text x="48" y="1272" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="15">
     python3 skills/content-factory/scripts/render_xray.py skills/content-factory/examples/xray-business.example.json --out /tmp/xray</text>
-  <text x="48" y="1648" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">
+  <text x="48" y="1304" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">
     Monogram badges; no official vendor marks in this file. Simple Icons (CC0) may be added later with the license noted.
-    Do not invent seats. Do not rename Produce → Process → Post → Promote.</text>
+    Do not invent seats. Do not rename Produce → Process → Post → Promote. Seat picker: standards/pick-the-cheapest-capable-fleet-lane.md.</text>
 </svg>
