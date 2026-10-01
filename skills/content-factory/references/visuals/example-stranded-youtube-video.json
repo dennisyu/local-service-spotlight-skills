@@ -46,7 +46,7 @@
       "label": "Produce",
       "status": "done",
       "effectiveness": "working",
-      "owner": "Muse",
+      "owner": "Muse / Happy",
       "lane": "muse",
       "handoff_in": "Channel uploads playlist",
       "handoff_out": "inventory.json row + STRONG flag",
@@ -70,7 +70,7 @@
               "id": "watchdog",
               "label": "Daily stranded-video watch",
               "status": "done",
-              "owner": "Muse",
+              "owner": "Muse / Happy",
               "lane": "muse",
               "skill": "video-repurposing-agent",
               "articles": []
@@ -113,9 +113,9 @@
           "tasks": [
             {
               "id": "enhance-or-new",
-              "label": "NEW hub after site search (no existing owner)",
+              "label": "NEW hub after site search (no existing owner; Astra reasoning, fresh check before publish)",
               "status": "in_progress",
-              "owner": "Astra",
+              "owner": "Trenton",
               "lane": "astra",
               "skill": "definitive-article-writer",
               "articles": [
@@ -143,10 +143,10 @@
       "label": "Post",
       "status": "missing",
       "effectiveness": "missing",
-      "owner": "Claude Fleet",
-      "lane": "claude-fleet",
+      "owner": "Sam",
+      "lane": "cursor",
       "handoff_in": "No GitHub issue yet \u2014 draft is not A-",
-      "handoff_out": "Nothing on Basecamp until the pack is ready",
+      "handoff_out": "Nothing on Basecamp (Claude Fleet) until the pack is ready",
       "metrics": [],
       "subcomponents": [
         {
@@ -172,7 +172,7 @@
       "label": "Promote",
       "status": "missing",
       "effectiveness": "missing",
-      "owner": "Muse",
+      "owner": "Alex",
       "lane": "muse",
       "handoff_in": "No organic proof yet",
       "handoff_out": "No $1/day rec",
@@ -196,7 +196,7 @@
               "id": "wait-organic",
               "label": "Wait for organic proof",
               "status": "missing",
-              "owner": "Muse",
+              "owner": "Muse / Happy",
               "lane": "muse",
               "skill": "dollar-a-day-strategist",
               "articles": []
@@ -210,8 +210,8 @@
       "label": "Perform / MAA",
       "status": "in_progress",
       "effectiveness": "unknown",
-      "owner": "Kimi/Codex",
-      "lane": "kimi-codex",
+      "owner": "Trenton",
+      "lane": "grok-desk",
       "handoff_in": "Watch-run counts only",
       "handoff_out": "Action \u2192 finish the STRONG hub, skip promo shorts",
       "metrics": [

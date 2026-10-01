@@ -13,13 +13,25 @@ python3 skills/content-factory/scripts/render_factory_visuals.py \
 | `agency-flow.svg` / `.html` / `.png` | Swimlane agency chart |
 | `hierarchy.svg` / `.html` / `.png` | Stage → subcomponent → task → articles |
 
-X-ray samples are generated from `examples/*.example.json` into this folder:
+X-ray samples are generated from `examples/*.example.json` into this folder.
+Regenerate them after you change `scripts/render_xray.py` or an example file:
+
+```bash
+for f in skills/content-factory/examples/xray-*.example.json; do
+  python3 skills/content-factory/scripts/render_xray.py "$f" \
+    --out skills/content-factory/references/visuals --png
+done
+```
 
 | File | Kind |
 |---|---|
-| `example-local-service-brand.svg` / `.html` / `.png` | Business |
-| `example-podcast-to-boost.svg` / `.html` / `.png` | Project |
-| `example-stranded-youtube-video.svg` / `.html` / `.png` | One piece of content |
+| `example-local-service-brand.svg` / `.html` / `.png` / `.json` | Business |
+| `example-podcast-to-boost.svg` / `.html` / `.png` / `.json` | Project |
+| `example-stranded-youtube-video.svg` / `.html` / `.png` / `.json` | One piece of content |
+
+Every number in them is **EXAMPLE DATA** and the banner says so. `--png`
+needs a Chromium binary on PATH; `scripts/png_shot.py` runs it headless with
+a throwaway profile and sizes the capture to the drawing.
 
 ## Marks
 

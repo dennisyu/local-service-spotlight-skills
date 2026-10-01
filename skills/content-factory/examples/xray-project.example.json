@@ -59,9 +59,9 @@
           "tasks": [
             {
               "id": "podcast-record",
-              "label": "Record the interview",
+              "label": "Book and record the interview",
               "status": "done",
-              "owner": "Trenton",
+              "owner": "Tanner",
               "lane": "muse",
               "skill": "content-agent",
               "articles": []
@@ -88,10 +88,10 @@
           "tasks": [
             {
               "id": "descript-shorts",
-              "label": "Descript shorts + captions",
+              "label": "Descript shorts + captions (Trenton in Descript; Qwen captions)",
               "status": "done",
               "owner": "Trenton",
-              "lane": "grok-desk",
+              "lane": "other",
               "skill": "content-agent",
               "articles": []
             }
@@ -104,9 +104,9 @@
           "tasks": [
             {
               "id": "episode-hub",
-              "label": "Episode hub (Astra reasoning, spot-checked)",
+              "label": "Episode hub (Astra reasoning; fresh check before publish)",
               "status": "done",
-              "owner": "Astra",
+              "owner": "Trenton",
               "lane": "astra",
               "skill": "definitive-article-writer",
               "articles": [
@@ -134,10 +134,10 @@
       "label": "Post",
       "status": "done",
       "effectiveness": "working",
-      "owner": "Sam",
+      "owner": "Mario",
       "lane": "cursor",
-      "handoff_in": "Staged pack",
-      "handoff_out": "Draft URL; Dennis published",
+      "handoff_in": "Staged pack + GitHub issue",
+      "handoff_out": "Draft URL; Dennis published; Claude Fleet posted the Basecamp update",
       "metrics": [
         {"name": "posts", "value": 6, "unit": "posts", "source": "example", "example": true, "effectiveness": "working"}
       ],
@@ -165,7 +165,7 @@
       "label": "Promote",
       "status": "done",
       "effectiveness": "watch",
-      "owner": "Muse",
+      "owner": "Alex",
       "lane": "muse",
       "handoff_in": "Two clips with comments",
       "handoff_out": "Dennis-approved $1/day × 7 on clip A; clip B killed in the rec",
@@ -182,9 +182,9 @@
           "tasks": [
             {
               "id": "boost-a",
-              "label": "Boost clip A at $1/day for 7 days",
+              "label": "Boost clip A at $1/day for 7 days (Dennis approved)",
               "status": "done",
-              "owner": "Muse",
+              "owner": "Muse / Happy",
               "lane": "muse",
               "skill": "dollar-a-day-strategist",
               "articles": []
@@ -198,7 +198,7 @@
       "label": "Perform / MAA",
       "status": "done",
       "effectiveness": "watch",
-      "owner": "Astra",
+      "owner": "Trenton",
       "lane": "astra",
       "handoff_in": "Ad + site metrics (example)",
       "handoff_out": "Action → recut hook + follow-up capture",
@@ -216,9 +216,9 @@
           "tasks": [
             {
               "id": "day7-read",
-              "label": "Day-7 MAA on the $1/day test",
+              "label": "Day-7 MAA on the $1/day test (Astra analysis; fresh check before acting)",
               "status": "done",
-              "owner": "Astra",
+              "owner": "Trenton",
               "lane": "astra",
               "skill": "weekly-brand-maa",
               "articles": [

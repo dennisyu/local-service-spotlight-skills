@@ -1,132 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="1528"
-      viewBox="0 0 1480 1528" role="img"
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="1472"
+      viewBox="0 0 1480 1472" role="img"
       aria-label="Content Factory X-ray — example podcast project">
-  <rect width="1480" height="1528" fill="#F4F1EA"/>
-  <rect x="0" y="0" width="1480" height="36" fill="#9F1239"/><text x="740" y="24" text-anchor="middle" fill="#FFF7ED" font-family="Georgia, serif" font-size="15" font-weight="700">EXAMPLE DATA — illustration only. Not a real project&#x27;s spend, clicks, or booked jobs.</text>
-  <text x="40" y="84" font-family="Georgia, serif" font-size="28" fill="#0F172A">
-    Content Factory X-ray — example podcast project</text>
-  <text x="40" y="112" font-family="ui-sans-serif, sans-serif" font-size="15" fill="#334155">
-    Example client podcast episode → article + shorts + $1/day (not a real project) · EXAMPLE DATA — 2026-09-14 to 2026-09-28</text>
-  <text x="40" y="136" font-family="ui-sans-serif, sans-serif" font-size="13" fill="#475569">
-    kind=project · owner function=content
-    · approval=dennis · generated 2026-10-01</text>
-  <g font-family="ui-sans-serif, sans-serif" font-size="12">
-    <rect x="40" y="152" width="118" height="22" rx="11" fill="#0F766E"/><text x="99" y="168" text-anchor="middle" fill="#FFF7ED">Done</text><rect x="166" y="152" width="118" height="22" rx="11" fill="#C47B17"/><text x="225" y="168" text-anchor="middle" fill="#FFF7ED">In progress</text><rect x="292" y="152" width="118" height="22" rx="11" fill="#94A3B8"/><text x="351" y="168" text-anchor="middle" fill="#FFF7ED">Missing</text><rect x="418" y="152" width="118" height="22" rx="11" fill="#157A4B"/><text x="477" y="168" text-anchor="middle" fill="#FFF7ED">Working</text><rect x="544" y="152" width="118" height="22" rx="11" fill="#C47B17"/><text x="603" y="168" text-anchor="middle" fill="#FFF7ED">Watch</text><rect x="670" y="152" width="118" height="22" rx="11" fill="#B42318"/><text x="729" y="168" text-anchor="middle" fill="#FFF7ED">Weak</text>
-  </g>
+  <rect width="1480" height="1472" fill="#F4F1EA"/>
+  <rect x="0" y="0" width="1480" height="36" fill="#9F1239"/><text x="740" y="24" fill="#FFF7ED" font-family="Georgia, serif" font-size="15" text-anchor="middle" font-weight="700">EXAMPLE DATA — illustration only. Not a real project&#x27;s spend, clicks, or booked jobs.</text>
+  <text x="40" y="84" fill="#0F172A" font-family="Georgia, serif" font-size="28">Content Factory X-ray — example podcast project</text>
+  <text x="40" y="112" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="15">Example client podcast episode → article + shorts + $1/day (not a real project) · EXAMPLE DATA — 2026-09-14 to 2026-09-28</text>
+  <text x="40" y="136" fill="#475569" font-family="ui-sans-serif, sans-serif" font-size="13">kind=project · owner function=content · approval=dennis · generated 2026-10-01</text>
+  <rect x="40" y="152" width="118" height="22" rx="11" fill="#0F766E"/><text x="99" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">Done</text><rect x="166" y="152" width="118" height="22" rx="11" fill="#C47B17"/><text x="225" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">In progress</text><rect x="292" y="152" width="118" height="22" rx="11" fill="#94A3B8"/><text x="351" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">Missing</text><rect x="418" y="152" width="118" height="22" rx="11" fill="#157A4B"/><text x="477" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">Working</text><rect x="544" y="152" width="118" height="22" rx="11" fill="#C47B17"/><text x="603" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">Watch</text><rect x="670" y="152" width="118" height="22" rx="11" fill="#B42318"/><text x="729" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">Weak</text><rect x="796" y="152" width="118" height="22" rx="11" fill="#64748B"/><text x="855" y="168" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">Unknown</text><text x="40" y="194" fill="#475569" font-family="ui-sans-serif, sans-serif" font-size="12">First three pills = station status. Next four = effectiveness of results, also the station&#x27;s left bar and each metric chip. * on a metric = example number, not a measurement. Owner = accountable</text><text x="40" y="210" fill="#475569" font-family="ui-sans-serif, sans-serif" font-size="12">desk; seat = the lane doing the work (pick-the-cheapest-capable-fleet-lane).</text>
   
-    <rect x="24" y="188" width="1432" height="172" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
-    <rect x="24" y="188" width="10" height="172" rx="4" fill="#157A4B"/>
-    <text x="52" y="220" font-family="Georgia, serif" font-size="20" fill="#0F172A">
-      Plumbing</text>
-    <rect x="52" y="232" width="86" height="22" rx="11" fill="#0F766E"/>
-    <text x="95" y="248" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">done</text>
-    <rect x="146" y="232" width="96" height="22" rx="11" fill="#157A4B"/>
-    <text x="194" y="248" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">working</text>
-    <text x="52" y="276" fill="#334155" font-size="12" font-family="ui-sans-serif, sans-serif">
-      Austin · Grok desk</text>
-    <text x="454" y="230" fill="#64748B" font-size="12" font-family="ui-sans-serif, sans-serif">No MAA numbers connected</text>
-    <text x="42" y="306" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">Access: Pixel and ad account recorded (done)</text>
-    <text x="42" y="344" fill="#64748B" font-size="11" font-family="ui-sans-serif, sans-serif">
-      in: Access checklist  →  out: YouTube + Meta + pixel green</text>
+    <rect x="24" y="238" width="1432" height="160" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
+    <rect x="24" y="238" width="10" height="160" rx="4" fill="#157A4B"/>
+    <text x="52" y="270" fill="#0F172A" font-family="Georgia, serif" font-size="20">Plumbing</text>
+    <rect x="52" y="282" width="86" height="22" rx="11" fill="#0F766E"/>
+    <text x="95" y="298" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">done</text>
+    <rect x="146" y="282" width="96" height="22" rx="11" fill="#157A4B"/>
+    <text x="194" y="298" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">working</text>
+    <text x="52" y="326" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="12">Owner: Austin · Seat: Grok desk</text>
+    <text x="454" y="280" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">No MAA numbers connected</text>
+    <text x="42" y="348" fill="#1E293B" font-family="ui-sans-serif, sans-serif" font-size="12">Access: Pixel and ad account recorded (done)</text>
+    <text x="42" y="372" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">in: Access checklist → out: YouTube + Meta + pixel green</text>
     
-    <rect x="24" y="376" width="1432" height="172" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
-    <rect x="24" y="376" width="10" height="172" rx="4" fill="#157A4B"/>
-    <text x="52" y="408" font-family="Georgia, serif" font-size="20" fill="#0F172A">
-      Produce</text>
-    <rect x="52" y="420" width="86" height="22" rx="11" fill="#0F766E"/>
-    <text x="95" y="436" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">done</text>
-    <rect x="146" y="420" width="96" height="22" rx="11" fill="#157A4B"/>
-    <text x="194" y="436" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">working</text>
-    <text x="52" y="464" fill="#334155" font-size="12" font-family="ui-sans-serif, sans-serif">
-      Trenton · Muse on Spark</text>
-    <text x="454" y="418" fill="#64748B" font-size="12" font-family="ui-sans-serif, sans-serif">No MAA numbers connected</text>
-    <text x="42" y="494" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">Capture: Record the interview (done)</text>
-    <text x="42" y="532" fill="#64748B" font-size="11" font-family="ui-sans-serif, sans-serif">
-      in: Booked interview  →  out: Raw episode on Drive / YouTube</text>
+    <rect x="24" y="410" width="1432" height="160" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
+    <rect x="24" y="410" width="10" height="160" rx="4" fill="#157A4B"/>
+    <text x="52" y="442" fill="#0F172A" font-family="Georgia, serif" font-size="20">Produce</text>
+    <rect x="52" y="454" width="86" height="22" rx="11" fill="#0F766E"/>
+    <text x="95" y="470" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">done</text>
+    <rect x="146" y="454" width="96" height="22" rx="11" fill="#157A4B"/>
+    <text x="194" y="470" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">working</text>
+    <text x="52" y="498" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="12">Owner: Trenton · Seat: Muse on Spark</text>
+    <text x="454" y="452" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">No MAA numbers connected</text>
+    <text x="42" y="520" fill="#1E293B" font-family="ui-sans-serif, sans-serif" font-size="12">Capture: Book and record the interview (done)</text>
+    <text x="42" y="544" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">in: Booked interview → out: Raw episode on Drive / YouTube</text>
     
-    <rect x="24" y="564" width="1432" height="172" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
-    <rect x="24" y="564" width="10" height="172" rx="4" fill="#157A4B"/>
-    <text x="52" y="596" font-family="Georgia, serif" font-size="20" fill="#0F172A">
-      Process</text>
-    <rect x="52" y="608" width="86" height="22" rx="11" fill="#0F766E"/>
-    <text x="95" y="624" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">done</text>
-    <rect x="146" y="608" width="96" height="22" rx="11" fill="#157A4B"/>
-    <text x="194" y="624" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">working</text>
-    <text x="52" y="652" fill="#334155" font-size="12" font-family="ui-sans-serif, sans-serif">
-      Trenton · Local Qwen</text>
-    <text x="454" y="606" fill="#64748B" font-size="12" font-family="ui-sans-serif, sans-serif">No MAA numbers connected</text>
-    <text x="42" y="682" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">Atomize: Descript shorts + captions (done) · Definitive article: Episode hub (Astra</text><text x="42" y="698" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">reasoning, spot-checked) (done)</text>
-    <text x="42" y="720" fill="#64748B" font-size="11" font-family="ui-sans-serif, sans-serif">
-      in: Raw episode  →  out: Article draft + 8 clip picks</text>
+    <rect x="24" y="582" width="1432" height="160" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
+    <rect x="24" y="582" width="10" height="160" rx="4" fill="#157A4B"/>
+    <text x="52" y="614" fill="#0F172A" font-family="Georgia, serif" font-size="20">Process</text>
+    <rect x="52" y="626" width="86" height="22" rx="11" fill="#0F766E"/>
+    <text x="95" y="642" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">done</text>
+    <rect x="146" y="626" width="96" height="22" rx="11" fill="#157A4B"/>
+    <text x="194" y="642" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">working</text>
+    <text x="52" y="670" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="12">Owner: Trenton · Seat: Local Qwen</text>
+    <text x="454" y="624" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">No MAA numbers connected</text>
+    <text x="42" y="692" fill="#1E293B" font-family="ui-sans-serif, sans-serif" font-size="12">Atomize: Descript shorts + captions (Trenton in Descript; Qwen captions) (done) · Definitive article: Episode hub (Astra reasoning; fresh check before publish) (done)</text>
+    <text x="42" y="716" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">in: Raw episode → out: Article draft + 8 clip picks</text>
     
-    <rect x="24" y="752" width="1432" height="172" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
-    <rect x="24" y="752" width="10" height="172" rx="4" fill="#157A4B"/>
-    <text x="52" y="784" font-family="Georgia, serif" font-size="20" fill="#0F172A">
-      Post</text>
-    <rect x="52" y="796" width="86" height="22" rx="11" fill="#0F766E"/>
-    <text x="95" y="812" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">done</text>
-    <rect x="146" y="796" width="96" height="22" rx="11" fill="#157A4B"/>
-    <text x="194" y="812" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">working</text>
-    <text x="52" y="840" fill="#334155" font-size="12" font-family="ui-sans-serif, sans-serif">
-      Sam · Cursor cloud</text>
-    <rect x="454" y="770" width="150" height="36" rx="8" fill="#157A4B"/><text x="529" y="793" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">posts 6 *</text>
-    <text x="42" y="870" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">Hub page: Stage on the company site (done)</text>
-    <text x="42" y="908" fill="#64748B" font-size="11" font-family="ui-sans-serif, sans-serif">
-      in: Staged pack  →  out: Draft URL; Dennis published</text>
+    <rect x="24" y="754" width="1432" height="160" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
+    <rect x="24" y="754" width="10" height="160" rx="4" fill="#157A4B"/>
+    <text x="52" y="786" fill="#0F172A" font-family="Georgia, serif" font-size="20">Post</text>
+    <rect x="52" y="798" width="86" height="22" rx="11" fill="#0F766E"/>
+    <text x="95" y="814" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">done</text>
+    <rect x="146" y="798" width="96" height="22" rx="11" fill="#157A4B"/>
+    <text x="194" y="814" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">working</text>
+    <text x="52" y="842" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="12">Owner: Mario · Seat: Cursor cloud</text>
+    <rect x="454" y="772" width="172" height="36" rx="8" fill="#157A4B"/><text x="540" y="795" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">posts 6 *</text>
+    <text x="42" y="864" fill="#1E293B" font-family="ui-sans-serif, sans-serif" font-size="12">Hub page: Stage on the company site (done)</text>
+    <text x="42" y="888" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">in: Staged pack + GitHub issue → out: Draft URL; Dennis published; Claude Fleet posted the Basecamp update</text>
     
-    <rect x="24" y="940" width="1432" height="172" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
-    <rect x="24" y="940" width="10" height="172" rx="4" fill="#C47B17"/>
-    <text x="52" y="972" font-family="Georgia, serif" font-size="20" fill="#0F172A">
-      Promote</text>
-    <rect x="52" y="984" width="86" height="22" rx="11" fill="#0F766E"/>
-    <text x="95" y="1000" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">done</text>
-    <rect x="146" y="984" width="96" height="22" rx="11" fill="#C47B17"/>
-    <text x="194" y="1000" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">watch</text>
-    <text x="52" y="1028" fill="#334155" font-size="12" font-family="ui-sans-serif, sans-serif">
-      Muse · Muse on Spark</text>
-    <rect x="454" y="958" width="150" height="36" rx="8" fill="#C47B17"/><text x="529" y="981" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">revenue 0 *</text><rect x="614" y="958" width="150" height="36" rx="8" fill="#C47B17"/><text x="689" y="981" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">profit -7 *</text><rect x="774" y="958" width="150" height="36" rx="8" fill="#157A4B"/><text x="849" y="981" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">clicks 86 *</text>
-    <text x="42" y="1058" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">$1/day test: Boost clip A at $1/day for 7 days (done)</text>
-    <text x="42" y="1096" fill="#64748B" font-size="11" font-family="ui-sans-serif, sans-serif">
-      in: Two clips with comments  →  out: Dennis-approved $1/day × 7 on clip A; clip B killed in the rec</text>
+    <rect x="24" y="926" width="1432" height="160" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
+    <rect x="24" y="926" width="10" height="160" rx="4" fill="#C47B17"/>
+    <text x="52" y="958" fill="#0F172A" font-family="Georgia, serif" font-size="20">Promote</text>
+    <rect x="52" y="970" width="86" height="22" rx="11" fill="#0F766E"/>
+    <text x="95" y="986" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">done</text>
+    <rect x="146" y="970" width="96" height="22" rx="11" fill="#C47B17"/>
+    <text x="194" y="986" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">watch</text>
+    <text x="52" y="1014" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="12">Owner: Alex · Seat: Muse on Spark</text>
+    <rect x="454" y="944" width="172" height="36" rx="8" fill="#C47B17"/><text x="540" y="967" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">revenue $0 *</text><rect x="636" y="944" width="172" height="36" rx="8" fill="#C47B17"/><text x="722" y="967" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">profit -$7 *</text><rect x="818" y="944" width="172" height="36" rx="8" fill="#157A4B"/><text x="904" y="967" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">clicks 86 *</text>
+    <text x="42" y="1036" fill="#1E293B" font-family="ui-sans-serif, sans-serif" font-size="12">$1/day test: Boost clip A at $1/day for 7 days (Dennis approved) (done)</text>
+    <text x="42" y="1060" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">in: Two clips with comments → out: Dennis-approved $1/day × 7 on clip A; clip B killed in the rec</text>
     
-    <rect x="24" y="1128" width="1432" height="172" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
-    <rect x="24" y="1128" width="10" height="172" rx="4" fill="#C47B17"/>
-    <text x="52" y="1160" font-family="Georgia, serif" font-size="20" fill="#0F172A">
-      Perform / MAA</text>
-    <rect x="52" y="1172" width="86" height="22" rx="11" fill="#0F766E"/>
-    <text x="95" y="1188" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">done</text>
-    <rect x="146" y="1172" width="96" height="22" rx="11" fill="#C47B17"/>
-    <text x="194" y="1188" text-anchor="middle" fill="#FFF7ED" font-size="11"
-      font-family="ui-sans-serif, sans-serif">watch</text>
-    <text x="52" y="1216" fill="#334155" font-size="12" font-family="ui-sans-serif, sans-serif">
-      Astra · Astra (experimental)</text>
-    <rect x="454" y="1146" width="150" height="36" rx="8" fill="#C47B17"/><text x="529" y="1169" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">revenue 0 *</text><rect x="614" y="1146" width="150" height="36" rx="8" fill="#C47B17"/><text x="689" y="1169" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">profit -7 *</text><rect x="774" y="1146" width="150" height="36" rx="8" fill="#157A4B"/><text x="849" y="1169" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">clicks 86 *</text><rect x="934" y="1146" width="150" height="36" rx="8" fill="#157A4B"/><text x="1009" y="1169" text-anchor="middle" fill="#FFF7ED" font-size="12" font-family="ui-sans-serif, sans-serif">booked_calls 1 *</text>
-    <text x="42" y="1246" fill="#1E293B" font-size="12" font-family="ui-sans-serif, sans-serif">Metrics → Analysis → Action: Day-7 MAA on the $1/day test (done)</text>
-    <text x="42" y="1284" fill="#64748B" font-size="11" font-family="ui-sans-serif, sans-serif">
-      in: Ad + site metrics (example)  →  out: Action → recut hook + follow-up capture</text>
+    <rect x="24" y="1098" width="1432" height="160" rx="14" fill="#FFFFFF" stroke="#D6D3C9"/>
+    <rect x="24" y="1098" width="10" height="160" rx="4" fill="#C47B17"/>
+    <text x="52" y="1130" fill="#0F172A" font-family="Georgia, serif" font-size="20">Perform / MAA</text>
+    <rect x="52" y="1142" width="86" height="22" rx="11" fill="#0F766E"/>
+    <text x="95" y="1158" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">done</text>
+    <rect x="146" y="1142" width="96" height="22" rx="11" fill="#C47B17"/>
+    <text x="194" y="1158" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="middle">watch</text>
+    <text x="52" y="1186" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="12">Owner: Trenton · Seat: Astra (experimental)</text>
+    <rect x="454" y="1116" width="172" height="36" rx="8" fill="#C47B17"/><text x="540" y="1139" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">revenue $0 *</text><rect x="636" y="1116" width="172" height="36" rx="8" fill="#C47B17"/><text x="722" y="1139" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">profit -$7 *</text><rect x="818" y="1116" width="172" height="36" rx="8" fill="#157A4B"/><text x="904" y="1139" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">clicks 86 *</text><rect x="1000" y="1116" width="172" height="36" rx="8" fill="#157A4B"/><text x="1086" y="1139" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="12" text-anchor="middle">booked_calls 1 *</text>
+    <text x="42" y="1208" fill="#1E293B" font-family="ui-sans-serif, sans-serif" font-size="12">Metrics → Analysis → Action: Day-7 MAA on the $1/day test (Astra analysis; fresh check before acting) (done)</text>
+    <text x="42" y="1232" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">in: Ad + site metrics (example) → out: Action → recut hook + follow-up capture</text>
     
-  
-    <rect x="24" y="1316" width="1432" height="152" rx="14" fill="#0F172A"/>
-    <text x="48" y="1344" fill="#F5A623" font-family="Georgia, serif" font-size="16">
-      MAA loop — Action feeds Produce</text>
-    <text x="48" y="1370" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="13">
-      EXAMPLE DATA — $7 spend, 86 landing-page clicks, 1 booked call, $0 collected revenue.</text>
-    <text x="48" y="1394" fill="#CBD5E1" font-family="ui-sans-serif, sans-serif" font-size="13">
-      Analysis: EXAMPLE DATA — clip A earned the call; clip B did not. The hub answers the interview, not the offer question the caller asked.</text>
-    <text x="48" y="1418" fill="#F8FAFC" font-family="ui-sans-serif, sans-serif" font-size="13">
-      Action: Kill clip B. Recut clip A&#x27;s hook. Produce a follow-up that answers the offer question.</text>
-    <text x="48" y="1442" fill="#F5A623" font-family="ui-sans-serif, sans-serif" font-size="13">
-      Next Produce: Next Produce packet: 20-minute follow-up on the offer question from the booked call.</text>
-    
+  <rect x="24" y="1274" width="1432" height="156" rx="14" fill="#0F172A"/><text x="48" y="1302" fill="#F5A623" font-family="Georgia, serif" font-size="16">MAA loop — Action feeds Produce</text><text x="48" y="1328" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="13">EXAMPLE DATA — $7 spend, 86 landing-page clicks, 1 booked call, $0 collected revenue.</text><text x="48" y="1352" fill="#CBD5E1" font-family="ui-sans-serif, sans-serif" font-size="13">Analysis: EXAMPLE DATA — clip A earned the call; clip B did not. The hub answers the interview, not the offer question the caller asked.</text><text x="48" y="1376" fill="#F8FAFC" font-family="ui-sans-serif, sans-serif" font-size="13">Action: Kill clip B. Recut clip A&#x27;s hook. Produce a follow-up that answers the offer question.</text><text x="48" y="1400" fill="#F5A623" font-family="ui-sans-serif, sans-serif" font-size="13">Next Produce: Next Produce packet: 20-minute follow-up on the offer question from the booked call.</text>
+  <text x="24" y="1452" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="11">Generated by render_xray.py from example-podcast-to-boost.json · schema 1.0 · seats follow standards/pick-the-cheapest-capable-fleet-lane.md · nothing public or paid ships without Dennis</text>
 </svg>

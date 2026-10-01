@@ -82,7 +82,7 @@
               "id": "youtube-watch",
               "label": "Daily YouTube watch-and-ping",
               "status": "in_progress",
-              "owner": "Muse",
+              "owner": "Muse / Happy",
               "lane": "muse",
               "skill": "video-repurposing-agent",
               "articles": []
@@ -111,7 +111,7 @@
               "id": "qwen-first-draft",
               "label": "Qwen transcript triage + first draft",
               "status": "done",
-              "owner": "Local Qwen",
+              "owner": "Trenton",
               "lane": "qwen",
               "skill": "content-factory",
               "articles": []
@@ -125,9 +125,9 @@
           "tasks": [
             {
               "id": "office-hours-hub",
-              "label": "Office Hours hub (Astra reasoning, spot-checked)",
+              "label": "Office Hours hub (Astra reasoning; fresh check before publish)",
               "status": "in_progress",
-              "owner": "Astra",
+              "owner": "Trenton",
               "lane": "astra",
               "skill": "definitive-article-writer",
               "articles": [
@@ -155,10 +155,10 @@
       "label": "Post",
       "status": "in_progress",
       "effectiveness": "watch",
-      "owner": "Claude Fleet",
-      "lane": "claude-fleet",
-      "handoff_in": "GitHub issue from the Grok desk",
-      "handoff_out": "Basecamp comment + staged CMS drafts (Dennis publishes)",
+      "owner": "Trenton",
+      "lane": "muse",
+      "handoff_in": "Staged pack + GitHub issue from the Grok desk",
+      "handoff_out": "Internal Basecamp note (Claude Fleet) + staged CMS drafts (Dennis publishes)",
       "metrics": [
         {"name": "posts", "value": 3, "unit": "posts", "source": "example", "example": true, "effectiveness": "watch"}
       ],
@@ -172,7 +172,7 @@
               "id": "fb-ig-drafts",
               "label": "Facebook and Instagram drafts",
               "status": "in_progress",
-              "owner": "Muse",
+              "owner": "Muse / Happy",
               "lane": "muse",
               "skill": "content-agent",
               "articles": []
@@ -203,7 +203,7 @@
               "id": "boost-calendar",
               "label": "Stage Dollar-a-Day calendar",
               "status": "missing",
-              "owner": "Muse",
+              "owner": "Muse / Happy",
               "lane": "muse",
               "skill": "dollar-a-day-strategist",
               "articles": []
@@ -217,7 +217,7 @@
       "label": "Perform / MAA",
       "status": "done",
       "effectiveness": "watch",
-      "owner": "Kimi/Codex",
+      "owner": "Kimi/Codex crons",
       "lane": "kimi-codex",
       "handoff_in": "GA4 + Meta + GSC (example connectors)",
       "handoff_out": "Action → next Thursday capture (Drive)",
@@ -236,7 +236,7 @@
               "id": "friday-maa",
               "label": "Friday MAA fleet",
               "status": "done",
-              "owner": "Kimi/Codex",
+              "owner": "Kimi/Codex crons",
               "lane": "kimi-codex",
               "skill": "weekly-brand-maa",
               "articles": [
