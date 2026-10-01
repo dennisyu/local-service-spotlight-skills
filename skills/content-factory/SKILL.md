@@ -110,14 +110,19 @@ See `boil-the-ocean.md` for the full operating principles.
 
 The factory is run by named seats, not invented agents. Canonical map:
 `references/fleet-orchestration.md`. Visuals: `references/visuals/agency-flow.svg`
-and `references/visuals/hierarchy.svg`. Incoming cheapest-capable-lane table:
-[PR #60](https://github.com/dennisyu/local-service-spotlight-skills/pull/60).
+and `references/visuals/hierarchy.svg`. Which seat runs a station follows
+`standards/pick-the-cheapest-capable-fleet-lane.md`: local Qwen (free), then
+Muse, then everything else. The map applies that rule station by station and
+adds no lane.
 
-Muse on Spark does high-volume, non-frontier work. Astra (Dot, plus specific
-ChatGPT tasks) does the thinking and is experimental — spot-check it. Until
-there are more Dots, the named desks still divide the work. Perform / MAA
-closes the loop: Action names the next Produce. Nothing public or paid
-without Dennis. Claude Fleet is the only Basecamp poster.
+Local Qwen takes offline bulk text that can wait for a Mac. Muse on Spark
+does high-volume, non-frontier work. Astra (Dot, plus specific ChatGPT tasks)
+does the thinking and is experimental: spot-check its routine output, and on
+anything critical a human or a separate ChatGPT task started fresh reviews
+Dot's output before anyone acts on it. Until there are many Dots, the named
+desks still divide the work. Perform / MAA closes the loop: Action names the
+next Produce. Nothing public or paid without Dennis. Claude Fleet is the only
+Basecamp poster.
 
 ## Content Factory X-ray
 

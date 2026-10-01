@@ -185,7 +185,7 @@ until they are green or a dated blocker exists.
 |---|---|---|---|---|
 | Capture | Book and record one Zoom, podcast, or hallway clip | Tanner (calendar); Muse on Spark (bookings, inbox); subject on camera | `content-factory` Capture | Calendar → Zoom/Drive recording |
 | Source inventory | Daily YouTube watch; stranded-video triage | Muse watch-and-ping; Trenton judges STRONG/SKIP | `video-repurposing-agent` | Channel RSS/API → `inventory.json` |
-| Aim | Confirm accepted GCT before the recording is mined | Alex (Nine Triangles); Astra for a strategy draft, then spot-check | `gct-screen`, `nine-triangles` | Brief → Produce packet |
+| Aim | Confirm accepted GCT before the recording is mined | Alex (Nine Triangles); Astra for a strategy draft, checked fresh before it is accepted | `gct-screen`, `nine-triangles` | Brief → Produce packet |
 
 ### Process — function: content — cheapest capable: Qwen for bulk text; Astra for definitive reasoning; Trenton owns the line
 
@@ -212,7 +212,7 @@ until they are green or a dated blocker exists.
 |---|---|---|---|---|
 | Rank organic | Last 60–90 days by real engagement | Muse volume monitoring; Qwen first pass | `dollar-a-day-strategist` | Live posts → ranked list |
 | $1/day test | Stage $1/day × 7 on proven winners | Muse (Meta); Dennis approves | `dollar-a-day-strategist` | Ranked list → staged calendar |
-| Kill / scale rec | Day-7 MAA on each test | Astra if the analysis must be right; else Qwen first pass + desk spot-check | `weekly-brand-maa` | Ad metrics → kill/hold/scale rec |
+| Kill / scale rec | Day-7 MAA on each test | Astra if the analysis must be right, checked fresh before anyone acts; else Qwen first pass + desk spot-check | `weekly-brand-maa` | Ad metrics → kill/hold/scale rec |
 
 ### Perform / MAA (after) — function: analytics — cheapest capable: Kimi/Codex clocks; Qwen first pass; Astra for analysis that must be right
 
@@ -264,10 +264,10 @@ Every number below is **EXAMPLE DATA**. It is not a client result.
 |---|---|---|---|
 | Plumbing | Already green on the Office Hours property | Access register | Drive |
 | Produce | Tanner books; Muse sends the calendar/inbox; Zoom records | `office-hours-YYYY-MM-DD.mp4` | Drive |
-| Process | Qwen mines the transcript; Trenton cuts clips in Descript; Astra (spot-checked) reasons the hub; jennifer grades A- | `transcript.md`, staged hub, clip list | Drive |
+| Process | Qwen mines the transcript; Trenton cuts clips in Descript; Astra reasons the hub and a fresh check reads it before it ships; jennifer grades A- | `transcript.md`, staged hub, clip list | Drive |
 | Post | Muse drafts FB/IG; Grok desk files a GitHub issue; Claude Fleet posts the internal Basecamp note; **Dennis** publishes | FB drafts + hub draft | Meta + WordPress draft |
 | Promote | Rank after a week of organic. No spend in week one unless a post already proved out | Ranked list | Drive |
-| Perform | Friday Kimi/Codex MAA. **EXAMPLE DATA:** 1,240 Facebook clicks, $0 attributed revenue (awareness week), Action = “record the Q&A that the comments asked for” | MAA file | Drive → Produce |
+| Perform | Friday MAA on the Kimi/Codex crons where those are live. **EXAMPLE DATA:** 1,240 Facebook clicks, $0 attributed revenue (awareness week), Action = “record the Q&A that the comments asked for” | MAA file | Drive → Produce |
 
 Articles in the tree: definitive *How we run Thursday Office Hours*; meta
 *Office Hours run EXAMPLE-2026-09-25*.
@@ -288,10 +288,10 @@ Articles in the tree: definitive *How we run Thursday Office Hours*; meta
 | Station | Who | Artifact | Place |
 |---|---|---|---|
 | Produce | Muse watch-and-ping; daily watchdog at ~4am; **EXAMPLE DATA:** 12 videos in inventory, 2 new | `inventory.json` | Repo / Drive |
-| Process | Trenton triages SKIP / LIGHT / MODERATE / STRONG. Qwen drafts. Astra spot-checked on STRONG reasoning. Search the site before writing (NEW vs ENHANCE) | Staged article(s) | CMS draft |
+| Process | Trenton triages SKIP / LIGHT / MODERATE / STRONG. Qwen drafts. Astra reasons the STRONG hub, checked fresh before it ships. Search the site before writing (NEW vs ENHANCE) | Staged article(s) | CMS draft |
 | Post | Stage only. Dennis publishes. Claude Fleet reports the run on the internal thread | Run report | GitHub issue → Basecamp |
 | Promote | Pair winners with Dollar-a-Day only after organic proof | Rec, not spend | Drive |
-| Perform | **EXAMPLE DATA:** 2 STRONG staged, 9 SKIP, 1 LIGHT enhance; 251 API units on the first article in the published Escape Fitness pattern (that historical receipt is real; the 12/2 counts above are example). Action = “mine the next STRONG guest episode, not another promo short” | Run report + MAA | Drive |
+| Perform | **EXAMPLE DATA:** 2 STRONG staged, 9 SKIP, 1 LIGHT enhance. The one real number here is the 251 API units for the first A- article in the Escape Fitness validation (May 2026), recorded in `skills/video-repurposing-agent/SKILL.md`; the 12 / 2 / 9 / 1 counts are example. Action = “mine the next STRONG guest episode, not another promo short” | Run report + MAA | Drive |
 
 ### 4. Personal-brand site (Sam) fed by the factory
 
