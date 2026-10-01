@@ -7,7 +7,7 @@ description: Operating principles for the whole skill pack. Use when running any
 
 This file is the operating layer beneath all ten skills in this pack: it changes nothing about WHAT each skill does and everything about HOW an agent runs it. Persistent agents loop, self-correct, hold memory, and finish end-to-end, so stopping at 90% stopped being a constraint and became a choice.
 
-Completeness is coverage, not model tier. Boil the ocean on COVERAGE. Never on TIER. "Max effort" means do not stop at 90%. It does NOT mean run every step on the most expensive model. Your session model is the CEILING, not the floor. Which engine runs each part is `model-judgment`: cheapest tier that still clears the bar.
+Completeness is coverage, not model tier. Boil the ocean on COVERAGE. Never on TIER. "Max effort" means do not stop at 90%. It does NOT mean run every step on the most expensive model. Your session model is the CEILING, not the floor. Which engine runs each part is `model-judgment`: cheapest tier that still clears the bar. Which seat runs the job is `pick-the-cheapest-capable-fleet-lane`: cheapest fleet lane that can actually do it.
 
 ## The principle
 
@@ -66,7 +66,7 @@ Last rewritten August 26, 2026. This block is a weekly rewrite, not a leftover h
 - **Every major vendor now ships this file's assumptions.** OpenAI's GPT-5.6 (July 9, 2026) exposes Sol, Terra, and Luna as an explicit cheap-to-flagship ladder and adds programmatic tool calling, where the model writes a small program to coordinate tools instead of round-tripping each one. Google's Gemini 3.6 Flash and 3.5 Flash-Lite (July 21, 2026) fold computer use in as a built-in tool. A tiered ladder, real tool use, long-horizon runs — that is the shape of the whole field now, not one vendor's bet. Gemini 3.5 Pro had not shipped as of this review.
 - **Managed Agents** run skills on a schedule with vault-stored secrets and browser/CLI access — this file's "persistent, looping agent" is a product surface, not just a way of working. This library is itself kept current by one.
 
-Rule of thumb after this month: pick the cheapest tier that clears the bar, turn the effort dial before you turn to a bigger model, and give every scheduled job a fallback. See `model-judgment` for the full routing ladder.
+Rule of thumb after this month: pick the cheapest tier that clears the bar, turn the effort dial before you turn to a bigger model, and give every scheduled job a fallback. See `model-judgment` for the model-tier ladder, and `pick-the-cheapest-capable-fleet-lane` for which seat should run the job.
 ## Definitive article & links
 
 - The source idea: https://garryslist.org/posts/boil-the-ocean — Garry Tan, "Boil the ocean" (Feb 2026)
@@ -2788,6 +2788,45 @@ This is a runtime judgment rule. An HTML regex cannot prove account identity,
 consent scope or session reuse; enforce it with a read-only check and its receipt.
 It supplements access and action-approval rules rather than granting new authority.
 <!-- shared-rule:reuse-existing-authorized-access:end -->
+
+<!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
+## Pick the cheapest capable fleet lane
+
+- **Route each job to the cheapest fleet lane that can actually do it.** This
+  picks the *seat* that should run the job. `model-judgment` still picks the
+  *model tier* inside that seat. They are two ladders, not one. There is no
+  separate skill-router skill; this file is the fleet router.
+
+| Lane | Takes | Hard stop |
+|---|---|---|
+| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites | No browser, no logins, no publishing. Runs only while a Mac is awake |
+| **Muse / Happy** | Anything in Google (Photos, Docs, Gmail) or Meta, plus email and correspondence. Most headroom | Prefer a cheaper lane when one can actually finish the job |
+| **Kimi and Codex crons** | Cheap recurring scheduled jobs | Do not keep a job here after a fitter lane is live |
+| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Grok overages can cost Dennis up to $1K a week |
+
+- **Rule of thumb.** Needs a browser or a login → not Qwen. Needs Google or
+  Meta → Muse/Happy. Recurring and mechanical → a Kimi or Codex cron. A
+  decision or a public post → a Grok desk. When more than one lane could do
+  it, take the cheapest one that still fits.
+- **Never run the same job on two lanes.** When a job moves, the new lane
+  must be live before the old one is turned off.
+- This rule picks the seat. It does not grant permission to send, publish,
+  spend, or delete. Those still need the existing approval rails. Do not put
+  passwords, tokens, or account inventories in this file or in any public
+  copy of it.
+
+### Worked example — weekly Google Photos person-albums
+
+The weekly Google Photos person-albums job stays on the existing enabled
+Kimi cron until Happy creates the Monday 9:17 AM PT Muse task from the
+Happy/Muse runbook. Then the Kimi cron is turned off so the job never runs
+twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
+browser.
+
+No regex can honestly decide which lane a job needs. Enforce this by reading
+the lane table before you schedule or claim a job, and by naming the live
+lane in the job's receipt.
+<!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work
