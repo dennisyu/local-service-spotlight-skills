@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.0",
+  "kind": "content",
+  "id": "example-stranded-youtube-video",
+  "title": "Content Factory X-ray \u2014 example stranded YouTube video",
+  "subject": "Example stranded upload (not a real video)",
+  "period": "EXAMPLE DATA \u2014 2026-09-27 watch run",
+  "generated_at": "2026-10-01",
+  "data_class": "example",
+  "disclaimer": "EXAMPLE DATA \u2014 illustration only. Not a real video's views, grade, or revenue.",
+  "owner_function": "content",
+  "canonical_hub": "https://example.invalid/example-stranded-video",
+  "approval_gate": "dennis",
+  "stages": [
+    {
+      "id": "plumbing",
+      "label": "Plumbing",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Austin",
+      "lane": "grok-desk",
+      "handoff_in": "Channel collaborator already recorded",
+      "handoff_out": "Watch loop may run",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "access",
+          "label": "Access",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "yt-read",
+              "label": "YouTube read path (API or RSS)",
+              "status": "done",
+              "owner": "Austin",
+              "lane": "muse",
+              "skill": "client-access-checklist",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "produce",
+      "label": "Produce",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Muse",
+      "lane": "muse",
+      "handoff_in": "Channel uploads playlist",
+      "handoff_out": "inventory.json row + STRONG flag",
+      "metrics": [
+        {
+          "name": "videos_triaged",
+          "value": 12,
+          "unit": "videos",
+          "source": "example",
+          "example": true,
+          "effectiveness": "working"
+        }
+      ],
+      "subcomponents": [
+        {
+          "id": "source-inventory",
+          "label": "Source inventory",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "watchdog",
+              "label": "Daily stranded-video watch",
+              "status": "done",
+              "owner": "Muse",
+              "lane": "muse",
+              "skill": "video-repurposing-agent",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "process",
+      "label": "Process",
+      "status": "in_progress",
+      "effectiveness": "watch",
+      "owner": "Trenton",
+      "lane": "qwen",
+      "handoff_in": "STRONG video id + captions",
+      "handoff_out": "Staged article waiting on A- and Dennis",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "triage",
+          "label": "Triage",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "strong-call",
+              "label": "Mark this upload STRONG",
+              "status": "done",
+              "owner": "Trenton",
+              "lane": "grok-desk",
+              "skill": "video-repurposing-agent",
+              "articles": []
+            }
+          ]
+        },
+        {
+          "id": "definitive-article",
+          "label": "Definitive article",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "enhance-or-new",
+              "label": "NEW hub after site search (no existing owner)",
+              "status": "in_progress",
+              "owner": "Astra",
+              "lane": "astra",
+              "skill": "definitive-article-writer",
+              "articles": [
+                {
+                  "kind": "definitive",
+                  "title": "Example stranded-video hub (draft)",
+                  "url": "https://example.invalid/example-stranded-video",
+                  "status": "in_progress"
+                },
+                {
+                  "kind": "meta",
+                  "title": "Meta: video-repurposing run EXAMPLE-YT-12",
+                  "url": "https://example.invalid/meta/example-yt-12",
+                  "execution_id": "EXAMPLE-YT-12",
+                  "status": "in_progress"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "post",
+      "label": "Post",
+      "status": "missing",
+      "effectiveness": "missing",
+      "owner": "Claude Fleet",
+      "lane": "claude-fleet",
+      "handoff_in": "No GitHub issue yet \u2014 draft is not A-",
+      "handoff_out": "Nothing on Basecamp until the pack is ready",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "hub-page",
+          "label": "Hub page",
+          "status": "missing",
+          "tasks": [
+            {
+              "id": "stage-cms",
+              "label": "Stage CMS draft after A-",
+              "status": "missing",
+              "owner": "Sam",
+              "lane": "cursor",
+              "skill": "video-repurposing-agent",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "promote",
+      "label": "Promote",
+      "status": "missing",
+      "effectiveness": "missing",
+      "owner": "Muse",
+      "lane": "muse",
+      "handoff_in": "No organic proof yet",
+      "handoff_out": "No $1/day rec",
+      "metrics": [
+        {
+          "name": "revenue",
+          "value": null,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "missing"
+        }
+      ],
+      "subcomponents": [
+        {
+          "id": "dollar-a-day",
+          "label": "$1/day test",
+          "status": "missing",
+          "tasks": [
+            {
+              "id": "wait-organic",
+              "label": "Wait for organic proof",
+              "status": "missing",
+              "owner": "Muse",
+              "lane": "muse",
+              "skill": "dollar-a-day-strategist",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "perform",
+      "label": "Perform / MAA",
+      "status": "in_progress",
+      "effectiveness": "unknown",
+      "owner": "Kimi/Codex",
+      "lane": "kimi-codex",
+      "handoff_in": "Watch-run counts only",
+      "handoff_out": "Action \u2192 finish the STRONG hub, skip promo shorts",
+      "metrics": [
+        {
+          "name": "revenue",
+          "value": null,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "unknown"
+        },
+        {
+          "name": "profit",
+          "value": null,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "unknown"
+        },
+        {
+          "name": "clicks",
+          "value": null,
+          "unit": "clicks",
+          "source": "example",
+          "example": true,
+          "effectiveness": "unknown"
+        }
+      ],
+      "subcomponents": [
+        {
+          "id": "maa",
+          "label": "Metrics \u2192 Analysis \u2192 Action",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "watch-report",
+              "label": "Log SKIP / STRONG and stop",
+              "status": "in_progress",
+              "owner": "Trenton",
+              "lane": "grok-desk",
+              "skill": "weekly-brand-maa",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "loop": {
+    "metrics_summary": "EXAMPLE DATA \u2014 12 videos triaged, 2 STRONG, 9 SKIP, 1 LIGHT. Revenue, profit, and clicks are not connected yet.",
+    "analysis": "EXAMPLE DATA \u2014 the stranded guest episode has a claim the site does not own. Promo shorts do not.",
+    "action": "Finish the STRONG hub to A- and stage it. Do not produce another promo short.",
+    "feeds_produce": "Next Produce packet: none. Process the STRONG row already in inventory.json."
+  }
+}

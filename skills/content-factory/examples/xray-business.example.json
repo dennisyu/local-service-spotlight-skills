@@ -1,0 +1,278 @@
+{
+  "schema_version": "1.0",
+  "kind": "business",
+  "id": "example-local-service-brand",
+  "title": "Content Factory X-ray — example local service brand",
+  "subject": "Example Local Service Brand (not a real client)",
+  "period": "EXAMPLE DATA — week of 2026-09-22 to 2026-09-28",
+  "generated_at": "2026-10-01",
+  "data_class": "example",
+  "disclaimer": "EXAMPLE DATA — illustration only. Not a real client's metrics, revenue, or clicks.",
+  "owner_function": "content",
+  "canonical_hub": "https://example.invalid/content-factory-hub",
+  "approval_gate": "dennis",
+  "stages": [
+    {
+      "id": "plumbing",
+      "label": "Plumbing",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Austin",
+      "lane": "grok-desk",
+      "handoff_in": "Kickoff access list → Drive register",
+      "handoff_out": "Rows 1–4 green on the live URL",
+      "metrics": [
+        {"name": "clicks", "value": null, "unit": "clicks", "source": "example", "example": true, "effectiveness": "unknown"},
+        {"name": "revenue", "value": null, "unit": "usd", "source": "example", "example": true, "effectiveness": "unknown"}
+      ],
+      "subcomponents": [
+        {
+          "id": "access",
+          "label": "Access",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "gsc-ga4-gtm",
+              "label": "GSC + GA4 + GTM verified",
+              "status": "done",
+              "owner": "Austin",
+              "lane": "muse",
+              "skill": "client-access-checklist",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "produce",
+      "label": "Produce",
+      "status": "in_progress",
+      "effectiveness": "watch",
+      "owner": "Trenton",
+      "lane": "muse",
+      "handoff_in": "MAA Action from last Friday → calendar",
+      "handoff_out": "Weekly Zoom + stranded-video inventory → Drive",
+      "metrics": [
+        {"name": "recordings", "value": 1, "unit": "recordings", "source": "example", "example": true, "effectiveness": "watch"}
+      ],
+      "subcomponents": [
+        {
+          "id": "capture",
+          "label": "Capture",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "office-hours-zoom",
+              "label": "Thursday Office Hours Zoom",
+              "status": "done",
+              "owner": "Tanner",
+              "lane": "muse",
+              "skill": "content-factory",
+              "articles": []
+            }
+          ]
+        },
+        {
+          "id": "source-inventory",
+          "label": "Source inventory",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "youtube-watch",
+              "label": "Daily YouTube watch-and-ping",
+              "status": "in_progress",
+              "owner": "Muse",
+              "lane": "muse",
+              "skill": "video-repurposing-agent",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "process",
+      "label": "Process",
+      "status": "in_progress",
+      "effectiveness": "watch",
+      "owner": "Trenton",
+      "lane": "qwen",
+      "handoff_in": "Drive recording",
+      "handoff_out": "Staged hub + clip list → Drive",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "transcribe-mine",
+          "label": "Transcribe & mine",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "qwen-first-draft",
+              "label": "Qwen transcript triage + first draft",
+              "status": "done",
+              "owner": "Local Qwen",
+              "lane": "qwen",
+              "skill": "content-factory",
+              "articles": []
+            }
+          ]
+        },
+        {
+          "id": "definitive-article",
+          "label": "Definitive article",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "office-hours-hub",
+              "label": "Office Hours hub (Astra reasoning, spot-checked)",
+              "status": "in_progress",
+              "owner": "Astra",
+              "lane": "astra",
+              "skill": "definitive-article-writer",
+              "articles": [
+                {
+                  "kind": "definitive",
+                  "title": "How we run Thursday Office Hours (example hub)",
+                  "url": "https://example.invalid/office-hours",
+                  "status": "in_progress"
+                },
+                {
+                  "kind": "meta",
+                  "title": "Meta: Office Hours run EXAMPLE-2026-09-25",
+                  "url": "https://example.invalid/meta/office-hours-example-2026-09-25",
+                  "execution_id": "EXAMPLE-2026-09-25",
+                  "status": "in_progress"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "post",
+      "label": "Post",
+      "status": "in_progress",
+      "effectiveness": "watch",
+      "owner": "Claude Fleet",
+      "lane": "claude-fleet",
+      "handoff_in": "GitHub issue from the Grok desk",
+      "handoff_out": "Basecamp comment + staged CMS drafts (Dennis publishes)",
+      "metrics": [
+        {"name": "posts", "value": 3, "unit": "posts", "source": "example", "example": true, "effectiveness": "watch"}
+      ],
+      "subcomponents": [
+        {
+          "id": "channel-packages",
+          "label": "Channel packages",
+          "status": "in_progress",
+          "tasks": [
+            {
+              "id": "fb-ig-drafts",
+              "label": "Facebook and Instagram drafts",
+              "status": "in_progress",
+              "owner": "Muse",
+              "lane": "muse",
+              "skill": "content-agent",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "promote",
+      "label": "Promote",
+      "status": "missing",
+      "effectiveness": "missing",
+      "owner": "Alex",
+      "lane": "muse",
+      "handoff_in": "No proven organic winner yet this example week",
+      "handoff_out": "No staged $1/day calendar",
+      "metrics": [
+        {"name": "profit", "value": null, "unit": "usd", "source": "example", "example": true, "effectiveness": "missing"}
+      ],
+      "subcomponents": [
+        {
+          "id": "dollar-a-day",
+          "label": "$1/day test",
+          "status": "missing",
+          "tasks": [
+            {
+              "id": "boost-calendar",
+              "label": "Stage Dollar-a-Day calendar",
+              "status": "missing",
+              "owner": "Muse",
+              "lane": "muse",
+              "skill": "dollar-a-day-strategist",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "perform",
+      "label": "Perform / MAA",
+      "status": "done",
+      "effectiveness": "watch",
+      "owner": "Kimi/Codex",
+      "lane": "kimi-codex",
+      "handoff_in": "GA4 + Meta + GSC (example connectors)",
+      "handoff_out": "Action → next Thursday capture (Drive)",
+      "metrics": [
+        {"name": "revenue", "value": 0, "unit": "usd", "source": "example", "example": true, "effectiveness": "watch"},
+        {"name": "profit", "value": 0, "unit": "usd", "source": "example", "example": true, "effectiveness": "watch"},
+        {"name": "clicks", "value": 1240, "unit": "clicks", "source": "example", "example": true, "effectiveness": "working"}
+      ],
+      "subcomponents": [
+        {
+          "id": "maa",
+          "label": "Metrics → Analysis → Action",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "friday-maa",
+              "label": "Friday MAA fleet",
+              "status": "done",
+              "owner": "Kimi/Codex",
+              "lane": "kimi-codex",
+              "skill": "weekly-brand-maa",
+              "articles": [
+                {
+                  "kind": "meta",
+                  "title": "Meta: Friday MAA EXAMPLE-2026-09-26",
+                  "url": "https://example.invalid/meta/maa-example-2026-09-26",
+                  "execution_id": "EXAMPLE-MAA-2026-09-26",
+                  "status": "done"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "loop": {
+    "metrics_summary": "EXAMPLE DATA — 1,240 Facebook clicks, $0 attributed revenue, $0 profit this week.",
+    "analysis": "EXAMPLE DATA — comments asked a follow-up the hub does not answer yet. Clicks are interest, not money.",
+    "action": "Record next Thursday's Q&A on that follow-up. Do not boost until a post earns comments.",
+    "feeds_produce": "Next Produce packet: Office Hours Q&A on the unanswered comment theme."
+  },
+  "articles": [
+    {
+      "kind": "definitive",
+      "title": "How we run Thursday Office Hours (example hub)",
+      "url": "https://example.invalid/office-hours",
+      "status": "in_progress"
+    },
+    {
+      "kind": "meta",
+      "title": "Meta: Office Hours run EXAMPLE-2026-09-25",
+      "url": "https://example.invalid/meta/office-hours-example-2026-09-25",
+      "execution_id": "EXAMPLE-2026-09-25",
+      "status": "in_progress"
+    }
+  ]
+}

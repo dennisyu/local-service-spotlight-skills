@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="1680"
+      viewBox="0 0 2480 1680" role="img"
+      aria-label="Content Factory hierarchy from stage to subcomponent to task to articles">
+  <rect width="2480" height="1680" fill="#F4F1EA"/>
+  <rect x="0" y="0" width="2480" height="118" fill="#22698A"/>
+  <text x="48" y="48" fill="#FFF7ED" font-family="Georgia, serif" font-size="34">
+    Content Factory hierarchy</text>
+  <text x="48" y="84" fill="#DBEAFE" font-family="ui-sans-serif, sans-serif" font-size="18">
+    Stage → subcomponent → task → definitive article → meta article · agents sit on tasks, not on invented boxes</text>
+  <text x="48" y="168" fill="#0F172A" font-family="Georgia, serif" font-size="20">
+    Six stations, left to right. Gold connectors are depth inside a stage, not a second factory line.</text>
+  <text x="48" y="196" fill="#475569" font-family="ui-sans-serif, sans-serif" font-size="14">
+    Muse on Spark = volume on the task. Astra / Dot = thinking on the task, experimental, spot-checked.
+    Current state still divides these tasks across the named desks.</text>
+  
+            <rect x="40" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
+            <rect x="40" y="220" width="396" height="58" rx="18" fill="#334155"/>
+            <rect x="40" y="256" width="396" height="22" fill="#334155"/>
+            <text x="60" y="258" fill="#FFF7ED" font-size="22" font-family="Georgia, serif">Plumbing</text>
+            
+                <rect x="58" y="300" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="76" y="328" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="76" y="354" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Access</text>
+                <text x="76" y="380" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · GSC, CMS, YouTube, ads</text>
+                <text x="76" y="404" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Austin · Muse</text>
+                <path d="M238 436 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="58" y="450" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="76" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="76" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Tracking</text>
+                <text x="76" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · GA4 / GTM live tag</text>
+                <text x="76" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Austin · Cursor</text>
+                <path d="M238 586 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="58" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="76" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="76" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Credentials</text>
+                <text x="76" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Record; do not re-ask</text>
+                <text x="76" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Austin</text>
+                
+            <text x="60" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">No article yet — the register is the artifact</text>
+            
+            <rect x="445" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
+            <rect x="445" y="220" width="396" height="58" rx="18" fill="#0F766E"/>
+            <rect x="445" y="256" width="396" height="22" fill="#0F766E"/>
+            <text x="465" y="258" fill="#FFF7ED" font-size="22" font-family="Georgia, serif">Produce</text>
+            
+                <rect x="463" y="300" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="481" y="328" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="481" y="354" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Capture</text>
+                <text x="481" y="380" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Office Hours / podcast Zoom</text>
+                <text x="481" y="404" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Tanner · Muse</text>
+                <path d="M643 436 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="463" y="450" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="481" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="481" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Source inventory</text>
+                <text x="481" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Stranded YouTube triage</text>
+                <text x="481" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Muse watch · Trenton</text>
+                <path d="M643 586 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="463" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="481" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="481" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Aim</text>
+                <text x="481" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Accepted GCT</text>
+                <text x="481" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Alex 9T · Astra draft</text>
+                
+            <text x="465" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">Recording + inventory.json</text>
+            
+            <rect x="850" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
+            <rect x="850" y="220" width="396" height="58" rx="18" fill="#1D4ED8"/>
+            <rect x="850" y="256" width="396" height="22" fill="#1D4ED8"/>
+            <text x="870" y="258" fill="#FFF7ED" font-size="22" font-family="Georgia, serif">Process</text>
+            
+                <rect x="868" y="300" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="886" y="328" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="886" y="354" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Transcribe &amp; mine</text>
+                <text x="886" y="380" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · transcript.md</text>
+                <text x="886" y="404" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Local Qwen</text>
+                <path d="M1048 436 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="868" y="450" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="886" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="886" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Definitive article</text>
+                <text x="886" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Hub recipe</text>
+                <text x="886" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Astra + spot-check</text>
+                <path d="M1048 586 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="868" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="886" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="886" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Atomize + grade</text>
+                <text x="886" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Clips + A-</text>
+                <text x="886" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Trenton · jennifer A-</text>
+                
+            <text x="870" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">Definitive hub  →  meta run record</text>
+            
+            <rect x="1255" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
+            <rect x="1255" y="220" width="396" height="58" rx="18" fill="#6B21A8"/>
+            <rect x="1255" y="256" width="396" height="22" fill="#6B21A8"/>
+            <text x="1275" y="258" fill="#FFF7ED" font-size="22" font-family="Georgia, serif">Post</text>
+            
+                <rect x="1273" y="300" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="1291" y="328" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="1291" y="354" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Hub page</text>
+                <text x="1291" y="380" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · CMS draft</text>
+                <text x="1291" y="404" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Sam / Mario / Cursor</text>
+                <path d="M1453 436 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="1273" y="450" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="1291" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="1291" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Channel packages</text>
+                <text x="1291" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · FB/IG/email pack</text>
+                <text x="1291" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Muse · Grok desk</text>
+                <path d="M1453 586 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="1273" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="1291" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="1291" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Client update</text>
+                <text x="1291" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Basecamp via GitHub issue</text>
+                <text x="1291" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Claude Fleet</text>
+                
+            <text x="1275" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">Dennis publish click</text>
+            
+            <rect x="1660" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
+            <rect x="1660" y="220" width="396" height="58" rx="18" fill="#C2410C"/>
+            <rect x="1660" y="256" width="396" height="22" fill="#C2410C"/>
+            <text x="1680" y="258" fill="#FFF7ED" font-size="22" font-family="Georgia, serif">Promote</text>
+            
+                <rect x="1678" y="300" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="1696" y="328" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="1696" y="354" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Rank organic</text>
+                <text x="1696" y="380" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Last 60–90 days</text>
+                <text x="1696" y="404" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Muse volume</text>
+                <path d="M1858 436 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="1678" y="450" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="1696" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="1696" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">$1/day test</text>
+                <text x="1696" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Staged calendar</text>
+                <text x="1696" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Muse · Dennis</text>
+                <path d="M1858 586 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="1678" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="1696" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="1696" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Kill / scale rec</text>
+                <text x="1696" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Day-7 MAA</text>
+                <text x="1696" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Astra if it must be right</text>
+                
+            <text x="1680" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">Spend receipt · not a second factory</text>
+            
+            <rect x="2065" y="220" width="396" height="620" rx="18" fill="#FFFFFF" stroke="#D6D3C9"/>
+            <rect x="2065" y="220" width="396" height="58" rx="18" fill="#9F1239"/>
+            <rect x="2065" y="256" width="396" height="22" fill="#9F1239"/>
+            <text x="2085" y="258" fill="#FFF7ED" font-size="22" font-family="Georgia, serif">Perform / MAA</text>
+            
+                <rect x="2083" y="300" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="2101" y="328" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="2101" y="354" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Metrics</text>
+                <text x="2101" y="380" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Revenue, profit, clicks</text>
+                <text x="2101" y="404" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Kimi/Codex · Qwen</text>
+                <path d="M2263 436 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="2083" y="450" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="2101" y="478" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="2101" y="504" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Analysis</text>
+                <text x="2101" y="530" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Why it moved</text>
+                <text x="2101" y="554" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Astra + spot-check</text>
+                <path d="M2263 586 v14" stroke="#F5A623" stroke-width="2"/>
+                <rect x="2083" y="600" width="360" height="136" rx="12" fill="#0F172A"/>
+                <text x="2101" y="628" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">SUBCOMPONENT</text>
+                <text x="2101" y="654" fill="#F8FAFC" font-size="18" font-family="Georgia, serif">Action</text>
+                <text x="2101" y="680" fill="#93C5FD" font-size="13" font-family="ui-sans-serif, sans-serif">TASK · Feeds Produce</text>
+                <text x="2101" y="704" fill="#CBD5E1" font-size="13" font-family="ui-sans-serif, sans-serif">AGENT · Owning desk</text>
+                
+            <text x="2085" y="820" fill="#334155" font-size="13" font-family="ui-sans-serif, sans-serif">Monday: Codex/Pollen from Buzz</text>
+            
+  
+      <rect x="40" y="880" width="2400" height="280" rx="18" fill="#0F172A"/>
+      <text x="64" y="920" fill="#F5A623" font-family="Georgia, serif" font-size="22">
+        Worked leaf — Thursday Office Hours (EXAMPLE DATA, not a real run)</text>
+      <text x="64" y="956" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="16">
+        STAGE Produce → SUBCOMPONENT Capture → TASK Thursday Office Hours Zoom (Tanner books, Muse sends calendar)</text>
+      <text x="64" y="988" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="16">
+        STAGE Process → SUBCOMPONENT Definitive article → TASK Office Hours hub (Qwen draft, Astra reasoning, Trenton voice, jennifer A-)</text>
+      <text x="64" y="1020" fill="#F8FAFC" font-family="ui-sans-serif, sans-serif" font-size="16">
+        DEFINITIVE ARTICLE — How we run Thursday Office Hours (example hub at example.invalid)</text>
+      <text x="64" y="1052" fill="#F8FAFC" font-family="ui-sans-serif, sans-serif" font-size="16">
+        META ARTICLE — Office Hours run EXAMPLE-2026-09-25 (one execution; not a second recipe)</text>
+      <text x="64" y="1088" fill="#F5A623" font-family="ui-sans-serif, sans-serif" font-size="16">
+        STAGE Perform / MAA → Action: record the Q&amp;A the comments asked for → back to Produce</text>
+      <text x="64" y="1124" fill="#94A3B8" font-family="ui-sans-serif, sans-serif" font-size="14">
+        Same pattern on every leaf: a named seat sits on a task, the task hangs off a subcomponent,
+        the subcomponent hangs off a locked stage, and only then do articles appear.</text>
+    
+  <text x="48" y="1208" fill="#0F172A" font-family="Georgia, serif" font-size="20">How to read an X-ray</text>
+  <text x="48" y="1240" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="15">
+    The X-ray is this same tree with status (done / in progress / missing) and effectiveness
+    (working / watch / weak / unknown) plus MAA numbers. Generate it from JSON — do not draw it by hand.</text>
+  <text x="48" y="1272" fill="#334155" font-family="ui-sans-serif, sans-serif" font-size="15">
+    python3 skills/content-factory/scripts/render_xray.py skills/content-factory/examples/xray-business.example.json --out /tmp/xray</text>
+  <text x="48" y="1648" fill="#64748B" font-family="ui-sans-serif, sans-serif" font-size="12">
+    Monogram badges; no official vendor marks in this file. Simple Icons (CC0) may be added later with the license noted.
+    Do not invent seats. Do not rename Produce → Process → Post → Promote.</text>
+</svg>
