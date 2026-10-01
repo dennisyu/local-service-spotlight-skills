@@ -1467,9 +1467,9 @@ It supplements access and action-approval rules rather than granting new authori
 
 - **Muse (Meta Muse Spark) is the default for high-volume work that does not
   need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, and volume monitoring go here. It is fast and
-  heavily subsidized: Maximum is about 3 billion Muse tokens **per week**,
-  not per month. A Muse token is Meta's own meter — do not equate it to an
+  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
+  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
+  tokens **per week**, not per month. A Muse token is Meta's own meter — do not equate it to an
   OpenAI token. Do not buy more Muse capacity; the seat is already
   over-provisioned. Reliability is mid on hard reasoning, so do not put
   disputes, must-be-right research, or code/docs that matter on Muse.
@@ -1482,19 +1482,22 @@ It supplements access and action-approval rules rather than granting new authori
 |---|---|---|
 | **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
 | **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens, higher hit rate | Dot is about a day old. Spot-check it. Never the sole owner of anything critical |
+| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens, higher hit rate | Dot is about a day old. Spot-check it. Never the sole owner of anything critical: a human or a separate ChatGPT task checks Dot's output before anyone acts on it |
 | **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
 | **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
+| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
 
 Cost order: local Qwen (free, offline bulk text), then Muse, then everything
-else.
+else. Muse is the *default* for volume because most volume needs a browser or
+a login, which Qwen cannot do. When a job is offline bulk text with no browser
+or login and a Mac is awake, Qwen goes first; otherwise Muse.
 
 - **Until there are many Dots, keep dividing work across the existing
   agents.** "Many Dots" means the models absorb the harness so humans do not
   have to split tasks and project-manage them. Until that is true, do not
   collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** High-volume, no frontier intelligence → Muse. Offline
-  bulk text with no browser or login → Qwen. Hard reasoning, a dispute,
+- **Rule of thumb.** Offline bulk text with no browser or login → Qwen
+  first (free). Other high-volume work with no frontier intelligence → Muse. Hard reasoning, a dispute,
   research that has to be right, or code/docs that matter → Astra, with a
   human spot-check while Dot is new. Recurring mechanical work already on a
   Kimi or Codex cron stays there until a Muse task is live. A decision or a
