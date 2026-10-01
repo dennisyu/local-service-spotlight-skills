@@ -106,6 +106,39 @@ See `boil-the-ocean.md` for the full operating principles.
 - Reference: https://blitzmetrics.com/content-factory/ · https://dennisyu.com/topic-wheel/
 - Pairs with: dollar-a-day-strategist → **content-factory** → definitive-article-writer → recursive-self-improvement-qa
 
+## Fleet orchestration (agency map)
+
+The factory is run by named seats, not invented agents. Canonical map:
+`references/fleet-orchestration.md`. Visuals: `references/visuals/agency-flow.svg`
+and `references/visuals/hierarchy.svg`. Which seat runs a station follows
+`standards/pick-the-cheapest-capable-fleet-lane.md`: local Qwen (free), then
+Muse, then everything else. The map applies that rule station by station and
+adds no lane.
+
+Local Qwen takes offline bulk text that can wait for a Mac. Muse on Spark
+does high-volume, non-frontier work. Astra (Dot, plus specific ChatGPT tasks)
+does the thinking and is experimental: spot-check its routine output, and on
+anything critical a human or a separate ChatGPT task started fresh reviews
+Dot's output before anyone acts on it. Until there are many Dots, the named
+desks still divide the work. Perform / MAA closes the loop: Action names the
+next Produce. Nothing public or paid without Dennis. Claude Fleet is the only
+Basecamp poster.
+
+## Content Factory X-ray
+
+When a review, Friday MAA, or stalled handoff needs a picture of done /
+in progress / missing plus revenue, profit, and clicks, write a JSON file
+that matches `references/xray-schema.md` and run:
+
+```bash
+python3 skills/content-factory/scripts/render_xray.py \
+  skills/content-factory/examples/xray-business.example.json \
+  --out /tmp/xray-business
+```
+
+Copy the shape of the files in `examples/`. They are **EXAMPLE DATA**. Do
+not invent real numbers. Missing is a valid state.
+
 ## Learned in the field
 
 *Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
@@ -1572,6 +1605,44 @@ This is a runtime judgment rule. An HTML regex cannot prove account identity,
 consent scope or session reuse; enforce it with a read-only check and its receipt.
 It supplements access and action-approval rules rather than granting new authority.
 <!-- shared-rule:reuse-existing-authorized-access:end -->
+
+<!-- shared-rule:content-factory-maa-closes-the-loop:start -->
+## Content Factory MAA closes the loop
+
+- **The factory is not done when content ships.** After Promote, run Perform /
+  MAA — Metrics, then Analysis, then Action. The Action names what gets
+  produced next. Content for its own sake is a failed run.
+- **Measure business impact first:** revenue, profit, and clicks. Diagnostic
+  metrics sit under those. See `weekly-brand-maa` and
+  `report-business-impact-not-volume`.
+- **Do not invent fleet seats or capabilities.** Use only the named lanes and
+  desks in `skills/content-factory/references/fleet-orchestration.md`. Which
+  seat runs a station follows `pick-the-cheapest-capable-fleet-lane`: cost
+  order is local Qwen (free), then Muse, then everything else. The map applies
+  that rule station by station; it does not add a lane.
+- **Muse on Spark takes volume. Astra takes thinking.** Muse (Meta Muse Spark)
+  does high-volume, non-frontier work: Google/Meta errands, inbox, calendar,
+  bookings, watch-and-ping, and volume monitoring, inside the weekly Muse
+  allowance. Astra (Dot, plus specific ChatGPT tasks) takes hard research,
+  strategy and judgment drafts, definitive-article reasoning, MAA analysis that
+  has to be right, and code/docs that matter. Dot is experimental (about a day
+  old on 2026-10-01): spot-check its routine output, and on anything critical a
+  human or a separate ChatGPT task started fresh reviews Dot's output before
+  anyone acts on it (`qa-from-a-different-context-window`). Until there are
+  many Dots, the named desks still divide the work.
+- **Nothing public or paid without Dennis.** Stage by default. Claude Fleet is
+  the single poster to client Basecamp threads. Grok desks prepare drafts and
+  hand them off through a GitHub issue.
+
+The locked line stays Plumbing (before) → Produce → Process → Post → Promote →
+Perform / MAA (after). Do not rename those stations. The full agency map,
+hierarchy, worked examples, and X-ray generator live in the content-factory
+reference, not in this short rule.
+
+No regex can honestly certify a handoff or a business-impact Action. Enforce
+this by reading the map before you claim a job, and by writing an X-ray when
+you need a checkable snapshot.
+<!-- shared-rule:content-factory-maa-closes-the-loop:end -->
 
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane

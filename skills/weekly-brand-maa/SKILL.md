@@ -182,6 +182,8 @@ thread the same night, and the guardrail is now in that task's parameters.)
 ## See also
 - `recursive-self-improvement-qa.md` (loop this run before moving on) · `boil-the-ocean.md` (operating principles)
 - `dollar-a-day-strategist.md` — for ad-amplification reports (e.g. the NaiL dollar-a-day update), which are NOT MAA reports and should use that skill instead.
+- `skills/content-factory/references/fleet-orchestration.md` — agency map. MAA Action feeds Produce. Muse on Spark monitors volume; Astra (spot-checked) does analysis that has to be right.
+- Content Factory X-ray: `skills/content-factory/references/xray-schema.md` and `skills/content-factory/scripts/render_xray.py` when a Friday or Monday run needs a done / in-progress / missing picture.
 
 ## Learned in the field
 
@@ -2495,6 +2497,44 @@ This is a runtime judgment rule. An HTML regex cannot prove account identity,
 consent scope or session reuse; enforce it with a read-only check and its receipt.
 It supplements access and action-approval rules rather than granting new authority.
 <!-- shared-rule:reuse-existing-authorized-access:end -->
+
+<!-- shared-rule:content-factory-maa-closes-the-loop:start -->
+## Content Factory MAA closes the loop
+
+- **The factory is not done when content ships.** After Promote, run Perform /
+  MAA — Metrics, then Analysis, then Action. The Action names what gets
+  produced next. Content for its own sake is a failed run.
+- **Measure business impact first:** revenue, profit, and clicks. Diagnostic
+  metrics sit under those. See `weekly-brand-maa` and
+  `report-business-impact-not-volume`.
+- **Do not invent fleet seats or capabilities.** Use only the named lanes and
+  desks in `skills/content-factory/references/fleet-orchestration.md`. Which
+  seat runs a station follows `pick-the-cheapest-capable-fleet-lane`: cost
+  order is local Qwen (free), then Muse, then everything else. The map applies
+  that rule station by station; it does not add a lane.
+- **Muse on Spark takes volume. Astra takes thinking.** Muse (Meta Muse Spark)
+  does high-volume, non-frontier work: Google/Meta errands, inbox, calendar,
+  bookings, watch-and-ping, and volume monitoring, inside the weekly Muse
+  allowance. Astra (Dot, plus specific ChatGPT tasks) takes hard research,
+  strategy and judgment drafts, definitive-article reasoning, MAA analysis that
+  has to be right, and code/docs that matter. Dot is experimental (about a day
+  old on 2026-10-01): spot-check its routine output, and on anything critical a
+  human or a separate ChatGPT task started fresh reviews Dot's output before
+  anyone acts on it (`qa-from-a-different-context-window`). Until there are
+  many Dots, the named desks still divide the work.
+- **Nothing public or paid without Dennis.** Stage by default. Claude Fleet is
+  the single poster to client Basecamp threads. Grok desks prepare drafts and
+  hand them off through a GitHub issue.
+
+The locked line stays Plumbing (before) → Produce → Process → Post → Promote →
+Perform / MAA (after). Do not rename those stations. The full agency map,
+hierarchy, worked examples, and X-ray generator live in the content-factory
+reference, not in this short rule.
+
+No regex can honestly certify a handoff or a business-impact Action. Enforce
+this by reading the map before you claim a job, and by writing an X-ray when
+you need a checkable snapshot.
+<!-- shared-rule:content-factory-maa-closes-the-loop:end -->
 
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
