@@ -1,15 +1,15 @@
 ---
 name: seo-audit
-description: Run a full technical + content + authority SEO audit on any site and score it out of 100 on the seven-component Local Service Spotlight SEO & Growth rubric, with every finding tied to a URL a stranger can open. Use when a client asks "how is my SEO", when a site is about to be rebuilt, when a monthly re-audit is due, or before promising anyone a ranking outcome. Produces a dated score, a delta against the last run, and a fix list ordered by cost-to-fix — not a list of everything that is wrong.
+description: Run a technical, content and authority SEO audit using the versioned seven-component Local Service Spotlight SEO & Growth rubric, with source-linked findings and UNKNOWN coverage. Use when a client asks "how is my SEO", before rebuilding a site, for monthly re-audits, or before promising a ranking outcome. Produce a dated score or INCOMPLETE result, comparable deltas, and actions ranked by expected business impact, confidence, effort and dependencies.
 author: Dennis Yu — Local Service Spotlight
 references:
   - https://blitzmetrics.com/quickaudit/
   - https://blitzmetrics.com/website-qa-audit/
   - https://blitzmetrics.com/seo-tree/
   - https://dennisyu.com/seo-audits/
-  - DealCon-Skills/weekly-brand-maa.md
-  - DealCon-Skills/evidence-verification.md
-  - DealCon-Skills/client-access-checklist.md
+  - ../weekly-brand-maa/SKILL.md
+  - ../evidence-verification/SKILL.md
+  - ../client-access-checklist/SKILL.md
 rule-scopes: published-html, design-review
 ---
 
@@ -17,7 +17,13 @@ rule-scopes: published-html, design-review
 
 **Use this when** you need to say something true and defensible about a site's search
 performance — to a client, in a pitch, in a monthly tracker, or to yourself before you
-promise anyone a result.
+promise anyone a result. Start with the business goal, offer, ideal customer, market,
+timeframe, and available calls/leads/sales baseline. Missing private measurements stay
+UNKNOWN; they do not prevent a clearly labelled outside-in audit.
+
+Use [How We Audit](https://blitzmetrics.com/how-we-audit/) to select the exam. This skill
+owns the seven-component **SEO & Growth** exam. Brand Authority, Website QA, proof-item
+authority, and Reputation-to-Sales Gap are separate products or measures.
 
 An SEO audit is not a crawl dump. A crawl tool produces 400 issues sorted by its own
 severity guess; that is a data export, not an audit. An audit is a **judgement**: this is
@@ -42,6 +48,12 @@ nowhere else. Any job that needs them reads this file. (Until 2026-08-02 they ex
 inside one scheduled task's parameter block, which meant no other audit could be compared to
 it and nobody could find the definition — the exact failure this file exists to end.)
 
+**Family:** `seo-growth`. **Version:** `seo-growth/1.0 — 2026-10-02` (reconciled
+contract; the standing weights below are unchanged). Record this version, source commit,
+subject type, overlay, research cutoff, and evidence coverage in every scoring receipt.
+Compare scores only when those contracts match; a historical seven-category report is
+not automatically this exam just because it also totals 100.
+
 | # | Component | Weight | What it measures |
 |---|---|---|---|
 | 1 | **Technical** | 18% | Indexability, crawl access, sitemaps, robots.txt, status codes, redirects, HTTPS, Core Web Vitals, mobile rendering |
@@ -52,27 +64,51 @@ it and nobody could find the definition — the exact failure this file exists t
 | 6 | **AI Search Readiness** | 12% | Whether AI crawlers are allowed, entity clarity, schema an LLM can parse, citability, Knowledge Panel/Wikidata presence |
 | 7 | **Conversion** | 10% | Does the traffic have somewhere to go — offer clarity, forms, calls, tracking that proves it |
 
-Score each component 0–100 on its own, then weight. Report the weighted total **and the
-seven raw components**, because the total hides which lever to pull.
+Score each component 0–100 on its own, then compute `sum(raw_score * weight / 100)`.
+Report the weighted total **and the seven raw components**, because the total hides which
+lever to pull. Retain unrounded values in the receipt and round only the displayed total
+to one decimal place; determine a pass from the unrounded total.
 
 **Never report a component you did not check.** Score it `UNKNOWN` and say what access you
 need. A component scored 0 because nobody looked reads identically to a component scored 0
-because the site is broken — see `evidence-verification.md`, Part 4.
+because the site is broken — see `evidence-verification`.
+
+If any required component is UNKNOWN, report **INCOMPLETE — no pass verdict**, its
+known weighted subtotal, the observed weight out of 100%, and the exact missing evidence.
+Do not drop an unknown component, divide by the known weight, fill it with zero, or call
+the subtotal a complete score. A non-applicable test within a component needs a reason;
+it does not silently remove that component's weight.
+
+### Person-site overlay and pass line
+
+For a personal entity home with no local-service offer, keep Local's 12% weight but label
+it **Local (entity overlay)**. Check consistent name, role, and canonical URL on the
+homepage, canonical profiles, and Person schema; assess public office NAP only when
+applicable. Missing GBP is not a failure for this subject type. This preserves the
+person-site overlay documented on 20 August 2026 rather than scoring an executive as a
+plumber.
+
+The complete person-site SEO & Growth exam passes at **80/100**. An incomplete exam has
+no pass/fail verdict. Improvement is a delta, not a pass. Do not carry that pass line or
+the personal-brand factory's Knowledge Panel cap into a local-service Quick Audit, and
+do not average this total with the ten-row Brand Authority exam.
 
 ### AI Search Readiness is the one people skip
 It is the component most sites fail worst and know least about. Start with `robots.txt`:
-count how many AI and image crawlers are blocked (`GPTBot`, `OAI-SearchBot`, `ClaudeBot`,
-`PerplexityBot`, `Google-Extended`, `Applebot-Extended`, `GoogleOther-Image`,
-`facebookexternalhit`). One real client was blocking **40+** of them while paying for content
-marketing — invisible to every AI assistant their buyers were asking, and nobody had opened
-the file.
+record which relevant crawlers are blocked and what each control actually affects.
+Search retrieval, model training, image crawling, and social link previews are different
+uses; a count of blocked agents does not prove invisibility to every AI assistant. Check
+the provider's current official guidance before recommending a change. Crawl access is
+an eligibility observation, not proof that an engine cited the site; run `geo-visibility-audit`
+for live engine observations and keep its results separate from this score.
 
 ---
 
 ## How to run it
 
-1. **Get access first, or say plainly that you did not have it.** Search Console before
-   anything else — see `client-access-checklist.md`. An audit without GSC is an outside-in
+1. **Confirm the goal and measurement scope.** Record the offer, buyer, market, business
+   outcome and timeframe. Verify existing authorized Search Console, analytics, CRM and
+   call-tracking reads where available — see `client-access-checklist`. An audit without GSC is an outside-in
    audit and must be labelled as one. It is still worth doing; it is not worth pretending.
 2. **Crawl what a stranger gets.** Anonymous, cache-busted, no cookies. Then crawl again as
    Googlebot. If those two differ, stop the audit and open a security incident — see
@@ -81,12 +117,15 @@ the file.
    position band, top pages, referring domains, and the same set for 3–6 competitors. The
    competitor set is what turns "2,094 visits/mo" into "2,094 against a peer at 24,833."
 4. **Score the seven components**, each against its own evidence list.
-5. **Delta it.** Against last month, and against the original baseline. Arrows, not prose.
-6. **Order the fix list by cost-to-fix, not by severity.** A 5-minute robots.txt edit that
-   unblocks every AI crawler outranks a 6-week content programme, even if the content
-   programme is "more important."
-7. **Write the one-page visual report.** Score then vs now, the traffic table, what shipped,
-   what is still open, top three next actions. One page. The 40-page audit is read by nobody.
+5. **Delta it.** Against last month and the original baseline only when family, version,
+   overlay, and coverage are comparable. Otherwise explain the changed contract.
+6. **Rank actions by expected business impact, evidence confidence, effort and dependencies.**
+   Cost-to-fix helps choose a quick win; cheap work does not automatically outrank a larger
+   revenue opportunity. Name an owner, due date, source evidence and acceptance test.
+7. **Write a one-page visual SEO summary with linked evidence and actions.** Show score
+   coverage, then versus now, the traffic table, what shipped and the top three next actions.
+   This is the SEO exam's summary; it may sit inside a longer full audit with its own output
+   contract. Route implementation and weekly outcome review to `weekly-brand-maa`.
 
 ---
 
@@ -131,17 +170,22 @@ finding — hand it to `security-audit.md` and do not publish anything to that s
 
 ## What you deliver
 
-- A dated one-page report: weighted score, seven components, delta arrows vs last run.
+- A dated one-page SEO summary: family/version, weighted score or INCOMPLETE, seven
+  components, coverage and comparable deltas, with a linked evidence/action register.
 - A findings table where **every row has a URL** and a cost-to-fix estimate.
 - A "what shipped since last time" section — this is what makes the client believe the next one.
 - An explicit list of what you could not check and what access would fix that.
 
 ## Definition of done
 - Every score component traces to evidence a stranger can open.
-- Anything unchecked says `UNKNOWN`, never 0.
+- Anything unchecked says `UNKNOWN`, never 0; missing required components leave the
+  exam INCOMPLETE, without renormalization or a pass verdict.
 - The human render and the bot render were compared.
-- The fix list is ordered by cost-to-fix and the top item is doable this week.
-- The report is one page, and the numbers on it can be recomputed next month the same way.
+- The fix list connects expected business impact to evidence, effort, dependencies,
+  an owner, a due date and an acceptance test; the top item is doable this week.
+- The SEO summary is one page, and the numbers can be recomputed from its pinned contract.
+- Corrected facts update the evidence register, score rows, summary and any downstream
+  full report before delivery; compare final rendered text with the accepted correction.
 
 ## Learned in the field
 
@@ -431,6 +475,15 @@ Learned August 3, 2026.
   so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
+
+### Audit intake refinement — Dennis Yu, October 2, 2026
+
+Only a truly blocking identity or action-authority question stops that lane.
+Premium/conference GCT clarification is relevant and optional after the base
+proof audit. Do not interpret front-loading as a generic questionnaire required
+to receive value. Record inferred/UNKNOWN strategy, offer confirm/edit/continue,
+and deliver qualified findings and conditional priorities without a reputation
+penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
 
 <!-- shared-rule:assign-work-to-a-function:start -->
@@ -1445,6 +1498,15 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
+- **For an audit, a missing attendee strategy is an open decision, not a gate.**
+  Dennis's October 2, 2026 premium/conference instructions require a base audit
+  from existing evidence first. Record supplied, inferred or UNKNOWN goals,
+  content and targeting; show a confirm/edit/continue hypothesis when useful.
+  Ask only relevant questions whose answers change a recommendation. The
+  attendee may continue without answering. Deliver qualified findings and
+  conditional sales priorities; missing GCT never lowers reputation. The
+  agent's editorial brief still states what this base report helps its reader do.
+  See `skills/personal-brand-audit/references/audit-run-contract.md`.
 - **Apply the same opening standard to every format.** Documents, reports, PDFs,
   presentations, articles, homepages, landing pages, service pages, relationship
   pages and task guides must earn attention at the beginning. Improve their
@@ -1910,3 +1972,41 @@ No regex can honestly decide which lane a job needs. Enforce this by reading
 the lane table before you schedule or claim a job, and by naming the live
 lane in the job's receipt.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
+
+<!-- shared-rule:audit-method-and-correction-propagation:start -->
+## Audit the business and propagate every correction
+
+- Use the shared audit run contract in the maintained marketplace at
+  `skills/personal-brand-audit/references/audit-run-contract.md`; its teaching
+  edition is https://blitzmetrics.com/how-we-audit/. Start with the subject's
+  business goal, offer and buyer, then proof inventory, gap, ranked actions,
+  visual cited report, authorized implementation and weekly MAA.
+- Deliver the base proof audit first. For premium/conference participants,
+  confirm clear supplied GCT, label inferred strategy for confirm/edit, and
+  ask only relevant optional questions. Continue without answers with
+  conditional priorities; missing GCT never means low reputation. Preserve
+  the base report and show changes after clarification.
+- Pin the input, exam family, rubric/version, source hash and report template.
+  The ten-row Brand Authority, seven-component SEO/Growth, Website QA checklist,
+  local/GBP product and Reputation-to-Sales Gap are separate exams. Do not invent
+  weights, substitute one for another, average them, or use an older report as
+  the rubric. The 30-point scale ranks individual proof items only.
+- UNKNOWN is not zero. Incomplete required evidence means a known subtotal and
+  INCOMPLETE with no pass verdict, without renormalizing weights. Use N/A only
+  under the pinned rubric's denominator rule. Calculate headlines from the rows;
+  keep a documented cap separate from the raw total. Compare deltas only within
+  the same exam/version and comparable coverage.
+- A correct graph object, a panel visible in a normal name query, and a claimed
+  panel require separate receipts. Query-match strength is not authority.
+  Blocked or unperformed checks remain UNKNOWN. Public controls do not prove
+  owner claim status, and coappearance does not prove friendship or endorsement.
+- Correct one authoritative fact first, identify every dependent report,
+  summary and leaderboard, and regenerate/inspect them at the new revision.
+  A retired claim surviving in one final PDF blocks that batch. Test arithmetic,
+  UNKNOWN, rubric version, entity/panel separation and correction propagation;
+  inspect actual renders independently. A page count is not visual QA.
+- Record actual tool/skill use, platform/model/effort or UNKNOWN, source and
+  capture times, allowance constraints and human rework. Separate documented
+  capabilities from observed executions. Publish useful teaching, keeping raw
+  private dictation and customer information in authorized private records.
+<!-- shared-rule:audit-method-and-correction-propagation:end -->
