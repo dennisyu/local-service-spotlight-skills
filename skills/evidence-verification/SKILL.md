@@ -1496,6 +1496,22 @@ lane in the job's receipt.
   capture times, allowance constraints and human rework. Separate documented
   capabilities from observed executions. Publish useful teaching, keeping raw
   private dictation and customer information in authorized private records.
+- State the inventory's source boundaries and counted unit. Public channel
+  assets, feed releases, distinct conversations, guest appearances, clips,
+  website posts and private camera/audio masters are different units. Enumerate
+  every page of the declared public sources; retain unresolved external leads.
+  Cross-posts and multipart releases need explicit joins, not a summed headline.
+  Missing video does not prove audio-only. Raw-source holdings remain UNKNOWN
+  unless actually inventoried; never divide public uploads by releases and call
+  that a verified repurposing ratio.
+- Make a substantive business report: first two pages answer the buyer's
+  question, major findings pair evidence with an implication and action, and
+  charts keep sample, denominator, date and precision beside the number. Report
+  content performance by comparable format/date coverage; views are not sales.
+  Use distinct commercial lanes until the current product and goal are verified.
+  Existing automations/offers require observed-output and outcome checks, not a
+  proposal to create them again. Every physical PDF page needs readable type,
+  correct numbering, useful composition and an actual final visual review.
 <!-- shared-rule:audit-method-and-correction-propagation:end -->
 
 <!-- shared-rule-index:start -->

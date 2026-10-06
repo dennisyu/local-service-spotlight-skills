@@ -73,6 +73,34 @@ its relevance to the buyer. This ranks individual proof, not the whole business.
 Record public association separately from friendship, endorsement and introduction
 permission. Reuse the evidence-ledger identity and privacy controls.
 
+### Source census and derivative inventory
+
+Declare each source, surface, date, access boundary, pagination completion and
+counted unit. A complete current public channel listing is not a lifetime census.
+Feed releases, unique conversations, host/guest roles, full filmed interviews,
+audio releases, clips, Shorts, event companions and website posts stay distinct.
+Use stable publisher IDs. Group alternate editions only with evidence; never
+deduplicate by episode number alone. Preserve cross-role republications and
+multipart/compilation relationships. A video not found is not proven audio-only;
+a publisher upload does not establish full moving footage. Blocked checks are
+unresolved, not deleted. Keep unresolved leads outside confirmed totals.
+
+Link source releases to derivatives with explicit relationship and match evidence.
+Published sources are not private raw camera/audio masters. Record raw-file
+holdings UNKNOWN unless that repository was actually inventoried. Do not divide
+all uploads by feed releases and call it a repurposing ratio. Separate exact
+watch-page views, rounded listing views, capture dates and missing date coverage;
+do not invent velocity. Rankings explain the measured population and buyer fit;
+views, likes and audience size do not prove inquiries, revenue or cause.
+
+Reconcile the current product, business goal, readiness and marketing authority
+from first-party records. Historical project names, a stale launch promise or a
+public discussion do not prove the current offer/ownership. Keep equipment,
+podcast partnership and a separate product venture in distinct lanes until their
+identity and objectives are confirmed. Existing hubs, sponsor offers and reported
+automations require source/output/CTA/measurement verification before recommending
+their creation anew. Preserve the existing inventory instead of overwriting it.
+
 ## 3. Diagnose the gap against the goal
 
 Compare what buyers need to believe with the proof that exists and what they can
@@ -117,6 +145,30 @@ Use real permitted media, evidence-backed diagrams, a money tree, relationships,
 and readable timelines where useful. Keep citations beside the claims. Do not
 pad pages or substitute a long inventory for analysis.
 
+### Composed report and actual visual acceptance
+
+Use the supplied reference reports as design evidence, not transferable facts,
+scores or proof of their author's model. The first two pages stand alone: the
+business question, current strongest findings, a useful source-based visual and
+the first decisions. Each major section has a finding headline, implication,
+visual where useful, analysis/action and adjacent evidence IDs. Each major action
+traces observation → consequence → next step → owner/function → measure. Use
+varied evidence forms when supported: directly labelled bars, source screens,
+relationship/source maps, proof cards, destination flows and a gated roadmap.
+Do not invent a metric merely to fill a chart. Targets, company claims, inference
+and UNKNOWN remain explicit. Keep current evidence separate from historic values.
+
+Compose physical pages deliberately. Normal body type is 11–12pt; figure labels
+and footnotes at least9pt. Use readable contrast and at most two embedded fonts.
+Avoid tiny multi-column tables, accidental continuations, near-blank score pages
+and page-count padding. Adapt length to substance and the agreed engagement,
+retaining any comparison's exact template control. Printed numbers, contents and
+physical PDF pages must agree. Open every final exported page, confirm no clipped
+or overlapping text, selectable text, accurate labels/scales and usable links,
+and bind that review to the final PDF hash. Geometry checks alone do not certify
+visual or source truth. Public teaching uses a separately checked privacy edition
+and never gains access to private source rows by sharing the operational file.
+
 Prioritize actions by plausible business impact, effort and dependencies; label
 estimates as assumptions. Every action has an ID, finding/evidence IDs, durable
 owning function and responsible operator, routed skill, inputs/dependencies,
@@ -153,6 +205,13 @@ checks the complete expected artifact list against the current shared facts and
 retired text. PDF entries bind their binary hash to freshly extracted text using
 `pypdf` (record its installed version); unavailable extraction keeps the batch HOLD. It is a deterministic
 gate, not a source-truth or visual certificate.
+Use `scripts/audit_inventory_contract.py` for the separate census and PDF receipt.
+Its synthetic fixture is `tests/fixtures/audit-inventory-and-render/valid-synthetic.json`.
+It rejects cross-unit or overlapping sums, UNKNOWN converted to a number,
+unsupported parentage, a reuse yield with unknown raw holdings, missing physical
+page reviews, small type and accepted-artifact hash drift. It validates declarations
+and receipt completeness; it cannot establish that the sources or visual judgment
+are true. The actual source enumeration and page inspection remain required.
 Never run the comparison before the identities, common inputs/rubric/template and
 ownership are agreed. Subscription-only comparisons use existing supported access;
 missing tools are findings, not permission to buy APIs.
