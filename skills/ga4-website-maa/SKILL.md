@@ -55,7 +55,7 @@ This skill runs in one of two modes. Decide which before anything else; they dif
 |---|---|---|
 | **When** | First touch for a client; OR any run flagged for team review by a tripwire last time; OR the operator forces it. | An established client with a **locked-config** (`references/locked-config.md`) and a clean prior run — the owner (or a schedule) triggers the weekly pulse. |
 | **Judgment work** | Full procedure. Proposes/locks the lead classification, service-area, known-integration fixes. Seeds/updates the locked-config. | Reuses the locked-config. Does **not** re-litigate classification or service area. |
-| **Gate before delivery** | **Human review, always.** Draft only; a person signs off before the owner sees it. | **Tripwire gate (`references/tripwires.md`), then deliver.** A clean week goes to the owner directly. A week that trips any material-change tripwire is **held for the team** — it does not go to the owner unreviewed. |
+| **Gate before delivery** | **Independent QA and selective review.** Verify the source and classification before delivery. Routine authorized factual reports may reach the configured owner without an extra human gate. Consequential decisions, missing authority or unresolved material facts go to the appropriate decision owner first. | **Tripwire gate (`references/tripwires.md`), then deliver.** A clean week goes to the owner directly. A week that trips any material-change tripwire is **held for the team** — it does not go to the owner unreviewed. |
 | **Voice** | Full MAA voice. | Recurring-run voice (`references/report-format.md` § Recurring-run voice): report fix-progress, raise only genuinely new asks, never fabricate ✅ team commitments for a week the team isn't acting. |
 
 **The rule that makes Recurring safe:** an owner-triggered run has no human in the loop that week, so it must self-detect when it is out of its depth and route back to the team instead of confidently shipping. That detection is the tripwire gate in Phase 0.5 and Phase 7. Never deliver an owner-facing report that tripped a tripwire without team review.
@@ -210,7 +210,7 @@ The QA gate has three layers because self-grading alone is unreliable (self-pref
    - Narrative: dated Weekly Log entry (leads, findings, actions, start-here, open questions); update Running Themes; update Account Context if setup changed; carry open questions forward. Corrections are noted in place, never deleted.
    - **Locked-config:** append this run to `run_history` (date, mode, headline leads, clarity, escalated?); update `fix_status`/`last_checked` where a fix was verified this run; refresh `baselines` only on a team-reviewed First-Run. If a tripwire fired, set next cycle to First-Run. Locked fields never change on a Recurring run.
    - System-level gap (would change how EVERY client is analyzed, not just this one) → `05-Decisions-Log/YYYY-MM-DD_GA4-{title}.md` (trigger, gap, fix, landed-in) and flag this skill for the change. Client-specific findings go in the Narrative, not the log.
-3. **Draft only.** Human reviews before anything posts. Never auto-post.
+3. **Selective review.** Post routine verified findings on the configured authorized rail after required QA. Honor an explicit draft request. Hold consequential decisions or missing authority for the appropriate decision owner; do not require a human for every factual report.
 
 <!-- shared-rule:agents-draft-humans-send:start -->
 ## Selective human review; agents finish authorized work

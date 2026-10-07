@@ -20,7 +20,7 @@ One recording in. Six things out, all as **drafts for your review**:
 6. **Schema + internal links**: JSON-LD for the post, plus 3–5 proposed internal links from your existing pages.
 
 ## Hard rules (the whole reason you can trust it)
-- **Draft-only.** YouTube = Private. WordPress/GHL = Draft. Email = saved file, never sent. The agent does not publish; YOU publish. Verify the status after every upload and say what you verified.
+- **Selective review and exact delivery intent.** Honor explicitly requested Private, Draft or saved-file status. Otherwise finish routine publication and delivery within recorded authority, with required QA and verified destinations. Ask in advance only for consequential decisions or missing authority under `SELECTIVE-HUMAN-REVIEW-2026-10-07`. Verify the status after every upload and say what you verified.
 - **Nothing invented.** Every claim, quote, name, number, and link comes from your transcript, your knowledge-base files, or a page actually fetched and confirmed live. If a link isn't in your files and doesn't resolve when checked, leave it out and say so.
 - **Quotes are verbatim** from the transcript. Image/thumbnail captions describe only what is literally in frame.
 - **Your voice, not AI voice.** Use the brand-voice file. Style gate: no "not just X, but Y" constructions, H2s start with verbs where natural, no sentences ending in prepositions, no em-dash soup, TL;DR liftable word-for-word. Run the gate as a **mechanical final pass** AFTER all edits and expansions — violations sneak in precisely when you lengthen or rework a draft.
@@ -73,7 +73,7 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 → content-factory (words-only weeks) → video-repurposing-agent (this is record-side; that watches the channel publish-side — the full loop) → definitive-article-writer (when a video deserves the canonical page) → dollar-a-day-strategist (put $1/day behind the winner) → recursive-self-improvement-qa (grade the run, better next week)
 
 ---
-*Built by Dennis Yu (Local Service Spotlight). Reads your brand-voice + ideal-client + links files so everything sounds like you and points home. Draft-only by design: the agent prepares, you publish.*
+*Built by Dennis Yu (Local Service Spotlight). Reads your brand-voice + ideal-client + links files so everything sounds like you and points home. Agents finish routine authorized work; consequential decisions or missing authority get selective advance review.*
 
 ## Learned in the field
 
