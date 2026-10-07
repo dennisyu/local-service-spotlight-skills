@@ -36,9 +36,10 @@
 - **The second time the same dependency blocks, stop treating it as a people problem.**
   Build the thing that makes their non-response harmless — a watchdog, a fallback route, a
   second credential, a cached copy. Building it once costs less than chasing it forever.
-- This does not loosen `agents-draft-humans-send`. Rescue means doing the *work* yourself,
-  never dispatching messages, publishing, spending or deleting on someone's behalf because
-  they went quiet. Where the rescue would cross that line, stage it and say so.
+- Use the selective-review standard in `agents-draft-humans-send`: execute routine
+  rescue work, messages, and publication within recorded authority. Silence never supplies
+  missing authority or clears an explicit hold. Stage only the consequential decision
+  that still requires advance review, and continue the independent work.
 - Rescue toward the function, not the person — see `assign-work-to-a-function`. A rescue
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that

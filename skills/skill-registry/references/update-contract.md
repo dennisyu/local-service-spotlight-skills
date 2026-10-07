@@ -7,7 +7,7 @@ updates without agents overwriting one another.
 
 ```text
 Source:  GitHub main branch
-Change:  branch → pull request → automated checks → human merge
+Change:  branch → pull request → automated checks → authorized merge (selective review)
 Install: Claude marketplace repository URL
 Update:  compare commit → canary sync → activation test → cohort rollout
 Proof:   immutable receipt per account/site/run
@@ -45,8 +45,9 @@ commit directly to `main`.
 - **Executor:** syncs the approved commit and writes run receipts.
 - **Auditor:** reads source and receipts, checks assertions, and opens a separate
   corrective branch. It does not edit the same environment during execution.
-- **Human owner:** merges source changes and approves production schedule,
-  credential, or rollback decisions.
+- **Decision owner:** reviews consequential source, production schedule, credential,
+  or rollback decisions in advance. Routine authorized documentation merges proceed
+  under `standards/agents-draft-humans-send.md`; no blanket per-item Dennis gate.
 
 Use a stable `release_id`, `run_id`, and environment lock. If a lock exists, another
 agent reports `waiting_on_lock`; it does not start a competing deployment.
