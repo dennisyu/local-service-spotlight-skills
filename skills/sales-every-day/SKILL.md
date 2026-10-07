@@ -66,7 +66,7 @@ Every other skill waits for you to remember it. This one doesn't. Tell Claude on
 → weekly-brand-maa (the diagnosis this acts on) → measurement-analytics (real numbers instead of snapshots) → content-agent / content-factory (your raw material) → dollar-a-day-strategist (amplify the winners) → recursive-self-improvement-qa (grade the week, sharpen next week)
 
 ---
-*Built by Dennis Yu (Local Service Spotlight). Scheduled by design: a sales department that reports for work before you wake up — and never sends a word without you.*
+*Built by Dennis Yu (Local Service Spotlight). Scheduled by design: a sales department that reports for work before you wake up, completes routine work within recorded authority, and reserves advance review for consequential decisions or missing authority.*
 
 <!-- learning:ghl-mcp-truth-2026-07-27 -->
 ## Connecting to a CRM / marketing platform — and the one hard limit
