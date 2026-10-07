@@ -1,12 +1,12 @@
 ---
 name: content-agent
-description: The Content Agent - drop in one raw video and get back a lightly edited YouTube upload (private, for your review), a blog draft with schema, 5-10 short-clip picks, platform social posts, and an email - everything grounded in YOUR transcript and YOUR files, nothing invented, nothing published without your click.
+description: The Content Agent - drop in one raw video and get back a lightly edited YouTube upload, a blog with schema, 5-10 short-clip picks, platform social posts, and an email - grounded in YOUR transcript and YOUR files. Honor the requested delivery mode; routine publication within recorded authority proceeds, while consequential decisions or missing authority require advance review.
 rule-scopes: published-html, design-review
 ---
 
 # Content Agent
 
-**Use this when** you have ONE raw recording — a talking-head video, a podcast episode, a webinar, a livestream, even a long voice note — and you want it to become a week of distribution without you touching an editing timeline. Run it weekly. This is the Content Factory's big sister: Content Factory writes the words; the Content Agent also handles the video itself and stages everything as drafts.
+**Use this when** you have ONE raw recording — a talking-head video, a podcast episode, a webinar, a livestream, even a long voice note — and you want it to become a week of distribution without you touching an editing timeline. Run it weekly. This is the Content Factory's big sister: Content Factory writes the words; the Content Agent also handles the video itself and delivers according to recorded authority and the requested mode.
 
 > **Read these first, every run:** your brand-voice document, your ideal-client file, and your links file (your real domains, offer pages, and social URLs). Everything below is grounded in those plus your transcript — and nothing else.
 
@@ -45,27 +45,27 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
 4. **Target keyword.** From the transcript's strongest theme + your positioning: one keyword you can actually win (specific beats glamorous). One line of why.
 5. **Blog draft.** Restructure the transcript into an article in your voice: hook open, H2/H3s, verbatim quote callouts, 3-line TL;DR up top, key takeaways, video embed placeholder, cleaned transcript at the bottom. Wire in your offer/lead-magnet link FROM YOUR LINKS FILE. Passes in this order: outline → draft → expand → tighten → style gate LAST.
-6. **YouTube upload package.** SEO title (≤70 chars, keyword-front), description opening with the meta title + 2-line meta description, then summary + timestamped chapters + verified links, then transcript excerpt. Tags. Thumbnail brief: 3 concepts, each = frame-grab suggestion + ≤4 overlay words. Upload **as Private** — via YouTube Studio in your signed-in browser, or the one-screen upload kit (`youtube-upload.md`) if you'd rather click yourself. Never public.
+6. **YouTube upload package.** SEO title (≤70 chars, keyword-front), description opening with the meta title + 2-line meta description, then summary + timestamped chapters + verified links, then transcript excerpt. Tags. Thumbnail brief: 3 concepts, each = frame-grab suggestion + ≤4 overlay words. Upload with the explicitly requested visibility through the authorized channel and verify that status. Honor Private when requested; routine authorized Public delivery may proceed after required QA. If upload or visibility authority is missing, prepare the one-screen upload kit (`youtube-upload.md`).
 7. **Clips plan.** Scan for 5–10 self-contained 30–60s moments; score each: hook-in-1.5s · stands alone · quotable. For each: timestamps, the hook line, and captions for Shorts / Reels / TikTok / LinkedIn in that platform's tone.
 8. **Social + email.** LinkedIn post (200–300 words), Instagram carousel script (5–7 slides), X thread (6–10), Threads one-liner — each pointing to the blog post. Email (200–400 words) in your newsletter format: headline takeaway, one verbatim quote, one link.
-9. **Schema + internal links.** JSON-LD (BlogPosting + Person + VideoObject) for the post. Crawl your site for 3–5 real pages that should link to the new post; propose natural anchors; touch nothing until approved.
-10. **Stage drafts + hand over.** WordPress/GHL draft if connected (verify "draft" in the response); otherwise paste-ready HTML. Save everything to `Outputs/<video-slug>/`. Update the log. Close with the review list: "3 things to approve: YouTube (private) → publish · blog draft → publish · email → send."
+9. **Schema + internal links.** JSON-LD (BlogPosting + Person + VideoObject) for the post. Crawl your site for 3–5 real pages that should link to the new post; use natural anchors within recorded editing authority; propose them when that authority is missing.
+10. **Deliver + verify.** Honor the requested Draft/Private mode, or complete routine authorized publication and sending through the configured destinations after required QA. If authority is missing, stage paste-ready assets. Verify each actual status, save everything to `Outputs/<video-slug>/`, update the log, and report delivered assets plus only the decisions that still need review.
 
 ## Output
 - `Outputs/<video-slug>/` with: `transcript.md` · `blog-post.md` (+ `.html`) · `youtube-upload.md` · `clips-plan.md` · `social-posts.md` · `email.md` · `schema.json` · `internal-links.md`.
-- The lightly edited video on YouTube as **Private** (or the upload kit), with receipts: what changed, before/after duration.
-- The WordPress/GHL draft if connected — status verified as "draft" and said so.
+- The lightly edited video on YouTube in the requested, authorized visibility (or the upload kit), with receipts: what changed, before/after duration.
+- The WordPress/GHL asset in the requested, authorized status — actual status verified and reported.
 - One appended line in `Outputs/processing-log.md`.
 
 ## Definition of done
-- You can review everything in under 30 minutes and publish with clicks, not edits.
+- Routine authorized assets are delivered and verified; requested drafts or decisions needing review are complete and easy to act on.
 - Zero invented facts, quotes, links, or offers — three claims spot-checked against the transcript before handover.
-- YouTube is Private, blog is Draft — verified and stated.
+- YouTube visibility and blog status match the requested delivery and recorded authority — verified and stated.
 - Every asset points home (blog ← video ← clips ← social ← email), in your voice, in your language.
 - The log line exists. Next week's run knows what this week did.
 
 ## Notes
-- Weekly rhythm: record once → drop it in Raw → run this agent → review over coffee → publish. 52 recordings a year becomes 52 posts, ~500 shorts, ~150 social posts, 52 emails.
+- Weekly rhythm: record once → drop it in Raw → run this agent → verify authorized delivery, or review requested drafts and consequential decisions. 52 recordings a year becomes 52 posts, ~500 shorts, ~150 social posts, 52 emails.
 - What the edit does NOT do (say it out loud, it prevents heartbreak): no b-roll, no music, no burned-in captions, no jump-cut style, no color grade, no auto-thumbnails. It gets a raw recording over the publish line; it is not a video editor with bells and whistles.
 - Model note: plans on the big model, drafts on the fast one (see model-judgment). No special setup.
 
@@ -92,8 +92,7 @@ Consequence for every agent that touches a CRM: never promise to "build the funn
 the page to the client's own WordPress site as a draft and hand over paste-ready copy for their
 page template. This is also the only route that works for clients not on the coach's platform.
 
-Send safety: conversations_send-a-new-message is a REAL send — never call it on a scheduled run.
-emails_create-template is the safe way to stage a daily email.
+Send safety: conversations_send-a-new-message is a REAL send. Honor an explicitly configured draft-only run; a schedule or connector login grants no missing recipient or campaign authority. Routine sending within recorded authority follows selective review. emails_create-template stages an email template and does not send it.
 
 <!-- learning:2026-07-29-edit-the-generator-not-the-page -->
 **July 29, 2026** (from: applying the SEO-tree block across 13 surfaces on 6 domains, July 29, 2026)

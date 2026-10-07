@@ -1,11 +1,11 @@
 ---
 name: sales-every-day
-description: The Sales Every Day Agent — the capstone. Runs on a schedule (that's the point), reads YOUR funnel and YOUR weekly MAA, and comes back each morning with ONE staged selling action - the email drafted, the post written, the follow-up list ready. You review over coffee and click send. Nothing invented, nothing sent without you.
+description: The Sales Every Day Agent — the capstone. Runs on a schedule (that's the point), reads YOUR funnel and YOUR weekly MAA, and comes back each morning with ONE staged selling action - the email drafted, the post written, the follow-up list ready. Honor requested draft delivery; complete routine sending within recorded recipient/channel authority. Nothing invented; consequential decisions or missing authority need advance review.
 ---
 
 # Sales Every Day Agent
 
-**The rule this agent enforces: you sell every day.** Not "launch twice a year." Not "post when inspired." One deliberate selling action, every working day, aimed at the weakest stage of YOUR funnel. Most owners don't skip this because they disagree — they skip it because deciding *what today's action is* costs more willpower than doing it. So the agent decides, stages, and hands you the finished draft. You keep the judgment and the send button.
+**The rule this agent enforces: you sell every day.** Not "launch twice a year." Not "post when inspired." One deliberate selling action, every working day, aimed at the weakest stage of YOUR funnel. Most owners don't skip this because they disagree — they skip it because deciding *what today's action is* costs more willpower than doing it. So the agent prepares the finished asset, honors an explicit draft request, and completes routine delivery within recorded authority. You keep consequential decisions and control of the scope.
 
 *The daily-selling discipline was battle-tested inside Sigrun's SOMBA program (her Sales Every Day® system); this is the general-business edition.*
 
@@ -35,8 +35,8 @@ Every other skill waits for you to remember it. This one doesn't. Tell Claude on
 1. **Read state.** Log first. Then MAA + knowledge base. Identify: weakest funnel stage, this week's focus, what was staged yesterday and whether it went out.
 2. **Pick TODAY's action** from the stage playbook below — the single highest-leverage move you can complete as a draft right now. Weekly rhythm guide: **Mon** plan + pipeline sweep · **Tue** content-to-offer · **Wed** list email · **Thu** follow-up day · **Fri** proof + MAA handoff. The stage playbook overrides the rhythm when a stage is BROKEN (no opt-in page beats everything).
 3. **Build the asset, completely.** Not an outline — the finished draft, grounded in your files, links verified live.
-4. **Stage it** where you can act in one click (email draft, page draft, ready-to-paste post + open-this-profile list). If your CRM (HighLevel, etc.) or email platform is connected, stage the email/page/automation as a DRAFT right inside it. Say exactly where it is.
-5. **Report in 5 lines:** today's action · why this stage · where the draft is · what to click · yesterday's action status (sent/not).
+4. **Deliver in the requested mode.** Honor explicit draft-only requests. For routine sending or publication with recorded recipient/channel authority and required QA, deliver and verify the result. A connector login or schedule alone grants no such authority; otherwise stage a finished draft and report its exact location.
+5. **Report in 5 lines:** today's action · why this stage · verified delivery or draft location · any consequential decision or missing authority · yesterday's action status (sent/not).
 6. **Fridays only — pre-fill your weekly review.** Three answers drafted from this week's log: what went out, what's next, where you had trouble — so the weekly MAA takes one minute, not twenty.
 
 ## Stage playbooks (what "today's action" looks like)
@@ -54,10 +54,10 @@ Every other skill waits for you to remember it. This one doesn't. Tell Claude on
 **Funnel complete → daily selling rhythm (rotate, never the same move twice in a row):** one value email with a P.S. offer mention · one follow-up sweep (everyone who raised a hand in 30 days, with suggested one-line personal replies — sell without selling) · one same-day offer when the moment fits · one proof post (client win, verbatim quote) · one open-loop content post → lead magnet. For local businesses add: one review ask to a just-served customer · one quote-chase call list with talking points.
 
 ## Output
-`Outputs/sales-every-day/<date>/` with the day's asset file(s) + `report.md` (the 5-line report), and the appended log line. If email/site/CRM access is connected: the draft staged there, status verified and stated.
+`Outputs/sales-every-day/<date>/` with the day's asset file(s) + `report.md` (the 5-line report), and the appended log line. Report the verified sent/published/draft status according to the requested mode and recorded authority.
 
 ## Definition of done
-- One finished, sendable asset exists for today — review under 10 minutes, send in one click.
+- One finished asset exists for today — routine authorized delivery is verified, or a requested draft/consequential decision is ready to act on.
 - It targets your CURRENT weakest stage, not a generic tip.
 - Zero invented facts/links/prices; style gate run LAST, mechanically.
 - The log line exists; the agent knows what tomorrow must not repeat.
@@ -66,7 +66,7 @@ Every other skill waits for you to remember it. This one doesn't. Tell Claude on
 → weekly-brand-maa (the diagnosis this acts on) → measurement-analytics (real numbers instead of snapshots) → content-agent / content-factory (your raw material) → dollar-a-day-strategist (amplify the winners) → recursive-self-improvement-qa (grade the week, sharpen next week)
 
 ---
-*Built by Dennis Yu (Local Service Spotlight). Scheduled by design: a sales department that reports for work before you wake up — and never sends a word without you.*
+*Built by Dennis Yu (Local Service Spotlight). Scheduled by design: a sales department that reports for work before you wake up, completes routine work within recorded authority, and reserves advance review for consequential decisions or missing authority.*
 
 <!-- learning:ghl-mcp-truth-2026-07-27 -->
 ## Connecting to a CRM / marketing platform — and the one hard limit
@@ -74,8 +74,8 @@ Every other skill waits for you to remember it. This one doesn't. Tell Claude on
 Work at whatever tier the client has granted, and **say which tier you used in every report**.
 
 - **Tier 0 — nothing connected.** Read their files and public pages, produce finished drafts. Full value on day one.
-- **Tier 1 — email platform.** Stage the day's email as a real draft. Never schedule, never send.
-- **Tier 2 — their website.** With a WordPress application password, publish opt-in and sales pages as **drafts**.
+- **Tier 1 — email platform.** Honor requested draft-only delivery. Routine sending requires recorded recipient/channel authority; platform access alone does not grant it.
+- **Tier 2 — their website.** Use the requested delivery status within recorded client editing/publication authority. A WordPress application password alone does not grant publication authority.
 - **Tier 3 — CRM.** See below.
 - **Tier 4 — ads + analytics.** Read-and-recommend only. Never change a budget, never spend.
 
@@ -95,10 +95,7 @@ pages). No create, no update, in any version. So: write the page onto the client
 as a draft (better for their SEO anyway, and platform-neutral), and hand them paste-ready copy
 mapped to their page template. Never drive the CRM's UI by browser automation to fake a page build.
 
-**Send safety:** `conversations_send-a-new-message` sends a real message to a real person. Never
-call it on a scheduled run — draft it and let the human send. Treat `social-media-posting_create-post`
-as publishing and get an explicit yes per post. `emails_create-template` is safe: it creates a
-template, it does not send a campaign.
+**Send safety:** `conversations_send-a-new-message` sends a real message to a real person and `social-media-posting_create-post` publishes. Honor an explicitly configured draft-only lane. Routine delivery may proceed within recorded recipient/channel authority after required QA; schedules and connector access grant no missing authority, and new offers or consequential decisions need advance review. `emails_create-template` creates a template and does not send a campaign.
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
