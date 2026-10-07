@@ -19,7 +19,7 @@ entity_name:        # the person or client
 context_docs:       # absolute path(s) to read FIRST — canonical brief, project plan, "easy checklist", baseline notes
 comms_channels:      # where to check for replies/approvals since last run — email thread id/search terms, Basecamp project + thread URLs
 approval_gate:       # what specifically needs their sign-off before it goes live (e.g. "draft posts 498/499", "GoDaddy login", "Instagram photo permission") and what to do the moment each one arrives
-safe_increment_policy: # what "one incremental improvement needing no new access" is allowed to touch this run (e.g. repurpose existing public material into a draft post, fix one Yoast title, tidy one QA item) — and what's explicitly off-limits (never enter passwords into a login form, never publish new content without review, never permanently delete data)
+safe_increment_policy: # what "one incremental improvement needing no new access" is allowed to touch this run (e.g. repurpose existing public material into a draft post, fix one Yoast title, tidy one QA item) — and what's explicitly off-limits (never enter passwords into a login form, bring consequential publication decisions or missing authority for advance review, never permanently delete data)
 notify_rule:         # when to post/reply vs. stay quiet (e.g. "only if something material changed"; "one friendly nudge if no checklist progress in 7+ days AND no nudge sent in the past 14 days")
 state_file:          # where the running "state of the project" note lives — update it every run, don't just append noise
 voice:               # tone to write in (e.g. entity's own casual voice for client-facing drafts; Dennis's direct voice for outreach email)
@@ -63,7 +63,7 @@ Tell Dennis, concisely: what moved, what you did, what's still waiting on the en
 
 ## NON-NEGOTIABLES
 - Never enter a password into any login form, even one the entity sent you directly.
-- Never publish new client-facing content without the approval gate being satisfied, unless the run's own policy explicitly pre-approves a category of change.
+- Publish routine client-facing work only within recorded client authority and the run's scope, with required QA. Honor explicit draft requests and holds; seek advance review for consequential decisions or missing authority.
 - Never spam the relationship — an unnecessary update is worse than no update.
 - Every fact you report has a verifiable source (a real reply, a real page fetch) — never fabricate progress.
 

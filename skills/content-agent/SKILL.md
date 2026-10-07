@@ -11,9 +11,9 @@ rule-scopes: published-html, design-review
 > **Read these first, every run:** your brand-voice document, your ideal-client file, and your links file (your real domains, offer pages, and social URLs). Everything below is grounded in those plus your transcript — and nothing else.
 
 ## The promise
-One recording in. Six things out, all as **drafts for your review**:
-1. A lightly edited video, uploaded to **YouTube as Private** (or staged as an upload kit).
-2. A **blog post draft** (2,000–3,500 words) with the video embedded, a 3-line TL;DR, and the cleaned transcript at the bottom.
+One recording in. Six outputs in the requested delivery mode. Honor explicit draft/private requests; routine authorized publication follows selective review:
+1. A lightly edited video in the explicitly configured visibility (or staged as an upload kit when upload authority is missing).
+2. A **blog post** (2,000–3,500 words; drafted or published according to recorded authority and requested delivery) with the video embedded, a 3-line TL;DR, and the cleaned transcript at the bottom.
 3. **5–10 short-clip picks** with timestamps, hooks, and per-platform captions.
 4. **3–4 platform-native social posts** (LinkedIn · Instagram carousel script · X thread · Threads).
 5. **One email** to your list, in your newsletter's voice.
