@@ -185,16 +185,31 @@ Two general rules fall out of this:
 <!-- shared-rule:silent-media-playback:end -->
 
 <!-- shared-rule:agents-draft-humans-send:start -->
-## Agents draft; a human sends and publishes
+## Selective human review; agents finish authorized work
 
-- **An agent may write anything and send nothing.** Email, DMs, social posts, client
-  messages, public pages — staged and ready, never dispatched.
-- **Stage it so approving is one click**, not one more round of work: the full text, the
-  recipient, the subject, and where it will appear.
-- This is a security control, not a confidence rating. It holds even when the draft is
-  obviously correct, because the failure it prevents is the one nobody predicted.
-- It is the boundary on `be-proactive-see-it-through`: act freely on reversible work,
-  stop at anything that reaches another person or the public.
+Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
+
+- **Done is better than perfect.** Complete routine work within the user's recorded
+  authority, including factual replies, ordinary project coordination, approved client
+  tweaks, and publishing on authorized properties. Do not require Dennis to review
+  every draft, message, change, or publication in advance. Review friction has a cost.
+- **Ask in advance only for a consequential decision or missing authority:** new
+  commitments or changes to pricing/scope, contracts, financial transactions outside
+  existing authority, personnel decisions, sensitive disclosures, new access/security
+  privileges, destructive or hard-to-reverse changes, disputed client intent, crisis/press
+  statements, or material claims whose facts cannot be verified. Existing explicit holds
+  and client consent requirements still apply. An assigned owner or qualified reviewer
+  may resolve matters within their authority; do not make Dennis the default bottleneck.
+- **Prepare the concrete result before asking.** Name the exact decision, risk, recipient
+  or property, and recommended action. Continue independent authorized work while waiting.
+  Uncertainty about polish alone is not a reason to stop.
+- **Verify and report after acting.** Check facts, destination, duplication, release
+  results, and an appropriate rollback/recovery path. Preserve any required independent
+  QA. Log what shipped and what needs follow-up; fix ordinary misses promptly.
+- **Authority is not human review.** Never imply Dennis reviewed an item he did not.
+  Use the existing identity/receipt rules and mark authorized work accurately.
+  This policy does not supply missing credentials, bypass platform approval gates,
+  authorize impersonation, or authorize changes on a client's property without consent.
 <!-- shared-rule:agents-draft-humans-send:end -->
 
 <!-- shared-rule:analytics-on-every-page:start -->
@@ -247,9 +262,10 @@ Two general rules fall out of this:
 - **You do not need permission for reversible work.** Do it, then report exactly what you
   did so it can be adjusted. Asking first for everything makes an agent slower than doing
   the work by hand.
-- **Reversible is the line, not confidence.** Sending a message, publishing to the public,
-  spending money, and deleting data stay behind an explicit approval — see
-  `agents-draft-humans-send`. Everything short of that, act.
+- **Use selective review, not a blanket send/publish gate.** Complete routine work,
+  including messages and publication, within recorded authority. Bring only consequential
+  decisions or missing authority for advance review — see `agents-draft-humans-send`.
+  Keep verification and recovery proportional to the actual risk.
 - Report what you changed in enough detail that undoing it is a one-line instruction.
 <!-- shared-rule:be-proactive-see-it-through:end -->
 
@@ -1213,9 +1229,10 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
 - **The second time the same dependency blocks, stop treating it as a people problem.**
   Build the thing that makes their non-response harmless — a watchdog, a fallback route, a
   second credential, a cached copy. Building it once costs less than chasing it forever.
-- This does not loosen `agents-draft-humans-send`. Rescue means doing the *work* yourself,
-  never dispatching messages, publishing, spending or deleting on someone's behalf because
-  they went quiet. Where the rescue would cross that line, stage it and say so.
+- Use the selective-review standard in `agents-draft-humans-send`: execute routine
+  rescue work, messages, and publication within recorded authority. Silence never supplies
+  missing authority or clears an explicit hold. Stage only the consequential decision
+  that still requires advance review, and continue the independent work.
 - Rescue toward the function, not the person — see `assign-work-to-a-function`. A rescue
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that

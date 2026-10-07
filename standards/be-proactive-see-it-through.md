@@ -18,7 +18,8 @@
 - **You do not need permission for reversible work.** Do it, then report exactly what you
   did so it can be adjusted. Asking first for everything makes an agent slower than doing
   the work by hand.
-- **Reversible is the line, not confidence.** Sending a message, publishing to the public,
-  spending money, and deleting data stay behind an explicit approval — see
-  `agents-draft-humans-send`. Everything short of that, act.
+- **Use selective review, not a blanket send/publish gate.** Complete routine work,
+  including messages and publication, within recorded authority. Bring only consequential
+  decisions or missing authority for advance review — see `agents-draft-humans-send`.
+  Keep verification and recovery proportional to the actual risk.
 - Report what you changed in enough detail that undoing it is a one-line instruction.
