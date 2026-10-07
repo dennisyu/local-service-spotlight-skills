@@ -19,7 +19,7 @@ Revenue = traffic × conversion, stage by stage. Your weekly MAA names your weak
 Every other skill waits for you to remember it. This one doesn't. Tell Claude once — *"Create a scheduled task: every weekday at 7am, run my sales-every-day skill and leave today's action pack in my Outputs folder"* — and from then on it behaves like a tiny sales department that reports for work before you're awake. That's the difference between *having* agents (you drive every run) and *employing* them (they run in loops and come back to you).
 
 ## Hard rules
-- **Draft-only.** Emails = drafts, never sent. Pages = drafts, never published. DMs = a prepared list with suggested wording, never messaged. YOU send.
+- **Selective review within recorded authority.** Honor an explicit draft-only request. Routine factual follow-ups and approved publication may ship without per-item human review. New offers, pricing, commercial promises or missing recipient/channel authority require the decision owner's advance review. This skill does not authorize an unsolicited campaign or invent consent. Verify every sent or published result.
 - **Nothing invented.** Offers, prices, testimonials, links — only from your files or pages actually fetched and verified live. No fabricated urgency, no fake scarcity, no made-up bonuses.
 - **Your voice.** Brand-voice file governs. Style gate as a mechanical LAST pass: no "not just X, but Y", no em-dash soup, no AI-tell words, quotes verbatim.
 - **One action per day.** Never a to-do list of five things. The agent's discipline protects yours.

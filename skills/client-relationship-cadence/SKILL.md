@@ -35,7 +35,7 @@ Search `comms_channels` (Gmail thread, Basecamp project/thread) for anything new
 - **Nothing new** → say so plainly and move to Step 2.
 
 ## STEP 2 — One safe increment
-Do exactly ONE incremental improvement that fits `safe_increment_policy` and needs no new access — draft-only for anything public-facing unless it was already pre-approved. Prefer real, repurposable material (the entity's own site, public press, existing reviews) over generic filler. Then QA whatever you touched (fetch the live pages, check nav/contact info/schema still parse) before moving on.
+Do exactly ONE incremental improvement that fits `safe_increment_policy` and needs no new access — routine public-facing work proceeds within recorded scope and client consent under the selective-review standard; stage only consequential decisions or missing authority. Prefer real, repurposable material (the entity's own site, public press, existing reviews) over generic filler. Then QA whatever you touched (fetch the live pages, check nav/contact info/schema still parse) before moving on.
 
 ## STEP 2.5 — Put the ask where it can be tracked, and OWN the chase
 
