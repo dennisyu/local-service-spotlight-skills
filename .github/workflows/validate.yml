@@ -29,6 +29,9 @@ jobs:
           node-version: "22"
       - name: Install browser test runtime
         run: |
+          # Hosted runner's Azure HTTP mirror can stall every apt retry. Use the
+          # official HTTPS Ubuntu archive; preserve dependency and browser tests.
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
           npm install --no-save --package-lock=false playwright@1.58.2
           npx playwright install --with-deps chromium
       - name: Prove rendered first-screen gates on real browser fixtures
