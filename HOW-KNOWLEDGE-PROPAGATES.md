@@ -263,8 +263,9 @@ not evidence of an installed-runtime failure.
 The old `upsert` interpreted missing delimiters as absent content and appended
 a second copy. Restoring comments alone fixes this snapshot but leaves that
 failure path intact. Sync now recognizes one exact standalone canonical section
-and restores its delimiters in place. An edited or duplicate unmarked section
-fails with a reconciliation message instead of guessing or appending. Partial
+and restores its delimiters in place. An edited or duplicate unmarked section retaining the canonical heading
+fails with a reconciliation message instead of guessing or appending. A renamed
+heading cannot be identified safely and follows the existing append path. Partial
 and duplicate delimiters remain errors.
 
 The generated-file repair adds only 78 comments in `AGENTS.md` and 38 skills;
