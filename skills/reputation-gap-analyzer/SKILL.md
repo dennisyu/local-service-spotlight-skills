@@ -9,26 +9,63 @@ rule-scopes: published-html, design-review
 **Use this when** you hold the positioning brief and the scored proof library and need to know exactly what to fix first. Step 3 of the Local Service Spotlight method — MAA (Metrics → Analysis → Action) applied to your own name.
 
 ## Inputs
-- Positioning brief from `personal-brand-strategist` — buy box, passion, differentiation.
+- Resolved positioning record: `personal-brand-audit` intake for a person, or
+  `business-brand-strategist` for a company — goal, offer, ideal customer, market,
+timeframe, differentiation and capacity. Record missing inputs as UNKNOWN.
 - Scored proof library from `positive-mentions-harvester` — including the lighthouse list and gap list.
 - Your next 30 days: real availability, events you'll attend, interviews you can book. The plan has to survive your calendar.
 - Optional: 2–3 peers who currently win the deals you want — their public reputation is the benchmark you're closing against.
 
+Use [How We Audit](https://blitzmetrics.com/how-we-audit/) for the overall method.
+This skill produces a proof-to-buyer gap map, not an automatic 100-point score.
+The harvester's 30-point proof-item scale, ten-row Brand Authority exam and
+seven-component SEO & Growth exam stay separate. **Reputation-to-Sales Gap** requires
+its own approved family/version, dimensions, weights and unknown policy before any
+numeric score; a planning document or another exam cannot supply those weights.
+The [shared audit run contract](../personal-brand-audit/references/audit-run-contract.md)
+owns staged intake. Missing GCT does not lower reputation or block the base proof
+audit. Label inferred goals for confirm/edit/continue; ask only relevant optional
+questions and keep buyer-dependent findings/priorities conditional until confirmed.
+
 ## Steps
-1. **Metrics — score what you have.** Map every scored mention against each buy-box claim. Some claims will have stacked proof; others will be silent. The silence is the finding.
+1. **Metrics — inventory what you have.** Map verified proof against each buyer belief.
+   Preserve source, date, ownership, evidence ID and the harvester's item score where
+   available. Record coverage; a blocked or unchecked source is UNKNOWN, not absent.
 2. **Metrics — define what you need.** For the deals you want, write the 3–5 things the other side must believe before they call. That's the reputation requirement — not a vanity wish list.
-3. **Analysis — diagnose each gap.** Every gap has one of three causes: you never said it publicly, you said it but never captured proof, or the proof exists but is buried and unfindable. Each cause has a different fix.
+3. **Analysis — diagnose each gap.** Separate evidenced missing proof, uncollected proof,
+   buried/unfindable proof, inconsistent positioning, missing measurement and unavailable
+   access. Say "not found in this scope" unless adequate recorded coverage proves absence.
+   Each cause needs a different action; unknown cause remains UNKNOWN.
 4. **Pick 3 gaps and 3 strengths.** Three claims that need proof, three strengths already working that you're under-leveraging. More than that and nothing ships in 30 days.
-5. **Action — build the dated 30-day plan.** Repurpose before you create: one lighthouse interview, cut into clips, closes most gaps faster than net-new writing. Every action gets a date, an asset, and a destination — site page, post, or boost.
-6. **Schedule the re-measure.** Day 30: rerun the harvester, re-score, compare. MAA is a loop, not a report.
+5. **Action — build the dated 30-day plan.** Rank opportunities by expected business
+   impact, evidence confidence, effort and dependencies. Use the strongest relevant
+   existing content before requesting new material. Each action names evidence IDs,
+   an owning function, routed skill, input/asset, destination, due date, authority gate
+   and observable acceptance test; distinguish agent work from owner/relationship work.
+6. **Implement and review weekly.** Route the authorized actions and outcome baseline to
+   `weekly-brand-maa`. Review what shipped, qualified calls/leads/sales and remaining
+   gaps each week. Day 30: rerun the harvester and compare proof and outcomes under the
+   same contracts. Unmeasured revenue stays UNKNOWN; proposed impact is an assumption.
+7. **Propagate corrections before delivery.** Resolve changed facts in the shared
+   evidence record, then update all affected gap rows, actions, scorecards and reports.
+   A fresh reviewer checks the final rendered text for superseded claims; a worker's
+   correction alone is not a corrected batch.
 
 ## Output
 - Gap map: each buy-box claim with proof you have vs. proof you need.
 - 3 gaps with their diagnosed cause; 3 strengths to amplify.
-- Dated 30-day plan: action, asset, destination — content + proof + boosts, no filler.
-- Handoff notes: which actions feed `personal-brand-website-agent`, which feed `dollar-a-day-strategist`.
+- Dated 30-day action register with owners, evidence, dependencies, destinations,
+  acceptance tests and weekly outcome review; content + proof + staged boosts, no filler.
+- Handoff notes: person-site fixes go to the entity-home owner in the
+  `personal-brand-audit` action register; company-site fixes use `business-website-agent`.
+  Content uses `content-factory`; proven amplification candidates use
+  `dollar-a-day-strategist`; recurring outcome review uses `weekly-brand-maa`.
 
 ## The 30-day plan shape
+This is a proposed sequence, not automatic permission to contact, publish or spend.
+Keep actions STAGED until the exact applicable authority exists, and adapt timing to
+capacity, source assets and dependencies rather than inventing proof to meet the calendar.
+
 - **Days 1–7 — plumbing + capture:** confirm tracking is in place; record the lighthouse interviews that hit the biggest gap; ask directly for the missing testimonials.
 - **Days 8–14 — publish:** cut interviews into clips, post natively everywhere, put the strongest new proof on your entity home.
 - **Days 15–21 — promote:** Dollar-a-Day on the proven pieces — $1/day × 7 per clip, kill the bottom 90%.
@@ -45,7 +82,7 @@ rule-scopes: published-html, design-review
 **If you buy & sell companies:** sellers and LPs diligence you before the first call — every gap they find is friction on terms; every gap you close first is leverage. Post-close, run this on the acquired company: amplifying proof that already exists is the cheapest EBITDA lift available.
 **Your edge:** the analysis names the ONE claim that, proven publicly in 30 days, moves your specific pipeline — do that one first, not the easy ones.
 
-## Run on a persistent agent (Fable 5)
+## Run on a persistent agent
 - **Loop to done:** not finished until every buy-box claim is mapped and every plan item carries a date, an asset, and a destination — "build awareness" gets rejected by your own QA pass, not by Dennis.
 - **Self-verify:** check the 30-day plan against the stated calendar before delivering; a plan that ignores real availability fails its own definition.
 - **Compound with memory:** pull the brief and scored library from the upstream skills; on day 30, diff against the prior gap map instead of re-deriving it — MAA is a loop, and memory is what makes it one.
@@ -61,7 +98,8 @@ See `boil-the-ocean.md` for the full operating principles.
 
 ## Definitive article & pairings
 - Reference: Content Factory (MAA engine) — https://blitzmetrics.com/content-factory/ ; Boil the Ocean — https://blitzmetrics.com/always-boil-the-ocean-because-good-enough-is-not-enough/
-- Pairs with: positive-mentions-harvester → **this skill** → personal-brand-website-agent
+- Pairs with: positive-mentions-harvester → **this skill** → content-factory /
+  entity-home owner / business-website-agent → weekly-brand-maa
 
 ## Learned in the field
 
@@ -207,6 +245,15 @@ Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
   so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
+
+### Audit intake refinement — Dennis Yu, October 2, 2026
+
+Only a truly blocking identity or action-authority question stops that lane.
+Premium/conference GCT clarification is relevant and optional after the base
+proof audit. Do not interpret front-loading as a generic questionnaire required
+to receive value. Record inferred/UNKNOWN strategy, offer confirm/edit/continue,
+and deliver qualified findings and conditional priorities without a reputation
+penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
 
 <!-- shared-rule:assign-work-to-a-function:start -->
@@ -1222,6 +1269,15 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
+- **For an audit, a missing attendee strategy is an open decision, not a gate.**
+  Dennis's October 2, 2026 premium/conference instructions require a base audit
+  from existing evidence first. Record supplied, inferred or UNKNOWN goals,
+  content and targeting; show a confirm/edit/continue hypothesis when useful.
+  Ask only relevant questions whose answers change a recommendation. The
+  attendee may continue without answering. Deliver qualified findings and
+  conditional sales priorities; missing GCT never lowers reputation. The
+  agent's editorial brief still states what this base report helps its reader do.
+  See `skills/personal-brand-audit/references/audit-run-contract.md`.
 - **Apply the same opening standard to every format.** Documents, reports, PDFs,
   presentations, articles, homepages, landing pages, service pages, relationship
   pages and task guides must earn attention at the beginning. Improve their
@@ -1687,3 +1743,57 @@ No regex can honestly decide which lane a job needs. Enforce this by reading
 the lane table before you schedule or claim a job, and by naming the live
 lane in the job's receipt.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
+
+<!-- shared-rule:audit-method-and-correction-propagation:start -->
+## Audit the business and propagate every correction
+
+- Use the shared audit run contract in the maintained marketplace at
+  `skills/personal-brand-audit/references/audit-run-contract.md`; its teaching
+  edition is https://blitzmetrics.com/how-we-audit/. Start with the subject's
+  business goal, offer and buyer, then proof inventory, gap, ranked actions,
+  visual cited report, authorized implementation and weekly MAA.
+- Deliver the base proof audit first. For premium/conference participants,
+  confirm clear supplied GCT, label inferred strategy for confirm/edit, and
+  ask only relevant optional questions. Continue without answers with
+  conditional priorities; missing GCT never means low reputation. Preserve
+  the base report and show changes after clarification.
+- Pin the input, exam family, rubric/version, source hash and report template.
+  The ten-row Brand Authority, seven-component SEO/Growth, Website QA checklist,
+  local/GBP product and Reputation-to-Sales Gap are separate exams. Do not invent
+  weights, substitute one for another, average them, or use an older report as
+  the rubric. The 30-point scale ranks individual proof items only.
+- UNKNOWN is not zero. Incomplete required evidence means a known subtotal and
+  INCOMPLETE with no pass verdict, without renormalizing weights. Use N/A only
+  under the pinned rubric's denominator rule. Calculate headlines from the rows;
+  keep a documented cap separate from the raw total. Compare deltas only within
+  the same exam/version and comparable coverage.
+- A correct graph object, a panel visible in a normal name query, and a claimed
+  panel require separate receipts. Query-match strength is not authority.
+  Blocked or unperformed checks remain UNKNOWN. Public controls do not prove
+  owner claim status, and coappearance does not prove friendship or endorsement.
+- Correct one authoritative fact first, identify every dependent report,
+  summary and leaderboard, and regenerate/inspect them at the new revision.
+  A retired claim surviving in one final PDF blocks that batch. Test arithmetic,
+  UNKNOWN, rubric version, entity/panel separation and correction propagation;
+  inspect actual renders independently. A page count is not visual QA.
+- Record actual tool/skill use, platform/model/effort or UNKNOWN, source and
+  capture times, allowance constraints and human rework. Separate documented
+  capabilities from observed executions. Publish useful teaching, keeping raw
+  private dictation and customer information in authorized private records.
+- State the inventory's source boundaries and counted unit. Public channel
+  assets, feed releases, distinct conversations, guest appearances, clips,
+  website posts and private camera/audio masters are different units. Enumerate
+  every page of the declared public sources; retain unresolved external leads.
+  Cross-posts and multipart releases need explicit joins, not a summed headline.
+  Missing video does not prove audio-only. Raw-source holdings remain UNKNOWN
+  unless actually inventoried; never divide public uploads by releases and call
+  that a verified repurposing ratio.
+- Make a substantive business report: first two pages answer the buyer's
+  question, major findings pair evidence with an implication and action, and
+  charts keep sample, denominator, date and precision beside the number. Report
+  content performance by comparable format/date coverage; views are not sales.
+  Use distinct commercial lanes until the current product and goal are verified.
+  Existing automations/offers require observed-output and outcome checks, not a
+  proposal to create them again. Every physical PDF page needs readable type,
+  correct numbering, useful composition and an actual final visual review.
+<!-- shared-rule:audit-method-and-correction-propagation:end -->

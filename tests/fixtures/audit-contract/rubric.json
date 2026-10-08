@@ -1,0 +1,53 @@
+{
+  "approved": true,
+  "approval_scope": "SYNTHETIC_TEST_ONLY",
+  "exam_family": "Synthetic ten-row exam",
+  "rubric_id": "fixture-ten-row",
+  "rubric_version": "1.0",
+  "calculation": "sum",
+  "scale_max": 100,
+  "pass_line": 80,
+  "display_decimals": 0,
+  "rows": [
+    {
+      "id": "0",
+      "max": 10
+    },
+    {
+      "id": "1",
+      "max": 10
+    },
+    {
+      "id": "2",
+      "max": 10
+    },
+    {
+      "id": "3",
+      "max": 10
+    },
+    {
+      "id": "4",
+      "max": 10
+    },
+    {
+      "id": "5",
+      "max": 10
+    },
+    {
+      "id": "6",
+      "max": 10
+    },
+    {
+      "id": "7",
+      "max": 10
+    },
+    {
+      "id": "8",
+      "max": 10
+    },
+    {
+      "id": "9",
+      "max": 10
+    }
+  ]
+}

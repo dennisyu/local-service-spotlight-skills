@@ -1,0 +1,92 @@
+{
+  "exam_family": "Synthetic ten-row exam",
+  "rubric_id": "fixture-ten-row",
+  "rubric_version": "1.0",
+  "subject_id": "synthetic",
+  "rubric_sha256": "bf6e2f6a017b903e82c7bc8c36bc8a21f206e74bf502a74a832fc380106fb455",
+  "total": 58,
+  "verdict": "FAIL",
+  "coverage_id": "fixture",
+  "rows": [
+    {
+      "id": "0",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "1",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "2",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "3",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "4",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "5",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "6",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "7",
+      "state": "CHECKED",
+      "score": 5,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "8",
+      "state": "CHECKED",
+      "score": 4,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    },
+    {
+      "id": "9",
+      "state": "CHECKED",
+      "score": 4,
+      "evidence_ids": [
+        "SYNTHETIC-E1"
+      ]
+    }
+  ]
+}

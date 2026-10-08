@@ -1,0 +1,29 @@
+{
+  "expected_artifacts": [
+    "final.pdf"
+  ],
+  "shared_facts": {
+    "C1": {
+      "revision": "r2",
+      "dependents": [
+        "final.pdf"
+      ],
+      "required_text": "Corrected shared fact.",
+      "retired_text": [
+        "Retired shared fact."
+      ]
+    }
+  },
+  "artifacts": [
+    {
+      "path": "final.pdf",
+      "kind": "pdf",
+      "sha256": "b5ee15e05791454320c618028022049d00e9f244f1f4d1b9ae860df9aaf0df09",
+      "text_path": "final.txt",
+      "text_sha256": "f288beb758ed0007dccf8621f065d84863efc31d61cfd3a028e8a7eecf1eb46a",
+      "shared_fact_revisions": {
+        "C1": "r2"
+      }
+    }
+  ]
+}

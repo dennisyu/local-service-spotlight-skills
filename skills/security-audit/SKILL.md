@@ -378,6 +378,15 @@ Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
   so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
+
+### Audit intake refinement — Dennis Yu, October 2, 2026
+
+Only a truly blocking identity or action-authority question stops that lane.
+Premium/conference GCT clarification is relevant and optional after the base
+proof audit. Do not interpret front-loading as a generic questionnaire required
+to receive value. Record inferred/UNKNOWN strategy, offer confirm/edit/continue,
+and deliver qualified findings and conditional priorities without a reputation
+penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
 
 <!-- shared-rule:assign-work-to-a-function:start -->
@@ -1393,6 +1402,15 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
+- **For an audit, a missing attendee strategy is an open decision, not a gate.**
+  Dennis's October 2, 2026 premium/conference instructions require a base audit
+  from existing evidence first. Record supplied, inferred or UNKNOWN goals,
+  content and targeting; show a confirm/edit/continue hypothesis when useful.
+  Ask only relevant questions whose answers change a recommendation. The
+  attendee may continue without answering. Deliver qualified findings and
+  conditional sales priorities; missing GCT never lowers reputation. The
+  agent's editorial brief still states what this base report helps its reader do.
+  See `skills/personal-brand-audit/references/audit-run-contract.md`.
 - **Apply the same opening standard to every format.** Documents, reports, PDFs,
   presentations, articles, homepages, landing pages, service pages, relationship
   pages and task guides must earn attention at the beginning. Improve their
@@ -1858,3 +1876,57 @@ No regex can honestly decide which lane a job needs. Enforce this by reading
 the lane table before you schedule or claim a job, and by naming the live
 lane in the job's receipt.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
+
+<!-- shared-rule:audit-method-and-correction-propagation:start -->
+## Audit the business and propagate every correction
+
+- Use the shared audit run contract in the maintained marketplace at
+  `skills/personal-brand-audit/references/audit-run-contract.md`; its teaching
+  edition is https://blitzmetrics.com/how-we-audit/. Start with the subject's
+  business goal, offer and buyer, then proof inventory, gap, ranked actions,
+  visual cited report, authorized implementation and weekly MAA.
+- Deliver the base proof audit first. For premium/conference participants,
+  confirm clear supplied GCT, label inferred strategy for confirm/edit, and
+  ask only relevant optional questions. Continue without answers with
+  conditional priorities; missing GCT never means low reputation. Preserve
+  the base report and show changes after clarification.
+- Pin the input, exam family, rubric/version, source hash and report template.
+  The ten-row Brand Authority, seven-component SEO/Growth, Website QA checklist,
+  local/GBP product and Reputation-to-Sales Gap are separate exams. Do not invent
+  weights, substitute one for another, average them, or use an older report as
+  the rubric. The 30-point scale ranks individual proof items only.
+- UNKNOWN is not zero. Incomplete required evidence means a known subtotal and
+  INCOMPLETE with no pass verdict, without renormalizing weights. Use N/A only
+  under the pinned rubric's denominator rule. Calculate headlines from the rows;
+  keep a documented cap separate from the raw total. Compare deltas only within
+  the same exam/version and comparable coverage.
+- A correct graph object, a panel visible in a normal name query, and a claimed
+  panel require separate receipts. Query-match strength is not authority.
+  Blocked or unperformed checks remain UNKNOWN. Public controls do not prove
+  owner claim status, and coappearance does not prove friendship or endorsement.
+- Correct one authoritative fact first, identify every dependent report,
+  summary and leaderboard, and regenerate/inspect them at the new revision.
+  A retired claim surviving in one final PDF blocks that batch. Test arithmetic,
+  UNKNOWN, rubric version, entity/panel separation and correction propagation;
+  inspect actual renders independently. A page count is not visual QA.
+- Record actual tool/skill use, platform/model/effort or UNKNOWN, source and
+  capture times, allowance constraints and human rework. Separate documented
+  capabilities from observed executions. Publish useful teaching, keeping raw
+  private dictation and customer information in authorized private records.
+- State the inventory's source boundaries and counted unit. Public channel
+  assets, feed releases, distinct conversations, guest appearances, clips,
+  website posts and private camera/audio masters are different units. Enumerate
+  every page of the declared public sources; retain unresolved external leads.
+  Cross-posts and multipart releases need explicit joins, not a summed headline.
+  Missing video does not prove audio-only. Raw-source holdings remain UNKNOWN
+  unless actually inventoried; never divide public uploads by releases and call
+  that a verified repurposing ratio.
+- Make a substantive business report: first two pages answer the buyer's
+  question, major findings pair evidence with an implication and action, and
+  charts keep sample, denominator, date and precision beside the number. Report
+  content performance by comparable format/date coverage; views are not sales.
+  Use distinct commercial lanes until the current product and goal are verified.
+  Existing automations/offers require observed-output and outcome checks, not a
+  proposal to create them again. Every physical PDF page needs readable type,
+  correct numbering, useful composition and an actual final visual review.
+<!-- shared-rule:audit-method-and-correction-propagation:end -->

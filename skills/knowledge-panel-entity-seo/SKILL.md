@@ -1,54 +1,111 @@
 ---
 name: knowledge-panel-entity-seo
-description: Run the plumbing that earns a Google Knowledge Panel — entity-clarity audit, Person schema JSON-LD with sameAs, ranked third-party corroboration, entity-collision fixes, and the KGMID claim in Search Console. Use to become the one person Google recognizes for your name and topic.
+description: Audit entity identity, Person schema and corroboration; separately verify Knowledge Graph objects, visible Google panels and owner claim status. Produce evidence-backed fixes and an authorized-owner claim checklist without promising a panel or a review time.
 rule-scopes: published-html, design-review
 ---
 
 # Knowledge Panel / Entity SEO
 
-**Use this when** your entity home is live and you want the box on the right of Google — plus the entity clarity underneath it that makes Google and every AI resolve you as one clear person. Step 5 of the Local Service Spotlight method.
+**Use this when** your entity home is live and you need to resolve identity, namesakes,
+structured data or Knowledge Panel facts. Use [How We Audit](https://blitzmetrics.com/how-we-audit/)
+for the full method. Entity plumbing can improve clarity; it does not guarantee that
+Google will show a panel or that an AI will recommend the subject.
 
 ## Inputs
 - Your live entity home (yourname.com) and every profile URL you own.
 - Scored proof from `positive-mentions-harvester`: press, podcasts, speaking, Wikidata candidates.
-- The exact name, role, company, and primary topic locked in `personal-brand-strategist`.
-- Government ID and access to your profiles — you'll need both for the claim.
+- The resolved identity and positioning record: `personal-brand-audit` intake for a
+  person, or `business-brand-strategist` for a company. Record the goal, exact name,
+  role/company, topic and two independent identity attributes.
+- For an authorized claim attempt only, the owner's existing Google account and a
+  verified official site/profile. Supply any requested identity material directly to
+  Google; do not collect government ID in the audit ledger or report.
+
+## Three independent observations
+
+Use the same receipt contract as `personal-brand-audit` and its evidence ledger:
+
+1. **Graph object / KGMID:** query the canonical
+   [LSS Knowledge Graph Explorer](https://localservicespotlight.com/knowledge-graph-explorer/).
+   Record exact queries, time, candidates and
+   `graph_object_status=RESOLVED | AMBIGUOUS | NO_SAFE_OBJECT_RETURNED | UNKNOWN`, plus
+   `kgmid=<safe identifier> | UNKNOWN`. Assign an object only after two independent
+   attributes match the subject. `resultScore` is query-match strength, not authority.
+2. **Visible normal-query panel:** separately run the ordinary name or name-plus-role
+   Google query. Record `normal_google_panel_status=VISIBLE | NOT_VISIBLE_IN_THIS_CHECK | UNKNOWN`,
+   query, date/timezone, locale/language, approximate location, device/surface, signed-in
+   and personalization state, and screenshot/response locator. A forced `?kgmid=` page
+   is a different test, not proof that the ordinary query displays a panel.
+3. **Owner claim:** record `owner_claim_status=CLAIMED | NOT_CLAIMED | UNKNOWN` only from
+   an authorized owner-side dashboard, dashboard screenshot/export or Google claim
+   receipt. A public claim button and Explorer defaults do not prove owner status.
+
+Unavailable or blocked checks remain UNKNOWN with the failed attempt recorded. A graph
+object does not prove a visible panel; a visible panel does not prove an owner claim;
+no returned object does not prove that no panel exists. Reuse these identity-safe fields
+for related public-association entities, without inferring friendship or endorsement.
 
 ## Steps
 1. **Entity-clarity audit.** Search your name. Are your name, role, company, and topic identical on your site, LinkedIn, X, YouTube, podcast bios, and event pages — same headshot everywhere? List every mismatch: old titles, name variants, stray photos.
-2. **Fix entity collision.** Share a name with anyone Google knows? Disambiguate: middle initial, "[Name], [Company]" phrasing, your differentiating topic in every bio. Google won't award a Panel to a name it can't resolve to one person.
+2. **Resolve entity collision.** Compare namesakes using two independent attributes.
+   Stage accurate qualifiers, canonical profiles and source-backed biography fixes;
+   do not rename a person or attribute a graph result from the matching name alone.
 3. **Person schema.** Write JSON-LD for the site head — your entity home as canonical, `sameAs` to every verified profile:
 
    ```json
    { "@context": "https://schema.org", "@type": "Person",
+     "@id": "https://yourname.com/#person",
      "name": "", "jobTitle": "", "worksFor": { "@type": "Organization", "name": "" },
      "url": "https://yourname.com", "image": "",
      "sameAs": ["<LinkedIn>", "<X>", "<YouTube>", "<press/podcast profiles>"] }
    ```
 
-4. **Build corroboration** down the signal stack below — every independent source that repeats the same facts raises Google's confidence score in you as an entity.
-5. **Find the KGMID and claim.** Search your name; when a Panel appears, the share link carries your `kgmid`. Click "Claim this knowledge panel," verify through a connected profile, write a plain explanation of who you are, submit via Search Console with ID and proof. Decision typically 2–7 days.
-6. **Re-audit monthly.** New mentions are new corroboration; stale titles are drift.
+4. **Build relevant corroboration** from independent sources repeating supported facts.
+   Rank it against the buyer and business goal; do not present an invented Google
+   confidence score or a guaranteed panel outcome.
+5. **Stage the owner claim using Google's current procedure.** Follow
+   [Get verified on Google](https://support.google.com/knowledgepanel/answer/7534902?hl=en)
+   (checked 2 October 2026): the authorized owner finds the correct panel in Google
+   Search, selects "Claim this knowledge panel" if available, reviews the information,
+   and verifies through an official site/profile Google offers. Search Console is one
+   possible verification route, not a universal application form. Google may request
+   additional information; not every panel is claimable. Record the actual state and
+   receipt, without promising a review time. Local service businesses use the separate
+   Google Business Profile route. Any claim submission or feedback needs the applicable
+   action authority; an audit alone does not grant it.
+6. **Re-audit monthly and after a correction.** Repeat the three observations separately.
+   Update the shared fact/evidence record and every affected score, diagram and report;
+   check the final rendered text before closing a corrected fact.
 
 ## Signal stack (pursue in this order)
 1. Press in recognized outlets — highest authority per unit of effort.
-2. Podcasts and YouTube shows with existing authority — lighthouse interviews count double.
+2. Podcasts and YouTube shows with relevant authority — rank their evidence with the
+   published proof-item scale; do not apply an invented double-points rule.
 3. Speaker pages at named events — the event's site corroborates you.
-4. Wikidata entry with sourced statements — feeds the Knowledge Graph directly.
+4. Eligible Wikidata statements with suitable sources — useful corroboration when
+   appropriate, not a mandatory prerequisite or proof that Google used them.
 5. Association and directory profiles carrying your exact one-line bio.
 
 ## Output
-- Mismatch list with exact fixes, paste-ready Person schema, ranked corroboration hit-list, and the step-by-step KGMID claim checklist.
+- Mismatch list with evidence and exact fixes, schema using one stable identity `@id`,
+  ranked corroboration actions, the three separate observation receipts, and the
+  authorized-owner claim checklist. Report UNKNOWN without turning it into absence,
+  zero or a failed exam. Entity, panel and owner-claim observations are not a new
+  overall score or an automatic cap on another exam.
 
 ## For DealCon — agency owners & acquirers
 **If you run an agency:** the Panel is what a premium prospect sees before your first call — you stop being one vendor in a spreadsheet and become the obvious authority, which is pricing power.
 **If you buy & sell companies:** a stranger-seller Googles you the night they decide which buyer to call back. A Panel with your face, role, and press wins that moment.
 **Your edge:** put your differentiating topic in every bio Google reads — the Panel should say the thing only you can claim, not just a job title.
 
-## Run on a persistent agent (Fable 5)
-- **Loop to done:** loop the entity-clarity audit until the mismatch list hits zero — every profile, same name, same headshot, same one-line title — and the schema validates. A Panel is won by signals agreeing everywhere, so "most profiles fixed" is not done.
+## Run on a persistent agent
+- **Loop to done:** resolve or explicitly hold every material identity mismatch and
+  validate the intended schema. Do not keep looping merely because Google has not
+  displayed a panel, and do not claim control over its decision.
 - **Self-verify:** re-search the name after every fix batch and confirm the change actually propagated before crossing it off.
-- **Compound with memory:** the claim takes weeks of compounding corroboration — exactly what a persistent agent is for. Track the hit-list, KGMID status, and each month's re-audit in memory so no signal gets lost or rebuilt.
+- **Compound with the shared record:** track corroboration actions and dated graph,
+  normal-query panel and owner-claim receipts in the evidence ledger, so new runs
+  compare the same fields without treating a remembered result as a fresh check.
 - **Log the run:** date every corroboration won — the dated trail is your evidence pack for the claim itself.
 
 See `boil-the-ocean.md` for the full operating principles.
@@ -56,7 +113,6 @@ See `boil-the-ocean.md` for the full operating principles.
 ## Notes — Dennis's method
 - This is **plumbing, not magic**. Dennis was a search engineer at Yahoo; Google resolves entities the same way — one clear identity, many independent sources agreeing.
 - Consistency is the cheap win: same name, same headshot, same one-line title, everywhere. Do it before chasing press, not after.
-- In 2025, Google Search Profiles require 100k followers (300k TikTok-only) **or** a Knowledge Panel. The Panel is the deal-maker's way in — authority without becoming an influencer.
 - Corroboration beats volume: one talk at a named event outweighs fifty self-published posts.
 - Entity collision is the silent killer for common names. Disambiguate first, or every signal you build splits between two people.
 - A Panel is never "done" — Google rebuilds it from the graph continuously. Keep the sources consistent and it keeps getting richer.
@@ -374,6 +430,15 @@ Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
   so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
+
+### Audit intake refinement — Dennis Yu, October 2, 2026
+
+Only a truly blocking identity or action-authority question stops that lane.
+Premium/conference GCT clarification is relevant and optional after the base
+proof audit. Do not interpret front-loading as a generic questionnaire required
+to receive value. Record inferred/UNKNOWN strategy, offer confirm/edit/continue,
+and deliver qualified findings and conditional priorities without a reputation
+penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:ask-blocking-questions-up-front:end -->
 
 <!-- shared-rule:assign-work-to-a-function:start -->
@@ -1389,6 +1454,15 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
+- **For an audit, a missing attendee strategy is an open decision, not a gate.**
+  Dennis's October 2, 2026 premium/conference instructions require a base audit
+  from existing evidence first. Record supplied, inferred or UNKNOWN goals,
+  content and targeting; show a confirm/edit/continue hypothesis when useful.
+  Ask only relevant questions whose answers change a recommendation. The
+  attendee may continue without answering. Deliver qualified findings and
+  conditional sales priorities; missing GCT never lowers reputation. The
+  agent's editorial brief still states what this base report helps its reader do.
+  See `skills/personal-brand-audit/references/audit-run-contract.md`.
 - **Apply the same opening standard to every format.** Documents, reports, PDFs,
   presentations, articles, homepages, landing pages, service pages, relationship
   pages and task guides must earn attention at the beginning. Improve their
@@ -1854,3 +1928,57 @@ No regex can honestly decide which lane a job needs. Enforce this by reading
 the lane table before you schedule or claim a job, and by naming the live
 lane in the job's receipt.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
+
+<!-- shared-rule:audit-method-and-correction-propagation:start -->
+## Audit the business and propagate every correction
+
+- Use the shared audit run contract in the maintained marketplace at
+  `skills/personal-brand-audit/references/audit-run-contract.md`; its teaching
+  edition is https://blitzmetrics.com/how-we-audit/. Start with the subject's
+  business goal, offer and buyer, then proof inventory, gap, ranked actions,
+  visual cited report, authorized implementation and weekly MAA.
+- Deliver the base proof audit first. For premium/conference participants,
+  confirm clear supplied GCT, label inferred strategy for confirm/edit, and
+  ask only relevant optional questions. Continue without answers with
+  conditional priorities; missing GCT never means low reputation. Preserve
+  the base report and show changes after clarification.
+- Pin the input, exam family, rubric/version, source hash and report template.
+  The ten-row Brand Authority, seven-component SEO/Growth, Website QA checklist,
+  local/GBP product and Reputation-to-Sales Gap are separate exams. Do not invent
+  weights, substitute one for another, average them, or use an older report as
+  the rubric. The 30-point scale ranks individual proof items only.
+- UNKNOWN is not zero. Incomplete required evidence means a known subtotal and
+  INCOMPLETE with no pass verdict, without renormalizing weights. Use N/A only
+  under the pinned rubric's denominator rule. Calculate headlines from the rows;
+  keep a documented cap separate from the raw total. Compare deltas only within
+  the same exam/version and comparable coverage.
+- A correct graph object, a panel visible in a normal name query, and a claimed
+  panel require separate receipts. Query-match strength is not authority.
+  Blocked or unperformed checks remain UNKNOWN. Public controls do not prove
+  owner claim status, and coappearance does not prove friendship or endorsement.
+- Correct one authoritative fact first, identify every dependent report,
+  summary and leaderboard, and regenerate/inspect them at the new revision.
+  A retired claim surviving in one final PDF blocks that batch. Test arithmetic,
+  UNKNOWN, rubric version, entity/panel separation and correction propagation;
+  inspect actual renders independently. A page count is not visual QA.
+- Record actual tool/skill use, platform/model/effort or UNKNOWN, source and
+  capture times, allowance constraints and human rework. Separate documented
+  capabilities from observed executions. Publish useful teaching, keeping raw
+  private dictation and customer information in authorized private records.
+- State the inventory's source boundaries and counted unit. Public channel
+  assets, feed releases, distinct conversations, guest appearances, clips,
+  website posts and private camera/audio masters are different units. Enumerate
+  every page of the declared public sources; retain unresolved external leads.
+  Cross-posts and multipart releases need explicit joins, not a summed headline.
+  Missing video does not prove audio-only. Raw-source holdings remain UNKNOWN
+  unless actually inventoried; never divide public uploads by releases and call
+  that a verified repurposing ratio.
+- Make a substantive business report: first two pages answer the buyer's
+  question, major findings pair evidence with an implication and action, and
+  charts keep sample, denominator, date and precision beside the number. Report
+  content performance by comparable format/date coverage; views are not sales.
+  Use distinct commercial lanes until the current product and goal are verified.
+  Existing automations/offers require observed-output and outcome checks, not a
+  proposal to create them again. Every physical PDF page needs readable type,
+  correct numbering, useful composition and an actual final visual review.
+<!-- shared-rule:audit-method-and-correction-propagation:end -->
