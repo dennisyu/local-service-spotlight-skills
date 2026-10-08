@@ -22,6 +22,7 @@
   website over an author archive, search result or social profile. If no owned site can
   be verified, use the relevant first-party company page or a canonical article that
   establishes who the person is; otherwise leave the name plain.
+- **Program members and clients get exactly one link per article — to their personal brand site.** Anyone in the AI Builder program, or any client, named in an article gets one link to their verified personal-brand site, on the first mention, and no repeat links later in that article. Standing rule from Dennis Yu (2026-10-08): one article, one link per person.
 - **Companies point to their owned company site.** Correct the entity name before
   linking it. A plausible domain for the wrong spelling teaches the wrong association.
 - **Tools and concepts point to our canonical training when it exists.** In explanatory
