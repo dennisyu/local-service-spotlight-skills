@@ -97,19 +97,28 @@ def targets() -> list[Path]:
 def upsert(text: str, slug: str, block: str) -> str:
     """Replace this rule's block in place, or append it if not present."""
     start, end = marker(slug)
+    body = block.removeprefix(start + "\n").removesuffix("\n" + end)
+    heading = body.splitlines()[0]
     if start in text or end in text:
-        if text.count(start) != 1 or text.count(end) != 1:
+        if (text.count(start) != 1 or text.count(end) != 1
+                or text.index(start) > text.index(end)):
             raise StandardError(
                 f"shared-rule markers for {slug!r} are missing or duplicated"
             )
         before, rest = text.split(start, 1)
-        _, after = rest.split(end, 1)
+        previous_body, after = rest.split(end, 1)
+        previous_heading = next(
+            (line for line in previous_body.splitlines() if line.startswith("## ")), None
+        )
+        outside = (before + "\n" + after).splitlines()
+        if heading in outside or (previous_heading and previous_heading in outside):
+            raise StandardError(
+                f"ambiguous shared rule {slug!r}: unmarked heading outside its markers"
+            )
         text = before.rstrip() + "\n\n" + block + after
     else:
         # Lost delimiters do not mean lost prose. Recover only an exact,
         # standalone canonical section; guessing at edited prose risks data loss.
-        body = block.removeprefix(start + "\n").removesuffix("\n" + end)
-        heading = body.splitlines()[0]
         matches = list(re.finditer(r"(?m)^" + re.escape(heading) + r"$", text))
         if matches:
             if len(matches) != 1:
@@ -159,6 +168,7 @@ def drop_index(text: str) -> str:
 def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tuple[Path, str]]]:
     changed: list[Path] = []
     orphans: list[tuple[Path, str]] = []
+    updates: list[tuple[Path, str]] = []
 
     for path, keep, rest in plan():
         current = path.read_text(encoding="utf-8") if path.exists() else ""
@@ -173,7 +183,10 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
                 orphans.append((path, slug))
 
         for standard in keep:
-            expected = upsert(expected, standard.slug, standard.block())
+            try:
+                expected = upsert(expected, standard.slug, standard.block())
+            except StandardError as exc:
+                raise StandardError(f"{path.relative_to(ROOT)}: {exc}") from exc
 
         block = index_block(rest)
         if block:
@@ -182,7 +195,12 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
         if current == expected:
             continue
         changed.append(path)
-        if not check:
+        updates.append((path, expected))
+
+    # Preflight all files so a damaged later target cannot leave earlier skills
+    # partly updated. Check mode never writes.
+    if not check:
+        for path, expected in updates:
             path.write_text(expected, encoding="utf-8")
     return changed, orphans
 

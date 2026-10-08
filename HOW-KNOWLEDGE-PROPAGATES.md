@@ -266,7 +266,10 @@ failure path intact. Sync now recognizes one exact standalone canonical section
 and restores its delimiters in place. An edited or duplicate unmarked section retaining the canonical heading
 fails with a reconciliation message instead of guessing or appending. A renamed
 heading cannot be identified safely and follows the existing append path. Partial
-and duplicate delimiters remain errors.
+and duplicate delimiters remain errors. A current or previous heading outside its
+existing marked block is also ambiguous, including during a title change. Sync preflights
+all targets before writing so a damaged later file cannot leave earlier skills
+partly updated.
 
 The generated-file repair adds only 78 comments in `AGENTS.md` and 38 skills;
 all other bytes, including the October 8 bullet, are preserved. The standard

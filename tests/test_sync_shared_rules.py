@@ -130,6 +130,55 @@ class SyncSharedRulesTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     mod.upsert(text, "rule-one", block)
 
+    def test_marked_and_unmarked_copies_are_rejected_even_during_title_update(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- current")
+        block = mod.standards()[0][1]
+        for marked in (block, block.replace("## One", "## Old title")):
+            outside_copies = ["## One\n\n- current", "## One\n\n- superseded"]
+            if "## Old title" in marked:
+                outside_copies.append("## Old title\n\n- superseded")
+            for outside in outside_copies:
+                with self.subTest(marked=marked, outside=outside):
+                    text = marked + "\n\n" + outside + "\n"
+                    with self.assertRaisesRegex(ValueError, "unmarked heading outside"):
+                        mod.upsert(text, "rule-one", block)
+
+    def test_late_ambiguous_file_prevents_all_writes(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        mod.sync()
+        damaged = self.root / "skills" / "beta" / "SKILL.md"
+        damaged.write_text(damaged.read_text() + "\n## One\n\n- superseded\n")
+        self.write_standard("rule-one", "## One\n\n- amended")
+        before = {p: p.read_bytes() for p in mod.targets()}
+        for check in (True, False):
+            with self.subTest(check=check):
+                with self.assertRaisesRegex(ValueError, "beta/SKILL.md.*unmarked"):
+                    mod.sync(check=check)
+                self.assertEqual({p: p.read_bytes() for p in mod.targets()}, before)
+
+    def test_marked_rule_title_change_remains_supported(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## Old title\n\n- first")
+        mod.sync()
+        self.write_standard("rule-one", "## Current title\n\n- amended")
+        mod.sync()
+        for p in mod.targets():
+            self.assertEqual(p.read_text().splitlines().count("## Current title"), 1)
+            self.assertNotIn("## Old title\n", p.read_text())
+        self.assertEqual(mod.sync(check=True), ([], []))
+
+    def test_reversed_markers_report_a_standard_error(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        block = mod.standards()[0][1]
+        start, end = mod.marker("rule-one")
+        text = block.replace(start, "TEMP-MARKER").replace(end, start)
+        text = text.replace("TEMP-MARKER", end)
+        with self.assertRaises(mod.StandardError):
+            mod.upsert(text, "rule-one", block)
+
     def test_edited_standard_is_detected_as_stale(self):
         """Changing a standard makes --check fail until re-synced."""
         mod = load_module(self.root)
