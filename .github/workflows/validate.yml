@@ -24,6 +24,10 @@ jobs:
         run: python3 scripts/validate_marketplace.py
       - name: Run converter tests
         run: python3 -m unittest discover -s tests -v
+      - name: Install local clip checker test dependency
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Prove clip defects fail and visual review is required
+        run: python3 -m unittest discover -s tools -p 'test_check_hero_loops.py' -v
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

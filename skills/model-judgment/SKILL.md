@@ -1063,7 +1063,7 @@ These are not repeated here because they govern published pages rather than agen
 - **Nothing plays at the visitor uninvited** (`nothing-plays-uninvited`)
 - **Order proof by authority, strongest first** (`order-proof-by-authority`)
 - **A photograph has to earn full bleed** (`photo-earns-full-bleed`)
-- **Hero background videos must loop without a visible snap** (`seamless-hero-video-loops`)
+- **Keep immersive heroes authentic and verify their motion** (`seamless-hero-video-loops`)
 - **Show the moment, not the resume** (`show-the-moment-not-the-resume`)
 - **Every URL we say out loud resolves** (`spoken-urls-must-resolve`)
 <!-- shared-rule-index:end -->
