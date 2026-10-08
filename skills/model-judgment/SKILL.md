@@ -659,6 +659,7 @@ a completed run. Enforce it in the semantic preflight, source-backed orbit manif
 bidirectional-link verifier and rendered desktop/mobile review.
 <!-- shared-rule:definitive-articles-show-what-they-are-and-where-they-fit:end -->
 
+<!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
 ## Named entities link to the most helpful canonical destination
 
 - **Route the first meaningful mention of a named entity to the page that best helps
@@ -705,6 +706,7 @@ the destination useful. When a bare entity name and a training page would confli
 destination-naming anchor above is the reconciliation. No generic fleet regex can identify
 people, ownership or the right internal training page, so enforce this through the
 entity-linking preflight and a live link audit.
+<!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
 
 <!-- shared-rule:visuals-above-the-fold:start -->
 ## Visual and interactive content sits above the fold

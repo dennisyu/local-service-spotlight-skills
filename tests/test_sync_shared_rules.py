@@ -71,6 +71,65 @@ class SyncSharedRulesTests(unittest.TestCase):
         stale, _ = mod.sync(check=True)
         self.assertEqual(stale, [])
 
+    def test_removed_markers_recover_in_place_without_duplicate_prose(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        self.write_standard("rule-two", "## Two\n\n- second")
+        mod.sync()
+        originals = {p: p.read_text() for p in mod.targets()}
+        start, end = mod.marker("rule-one")
+        for path, text in originals.items():
+            path.write_text(text.replace(start + "\n", "").replace(end + "\n", ""))
+        damaged = {p: p.read_text() for p in mod.targets()}
+        changed, orphans = mod.sync(check=True)
+        self.assertEqual(set(changed), set(originals))
+        self.assertEqual(orphans, [])
+        self.assertEqual(damaged, {p: p.read_text() for p in mod.targets()})
+        mod.sync()
+        self.assertEqual(originals, {p: p.read_text() for p in mod.targets()})
+        self.assertEqual(mod.sync(), ([], []))
+        self.assertEqual(mod.sync(check=True), ([], []))
+
+    def test_repository_marker_removal_regression(self):
+        """Exercise all distributed files through the actual scoped sync plan."""
+        import shutil
+
+        shutil.copytree(REPO / "standards", self.root / "standards", dirs_exist_ok=True)
+        shutil.copytree(REPO / "skills", self.root / "skills", dirs_exist_ok=True)
+        shutil.copyfile(REPO / "AGENTS.md", self.root / "AGENTS.md")
+        # The small fixture skills are also synchronized before damaging output.
+        mod = load_module(self.root)
+        mod.sync()
+        originals = {p: p.read_text() for p in mod.targets()}
+        slug = "named-entities-link-to-the-most-helpful-canonical-destination"
+        start, end = mod.marker(slug)
+        for path, text in originals.items():
+            path.write_text(text.replace(start + "\n", "").replace(end + "\n", ""))
+        mod.sync()
+        self.assertEqual(originals, {p: p.read_text() for p in mod.targets()})
+        self.assertEqual(mod.sync(), ([], []))
+        self.assertEqual(mod.sync(check=True), ([], []))
+
+    def test_unmarked_edited_or_duplicate_section_is_rejected(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        block = mod.standards()[0][1]
+        for body in ("## One\n\n- edited", "## One\n\n- first\n- extra",
+                     "## One\n\n- first\n\n## One\n\n- first"):
+            with self.subTest(body=body):
+                with self.assertRaisesRegex(ValueError, "unmarked"):
+                    mod.upsert("# Custom\n\n" + body + "\n", "rule-one", block)
+
+    def test_partial_or_duplicate_markers_are_rejected(self):
+        mod = load_module(self.root)
+        self.write_standard("rule-one", "## One\n\n- first")
+        block = mod.standards()[0][1]
+        start, end = mod.marker("rule-one")
+        for text in (block.replace(start, ""), block.replace(end, ""), block + block):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
+                    mod.upsert(text, "rule-one", block)
+
     def test_edited_standard_is_detected_as_stale(self):
         """Changing a standard makes --check fail until re-synced."""
         mod = load_module(self.root)

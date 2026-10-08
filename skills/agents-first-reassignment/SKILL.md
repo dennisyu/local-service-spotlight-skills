@@ -621,6 +621,7 @@ separate executions. Enforce this through the run record, evidence manifest and 
   naming rule for new work.
 <!-- shared-rule:lss-is-the-public-company:end -->
 
+<!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
 ## Named entities link to the most helpful canonical destination
 
 - **Route the first meaningful mention of a named entity to the page that best helps
@@ -667,6 +668,7 @@ the destination useful. When a bare entity name and a training page would confli
 destination-naming anchor above is the reconciliation. No generic fleet regex can identify
 people, ownership or the right internal training page, so enforce this through the
 entity-linking preflight and a live link audit.
+<!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:end -->
 
 <!-- shared-rule:no-flattery-tell-it-straight:start -->
 ## No flattery — tell it straight
