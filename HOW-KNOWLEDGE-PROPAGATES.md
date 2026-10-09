@@ -247,3 +247,39 @@ problem it claims to solve.
 *See also: [`CONTRIBUTING.md`](CONTRIBUTING.md) for the pull-request route,
 [`ACCEPTANCE.md`](ACCEPTANCE.md) for what counts as proof that something
 actually happened, and [`standards/`](standards/) for the rules themselves.*
+
+
+## Source repair receipt — 2026-10-08
+
+At `84be5cb7543b8d13cb14122ee7e5e71d31d44a98`, marketplace validation
+reported 39 missing/stale copies of
+`named-entities-link-to-the-most-helpful-canonical-destination`.
+The October 8 direct-main edits (starting with `1a1b1ab` for `AGENTS.md`)
+added the program-member/client bullet but removed each generated section's
+start and end comments. The canonical standard and embedded prose matched;
+the ownership delimiters were missing. This is a source-generation failure,
+not evidence of an installed-runtime failure.
+
+The old `upsert` interpreted missing delimiters as absent content and appended
+a second copy. Restoring comments alone fixes this snapshot but leaves that
+failure path intact. Sync now recognizes one exact standalone canonical section
+and restores its delimiters in place. An edited or duplicate unmarked section retaining the canonical heading
+fails with a reconciliation message instead of guessing or appending. A renamed
+heading cannot be identified safely and follows the existing append path. Partial
+and duplicate delimiters remain errors.
+
+The generated-file repair adds only 78 comments in `AGENTS.md` and 38 skills;
+all other bytes, including the October 8 bullet, are preserved. The standard
+wording and unrelated PR #67 are untouched. Regression tests remove delimiters
+from generated fixtures and the full current skill corpus, run the same scoped
+sync path, compare complete file contents, and require repeated sync and
+`--check` to be no-ops. Check mode is tested without writes; ambiguous prose and
+partial/duplicate delimiters are tested as failures.
+
+Local evidence: marketplace validation passes for 38 skills; shared-rule check
+and repeated sync pass for 47 rules; fleet self-test passes. The regression
+failed against the original generator before the fix. This receipt describes
+source checks only. Installed build `0026` / `70489e7f37f97692a504003aef1d1a00487fcddf`
+was supplied as the working rollback identity; no installed copy was inspected,
+updated or activated. No merge, release, deployment or credential change is part
+of this repair.

@@ -106,7 +106,29 @@ def upsert(text: str, slug: str, block: str) -> str:
         _, after = rest.split(end, 1)
         text = before.rstrip() + "\n\n" + block + after
     else:
-        text = text.rstrip() + "\n\n" + block
+        # Lost delimiters do not mean lost prose. Recover only an exact,
+        # standalone canonical section; guessing at edited prose risks data loss.
+        body = block.removeprefix(start + "\n").removesuffix("\n" + end)
+        heading = body.splitlines()[0]
+        matches = list(re.finditer(r"(?m)^" + re.escape(heading) + r"$", text))
+        if matches:
+            if len(matches) != 1:
+                raise StandardError(f"ambiguous unmarked shared rule {slug!r}")
+            offset = matches[0].start()
+            following = re.search(
+                r"(?m)^(?:## |<!-- shared-rule[:-])", text[matches[0].end():]
+            )
+            stop = matches[0].end() + following.start() if following else len(text)
+            section = text[offset:stop]
+            if section.rstrip() != body:
+                raise StandardError(
+                    f"edited unmarked shared rule {slug!r}; restore its markers "
+                    "after reconciling with standards/"
+                )
+            # Preserve surrounding content and whitespace byte for byte.
+            text = text[:offset] + block + section[len(body):] + text[stop:]
+        else:
+            text = text.rstrip() + "\n\n" + block
     return text.rstrip() + "\n"
 
 
