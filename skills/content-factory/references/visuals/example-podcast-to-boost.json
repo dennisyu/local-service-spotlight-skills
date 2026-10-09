@@ -1,0 +1,301 @@
+{
+  "schema_version": "1.0",
+  "kind": "project",
+  "id": "example-podcast-to-boost",
+  "title": "Content Factory X-ray \u2014 example podcast project",
+  "subject": "Example client podcast episode \u2192 article + shorts + $1/day (not a real project)",
+  "period": "EXAMPLE DATA \u2014 2026-09-14 to 2026-09-28",
+  "generated_at": "2026-10-01",
+  "data_class": "example",
+  "disclaimer": "EXAMPLE DATA \u2014 illustration only. Not a real project's spend, clicks, or booked jobs.",
+  "owner_function": "content",
+  "canonical_hub": "https://example.invalid/podcast/example-episode",
+  "approval_gate": "dennis",
+  "stages": [
+    {
+      "id": "plumbing",
+      "label": "Plumbing",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Austin",
+      "lane": "grok-desk",
+      "handoff_in": "Access checklist",
+      "handoff_out": "YouTube + Meta + pixel green",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "access",
+          "label": "Access",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "pixel-meta",
+              "label": "Pixel and ad account recorded",
+              "status": "done",
+              "owner": "Austin",
+              "lane": "muse",
+              "skill": "client-access-checklist",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "produce",
+      "label": "Produce",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Trenton",
+      "lane": "muse",
+      "handoff_in": "Booked interview",
+      "handoff_out": "Raw episode on Drive / YouTube",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "capture",
+          "label": "Capture",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "podcast-record",
+              "label": "Book and record the interview",
+              "status": "done",
+              "owner": "Tanner",
+              "lane": "muse",
+              "skill": "content-agent",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "process",
+      "label": "Process",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Trenton",
+      "lane": "qwen",
+      "handoff_in": "Raw episode",
+      "handoff_out": "Article draft + 8 clip picks",
+      "metrics": [],
+      "subcomponents": [
+        {
+          "id": "atomize",
+          "label": "Atomize",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "descript-shorts",
+              "label": "Descript shorts + captions (Trenton in Descript; Qwen captions)",
+              "status": "done",
+              "owner": "Trenton",
+              "lane": "other",
+              "skill": "content-agent",
+              "articles": []
+            }
+          ]
+        },
+        {
+          "id": "definitive-article",
+          "label": "Definitive article",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "episode-hub",
+              "label": "Episode hub (Astra reasoning; fresh check before publish)",
+              "status": "done",
+              "owner": "Trenton",
+              "lane": "astra",
+              "skill": "definitive-article-writer",
+              "articles": [
+                {
+                  "kind": "definitive",
+                  "title": "Example episode hub",
+                  "url": "https://example.invalid/podcast/example-episode",
+                  "status": "done"
+                },
+                {
+                  "kind": "meta",
+                  "title": "Meta: podcast factory run EXAMPLE-POD-01",
+                  "url": "https://example.invalid/meta/example-pod-01",
+                  "execution_id": "EXAMPLE-POD-01",
+                  "status": "done"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "post",
+      "label": "Post",
+      "status": "done",
+      "effectiveness": "working",
+      "owner": "Mario",
+      "lane": "cursor",
+      "handoff_in": "Staged pack + GitHub issue",
+      "handoff_out": "Draft URL; Dennis published; Claude Fleet posted the Basecamp update",
+      "metrics": [
+        {
+          "name": "posts",
+          "value": 6,
+          "unit": "posts",
+          "source": "example",
+          "example": true,
+          "effectiveness": "working"
+        }
+      ],
+      "subcomponents": [
+        {
+          "id": "hub-page",
+          "label": "Hub page",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "stage-site",
+              "label": "Stage on the company site",
+              "status": "done",
+              "owner": "Mario",
+              "lane": "cursor",
+              "skill": "definitive-article-writer",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "promote",
+      "label": "Promote",
+      "status": "done",
+      "effectiveness": "watch",
+      "owner": "Alex",
+      "lane": "muse",
+      "handoff_in": "Two clips with comments",
+      "handoff_out": "Dennis-approved $1/day \u00d7 7 on clip A; clip B killed in the rec",
+      "metrics": [
+        {
+          "name": "revenue",
+          "value": 0,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "watch"
+        },
+        {
+          "name": "profit",
+          "value": -7,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "watch"
+        },
+        {
+          "name": "clicks",
+          "value": 86,
+          "unit": "clicks",
+          "source": "example",
+          "example": true,
+          "effectiveness": "working"
+        }
+      ],
+      "subcomponents": [
+        {
+          "id": "dollar-a-day",
+          "label": "$1/day test",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "boost-a",
+              "label": "Boost clip A at $1/day for 7 days (Dennis approved)",
+              "status": "done",
+              "owner": "Muse / Happy",
+              "lane": "muse",
+              "skill": "dollar-a-day-strategist",
+              "articles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "perform",
+      "label": "Perform / MAA",
+      "status": "done",
+      "effectiveness": "watch",
+      "owner": "Trenton",
+      "lane": "astra",
+      "handoff_in": "Ad + site metrics (example)",
+      "handoff_out": "Action \u2192 recut hook + follow-up capture",
+      "metrics": [
+        {
+          "name": "revenue",
+          "value": 0,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "watch"
+        },
+        {
+          "name": "profit",
+          "value": -7,
+          "unit": "usd",
+          "source": "example",
+          "example": true,
+          "effectiveness": "watch"
+        },
+        {
+          "name": "clicks",
+          "value": 86,
+          "unit": "clicks",
+          "source": "example",
+          "example": true,
+          "effectiveness": "working"
+        },
+        {
+          "name": "booked_calls",
+          "value": 1,
+          "unit": "calls",
+          "source": "example",
+          "example": true,
+          "effectiveness": "working"
+        }
+      ],
+      "subcomponents": [
+        {
+          "id": "maa",
+          "label": "Metrics \u2192 Analysis \u2192 Action",
+          "status": "done",
+          "tasks": [
+            {
+              "id": "day7-read",
+              "label": "Day-7 MAA on the $1/day test (Astra analysis; fresh check before acting)",
+              "status": "done",
+              "owner": "Trenton",
+              "lane": "astra",
+              "skill": "weekly-brand-maa",
+              "articles": [
+                {
+                  "kind": "meta",
+                  "title": "Meta: day-7 boost read EXAMPLE-POD-D7",
+                  "url": "https://example.invalid/meta/example-pod-d7",
+                  "execution_id": "EXAMPLE-POD-D7",
+                  "status": "done"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "loop": {
+    "metrics_summary": "EXAMPLE DATA \u2014 $7 spend, 86 landing-page clicks, 1 booked call, $0 collected revenue.",
+    "analysis": "EXAMPLE DATA \u2014 clip A earned the call; clip B did not. The hub answers the interview, not the offer question the caller asked.",
+    "action": "Kill clip B. Recut clip A's hook. Produce a follow-up that answers the offer question.",
+    "feeds_produce": "Next Produce packet: 20-minute follow-up on the offer question from the booked call."
+  }
+}
