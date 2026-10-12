@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "subject_id": "UNKNOWN",
+  "author_context": "UNKNOWN",
+  "source_revision": "UNKNOWN",
+  "guide_hashes": {
+    "SKILL.md": "UNKNOWN",
+    "references/20-page-pdf-blueprint.md": "UNKNOWN",
+    "references/evidence-ledger.md": "UNKNOWN",
+    "references/intake-and-authority-boundary.md": "UNKNOWN",
+    "references/brand-authority-rubric.md": "UNKNOWN",
+    "references/acceptance-tests.md": "UNKNOWN"
+  },
+  "sources": [
+    {
+      "id": "UNKNOWN",
+      "url": "UNKNOWN",
+      "final_url": "UNKNOWN",
+      "title": "UNKNOWN",
+      "publisher": "UNKNOWN",
+      "source_class": "UNKNOWN",
+      "origin_id": "UNKNOWN",
+      "captured_at": "UNKNOWN",
+      "capture": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "UNKNOWN",
+      "source_id": "UNKNOWN",
+      "finding_type": "UNKNOWN",
+      "evidence_state": "UNKNOWN",
+      "extract": "UNKNOWN",
+      "value": null,
+      "owner": "UNKNOWN",
+      "next_evidence": "UNKNOWN"
+    }
+  ],
+  "claims": [
+    {
+      "id": "UNKNOWN",
+      "page": 1,
+      "text": "UNKNOWN",
+      "evidence_ids": [
+        "UNKNOWN"
+      ]
+    }
+  ],
+  "visuals": [
+    {
+      "id": "UNKNOWN",
+      "kind": "UNKNOWN",
+      "asset": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      },
+      "evidence_ids": [
+        "UNKNOWN"
+      ],
+      "caption": "UNKNOWN",
+      "purpose": "UNKNOWN",
+      "reuse_status": "UNKNOWN",
+      "reuse_receipt": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      },
+      "identity_status": "UNKNOWN",
+      "identity_basis": "UNKNOWN",
+      "photo_role": "UNKNOWN",
+      "original_source": "UNKNOWN"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "takeaway": "UNKNOWN",
+      "layout_family": "UNKNOWN",
+      "visual_ids": [
+        "UNKNOWN"
+      ],
+      "body_min_pt": 11,
+      "label_min_pt": 9,
+      "render": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "UNKNOWN",
+      "evidence_ids": [
+        "UNKNOWN"
+      ],
+      "observation": "UNKNOWN",
+      "consequence": "UNKNOWN",
+      "next_step": "UNKNOWN",
+      "function": "UNKNOWN",
+      "skill": "UNKNOWN",
+      "input": "UNKNOWN",
+      "destination": "UNKNOWN",
+      "due": "UNKNOWN",
+      "human_gate": "UNKNOWN",
+      "acceptance_test": "UNKNOWN",
+      "state": "UNKNOWN",
+      "handoff": "UNKNOWN"
+    }
+  ],
+  "lifecycle_claims": [],
+  "source_counts": {
+    "unit": "distinct_supporting_urls",
+    "reported": 0,
+    "underlying_records": 0,
+    "citation_occurrences": 0,
+    "engagement_target": null,
+    "target_basis": "UNKNOWN",
+    "private_record_locators": 0
+  },
+  "coverage_crosswalk": {
+    "1": [
+      1
+    ],
+    "2": [
+      2
+    ],
+    "3": [
+      3
+    ],
+    "4": [
+      4
+    ],
+    "5": [
+      5
+    ],
+    "6": [
+      6
+    ],
+    "7": [
+      7
+    ],
+    "8": [
+      8
+    ],
+    "9": [
+      9
+    ],
+    "10": [
+      10
+    ],
+    "11": [
+      11
+    ],
+    "12": [
+      12
+    ],
+    "13": [
+      13
+    ],
+    "14": [
+      14
+    ],
+    "15": [
+      15
+    ],
+    "16": [
+      16
+    ],
+    "17": [
+      17
+    ],
+    "18": [
+      18
+    ],
+    "19": [
+      19
+    ],
+    "20": [
+      20
+    ]
+  },
+  "ledger": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "action_register": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "visual_brief": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "brief": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "pdf": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "install_qr": {
+    "printed_url": "UNKNOWN",
+    "rendered_crop": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    },
+    "decode_receipt": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    }
+  },
+  "install_check": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "kit": {
+    "required": null,
+    "basis": "UNKNOWN",
+    "url": "UNKNOWN",
+    "package": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    },
+    "contents_manifest": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    },
+    "promised_skills": [
+      "UNKNOWN"
+    ],
+    "qr": {
+      "printed_url": "UNKNOWN",
+      "rendered_crop": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      },
+      "decode_receipt": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      }
+    },
+    "access_check": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    }
+  },
+  "editorial_review": {
+    "path": "UNKNOWN",
+    "sha256": "UNKNOWN"
+  },
+  "_instructions": "Intentionally incomplete. Fill from actual private evidence; expand all 20 pages, sources, claims, visuals and actions. See acceptance-tests.md and synthetic-receipts.template.json for companion shapes. Never accept UNKNOWN placeholders."
+}

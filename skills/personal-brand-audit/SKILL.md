@@ -50,12 +50,65 @@ component needs an exact locator:
    change a decision.
 4. **Agent action register** — every action names the owning function, routed skill, input,
    evidence IDs, approval gate, destination, due date, and observable acceptance test.
-5. **Acceptance receipt** — run every applicable check in
+5. **Acceptance receipt and promised implementation kit** — run every applicable check in
    [references/acceptance-tests.md](references/acceptance-tests.md) and record failures,
-   skipped checks, and missing access without turning them into passes.
+   skipped checks, and missing access without turning them into passes. When the engagement
+   promises a personalized kit, stage the actual
+   subject-specific files, ordered handoffs, and starter requests; a generic install link
+   does not satisfy the kit requirement.
 
 Research notes alone are not the audit. A document source is not a rendered PDF. A rendered
 PDF is not reviewed, delivered, received, or acted upon.
+
+## Fresh-agent walkthrough
+
+1. **Establish the source of authority.** Read repository instructions and this skill at a
+   resolved source commit. Pin the blueprint, ledger, rubric, intake and acceptance file
+   hashes. Record installed skill availability separately. Main owns the procedure;
+   an open PR, Drive proposal, old report or helpful example is supplementary until accepted.
+   Open questions and missing access: list them now, or say none. Preserve unrelated work.
+2. **Freeze the useful decision.** Save the buyer, offer, 90-day goal, intended audience,
+   permissions and output contract. Use confirmed information first, qualified inference
+   next, and UNKNOWN otherwise. Produce useful outside-in findings while optional answers
+   remain missing. Do not promise sales from followers, impressions or search visibility.
+3. **Select sources before writing pages.** Use the existing ledger. Resolve identity;
+   collect first-party context, independent corroboration, hard anchors, real recordings,
+   documentary photos and counterevidence. Log rejected candidates and why. Cite the source
+   that can establish the particular claim, not whichever page looks most impressive.
+   Save exact captures, short extracts, dates, permission and intended report use. Count
+   supporting distinct URLs separately from evidence rows, citations and underlying records.
+   Research targets come from the agreed brief; never invent a universal minimum or pad one.
+4. **Storyboard before typesetting.** Map all 20 blueprint requirements to actual pages,
+   with one decision, takeaway, evidence and primary visual per page. A website screenshot
+   cannot satisfy page 1's approved real subject/context photo. If that photo is missing,
+   stage a visibly incomplete draft and the specific asset request. Do not certify the
+   fallback as the complete visual contract. Choose visual form for the job: proof cards,
+   source crops, maps, flows, labelled data and a roadmap. A repeated two-column memo fails.
+5. **Build any promised kit while writing the implementation plan.** Record applicability
+   from the brief; do not silently omit a promised kit. Include the facts/UNKNOWNs,
+   source/evidence map, configured starter requests, dependencies, gates and observable
+   outputs for this subject. Keep the canonical install QR, then add a separately labelled
+   kit QR and printed URL. Test the exact kit as the intended recipient; include a local
+   companion when hosting or recipient access is not yet authorized. Keep that check UNTESTED.
+6. **Export and bind the checks.** Copy
+   [references/acceptance-manifest.template.json](references/acceptance-manifest.template.json)
+   into the private job directory; replace every UNKNOWN only with actual evidence. Run
+   `python3 scripts/personal_brand_acceptance.py <manifest.json>` from a repository checkout.
+   It reads local captures, extracts the final PDF and checks receipt completeness/hashes.
+   It never fetches private links or claims A+ quality. Missing tools/checks keep it on HOLD.
+7. **Have a fresh context try to reject it.** Give the reviewer the brief, pinned sources,
+   final PDF, all page renders, ledger, action register, kit and acceptance receipt. Review
+   every page at normal size; inspect photo provenance, readable source crops, strategy,
+   traceability and recipient access. Correct defects, re-export, and re-run checks against
+   the new hashes. Acceptance of an earlier revision does not accept a later one.
+8. **Hand off with exact states.** Name the artifact/version, kit contents, acceptance
+   defects and UNKNOWN owners. Prepared files, tested outputs, account installation and
+   observed execution need different receipts. Follow the existing release owner and
+   authority; a source PR does not update accounts or start production jobs.
+
+Use permitted examples to learn composition and handoff patterns, never as transferable
+facts or proof of adoption. Public documentation and test fixtures use synthetic data.
+Private comparison materials stay in their authorized records; do not copy client data here.
 
 ## Preflight: questions, scope, and authority
 
@@ -271,6 +324,9 @@ allowed only when the row's observable acceptance test has passed.
   `https://localservicespotlight.com/install/`, and the anonymous destination resolves before
   delivery. The guide's repository, bundle, released version, and skill count match the
   released marketplace manifest; a stale HTTP 200 is a failure.
+- Any promised personalized kit contains subject-specific inputs, worked skill requests and
+  ordered handoffs. Its rendered QR, printed URL, recipient access and actual downloaded
+  contents are checked at the final PDF/kit hashes, or delivery remains HOLD/UNTESTED.
 - Every 7/30/60/90-day action satisfies the action-plan contract and preserves the human gate.
 - A fresh-context reviewer runs the acceptance suite. Failures and untested checks remain
   visible.
@@ -1080,6 +1136,15 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 - **Give the client the same auditing tools you use.** Work that only survives because
   nobody looked closely is not work worth selling.
 - Ship the audit result alongside the deliverable, including what it found.
+- **Check the specific promise, not a broad substitute.** A required real cover photograph
+  cannot pass from a website screenshot; a promised personalized kit cannot pass from a
+  generic installation link. Follow the existing skill's acceptance contract.
+- Bind source, visual, access and fresh-context review receipts to the final artifact and
+  package hashes. Re-exporting or changing a package invalidates the dependent checks.
+  Required failures and UNTESTED checks block full acceptance. Mechanical consistency is not
+  source truth, visual quality, recipient access or an installed/running agent.
+- This semantic check has no honest fleet regex. Use the task's evidence-bound fixtures and
+  actual artifact review; do not manufacture a machine-certified quality grade.
 <!-- shared-rule:pre-audit-before-the-client-does:end -->
 
 <!-- shared-rule:process-real-content-never-generate:start -->

@@ -252,6 +252,15 @@ Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
 - **Give the client the same auditing tools you use.** Work that only survives because
   nobody looked closely is not work worth selling.
 - Ship the audit result alongside the deliverable, including what it found.
+- **Check the specific promise, not a broad substitute.** A required real cover photograph
+  cannot pass from a website screenshot; a promised personalized kit cannot pass from a
+  generic installation link. Follow the existing skill's acceptance contract.
+- Bind source, visual, access and fresh-context review receipts to the final artifact and
+  package hashes. Re-exporting or changing a package invalidates the dependent checks.
+  Required failures and UNTESTED checks block full acceptance. Mechanical consistency is not
+  source truth, visual quality, recipient access or an installed/running agent.
+- This semantic check has no honest fleet regex. Use the task's evidence-bound fixtures and
+  actual artifact review; do not manufacture a machine-certified quality grade.
 <!-- shared-rule:pre-audit-before-the-client-does:end -->
 
 <!-- shared-rule:process-real-content-never-generate:start -->

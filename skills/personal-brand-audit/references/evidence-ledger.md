@@ -34,6 +34,9 @@ atomic claim or relationship observation. Do not bury contradictory values in pr
 | `retention_disposition` | Owner, review/deletion date, and deleted or retained state |
 | `used_in` | PDF page, score row, chart, action ID, schema draft, or other destination |
 | `notes_next_evidence` | Limitation and the exact next record needed |
+| `source_id` / `capture_locator` / `capture_sha256` | Stable source row, exact retained capture, and content hash; one source may support many atomic claims |
+| `supporting_extract` / `claim_locator` | Short exact extract or field, and the page/claim it supports; keep inference reasoning separate |
+| `visual_id` / `reuse_receipt` | Asset locator/hash, original source, provenance, permitted audience and reuse basis; citation permission alone is not photo reuse permission |
 
 ## Finding, evidence, and result tests
 
@@ -126,6 +129,29 @@ the range and keep the public recommendation on hold. Never choose the largest m
 number or the newest-looking page without a definition.
 
 ## Coverage receipt
+
+Choose sources by what they establish. Start with resolved identity and current business
+context, then independent proof, hard anchors, source recordings/photos, opposing evidence and
+dated platform observations. Record selection/rejection reasons and unresolved leads. A first-
+party assertion can support “the company states”; it cannot alone prove the stated result.
+Do not quote a search snippet as though the underlying source was inspected.
+
+Declare the counted unit and the target from the agreed brief before reporting coverage.
+Report **collected URLs**, **distinct supporting URLs actually used**, **underlying records or
+moments**, **atomic evidence rows**, and **citation placements** separately. Collapse repeated
+URLs, fragment links, tracking parameters, redirects and evidenced mirror/republication
+variants; preserve meaningful query parameters. Independent publishers are a separate
+dimension, not a synonym for distinct URLs. Navigation, install links, tool documentation and
+uncited padding do not increase the supporting-source count. Multiple claims from one source
+are valid but still one source. A count below a declared target remains PARTIAL; lower the
+target only with a recorded brief change, never to turn a finished report green. There is no
+universal URL quota in this skill. A large count does not prove comprehensive coverage.
+
+For each PDF claim, retain the source ID → captured extract → evidence ID → exact claim/page
+→ implication → action path. For visuals, retain original source → identity/context check →
+permission receipt → asset hash → crop/caption → final page. Store all of this in the existing
+ledger/acceptance receipt, not a parallel source of truth. A new asset or rewritten claim
+invalidates dependent reviews until they are checked again.
 
 Record what was actually searched:
 
