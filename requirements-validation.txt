@@ -1,0 +1,2 @@
+# Schema validation for public-bootstrap metadata; no model or account SDKs.
+jsonschema[format-nongpl]==4.26.0

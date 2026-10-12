@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "release_id": "synthetic-bootstrap-fixture",
+  "status": "PROTOTYPE",
+  "entrypoint": "https://example.com/public-start/",
+  "install_guide": "https://example.com/install/",
+  "source": {
+    "repository": "https://github.com/dennisyu/local-service-spotlight-skills",
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bundle": "lss-everything",
+    "previous_accepted_commit": null,
+    "skills": [
+      "evidence-verification"
+    ]
+  },
+  "permissions": {
+    "read_public_sources": true,
+    "create_local_drafts": true,
+    "publish": false,
+    "send": false,
+    "spend": false,
+    "change_access": false,
+    "create_schedule": false
+  },
+  "memory": {
+    "audience": "public",
+    "sources": [
+      {
+        "id": "public-agent-method",
+        "url": "https://example.com/public-method-1/",
+        "access": "public",
+        "sensitivity": "public",
+        "checked_at": "2026-01-01T00:00:00Z",
+        "expires_at": "2026-01-08T00:00:00Z",
+        "fetch_status": "NOT_CHECKED",
+        "sha256": null
+      },
+      {
+        "id": "shared-memory-method",
+        "url": "https://example.com/public-method-2/",
+        "access": "public",
+        "sensitivity": "public",
+        "checked_at": "2026-01-01T00:00:00Z",
+        "expires_at": "2026-01-08T00:00:00Z",
+        "fetch_status": "NOT_CHECKED",
+        "sha256": null
+      }
+    ]
+  },
+  "adapters": [
+    {
+      "id": "claude",
+      "surface": "Member's configured Claude surface",
+      "setup": [
+        "Follow the current install guide and add the canonical repository.",
+        "Install lss-everything and use a fresh chat; verify the account before reporting activation."
+      ],
+      "activation_prompt": "Using the installed methods, create a source-linked public proof inventory for my business and identify one next action. Save a draft and report which skill ran.",
+      "state": "NOT_TESTED",
+      "receipt": null
+    },
+    {
+      "id": "codex",
+      "surface": "Member's configured Codex workspace",
+      "setup": [
+        "Use that workspace's supported skill installation path against the canonical repository.",
+        "Record the installed commit and use a fresh task. Workspace access and connectors are separate setup."
+      ],
+      "activation_prompt": "Read the public method, inspect the available skills, then create a source-linked public proof inventory for my business. Save a draft and name the source revision.",
+      "state": "NOT_TESTED",
+      "receipt": null
+    },
+    {
+      "id": "grok",
+      "surface": "Member's configured Grok surface",
+      "setup": [
+        "Read the public method and use that surface's supported repository or skill connection.",
+        "Prove that the source was read; report unsupported tools as missing capability."
+      ],
+      "activation_prompt": "Read the public method and build a public proof inventory for my business. Cite the sources and name what remains unverified.",
+      "state": "NOT_TESTED",
+      "receipt": null
+    }
+  ]
+}
