@@ -22,6 +22,8 @@ jobs:
         run: python3 scripts/fleet_check.py --self-test
       - name: Validate repository structure and references
         run: python3 scripts/validate_marketplace.py
+      - name: Install pinned PDF contract parser
+        run: python3 -m pip install -r scripts/requirements-personal-brand-qa.txt
       - name: Run converter tests
         run: python3 -m unittest discover -s tests -v
       - uses: actions/setup-node@v4

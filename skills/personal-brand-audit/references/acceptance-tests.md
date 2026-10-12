@@ -19,6 +19,14 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   unresolved conflicts are not silently normalized.
 - [ ] Search coverage lists names, aliases, handles, languages, markets, sources, date window,
   blocks, and timeouts.
+- [ ] Source selection records the strongest suitable source for each claim, inspected
+  captures/extracts and rejected or unresolved candidates. Distinct supporting URLs/authorized
+  locators, underlying records, evidence rows and citation occurrences have separate counts.
+  Duplicate links, mirrors, tracking fragments and uncited padding cannot meet the brief's
+  declared research target; unmet coverage remains PARTIAL. No universal source quota applies.
+- [ ] The claim map traces source/capture → extract → evidence ID → exact PDF claim/page →
+  implication/action. A reviewer checks its completeness against the actual final report;
+  merely validating the enumerated rows cannot prove no claims were omitted.
 - [ ] The canonical [LSS Knowledge Graph
   Explorer](https://localservicespotlight.com/knowledge-graph-explorer/) was queried for the
   resolved subject, relevant company/employer, and every ranked public-association entity used
@@ -68,6 +76,16 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   no blended “overall score” was invented.
 - [ ] The top proof is sorted by the published 30-point authority dimensions, and any buy-box
   score is visibly provisional when the buy box is UNKNOWN.
+- [ ] Each ranked proof item has category, exact source/evidence and PDF claim/page locators,
+  what the source establishes, Who / Where / What components/rationales and correct total,
+  goal relevance, limitations, reuse permission and linked next action IDs. The full inventory
+  is organized and usable; a list of impressive links without decisions fails. Incomplete
+  components/totals are null; if no adequate proof is established, retain UNKNOWN/HOLD and
+  coverage limits instead of inventing rated items.
+- [ ] Asset-level analyst ratings are labelled as such. They are not aggregate Brand Authority
+  or measured business results. Goal fit is separate from authority rating; missing goals
+  do not lower proof scores. Leads, revenue, causal lift and conversions require their own
+  source-system measurements, definitions, periods and denominators.
 - [ ] Page 1 contains four evidence-backed headline facts and stands alone; page 2 contains
   five to eight non-obvious findings that lead to decisions, not generic praise or a biography
   recap.
@@ -75,6 +93,12 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   the reader's situation, reason to care, useful decision/outcome and supporting evidence or
   mechanism. The audit delivers that promise. A short paragraph or readability score alone
   cannot pass meaning; unchecked fields remain UNKNOWN. Later pages lead with their takeaway.
+- [ ] **Supplied-goal gate:** if the client supplied a goal, compare its retained authorized
+  source with page 1's exact first 2–3 sentences. The goal leads, faithfully quoted or safely
+  paraphrased; consequential outcome/buyer/scope/time qualifiers survive. Record the supplied
+  goal quote, opening quote, final PDF hash and a semantic fidelity verdict. A generic
+  reputation frame or a correct goal confined to page 3 fails. Keyword matching alone cannot
+  pass fidelity. Inferred/UNKNOWN goals stay explicit without scoring penalties.
 - [ ] Recommendations distinguish a proof gap, a findability gap, a consistency gap, a
   measurement gap, and an access gap.
 - [ ] Every live model/search observation records prompt, product/provider, model/version when
@@ -93,6 +117,15 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   all affected pages.
 - [ ] Every page contains a meaningful approved real photo, source screenshot, data chart, or
   evidence-backed diagram with caption/evidence IDs.
+- [ ] **Cover-specific gate:** page 1 contains the approved real subject/context photograph
+  required by the blueprint. The original source, identity/context match, permission and
+  asset hash resolve; the final render shows a useful, readable crop. A website screenshot,
+  wrong-person/unknown-rights portrait or decorative QR fails this gate. If a permitted photo
+  is unavailable, the partial draft stays HOLD for full acceptance.
+- [ ] The reviewer evaluates the final pages against the declared image-led visual brief,
+  not only a visual-element count or a readability formula. Repetitive two-column memos,
+  unreadable source thumbnails, decorative diagrams and generic action cards fail. Record
+  page-specific reasons, corrections and the reviewed PDF/render hashes.
 - [ ] No clipped text, overflow, accidental blank page, tiny unreadable type, broken glyph,
   low-resolution hero, obscured face, or chart legend mismatch appears.
 - [ ] Required fonts are embedded, hyperlinks are present, no page is empty/near-empty, and
@@ -101,6 +134,8 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   distinctions remain understandable without color alone.
 - [ ] No placeholder copy, generic stock proof, invented portrait, invented quote, or fabricated
   chart value appears.
+- [ ] Any engagement-requested coauthor photo byline uses real, identity/permission-checked
+  assets and stays compact. It is not a universal requirement or a substitute cover photo.
 - [ ] The file name, title, subject, research cutoff, version, and confidentiality label agree.
 
 ## 5. Links, QR, and installability
@@ -117,14 +152,27 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   the install rail.
 - [ ] The full printed HTTPS link appears beside the QR and resolves anonymously to the intended
   installation guide without a 404 or cross-entity mismatch.
-- [ ] The anonymous install guide names
+- [ ] The anonymous install guide names or links to
   `https://github.com/dennisyu/local-service-spotlight-skills`, the
-  `lss-everything` bundle, and the same released version and master-skill count as
-  `.claude-plugin/marketplace.json`. A reachable but stale guide fails.
+  `lss-everything` bundle, and the current `.claude-plugin/marketplace.json`. Follow the
+  actual manifest link, resolve its commit, inspect the bundle membership and record its
+  version/count. A guide may deliberately avoid duplicating hard-coded numbers. A stale
+  printed claim, stale/wrong linked manifest or wrong bundle fails; HTTP 200 alone cannot pass.
 - [ ] The agent diagram names the eight routed skills exactly and describes input, output,
   human gate, and handoff for each.
 - [ ] The receipt says only AVAILABLE, INSTALLED, ENABLED, TESTED, SCHEDULED, or OBSERVED when
   that exact state has evidence for a named account/runtime and version.
+- [ ] **Conditional kit gate:** applicability comes from the engagement. When a bespoke kit
+  is promised, open the exact package and check START-HERE, subject facts/UNKNOWNs, runnable
+  instructions for every promised skill, first real task, worked output example, versioned
+  contents manifest, permission gates and receipt forms. Include subject-specific inputs,
+  evidence IDs, outputs, cadence and ordered handoffs. A hub with a missing starter file or
+  promised skill fails. Private facts remain within the authorized audience.
+- [ ] Decode the separate kit QR from the final PDF; compare its printed URL and subject,
+  test the intended recipient's access, download/open the contents, and match the final kit
+  hash. A working generic installer, login interstitial, owner-only share or another client's
+  package fails. Unperformed recipient checks stay UNTESTED/HOLD. A valid ZIP proves prepared
+  content; it cannot establish installed, enabled, tested or running agents.
 
 ## 6. Action plan and business impact
 
@@ -156,16 +204,114 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
 
 ## Receipt template
 
+Use [acceptance-manifest.template.json](acceptance-manifest.template.json) as the machine
+companion to this receipt in the existing private job directory. Do not commit client manifests,
+captures, access links or packages here. From a repository checkout run:
+
+```bash
+python3 scripts/personal_brand_acceptance.py /path/to/private-job/acceptance.json
+```
+
+Install the pinned PDF parser from `scripts/requirements-personal-brand-qa.txt` if unavailable.
+The checker performs no network access, QR decoding or installations; it validates the saved
+decoder/access receipts against the files. Exit 0 means mechanical PASS and **REVIEW_REQUIRED**,
+never undifferentiated acceptance PASS or A+. Exit 1 is HOLD; exit 2 is input/setup failure.
+Missing, failed or untested required checks block full acceptance. N/A needs a brief-based
+reason and cannot waive the invariant cover or a promised kit. Research coverage, report
+acceptance, delivery, recipient receipt and agent lifecycle remain separate.
+
+The template is deliberately incomplete. Expand its arrays to every source, atomic claim,
+page, visual and action; use private locators rather than committing the filled template.
+`guide_hashes` are SHA256 of the six pinned guide files. Each `{path, sha256}` pair names an
+actual companion file relative to the job directory. Companion receipt JSON shapes:
+
+Copy shapes from [synthetic-receipts.template.json](synthetic-receipts.template.json); its
+UNTESTED/UNKNOWN placeholders cannot pass. Public URL normalization collapses tracking and
+fragments while retaining meaningful query parameters. For evidenced mirrors/republications,
+use `duplicate_of` (source ID) and `dedupe_basis`; dangling/cyclic mappings fail. The reviewer
+must verify that grouping. A photo's `original_source` is its captured source ID.
+
+- Decoder: `pdf_sha256`, `crop_sha256`, `decoded_value`, `decoder`, `checked_at`.
+- Install check: `guide_url`, `status`, `access`, `checked_at`, `repository`, `bundle`,
+  `manifest_commit`, `linked_manifest_verified`, `guide_capture`, `manifest_capture`,
+  `manifest_url`, `resolved_manifest_url`, `manifest_version`, `master_skill_count`. The two
+  captures use `{path, sha256}`. Retain the actual guide link and the resolved commit URL;
+  the captured manifest establishes version and bundle membership/count without requiring
+  duplicated numbers in the guide.
+- Pinned engagement brief JSON: `subject_id`, `kit_required` (boolean), `promised_skills`
+  and `source_target` (integer distinct URL target or null when no quota was agreed).
+  `goal` records `state` (`SUPPLIED`, `INFERRED`, `UNKNOWN`) and `text`. SUPPLIED includes a
+  hashed authorized `capture`; INFERRED includes `basis`; UNKNOWN uses null text, `owner`
+  and `next_evidence`. These private source words are not public fixture material.
+- `opening` in the acceptance manifest records `page: 1` and exact `text`. Ranked
+  `proof_inventory` rows record `id`, `rank`, `category`, `evidence_ids`, `claim_ids`,
+  `what_source_establishes`, `goal_relevance`, `limitations`, `reuse_permission`,
+  `next_action_ids`; `score` has `kind: ASSET_ANALYST_RATING`, `rubric: WHO-WHERE-WHAT-30`,
+  `dimensions` and `rationale` objects with `who`, `where`, `what`, and `total`.
+  Linked claims/actions carry the item's supporting evidence; existing but unrelated IDs
+  cannot pass. `goal_relevance` is an explanation string. When fit is unknown, write
+  `UNKNOWN — <reason>; owner: <function>; next evidence: <record or decision>`; do not use a
+  zero or invent a buyer. Numeric unknown components and totals remain null.
+- Kit contents QA projection: `kit.contents_manifest` points to a private JSON file with
+  `subject_id`, `version`, `source_revision`, `skills`
+  and `files` rows (`path`, `role`, `sha256`). Roles are `start_here`, `subject_facts`,
+  `source_map`, `instructions`, `first_task`, `output_example`, `permission_gates`,
+  `receipt_template`. Each skill mapping has `id`, `canonical_route`, `instruction_path`,
+  `output_example_path`, `input`, `output`, `cadence`, `human_gate`, `handoff`, `receipt`.
+  Bespoke IDs may differ from canonical routes; both referenced files must actually exist
+  with the correct hash/role in the package. `delivered_manifest` names the archive's actual
+  versioned manifest (`path`, `sha256`, `version_path` array of JSON keys). Its version must
+  match the QA projection. The external projection alone cannot replace a recipient's
+  manifest. An existing kit may keep its own schema/filename; create this QA projection
+  privately without renaming the delivered files or claiming new package guarantees.
+- Kit access: `status`, `access` (`anonymous` or `authorized_recipient`), `subject_id`,
+  `final_url`, `downloaded_sha256`, `contents_opened`, `checked_at`.
+- Editorial review: `pdf_sha256`, `kit_sha256` when applicable, `input_binding_sha256`, `reviewer_context`, `gates`
+  and `pages`. Each gate has `status` and a source-based `basis`; required gates are
+  `source_truth`, `claim_inventory_complete`, `visual_brief`, `normal_size_readability`,
+  `strategy`, `privacy`, `cover_identity_provenance`, `proof_inventory`, and conditional
+  `bespoke_kit`. A SUPPLIED goal additionally requires `supplied_goal_fidelity` with `status`,
+  `basis`, `supplied_goal_quote` and `opening_quote`. Quotes bind the check to actual source
+  and the complete declared first 2–3 sentences; a lexical fragment cannot fill the opening
+  quote. The reviewer judges faithful meaning and whether the goal actually leads page 1.
+  Each physical page key (`"1"`–`"20"`) records `render_sha256`, `status`, `basis`.
+  Before review, run `python3 scripts/personal_brand_acceptance.py acceptance.json --binding-only`
+  and record that value as `input_binding_sha256`: SHA256 of canonical sorted compact UTF-8 JSON excluding only `editorial_review`
+  and `_instructions`. Any source, asset, permission, brief, QR/access receipt, action,
+  page metadata or kit mapping change requires a new review of the affected dependencies.
+- Lifecycle: `state`, `runtime`, `source_revision`, `event_id`, `checked_at`, `kind`.
+  Kinds are `merged_source`, `account_inventory`, `account_setting`, `fresh_task_output`,
+  `scheduler_definition`, `scheduler_firing` for the six existing lifecycle states.
+
+Use PASS only for a performed check with its actual evidence. The review basis must state
+what was inspected and why it satisfies the promise; synthetic fixture declarations are
+never receipts for a real audit. The checker binds declarations but cannot authenticate
+their author, prove a photo depicts the subject, establish rights, or prove the live URL was
+tested. Those remain fresh-context review duties. Source rows in this machine projection
+are inspected UTF-8 captures supporting enumerated PDF claims; private-record locators
+require `data_classification: PRIVATE-AUTHORIZED` and are counted separately in
+`source_counts.private_record_locators`, never padded into public URL totals. Other source
+formats and specialist rubric/graph receipts remain in the existing ledger and are checked
+separately. This projection does not replace the entire acceptance suite.
+
 ```text
 Subject:
 Audit version / research cutoff:
+Pinned source revision and guide/rubric hashes:
+Engagement brief / image-led visual brief:
 Evidence ledger path or URL:
 Rendered PDF path or URL:
 Action register path or URL:
 PDF parser / page count:
 Rendered-page montage:
 QR decoded value:
+Kit promised / applicability basis:
+Kit version / package path / final hash / actual contents:
+Kit QR decoded value / printed URL / recipient access / actual download hash:
 Install URL anonymous status / final URL / checked at:
+Linked marketplace manifest commit / version / bundle membership / count:
+Distinct supporting locators / URL count / underlying records / citation occurrences:
+Declared research target / unit / brief basis / coverage state:
 Outside-in coverage:
 Credentialed coverage:
 LSS Knowledge Graph Explorer queries / captured at:
@@ -178,6 +324,8 @@ Tests passed:
 Tests failed:
 Tests untested and why:
 Corrections made after review:
+Final PDF hash / reviewed render hashes / kit hash:
+Mechanical result / editorial review result / required failures or untested gates:
 Work-product state:
 Delivery/publication state:
 Agent lifecycle state and named account/version:

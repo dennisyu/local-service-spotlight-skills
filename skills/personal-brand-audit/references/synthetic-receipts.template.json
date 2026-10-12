@@ -1,0 +1,252 @@
+{
+  "brief.json": {
+    "subject_id": "UNKNOWN",
+    "kit_required": null,
+    "promised_skills": [
+      "UNKNOWN"
+    ],
+    "source_target": null,
+    "goal": {
+      "state": "UNKNOWN",
+      "text": null,
+      "owner": "UNKNOWN",
+      "next_evidence": "UNKNOWN",
+      "capture": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      }
+    }
+  },
+  "review.json": {
+    "pdf_sha256": "UNKNOWN",
+    "reviewer_context": "UNKNOWN",
+    "pages": {
+      "1": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "2": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "3": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "4": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "5": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "6": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "7": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "8": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "9": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "10": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "11": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "12": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "13": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "14": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "15": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "16": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "17": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "18": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "19": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "20": {
+        "render_sha256": "UNKNOWN",
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      }
+    },
+    "gates": {
+      "source_truth": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "claim_inventory_complete": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "visual_brief": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "normal_size_readability": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "strategy": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "privacy": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "cover_identity_provenance": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "bespoke_kit": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "supplied_goal_fidelity": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN",
+        "supplied_goal_quote": "UNKNOWN",
+        "opening_quote": "UNKNOWN"
+      },
+      "proof_inventory": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      }
+    },
+    "kit_sha256": "UNKNOWN",
+    "input_binding_sha256": "UNKNOWN"
+  },
+  "install-decode.json": {
+    "pdf_sha256": "UNKNOWN",
+    "crop_sha256": "UNKNOWN",
+    "decoded_value": "UNKNOWN",
+    "decoder": "UNKNOWN",
+    "checked_at": "UNKNOWN"
+  },
+  "install-check.json": {
+    "guide_url": "UNKNOWN",
+    "status": "UNTESTED",
+    "access": "UNKNOWN",
+    "checked_at": "UNKNOWN",
+    "repository": "UNKNOWN",
+    "bundle": "UNKNOWN",
+    "manifest_commit": "UNKNOWN",
+    "linked_manifest_verified": false,
+    "guide_capture": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    },
+    "manifest_capture": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN"
+    },
+    "manifest_url": "UNKNOWN",
+    "resolved_manifest_url": "UNKNOWN",
+    "manifest_version": "UNKNOWN",
+    "master_skill_count": "UNKNOWN"
+  },
+  "kit-access.json": {
+    "status": "UNTESTED",
+    "access": "UNKNOWN",
+    "subject_id": "UNKNOWN",
+    "final_url": "UNKNOWN",
+    "downloaded_sha256": "UNKNOWN",
+    "contents_opened": false,
+    "checked_at": "UNKNOWN"
+  },
+  "kit-projection.json": {
+    "subject_id": "UNKNOWN",
+    "version": "UNKNOWN",
+    "source_revision": "UNKNOWN",
+    "skills": [
+      {
+        "id": "UNKNOWN",
+        "canonical_route": "UNKNOWN",
+        "instruction_path": "UNKNOWN",
+        "output_example_path": "UNKNOWN",
+        "input": "UNKNOWN",
+        "output": "UNKNOWN",
+        "cadence": "UNKNOWN",
+        "human_gate": "UNKNOWN",
+        "handoff": "UNKNOWN",
+        "receipt": "UNKNOWN"
+      }
+    ],
+    "files": [
+      {
+        "path": "UNKNOWN",
+        "role": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      }
+    ],
+    "delivered_manifest": {
+      "path": "UNKNOWN",
+      "sha256": "UNKNOWN",
+      "version_path": [
+        "version"
+      ]
+    }
+  },
+  "_instructions": "SYNTHETIC STRUCTURE ONLY. Split each named receipt into its own file and replace placeholders with actual performed checks. UNKNOWN and UNTESTED cannot pass.",
+  "lifecycle.json": {
+    "state": "INSTALLED",
+    "runtime": "UNKNOWN",
+    "source_revision": "UNKNOWN",
+    "event_id": "UNKNOWN",
+    "checked_at": "UNKNOWN",
+    "kind": "account_inventory"
+  }
+}
