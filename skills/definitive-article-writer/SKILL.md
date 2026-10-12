@@ -92,6 +92,7 @@ See `boil-the-ocean.md` for the full operating principles.
 ## Definitive article & pairings
 - Reference: https://blitzmetrics.com/definitive-article-guide/ · https://dennisyu.com/podcast-appearances/
 - Pairs with: content-factory → **definitive-article-writer** → recursive-self-improvement-qa
+- Voice: follow `personal-brand-voice` — first person on the owner's personal-brand articles; third person on `/people/{slug}/` honor cards; first person as the labeled guest on guest posts. Never invent or generate photos of real people.
 
 ## Learned in the field
 
