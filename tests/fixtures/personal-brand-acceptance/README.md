@@ -12,3 +12,12 @@ QRs, missed source targets, duplicate/padded counts, broken traceability, tiny l
 missing/failed fresh review, stale PDF/kit/render hashes, generic kit destinations,
 missing promised files/skills, owner-only downloads and installation claims from a ZIP.
 No client data or private reports are included. The fixtures do not award an A+.
+
+The goal/inventory follow-up uses only a fictional studio-owner goal. It rejects a goal
+confined to page 3, a failed semantic opening-fidelity verdict, an invented supplied goal,
+unprinted opening quotes, missing proof sources/limitations/action or PDF locators,
+missing scoring dimensions/rationales, bad arithmetic, null scores converted to zero,
+asset ratings labelled as aggregate authority or measured outcomes, and reversed rank order.
+UNKNOWN goals preserve asset ratings. Coauthor portraits remain optional and cannot replace
+the required subject/context cover photo. Semantic fidelity remains fresh-context review,
+not a keyword-match certificate.

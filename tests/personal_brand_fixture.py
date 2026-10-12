@@ -37,8 +37,13 @@ def make_fixture(base: Path, repo: Path):
         m["guide_hashes"][name] = hashlib.sha256((repo / "skills/personal-brand-audit" / name).read_bytes()).hexdigest()
     for name in ("ledger", "action_register", "visual_brief"):
         m[name] = put(name + ".txt", "SYNTHETIC testing stand-in; no real evidence or review. " + name)
+    supplied_goal = "More qualified consultations in 90 days."
+    opening_text = "Avery Sample wants more qualified consultations in 90 days. This audit ranks existing proof for that decision."
     m["brief"] = put("brief.json", {"subject_id": m["subject_id"], "kit_required": True,
-                                  "promised_skills": ["evidence-verification"], "source_target": None})
+                                  "promised_skills": ["evidence-verification"], "source_target": None,
+                                  "goal": {"state":"SUPPLIED", "text":supplied_goal,
+                                           "capture":put('goal-source.txt',supplied_goal)}})
+    m['opening'] = {'page':1,'text':opening_text}
     for i in range(1, 11):
         extract = f"Synthetic source {i} states a test observation."
         m["sources"].append({"id": f"S{i}", "url": f"https://example.org/source/{i}",
@@ -59,6 +64,7 @@ def make_fixture(base: Path, repo: Path):
                                  NameObject("/BaseFont"): NameObject("/Helvetica")})
         page[NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})})
         text = " ".join(c["text"] for c in m["claims"] if c["page"] == n)
+        if n == 1: text = opening_text + " " + text
         stream = DecodedStreamObject()
         stream.set_data(f"BT /F1 12 Tf 36 700 Td (SYNTHETIC page {n}. {text}) Tj ET".encode())
         page[NameObject("/Contents")] = writer._add_object(stream)
@@ -77,18 +83,31 @@ def make_fixture(base: Path, repo: Path):
                      "identity_basis": "Synthetic two attributes", "photo_role": "subject", "original_source": "S1"}]
     review = {"pdf_sha256": m["pdf"]["sha256"], "reviewer_context": "synthetic-reviewer", "pages": {}, "gates": {}}
     for gate in ("source_truth", "claim_inventory_complete", "visual_brief", "normal_size_readability", "strategy",
-                 "privacy", "cover_identity_provenance", "bespoke_kit"):
+                 "privacy", "cover_identity_provenance", "bespoke_kit", "proof_inventory"):
         review["gates"][gate] = {"status": "PASS", "basis": "Synthetic reviewer declaration; no real acceptance."}
+    review['gates']['supplied_goal_fidelity'] = {'status':'PASS','basis':'Synthetic fidelity review',
+        'supplied_goal_quote':supplied_goal,'opening_quote':opening_text}
     for n in range(1, 21):
         render = put(f"page-{n}.txt", f"Synthetic page render stand-in {n}")
         m["pages"].append({"page": n, "takeaway": f"Synthetic decision {n}", "layout_family": "test-only",
                             "visual_ids": ["V1"], "body_min_pt": 11, "label_min_pt": 9, "render": render})
         review["pages"][str(n)] = {"render_sha256": render["sha256"], "status": "PASS", "basis": "Synthetic test declaration"}
-    m["actions"] = [{"id": "A1", "evidence_ids": ["E1"], "observation": "Source says test observation",
+    m["actions"] = [{"id": "A1", "evidence_ids": ["E1", "E2"], "observation": "Sources say test observations",
                      "consequence": "Test consequence", "next_step": "Inspect exact source", "function": "research",
                      "skill": "evidence-verification", "input": "S1", "destination": "private facts file",
                      "due": "day 7", "human_gate": "No publish/send authority", "acceptance_test": "Source extract matched",
                      "state": "STAGED", "handoff": "Research to content with evidence IDs"}]
+    m['proof_inventory'] = []
+    for i, values in enumerate(((6,4,8),(5,3,4)),start=1):
+        m['proof_inventory'].append({'id':f'P{i}','rank':i,'category':'synthetic appearance',
+            'evidence_ids':[f'E{i}'],'claim_ids':[f'C{i}'],'what_source_establishes':f'Synthetic source {i} statement',
+            'goal_relevance':'Relevant proof for the fictional consultation buyer; no business result measured',
+            'limitations':'Synthetic first-party source; outcome and reuse scope need checking',
+            'reuse_permission':'Private synthetic test only','next_action_ids':['A1'],
+            'score':{'kind':'ASSET_ANALYST_RATING','rubric':'WHO-WHERE-WHAT-30',
+                'dimensions':dict(zip(('who','where','what'),values)),
+                'rationale':{k:'Synthetic analyst rationale; no real rating' for k in ('who','where','what')},
+                'total':sum(values)}})
     def qr(url, name):
         crop = put(name + "-crop.txt", "Synthetic QR crop " + name)
         return {"printed_url": url, "rendered_crop": crop,

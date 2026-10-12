@@ -251,5 +251,44 @@
     "path": "UNKNOWN",
     "sha256": "UNKNOWN"
   },
-  "_instructions": "Intentionally incomplete. Fill from actual private evidence; expand all 20 pages, sources, claims, visuals and actions. See acceptance-tests.md and synthetic-receipts.template.json for companion shapes. Never accept UNKNOWN placeholders."
+  "_instructions": "Intentionally incomplete. Fill from actual private evidence; expand all 20 pages, sources, claims, visuals and actions. See acceptance-tests.md and synthetic-receipts.template.json for companion shapes. Never accept UNKNOWN placeholders.",
+  "opening": {
+    "page": 1,
+    "text": "UNKNOWN"
+  },
+  "proof_inventory": [
+    {
+      "id": "UNKNOWN",
+      "rank": 1,
+      "category": "UNKNOWN",
+      "evidence_ids": [
+        "UNKNOWN"
+      ],
+      "claim_ids": [
+        "UNKNOWN"
+      ],
+      "what_source_establishes": "UNKNOWN",
+      "goal_relevance": "UNKNOWN",
+      "limitations": "UNKNOWN",
+      "reuse_permission": "UNKNOWN",
+      "next_action_ids": [
+        "UNKNOWN"
+      ],
+      "score": {
+        "kind": "ASSET_ANALYST_RATING",
+        "rubric": "WHO-WHERE-WHAT-30",
+        "dimensions": {
+          "who": null,
+          "where": null,
+          "what": null
+        },
+        "rationale": {
+          "who": "UNKNOWN",
+          "where": "UNKNOWN",
+          "what": "UNKNOWN"
+        },
+        "total": null
+      }
+    }
+  ]
 }

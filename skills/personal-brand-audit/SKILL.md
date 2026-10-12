@@ -70,7 +70,10 @@ PDF is not reviewed, delivered, received, or acted upon.
 2. **Freeze the useful decision.** Save the buyer, offer, 90-day goal, intended audience,
    permissions and output contract. Use confirmed information first, qualified inference
    next, and UNKNOWN otherwise. Produce useful outside-in findings while optional answers
-   remain missing. Do not promise sales from followers, impressions or search visibility.
+   remain missing. When the client supplied a goal, lead page 1's first 2–3 sentences with
+   that goal, faithfully quoted or safely paraphrased with its important qualifiers intact.
+   A generic reputation pitch or a goal deferred to page 3 does not pass. Do not promise
+   sales from followers, impressions or search visibility.
 3. **Select sources before writing pages.** Use the existing ledger. Resolve identity;
    collect first-party context, independent corroboration, hard anchors, real recordings,
    documentary photos and counterevidence. Log rejected candidates and why. Cite the source
@@ -78,6 +81,10 @@ PDF is not reviewed, delivered, received, or acted upon.
    Save exact captures, short extracts, dates, permission and intended report use. Count
    supporting distinct URLs separately from evidence rows, citations and underlying records.
    Research targets come from the agreed brief; never invent a universal minimum or pad one.
+   Organize ranked proof items by category and goal relevance, with source/claim IDs, the
+   maintained Who / Where / What components and rationales, limitations, permission and
+   next action IDs. These are analyst ratings of assets, not aggregate authority or measured
+   business results. Keep unknown goal fit and outcome measurements explicit.
 4. **Storyboard before typesetting.** Map all 20 blueprint requirements to actual pages,
    with one decision, takeaway, evidence and primary visual per page. A website screenshot
    cannot satisfy page 1's approved real subject/context photo. If that photo is missing,
@@ -1443,6 +1450,11 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **A supplied client goal leads the report's opening.** Preserve its outcome and
+  consequential buyer, scope and time qualifiers in the first 2–3 sentences,
+  with permission-safe wording. A generic reputation frame or the goal appearing
+  only on a later page cannot pass. Review fidelity against the authorized source;
+  do not invent a goal or penalize evidence scores when it is UNKNOWN.
 - **Explain the connection in that same short opening.** Name one useful
   connection and say what it does: the larger process this work serves, a guide
   whose checked result the reader needs first, or the next task that uses this

@@ -76,6 +76,16 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   no blended “overall score” was invented.
 - [ ] The top proof is sorted by the published 30-point authority dimensions, and any buy-box
   score is visibly provisional when the buy box is UNKNOWN.
+- [ ] Each ranked proof item has category, exact source/evidence and PDF claim/page locators,
+  what the source establishes, Who / Where / What components/rationales and correct total,
+  goal relevance, limitations, reuse permission and linked next action IDs. The full inventory
+  is organized and usable; a list of impressive links without decisions fails. Incomplete
+  components/totals are null; if no adequate proof is established, retain UNKNOWN/HOLD and
+  coverage limits instead of inventing rated items.
+- [ ] Asset-level analyst ratings are labelled as such. They are not aggregate Brand Authority
+  or measured business results. Goal fit is separate from authority rating; missing goals
+  do not lower proof scores. Leads, revenue, causal lift and conversions require their own
+  source-system measurements, definitions, periods and denominators.
 - [ ] Page 1 contains four evidence-backed headline facts and stands alone; page 2 contains
   five to eight non-obvious findings that lead to decisions, not generic praise or a biography
   recap.
@@ -83,6 +93,12 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   the reader's situation, reason to care, useful decision/outcome and supporting evidence or
   mechanism. The audit delivers that promise. A short paragraph or readability score alone
   cannot pass meaning; unchecked fields remain UNKNOWN. Later pages lead with their takeaway.
+- [ ] **Supplied-goal gate:** if the client supplied a goal, compare its retained authorized
+  source with page 1's exact first 2–3 sentences. The goal leads, faithfully quoted or safely
+  paraphrased; consequential outcome/buyer/scope/time qualifiers survive. Record the supplied
+  goal quote, opening quote, final PDF hash and a semantic fidelity verdict. A generic
+  reputation frame or a correct goal confined to page 3 fails. Keyword matching alone cannot
+  pass fidelity. Inferred/UNKNOWN goals stay explicit without scoring penalties.
 - [ ] Recommendations distinguish a proof gap, a findability gap, a consistency gap, a
   measurement gap, and an access gap.
 - [ ] Every live model/search observation records prompt, product/provider, model/version when
@@ -118,6 +134,8 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   distinctions remain understandable without color alone.
 - [ ] No placeholder copy, generic stock proof, invented portrait, invented quote, or fabricated
   chart value appears.
+- [ ] Any engagement-requested coauthor photo byline uses real, identity/permission-checked
+  assets and stays compact. It is not a universal requirement or a substitute cover photo.
 - [ ] The file name, title, subject, research cutoff, version, and confidentiality label agree.
 
 ## 5. Links, QR, and installability
@@ -222,6 +240,18 @@ must verify that grouping. A photo's `original_source` is its captured source ID
   duplicated numbers in the guide.
 - Pinned engagement brief JSON: `subject_id`, `kit_required` (boolean), `promised_skills`
   and `source_target` (integer distinct URL target or null when no quota was agreed).
+  `goal` records `state` (`SUPPLIED`, `INFERRED`, `UNKNOWN`) and `text`. SUPPLIED includes a
+  hashed authorized `capture`; INFERRED includes `basis`; UNKNOWN uses null text, `owner`
+  and `next_evidence`. These private source words are not public fixture material.
+- `opening` in the acceptance manifest records `page: 1` and exact `text`. Ranked
+  `proof_inventory` rows record `id`, `rank`, `category`, `evidence_ids`, `claim_ids`,
+  `what_source_establishes`, `goal_relevance`, `limitations`, `reuse_permission`,
+  `next_action_ids`; `score` has `kind: ASSET_ANALYST_RATING`, `rubric: WHO-WHERE-WHAT-30`,
+  `dimensions` and `rationale` objects with `who`, `where`, `what`, and `total`.
+  Linked claims/actions carry the item's supporting evidence; existing but unrelated IDs
+  cannot pass. `goal_relevance` is an explanation string. When fit is unknown, write
+  `UNKNOWN — <reason>; owner: <function>; next evidence: <record or decision>`; do not use a
+  zero or invent a buyer. Numeric unknown components and totals remain null.
 - Kit contents QA projection: `kit.contents_manifest` points to a private JSON file with
   `subject_id`, `version`, `source_revision`, `skills`
   and `files` rows (`path`, `role`, `sha256`). Roles are `start_here`, `subject_facts`,
@@ -239,7 +269,11 @@ must verify that grouping. A photo's `original_source` is its captured source ID
 - Editorial review: `pdf_sha256`, `kit_sha256` when applicable, `input_binding_sha256`, `reviewer_context`, `gates`
   and `pages`. Each gate has `status` and a source-based `basis`; required gates are
   `source_truth`, `claim_inventory_complete`, `visual_brief`, `normal_size_readability`,
-  `strategy`, `privacy`, `cover_identity_provenance`, and conditional `bespoke_kit`.
+  `strategy`, `privacy`, `cover_identity_provenance`, `proof_inventory`, and conditional
+  `bespoke_kit`. A SUPPLIED goal additionally requires `supplied_goal_fidelity` with `status`,
+  `basis`, `supplied_goal_quote` and `opening_quote`. Quotes bind the check to actual source
+  and the complete declared first 2–3 sentences; a lexical fragment cannot fill the opening
+  quote. The reviewer judges faithful meaning and whether the goal actually leads page 1.
   Each physical page key (`"1"`–`"20"`) records `render_sha256`, `status`, `basis`.
   Before review, run `python3 scripts/personal_brand_acceptance.py acceptance.json --binding-only`
   and record that value as `input_binding_sha256`: SHA256 of canonical sorted compact UTF-8 JSON excluding only `editorial_review`

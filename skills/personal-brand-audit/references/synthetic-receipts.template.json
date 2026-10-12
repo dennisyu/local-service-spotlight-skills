@@ -5,7 +5,17 @@
     "promised_skills": [
       "UNKNOWN"
     ],
-    "source_target": null
+    "source_target": null,
+    "goal": {
+      "state": "UNKNOWN",
+      "text": null,
+      "owner": "UNKNOWN",
+      "next_evidence": "UNKNOWN",
+      "capture": {
+        "path": "UNKNOWN",
+        "sha256": "UNKNOWN"
+      }
+    }
   },
   "review.json": {
     "pdf_sha256": "UNKNOWN",
@@ -142,6 +152,16 @@
         "basis": "UNKNOWN"
       },
       "bespoke_kit": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN"
+      },
+      "supplied_goal_fidelity": {
+        "status": "UNTESTED",
+        "basis": "UNKNOWN",
+        "supplied_goal_quote": "UNKNOWN",
+        "opening_quote": "UNKNOWN"
+      },
+      "proof_inventory": {
         "status": "UNTESTED",
         "basis": "UNKNOWN"
       }

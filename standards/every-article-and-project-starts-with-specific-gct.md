@@ -3,7 +3,7 @@
   "title": "Every opening makes its reader, value and purpose clear",
   "severity": "error",
   "captured": "2026-09-04",
-  "captured_from": "Dennis Yu, Codex task, 2026-09-04: repair cross-agent shared-memory documentation and apply the grade-8 opening, meaningful above-the-fold visual, and SEO Tree rules to all definitive articles and projects. Refined by Dennis Yu follow-up 2026-09-05: explain jargon and link its owned explainer on first mention. Grade threshold tightened to fifth grade by Dennis Yu, task-library activation follow-up, 2026-09-06. Extended by Dennis Yu, GPT-6 Money Tree correction, 2026-09-06: the beginning of any document, page, article or landing page must immediately grab attention and show relevance and value; explain how an entrepreneur can use existing proof of trust to help customers buy, instead of opening with a vague account of stories and connections.",
+  "captured_from": "Dennis Yu, Codex task, 2026-09-04: repair cross-agent shared-memory documentation and apply the grade-8 opening, meaningful above-the-fold visual, and SEO Tree rules to all definitive articles and projects. Refined by Dennis Yu follow-up 2026-09-05: explain jargon and link its owned explainer on first mention. Grade threshold tightened to fifth grade by Dennis Yu, task-library activation follow-up, 2026-09-06. Extended by Dennis Yu, GPT-6 Money Tree correction, 2026-09-06: the beginning of any document, page, article or landing page must immediately grab attention and show relevance and value; explain how an entrepreneur can use existing proof of trust to help customers buy, instead of opening with a vague account of stories and connections. Amendment: Dennis Yu, delegated audit review correction, 2026-10-13: the supplied client goal must lead the opening instead of appearing only on page 3; public fixtures retain synthetic wording only.",
   "source": "https://localservicespotlight.com/article-guidelines/",
   "applies_to": [
     "agent-behaviour",
@@ -38,6 +38,11 @@
   Use familiar words and short sentences; explain unavoidable terms on first use.
   Put commands, architecture details and specialist terms after this orientation.
   Readers should not have to know the acronym GCT to understand the page.
+- **A supplied client goal leads the report's opening.** Preserve its outcome and
+  consequential buyer, scope and time qualifiers in the first 2–3 sentences,
+  with permission-safe wording. A generic reputation frame or the goal appearing
+  only on a later page cannot pass. Review fidelity against the authorized source;
+  do not invent a goal or penalize evidence scores when it is UNKNOWN.
 - **Explain the connection in that same short opening.** Name one useful
   connection and say what it does: the larger process this work serves, a guide
   whose checked result the reader needs first, or the next task that uses this

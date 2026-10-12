@@ -160,7 +160,8 @@ class PersonalBrandAcceptanceTest(unittest.TestCase):
 
     def test_no_kit_promise_explicit_na(self):
         self.m["kit"] = {"required": False, "basis": "Synthetic brief explicitly excludes kit"}
-        self.m['brief'] = self.put('brief.json',{'subject_id':self.m['subject_id'],'kit_required':False,'source_target':None})
+        brief=json.loads((self.base/'brief.json').read_text());brief['kit_required']=False
+        self.m['brief'] = self.put('brief.json',brief)
         self.rebind_review(); self.assertEqual([],self.check()['errors'])
 
     def test_cannot_waive_promised_kit(self):
@@ -220,6 +221,82 @@ class PersonalBrandAcceptanceTest(unittest.TestCase):
         r=subprocess.run([sys.executable,str(ROOT/'scripts/personal_brand_acceptance.py'),str(path)],capture_output=True,text=True)
         self.assertEqual(2,r.returncode);self.assertEqual('HOLD',json.loads(r.stdout)['acceptance_status'])
         self.assertNotIn('Traceback',r.stderr)
+
+    def test_goal_only_on_page_three_does_not_satisfy_opening(self):
+        self.m['opening']={'page':3,'text':'Synthetic claim 3.'};self.check('OPENING')
+
+    def test_generic_reputation_opening_fails_goal_fidelity_review(self):
+        self.review['gates']['supplied_goal_fidelity']={'status':'FAIL','basis':'Generic reputation framing omits supplied consultation goal',
+            'supplied_goal_quote':'More qualified consultations in 90 days.','opening_quote':self.m['opening']['text']}
+        self.save_review();self.check('GOAL_FIDELITY')
+
+    def test_supplied_goal_must_match_actual_capture(self):
+        brief=json.loads((self.base/'brief.json').read_text());brief['goal']['text']='An invented sales goal.'
+        self.m['brief']=self.put('brief.json',brief);self.check('GOAL_SOURCE')
+
+    def test_fidelity_quote_must_be_in_final_opening(self):
+        self.review['gates']['supplied_goal_fidelity']['opening_quote']='Unprinted consultation goal'
+        self.save_review();self.check('GOAL_FIDELITY')
+
+    def test_fidelity_quote_cannot_be_a_lexical_fragment(self):
+        self.review['gates']['supplied_goal_fidelity']['opening_quote']='Avery'
+        self.save_review();self.check('GOAL_FIDELITY')
+
+    def test_unknown_goal_stays_null_without_changing_asset_ratings(self):
+        brief=json.loads((self.base/'brief.json').read_text());brief['goal']={'state':'UNKNOWN','text':None,'owner':'client success','next_evidence':'Confirm intended outcome'}
+        self.m['brief']=self.put('brief.json',brief);self.rebind_review();self.assertEqual([],self.check()['errors'])
+        self.assertEqual(18,self.m['proof_inventory'][0]['score']['total'])
+
+    def test_proof_item_needs_limitations(self):
+        self.m['proof_inventory'][0].pop('limitations');self.check('PROOF_ITEM')
+
+    def test_proof_item_needs_sources(self):
+        self.m['proof_inventory'][0]['evidence_ids']=[];self.check('TRACE')
+
+    def test_proof_item_needs_next_action(self):
+        self.m['proof_inventory'][0]['next_action_ids']=['missing'];self.check('PROOF_ACTION')
+
+    def test_proof_item_needs_pdf_claim_locator(self):
+        self.m['proof_inventory'][0]['claim_ids']=['missing'];self.check('PROOF_TRACE')
+
+    def test_proof_claim_must_carry_the_items_evidence(self):
+        self.m['proof_inventory'][0]['claim_ids']=['C2'];self.rebind_review();self.check('PROOF_TRACE')
+
+    def test_proof_action_must_carry_the_items_evidence(self):
+        self.m['actions'][0]['evidence_ids']=['E10'];self.rebind_review();self.check('PROOF_ACTION')
+
+    def test_asset_rating_requires_components_and_correct_sum(self):
+        self.m['proof_inventory'][0]['score']['total']=25;self.check('PROOF_ARITHMETIC')
+
+    def test_asset_rating_needs_each_dimension_and_rationale(self):
+        self.m['proof_inventory'][0]['score']['dimensions'].pop('where');self.check('PROOF_SCORE')
+        self.m['proof_inventory'][0]['score']['rationale'].pop('who');self.check('PROOF_SCORE')
+
+    def test_empty_proof_inventory_cannot_be_complete_acceptance(self):
+        self.m['proof_inventory']=[];self.check('PROOF_INVENTORY')
+
+    def test_unknown_asset_dimension_is_not_zero_total(self):
+        self.m['proof_inventory'][1]['score']['dimensions']['what']=None
+        self.m['proof_inventory'][1]['score']['total']=0;self.check('PROOF_UNKNOWN')
+
+    def test_valid_unknown_asset_dimension_has_null_total(self):
+        self.m['proof_inventory'][1]['score']['dimensions']['what']=None
+        self.m['proof_inventory'][1]['score']['total']=None;self.rebind_review();self.assertEqual([],self.check()['errors'])
+
+    def test_asset_rating_is_not_authority_or_measured_outcome(self):
+        for kind in ['AGGREGATE_AUTHORITY','MEASURED_BUSINESS_OUTCOME']:
+            self.m['proof_inventory'][0]['score']['kind']=kind;self.check('PROOF_SCORE_KIND')
+
+    def test_ranked_proof_must_preserve_declared_order(self):
+        self.m['proof_inventory'][0]['rank']=2;self.m['proof_inventory'][1]['rank']=1;self.check('PROOF_RANK')
+
+    def test_optional_coauthor_portrait_cannot_replace_subject_cover(self):
+        self.m['visuals'][0]['photo_role']='coauthor';self.check('COVER_PHOTO')
+
+    def test_optional_coauthor_portrait_is_allowed_without_being_required(self):
+        photo=copy.deepcopy(self.m['visuals'][0]);photo['id']='V-coauthor';photo['photo_role']='coauthor'
+        self.m['visuals'].append(photo);self.m['pages'][0]['visual_ids'].append(photo['id'])
+        self.rebind_review();self.assertEqual([],self.check()['errors'])
 
 
 if __name__ == "__main__": unittest.main()

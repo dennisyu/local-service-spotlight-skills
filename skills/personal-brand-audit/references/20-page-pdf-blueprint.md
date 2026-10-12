@@ -43,12 +43,12 @@ substantive report content only into a companion file fails acceptance.
 
 | Default page | Purpose | Required visual and evidence | Decision it enables |
 |---:|---|---|---|
-| 1 | Cover and executive snapshot | Approved real subject/context photo, scope/date/status, four headline facts, and a compact finding map with evidence IDs | What changes now, even if this is the only page read? |
+| 1 | Cover and executive snapshot | Supplied goal leading the opening when available; approved real subject/context photo, scope/date/status, four headline facts, and a compact finding map with evidence IDs | What changes now toward the client's goal, even if this is the only page read? |
 | 2 | Non-obvious executive summary | Five to eight insight → evidence → implication → action cards; distinguish finding type and evidence state | What would change the reader’s prior assumption or next decision? |
 | 3 | Goal, buy box, and mutual-value hypothesis | Buyer → problem → differentiated proof → offer map, company context, and the approved one-sentence strategy or UNKNOWN | Which opportunities should this brand and its company attract? |
 | 4 | Identity, profiles, search, and coverage | Identity graph joining two independent attributes; namesakes, owned/controlled surface states, aliases/languages, and research-coverage warnings | Are the facts about the right person, and what could a stranger find? |
 | 5 | Separate exam dashboard | Brand Authority ten-row heatmap and arithmetic; SEO/Growth, Website QA, entity, and other coverage on separate lines; pass or INCOMPLETE states, never averaged | Which systems are strong, weak, held, or unmeasured? |
-| 6 | Ranked highlights and proof | Top proof cards or bar chart from the 30-point authority scale; exact sources, dates, permissions, and weak tail omitted | Which proof deserves the first screen and first promotion? |
+| 6 | Ranked highlights and proof | Organized proof cards or chart from the maintained 30-point asset scale; Who / Where / What components, source/claim IDs, goal relevance, limitations, permissions and next action IDs; weak tail retained in the ledger | Which proof best supports the client's goal, and what should be done with each item? |
 | 7 | Top public connections | Network diagram whose edge style separates repeated collaboration, interview, testimonial, employment, and co-presence; relationship depth and permission shown separately | Which associations are real, and what must the subject confirm? |
 | 8 | Highest-value assets | Ranked content, relationships, and underused authority assets with ownership, evidence, and next use | Which existing assets create the fastest credible lift? |
 | 9 | Lighthouse and collaboration strategy | Authority/relevance matrix plus a consent-based value exchange for the people and organizations whose work should be amplified | Whose success should be featured, why, and with what mutual value? |
@@ -77,6 +77,27 @@ the most useful supported finding, and the decision this audit enables. Explain 
 the method. Keep the real photo and finding map beside that opening. Each subsequent page opens
 with its specific takeaway. Generic praise, a repeated entrepreneur pitch, and unmeasured promises
 of more conversions fail the shared specific-GCT opening standard.
+
+When a goal is supplied, it leads that opening. Preserve its intended outcome, buyer, scope,
+time horizon and other consequential qualifiers; a permission-safe paraphrase may be better
+than publishing private wording. Retain the supplied source and review the paraphrase against
+it in the private receipt. A generic reputation frame cannot substitute, and a correct goal
+only on page 3 cannot rescue the cover. Inferred or UNKNOWN goals remain labelled; missing
+goal information does not reduce a proof or authority score. Do not invent a goal to pass.
+
+Each ranked proof item shows what its source establishes, its category, the three maintained
+Who / Where / What ratings/rationales and arithmetic, relevance to the goal, limitations,
+reuse permission and an action-register next step. Keep authority rating and buyer fit
+separate; list incomplete ratings with null components/total instead of zero. These are
+asset-level analyst judgments. They do not measure aggregate Brand Authority, inquiries,
+revenue, causal lift or any other business outcome. Measured outcomes need their own records,
+definitions, periods and denominators. The full inventory remains in the existing ledger,
+with the decision-useful ranked items represented in the PDF.
+
+A real-photo coauthor byline is engagement-specific when requested. Apply the existing
+identity, provenance, permission and normal-size crop checks; keep the byline compact so the
+client's goal leads. Coauthor portraits are optional elsewhere and cannot replace the required
+subject/context cover photograph.
 
 ## Agent-install panel
 

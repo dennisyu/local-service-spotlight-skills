@@ -107,6 +107,20 @@ def validate(manifest: dict, base: Path, repo: Path) -> dict:
     texts = [normalized(p.extract_text() or "") for p in reader.pages]
     links = {str(a.get_object().get("/A", {}).get("/URI", ""))
              for page in reader.pages for a in page.get("/Annots", [])}
+    goal = brief.get("goal", {})
+    require(goal.get("state") in {"SUPPLIED", "INFERRED", "UNKNOWN"}, "GOAL", "record supplied, inferred or unknown goal")
+    opening = manifest.get("opening", {})
+    require(opening.get("page") == 1 and present(opening.get("text"))
+            and texts and normalized(opening["text"]) in texts[0], "OPENING", "exact opening on physical page 1")
+    if goal.get("state") == "SUPPLIED":
+        goal_capture = artifact(goal.get("capture"), "supplied goal source").decode("utf-8")
+        require(present(goal.get("text")) and normalized(goal["text"]) in normalized(goal_capture),
+                "GOAL_SOURCE", "supplied goal matches retained authorized source")
+    elif goal.get("state") == "UNKNOWN":
+        require(goal.get("text") is None and present(goal.get("owner")) and present(goal.get("next_evidence")),
+                "GOAL_UNKNOWN", "unknown goal stays null with owner and next evidence")
+    else:
+        require(present(goal.get("text")) and present(goal.get("basis")), "GOAL_INFERENCE", "bounded inference basis")
 
     sources = unique_rows(manifest["sources"], "sources")
     captures = {}
@@ -191,13 +205,15 @@ def validate(manifest: dict, base: Path, repo: Path) -> dict:
         artifact(v["reuse_receipt"], f"visual permission {vid}")
         if v["kind"] == "photo":
             require(v["identity_status"] == "RESOLVED" and present(v["identity_basis"]), "PHOTO_IDENTITY", vid)
-            require(v["photo_role"] in {"subject", "documentary_context"}, "PHOTO_ROLE", vid)
+            require(v["photo_role"] in {"subject", "documentary_context", "coauthor"}, "PHOTO_ROLE", vid)
             require(v["original_source"] in sources, "PHOTO_PROVENANCE", f"{vid} original source capture")
 
     pages = manifest["pages"]
     require(sorted(p["page"] for p in pages) == list(range(1, 21)), "PAGE_REVIEWS", "review all 20 once")
     page_one = next((p for p in pages if p["page"] == 1), {})
-    require(any(visuals.get(i, {}).get("kind") == "photo" for i in page_one.get("visual_ids", [])),
+    require(any(visuals.get(i, {}).get("kind") == "photo"
+                and visuals.get(i, {}).get("photo_role") in {"subject", "documentary_context"}
+                for i in page_one.get("visual_ids", [])),
             "COVER_PHOTO", "page 1 needs approved real subject/context photo")
     review = receipt(manifest["editorial_review"], "fresh-context review")
     require(review.get("input_binding_sha256") == input_binding(manifest), "REVIEW_INPUT_DRIFT",
@@ -206,9 +222,16 @@ def validate(manifest: dict, base: Path, repo: Path) -> dict:
     require(present(review.get("reviewer_context")) and review.get("reviewer_context") != manifest["author_context"],
             "FRESH_REVIEW", "different context required")
     for gate in ("source_truth", "claim_inventory_complete", "visual_brief", "normal_size_readability",
-                 "strategy", "privacy", "cover_identity_provenance"):
+                 "strategy", "privacy", "cover_identity_provenance", "proof_inventory"):
         item = review.get("gates", {}).get(gate, {})
         require(item.get("status") == "PASS" and present(item.get("basis")), "EDITORIAL_GATE", gate)
+    if goal.get("state") == "SUPPLIED":
+        fidelity = review.get("gates", {}).get("supplied_goal_fidelity", {})
+        require(fidelity.get("status") == "PASS" and present(fidelity.get("basis"))
+                and fidelity.get("supplied_goal_quote") == goal.get("text")
+                and present(fidelity.get("opening_quote"))
+                and normalized(fidelity["opening_quote"]) == normalized(opening.get("text", "")),
+                "GOAL_FIDELITY", "review goal meaning in first 2–3 sentences; a later goal page cannot substitute")
     for p in pages:
         require(present(p["takeaway"]) and present(p["layout_family"]), "PAGE_STORY", str(p["page"]))
         require(bool(p["visual_ids"]) and all(i in visuals for i in p["visual_ids"]), "PAGE_VISUAL", str(p["page"]))
@@ -234,6 +257,53 @@ def validate(manifest: dict, base: Path, repo: Path) -> dict:
                     "destination", "due", "human_gate", "acceptance_test", "state", "handoff"):
             require(present(a.get(key)), "ACTION", f"{aid}.{key}")
         require((repo / "skills" / a["skill"] / "SKILL.md").is_file(), "SKILL", aid)
+
+    proof_items = unique_rows(manifest.get("proof_inventory", []), "ranked proof inventory")
+    require(bool(proof_items), "PROOF_INVENTORY", "known proof rows or UNKNOWN/HOLD; never invent rated assets")
+    ranks = [p.get("rank") for p in proof_items.values()]
+    require(all(type(n) is int for n in ranks) and sorted(ranks) == list(range(1, len(ranks) + 1)),
+            "PROOF_RANK", "unique contiguous ranks")
+    ranked_totals = []
+    for pid, item in proof_items.items():
+        evidence_refs(item.get("evidence_ids", []), pid)
+        require(bool(item.get("claim_ids")) and all(c in claims for c in item["claim_ids"]),
+                "PROOF_TRACE", f"{pid} final PDF claim/page locators")
+        proof_evidence = set(item.get("evidence_ids", []))
+        linked_claims = [set(claims[c]["evidence_ids"]) for c in item.get("claim_ids", []) if c in claims]
+        require(bool(linked_claims) and all(proof_evidence & ids for ids in linked_claims)
+                and proof_evidence <= set().union(*linked_claims),
+                "PROOF_TRACE", f"{pid} linked claims carry its supporting evidence")
+        for field in ("category", "what_source_establishes", "goal_relevance", "limitations", "reuse_permission"):
+            require(present(item.get(field)), "PROOF_ITEM", f"{pid}.{field}")
+        require(bool(item.get("next_action_ids")) and all(a in actions for a in item["next_action_ids"]),
+                "PROOF_ACTION", f"{pid} observable action-register destination")
+        linked_actions = [set(actions[a]["evidence_ids"]) for a in item.get("next_action_ids", []) if a in actions]
+        require(bool(linked_actions) and all(proof_evidence & ids for ids in linked_actions)
+                and proof_evidence <= set().union(*linked_actions),
+                "PROOF_ACTION", f"{pid} linked actions carry its supporting evidence")
+        score = item.get("score", {})
+        require(score.get("kind") == "ASSET_ANALYST_RATING" and score.get("rubric") == "WHO-WHERE-WHAT-30",
+                "PROOF_SCORE_KIND", "asset rating is not aggregate authority or a measured outcome")
+        dims = score.get("dimensions", {})
+        require(set(dims) == {"who", "where", "what"}, "PROOF_SCORE", f"{pid} three maintained dimensions")
+        require(all(v is None or (type(v) in {int, float} and 0 <= v <= 10) for v in dims.values()),
+                "PROOF_SCORE", f"{pid} each 0–10 or null")
+        rationale = score.get("rationale", {})
+        require(all(present(rationale.get(k)) for k in ("who", "where", "what")),
+                "PROOF_SCORE", f"{pid} dimension rationales")
+        values = list(dims.values())
+        if any(v is None for v in values):
+            require(score.get("total") is None, "PROOF_UNKNOWN", f"{pid} incomplete asset rating is not zero")
+        elif len(values) == 3 and all(type(v) in {int, float} and 0 <= v <= 10 for v in values):
+            require(type(score.get("total")) in {int, float} and score["total"] == sum(values),
+                    "PROOF_ARITHMETIC", pid)
+        ranked_totals.append((item.get("rank"), score.get("total")))
+    if all(type(rank) is int for rank, _ in ranked_totals):
+        totals = [total for _, total in sorted(ranked_totals)]
+        known = [total for total in totals if type(total) in {int, float}]
+        require(known == sorted(known, reverse=True)
+                and all(total is None for total in totals[len(known):]),
+                "PROOF_RANK", "descending maintained authority rating; incomplete rows last, goal fit separate")
 
     def qr_check(q, expected, label):
         crop = artifact(q["rendered_crop"], f"{label} QR crop")
