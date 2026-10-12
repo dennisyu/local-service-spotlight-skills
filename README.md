@@ -88,7 +88,7 @@ not prove that the installed skill was used.
 
 The [personal-brand-audit skill](skills/personal-brand-audit/SKILL.md) is the front
 door for the full proof inventory, exact 20-page visual PDF, top-connection map, and
-agent installation/action plan and personalized implementation kit. Its install QR and printed link use
+agent installation/action plan and any promised personalized implementation kit. Its install QR and printed link use
 `https://localservicespotlight.com/install/`, never `/skills/` or a legacy ZIP page.
 The kit has a separately labelled QR/link, worked subject-specific requests and tested
 recipient access. Start with the skill's fresh-agent walkthrough; use its acceptance template
