@@ -104,6 +104,15 @@ Record:
 CONNECTED means the tool reaches its endpoint. AUTHENTICATED means the intended
 account is observed. VERIFIED_READ means the specified read succeeded. None proves
 write permission, every domain, another profile, another agent app or a later run.
+
+Confirm VERIFIED_READ from the actual connector/API/CLI request and returned
+service result, or the browser action and observed page. Establish the intended
+account and one harmless service fact; a profile response can establish both.
+A "Connected" badge, a tool label or agent summary, and shell placeholders such as
+`echo` or `true` do not establish a service read. If you cannot inspect the real
+result, record the evidence limit and leave the read unverified. A missing or
+unexecuted call does not establish bad credentials.
+
 Recheck at task start when identity, scope or freshness matters; do not retain page
 content or URLs containing tokens just to make the receipt look more complete.
 
