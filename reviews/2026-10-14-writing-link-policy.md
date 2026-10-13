@@ -12,7 +12,7 @@ Targeted handwritten changes supersede the definitive writer's historical July20
 
 ## Ownership and related work
 
-Base:9a30a22c650f9ddd9242a85181ef74f26526c397; manifest1.8.0. No skill, bundle or manifest version/name change. No schedules inspected or changed.
+Initial reviewed base:9a30a22c650f9ddd9242a85181ef74f26526c397. Integrated current main8a837cc260f02f8770fb3a36b7384cb9d81c8dc9 without conflicts, preserving its merged PR73 Grok troubleshooting update. The four reviewed linking-source blobs are unchanged by that upstream update. Manifest1.8.0. No skill, bundle or manifest version/name change. No schedules inspected or changed.
 
 Existing PR67 proposes different network/external-citation policy. It is another editor's work and was not reused, edited or merged. This source proposal adds current-owner loading and reconciles stale handwritten instructions against current main; it preserves current main's proof/action exceptions. Integration must explicitly reconcile any later competing wording before merge. Existing generated-marker repairs are also separate owner proposals; this change does not modify the generator.
 
