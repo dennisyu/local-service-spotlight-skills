@@ -12,7 +12,8 @@ reviewed sources do not establish one, not proof that every build lacks it.
 | ChatGPT cloud browser | Use its secure sign-in form and retained browser session. | Its browser is separate from the device browser and does not use the device's cookies. [Cloud browser](https://help.openai.com/en/articles/20001280-using-cloud-browser-in-chatgpt) |
 | ChatGPT Atlas | Retired; do not recommend for new setup. | Existing browser data does not automatically transfer to a supported browser. [Atlas retirement](https://help.openai.com/en/articles/20001371-chatgpt-atlas-retirement) |
 | Cursor | Native browser keeps workspace session state. A compatible local browser bridge can reuse Chrome when installed and enabled. | Native persistence is isolated per workspace; the native browser docs do not establish Chrome import. Kimi lists Cursor as a supported local agent for its extension. [Cursor browser](https://prod.cursor.com/docs/agent/tools/browser), [Kimi setup](https://www.kimi.com/en/help/kimi-webbridge/kimi-webbridge-introduction) |
-| Kimi Work / Kimi Code / Kimi browser sidebar | Kimi Browser Extension, formerly WebBridge, uses the real Chrome/Edge browser and its signed-in sessions. | Work/Code need their companion plugin or skill plus the browser extension. Plain web chat is a different surface. Local-agent mode does not require Kimi account sign-in. [Kimi plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins), [official extension](https://chromewebstore.google.com/detail/kimi/fldmhceldgbpfpkbgopacenieobmligc) |
+| Kimi Work | Select an existing connected service plugin with `/`. Use the supported browser extension if needed; on Mac, Work also documents Chrome-cookie import into its built-in browser. | Import was introduced in Work 3.2.0 and is off by default; inspect current Settings and consent. This Work-only import route is not a Code or web-chat claim. [Work plugins](https://www.kimi.com/en/help/kimi-work/plugin-center), [Work release notes](https://www.kimi.com/en/help/kimi-work/release-notes) |
+| Kimi Code / Kimi browser sidebar | Kimi Browser Extension, formerly WebBridge, uses the real Chrome/Edge browser and its signed-in sessions. | Code needs its companion plugin or skill plus the browser extension. Plain web chat is a different surface. Local-agent mode does not require Kimi account sign-in. [Kimi plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins), [official extension](https://chromewebstore.google.com/detail/kimi/fldmhceldgbpfpkbgopacenieobmligc) |
 | Qwen Code | Browser Use reuses Chrome sessions through its official extension. | macOS/Linux, Chrome 125+, Qwen Code 0.24.2+. Use the Chrome Web Store route; source build is a regional fallback. Keep one extension copy per profile. This does not establish Qwen web-chat access or installation. [Browser Use](https://qwenlm.github.io/qwen-code-docs/en/users/features/browser-use/) |
 | Qwen or another model inside a host app | Inspect the host's actual browser/connector tools. | Model weights and a local inference worker do not themselves contain Chrome access. Use the host's verified route; do not create a second runtime merely because its name matches the model. |
 | Grok web | Existing OAuth connectors; custom remote MCP where supported and authorized. | No Chrome password/cookie import is established by these docs. A public MCP endpoint requirement is not permission to expose a desktop browser bridge. [Grok connectors](https://docs.x.ai/grok/connectors) |
@@ -23,6 +24,15 @@ An agent's ability to reuse a session is distinct from its ability to read a sav
 password. Native import, an authenticated connector, browser session persistence
 and remote control are different mechanisms. No verified route promises that all
 saved passwords or every site's session works across all these products.
+
+## Kimi Work: a connected plugin has no tools in the task
+
+Try one fresh Work task and choose the existing plugin from the `/` menu. Ask the
+agent to load the offered connector tool when the runtime provides a tool loader,
+then run one harmless account read and inspect its actual result. Loading a tool
+does not complete the read. This recovery check does not guarantee that every
+connected plugin is available in a fresh task. If it remains unavailable, use the
+next supported route before requesting new authorization.
 
 ## Cross-agent local browser bridge
 
