@@ -34,6 +34,27 @@ does not complete the read. This recovery check does not guarantee that every
 connected plugin is available in a fresh task. If it remains unavailable, use the
 next supported route before requesting new authorization.
 
+## Grok web: Connected, but no Calendar result
+
+1. Check the intended account in connector settings and the read tools actually
+   enabled. In the chat, explicitly select `@Google Calendar` if offered.
+2. Request one harmless read within the existing scope: primary-calendar metadata
+   when the calendar-list tool is enabled, or a narrow date/keyword event search.
+   Inspect the actual provider response and intended account; a Connected badge,
+   public web search or an unsupported “zero results” answer is not that proof.
+3. If the current connector flow explicitly requests reconnecting, complete its
+   supported sign-in for the same intended account and existing scopes. Leave any
+   human verification to the user; new permissions need their own authority.
+   After the refresh, try one fresh chat with the connector selected.
+4. If reconnecting repeats without a provider result, stop the loop and record
+   the missing read. Record rate-limit, capacity or conversation-length errors as
+   task failures, not proof of bad credentials or a fixable password problem.
+   Keep the read unverified; do not infer that paying or scheduling it will help.
+
+This is a bounded troubleshooting sequence, not a guaranteed recovery. Calendar
+listing and event search use different permissions; do not enable extra tools
+just for this test. See the [official Calendar capabilities and scopes](https://docs.x.ai/grok/connectors/gmail-google-calendar).
+
 ## Cross-agent local browser bridge
 
 Kimi's [official setup guide](https://www.kimi.com/en/help/kimi-webbridge/kimi-webbridge-introduction)
