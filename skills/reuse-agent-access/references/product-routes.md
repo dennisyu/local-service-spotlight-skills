@@ -40,12 +40,12 @@ next supported route before requesting new authorization.
    account bound to Calendar. A matching Google account does not prove the Grok
    account is the one the user normally uses. Resolve any app-account mismatch
    before reconnecting the provider; see [Grok account guidance](https://docs.x.ai/grok/faq).
-   Then check the read tools actually enabled and explicitly select
-   `@Google Calendar` in the chat if offered.
    If X sign-in reaches a Grok/xAI authenticator prompt, let the user finish it
    in the official sign-in form; keep codes out of chat. This app verification
    is separate from Calendar's Google passkey or consent. Verify the returned
    Grok identity before testing the existing Calendar connection.
+   Then check the read tools actually enabled and explicitly select
+   `@Google Calendar` in the chat if offered.
 2. Request one harmless read within the existing scope: primary-calendar metadata
    when the calendar-list tool is enabled, or a narrow date/keyword event search.
    Inspect the actual provider response and intended account; a Connected badge,
