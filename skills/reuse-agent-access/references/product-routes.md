@@ -57,6 +57,12 @@ next supported route before requesting new authorization.
    the query ran, not that event contents were read. Summarize event results in
    the private receipt with only the window, timezone, returned count and whether
    more results remain; omit event details.
+   A date-window search can include events already in progress. Before calling
+   an event upcoming, verify its actual start is still in the future and within
+   the requested window, using its timezone. If cards omit dates, fetch one
+   identified event through an enabled read tool. Google's [event-list bounds](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)
+   use `timeMin` to filter event end, not start; do not assume a connector uses
+   identical parameters.
 3. If the current connector flow explicitly requests reconnecting, complete its
    supported sign-in for the same intended account and existing scopes. Leave any
    human verification to the user; new permissions need their own authority.
