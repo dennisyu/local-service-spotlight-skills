@@ -1147,6 +1147,8 @@ bidirectional-link verifier and rendered desktop/mobile review.
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
 ## Named entities link to the most helpful canonical destination
 
+Before writing or reviewing an article, open the current [Article Guidelines](https://localservicespotlight.com/article-guidelines/) and [link-building guide](https://blitzmetrics.com/link-building/). Use the [internal-linking process](https://blitzmetrics.com/internal-linking/) to connect pages and the [entity-linking decision tree](https://blitzmetrics.com/entity-linking/) to choose destinations. These are complementary owners, not competing copies. The older Blog Posting Guidelines and dated downloads are historical references, not the maintained writing standard. Record the checked URLs, date and available page revision or content hash in the existing work record, separately from the installed skill commit. If a current source is unavailable or conflicts with a copied instruction, record the gap and resolve it before claiming the review passed.
+
 - **Route the first meaningful mention of a named entity to the page that best helps
   the reader understand or act on it.** Link once; do not turn every repeated name
   into a link. Use the entity's natural name for a person or company, and use 3–6

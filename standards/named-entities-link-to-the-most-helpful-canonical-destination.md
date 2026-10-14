@@ -3,7 +3,7 @@
   "title": "Named entities link to the most helpful canonical destination",
   "severity": "error",
   "captured": "2026-08-22",
-  "captured_from": "Dennis Yu, Codex task, 2026-08-22",
+  "captured_from": "Dennis Yu, Codex task, 2026-08-22; current-guideline loading and no-quota alignment requested by Dennis Yu through Home Dot, 2026-10-14",
   "source": "https://blitzmetrics.com/how-to-inventory-a-podcast-on-youtube/",
   "applies_to": [
     "agent-behaviour",
@@ -13,6 +13,8 @@
 ---
 
 ## Named entities link to the most helpful canonical destination
+
+Before writing or reviewing an article, open the current [Article Guidelines](https://localservicespotlight.com/article-guidelines/) and [link-building guide](https://blitzmetrics.com/link-building/). Use the [internal-linking process](https://blitzmetrics.com/internal-linking/) to connect pages and the [entity-linking decision tree](https://blitzmetrics.com/entity-linking/) to choose destinations. These are complementary owners, not competing copies. The older Blog Posting Guidelines and dated downloads are historical references, not the maintained writing standard. Record the checked URLs, date and available page revision or content hash in the existing work record, separately from the installed skill commit. If a current source is unavailable or conflicts with a copied instruction, record the gap and resolve it before claiming the review passed.
 
 - **Route the first meaningful mention of a named entity to the page that best helps
   the reader understand or act on it.** Link once; do not turn every repeated name

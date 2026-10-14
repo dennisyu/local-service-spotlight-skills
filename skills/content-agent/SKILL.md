@@ -17,7 +17,7 @@ One recording in. Six outputs in the requested delivery mode. Honor explicit dra
 3. **5–10 short-clip picks** with timestamps, hooks, and per-platform captions.
 4. **3–4 platform-native social posts** (LinkedIn · Instagram carousel script · X thread · Threads).
 5. **One email** to your list, in your newsletter's voice.
-6. **Schema + internal links**: JSON-LD for the post, plus 3–5 proposed internal links from your existing pages.
+6. **Schema + internal links**: JSON-LD for the post and a prioritized, reader-helpful set of proposed incoming links from existing pages. Do not pad the set to reach a count.
 
 ## Hard rules (the whole reason you can trust it)
 - **Selective review and exact delivery intent.** Honor explicitly requested Private, Draft or saved-file status. Otherwise finish routine publication and delivery within recorded authority, with required QA and verified destinations. Ask in advance only for consequential decisions or missing authority under `SELECTIVE-HUMAN-REVIEW-2026-10-07`. Verify the status after every upload and say what you verified.
@@ -48,7 +48,7 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 6. **YouTube upload package.** SEO title (≤70 chars, keyword-front), description opening with the meta title + 2-line meta description, then summary + timestamped chapters + verified links, then transcript excerpt. Tags. Thumbnail brief: 3 concepts, each = frame-grab suggestion + ≤4 overlay words. Upload with the explicitly requested visibility through the authorized channel and verify that status. Honor Private when requested; routine authorized Public delivery may proceed after required QA. If upload or visibility authority is missing, prepare the one-screen upload kit (`youtube-upload.md`).
 7. **Clips plan.** Scan for 5–10 self-contained 30–60s moments; score each: hook-in-1.5s · stands alone · quotable. For each: timestamps, the hook line, and captions for Shorts / Reels / TikTok / LinkedIn in that platform's tone.
 8. **Social + email.** LinkedIn post (200–300 words), Instagram carousel script (5–7 slides), X thread (6–10), Threads one-liner — each pointing to the blog post. Email (200–400 words) in your newsletter format: headline takeaway, one verbatim quote, one link.
-9. **Schema + internal links.** JSON-LD (BlogPosting + Person + VideoObject) for the post. Crawl your site for 3–5 real pages that should link to the new post; use natural anchors within recorded editing authority; propose them when that authority is missing.
+9. **Schema + internal links.** JSON-LD (BlogPosting + Person + VideoObject) for the post. Find existing pages whose readers would benefit from this article. Check each source and destination, use natural anchors, and make only authorized edits; otherwise hand over the exact proposals. A smaller relevant set is better than links added to reach a quota.
 10. **Deliver + verify.** Honor the requested Draft/Private mode, or complete routine authorized publication and sending through the configured destinations after required QA. If authority is missing, stage paste-ready assets. Verify each actual status, save everything to `Outputs/<video-slug>/`, update the log, and report delivered assets plus only the decisions that still need review.
 
 ## Output
@@ -1085,6 +1085,8 @@ bidirectional-link verifier and rendered desktop/mobile review.
 
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
 ## Named entities link to the most helpful canonical destination
+
+Before writing or reviewing an article, open the current [Article Guidelines](https://localservicespotlight.com/article-guidelines/) and [link-building guide](https://blitzmetrics.com/link-building/). Use the [internal-linking process](https://blitzmetrics.com/internal-linking/) to connect pages and the [entity-linking decision tree](https://blitzmetrics.com/entity-linking/) to choose destinations. These are complementary owners, not competing copies. The older Blog Posting Guidelines and dated downloads are historical references, not the maintained writing standard. Record the checked URLs, date and available page revision or content hash in the existing work record, separately from the installed skill commit. If a current source is unavailable or conflicts with a copied instruction, record the gap and resolve it before claiming the review passed.
 
 - **Route the first meaningful mention of a named entity to the page that best helps
   the reader understand or act on it.** Link once; do not turn every repeated name

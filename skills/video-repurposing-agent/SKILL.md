@@ -37,9 +37,9 @@ Score each new video against the client's GCT (Goals · Content · Targeting) an
 | Tier | When | Article shape | Cross-links | Revision budget → target grade |
 |---|---|---|---|---|
 | **SKIP** | Off-topic for the GCT, duplicate of an existing article's ground, under ~2 minutes with no standalone claim, or pure promo | Log the reason, mark `skipped` — that IS the deliverable for this video | — | — |
-| **LIGHT** | One reusable idea; short clip or single-point video | 600–1,000 words, embed only | 1–2 | 1 → B |
-| **MODERATE** | Solid episode; one clear theme | 1,000–1,500 words + diagram if it strengthens the point | 2–3 | 2 → B+ |
-| **STRONG** | Signature content: named guests, real numbers, a framework, a story only this client can tell | 1,500+ words + required SVG diagram | 3–5 | 3 → A- |
+| **LIGHT** | One reusable idea; short clip or single-point video | 600–1,000 words, embed only | As useful | 1 → B |
+| **MODERATE** | Solid episode; one clear theme | 1,000–1,500 words + diagram if it strengthens the point | As useful | 2 → B+ |
+| **STRONG** | Signature content: named guests, real numbers, a framework, a story only this client can tell | 1,500+ words + required SVG diagram | As useful | 3 → A- |
 
 A 1-hour STRONG video may carry more than one article: if the transcript yields two distinct GCT-worthy themes with 6+ subtopics each, ship separate articles on separate hubs — never two pages on the same topic (that's content vandalism, competing with yourself).
 
@@ -62,8 +62,8 @@ In order of preference: the video's caption track (prefer a manually-uploaded tr
 Hand the cleaned transcript + client card to `definitive-article-writer` (Brandon) with the tier's spec. Non-negotiables:
 - Embed the source video at the top with one sentence of provenance; answer the article's question in the first paragraph.
 - 6–12 verb-led H2s for a long video; paragraphs ≤5 lines; preserve real quotes (E-E-A-T Experience).
-- **Entity Linking Decision Tree** — route every named entity: in-network person → their personal-brand site; in-network company → their site; out-of-network person/company or any tool/concept → the public canonical article on it, else plain text; Dennis Yu → dennisyu.com. Anchor text 3–6 descriptive words; link each entity on first mention only; 3+ in-network links on STRONG.
-- Every article links UP to its hub (Content Factory rule) and sideways to 2–3 sibling articles; when we run both sites, link across them.
+- **Entity Linking Decision Tree** — follow the current shared destination rule and maintained link-building guide. Use verified identity homes and useful owned explanations; retain exact primary proof and required-action links. Use natural names for people and companies and descriptive phrases for guides. Preserve the one-link-per-article rule for clients and AI Builder members. Link relevance, not a minimum in-network count, decides readiness.
+- Link the article to its actual topic owner and to related guides only where they help the reader's next task. Add a useful incoming or return link when authorized, or hand the exact proposal to that page's owner. Cross-link personal and company versions when their distinct perspectives help; do not fill sibling-link quotas.
 - Featured image = the video's own maxres thumbnail (`i.ytimg.com/vi/{id}/maxresdefault.jpg`) — a real frame, never a text-only card and never stock (blog-card thumbnails standard).
 - Evergreen: no dates-as-news, no limited-time promos.
 
@@ -103,7 +103,9 @@ a Basecamp update.
 - Pair the output with `dollar-a-day-strategist`: the article that wins organically is the one that earns the $1/day.
 
 ## Definitive article & pairings
-- Reference: blitzmetrics.com/inventory-youtube-channel/ · blitzmetrics.com/blog-posting-guidelines/ · blitzmetrics.com/content-factory/ · blitzmetrics.com/application-passwords/
+- Writing standard: https://localservicespotlight.com/article-guidelines/
+- Link policy: https://blitzmetrics.com/link-building/; destination method: https://blitzmetrics.com/entity-linking/; implementation: https://blitzmetrics.com/internal-linking/
+- Supporting references: blitzmetrics.com/inventory-youtube-channel/ · blitzmetrics.com/content-factory/ · blitzmetrics.com/application-passwords/
 - Pairs with: **video-repurposing-agent** → definitive-article-writer → jennifer → dollar-a-day-strategist → recursive-self-improvement-qa
 
 <!-- shared-rule:silent-media-playback:start -->
@@ -986,6 +988,8 @@ bidirectional-link verifier and rendered desktop/mobile review.
 
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
 ## Named entities link to the most helpful canonical destination
+
+Before writing or reviewing an article, open the current [Article Guidelines](https://localservicespotlight.com/article-guidelines/) and [link-building guide](https://blitzmetrics.com/link-building/). Use the [internal-linking process](https://blitzmetrics.com/internal-linking/) to connect pages and the [entity-linking decision tree](https://blitzmetrics.com/entity-linking/) to choose destinations. These are complementary owners, not competing copies. The older Blog Posting Guidelines and dated downloads are historical references, not the maintained writing standard. Record the checked URLs, date and available page revision or content hash in the existing work record, separately from the installed skill commit. If a current source is unavailable or conflicts with a copied instruction, record the gap and resolve it before claiming the review passed.
 
 - **Route the first meaningful mention of a named entity to the page that best helps
   the reader understand or act on it.** Link once; do not turn every repeated name
