@@ -3,7 +3,7 @@
   "title": "Show the moment, not the resume",
   "severity": "warn",
   "captured": "2026-09-05",
-  "captured_from": "Dennis Yu, Codex requests, 2026-09-05 and 2026-09-06: use real pictures, videos, moments, experiences, and relationships without sounding defensive, doubtful, boastful, embellished, or name-dropping; show the breadth of the Money Tree and its purpose, relationships, published work and useful next steps across the fleet.",
+  "captured_from": "Dennis Yu, Codex requests, 2026-09-05 and 2026-09-06: use real pictures, videos, moments, experiences, and relationships without sounding defensive, doubtful, boastful, embellished, or name-dropping; show the breadth of the Money Tree and its purpose, relationships, published work and useful next steps across the fleet. Dennis Yu, private audit QA correction, 2026-10-14: rich pictures and videos of the subject and citations on each page are critical; compare the actual audit examples and diagnose/fix the directions and QA.",
   "applies_to": [
     "design-review"
   ]
@@ -156,3 +156,32 @@ above.
   against the exact data and renderer revisions in the existing inventory.
   Carry accepted changes through the existing weekly/monthly Money Tree cycle;
   a merged convention alone does not prove any fleet page was updated.
+
+### Personal-brand PDF audits: verify the experience
+
+- Compare actual rendered reference audits before layout. Record the subject-specific
+  media and citation treatment to match, recover source portraits/screenshots/video frames,
+  and review a cover and media proof spread before producing all pages. An asset plan
+  identifies the people, moments, sources, dates, intended use and limits.
+- A diagram is useful evidence, but cannot replace all real-person/source-media proof in a
+  personal-brand audit. A required subject photo or video spread cannot be self-waived by
+  the producer/reviewer. Separate source provenance and private presentation scope from
+  broader commercial/public reuse permission; UNKNOWN does not prove an asset was sought
+  and unavailable, and is not a licence. Recover the asset or record a failed requirement.
+- Every page has reader-usable citations: publisher, short title and publication/event date
+  when known, with capture date distinguished. Codes and clickable annotation counts alone
+  do not make print citations usable. Cite the actual nearby claim; do not pad with copies.
+- A printed video uses a genuine source thumbnail/still, title and direct source link or QR;
+  a sampled frame has a supported timestamp. Audio-only content is labelled audio. Inspect
+  media silently and follow the existing playback rule.
+- Keep mechanics, evidence integrity, visual experience and human acceptance as separate
+  verdicts for the exact final bytes. The fresh reviewer receives the original outcome,
+  references, asset plan and full-size renders. A known required failure blocks readiness;
+  the rejected revision must fail the replacement checks. Counts assist review but cannot
+  certify recognizable people, useful imagery or citation relevance. Human acceptance
+  remains UNKNOWN until explicit acceptance of that exact revision is recorded; showing
+  or reviewing it alone does not establish acceptance. Routine production still proceeds
+  within existing authority.
+
+These PDF checks require rendered-artifact judgment and source inspection. HTML regexes do
+not honestly enforce them; no fleet regex is claimed.

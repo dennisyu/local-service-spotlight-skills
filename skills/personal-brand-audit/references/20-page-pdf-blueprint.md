@@ -18,12 +18,39 @@ substantive report content only into a companion file fails acceptance.
   identity, location, relationship, or outcome from a filename or image alone.
 - Prefer one clear takeaway, one primary visual, and a small number of supporting facts per
   page. Shrinking type to fit a wall of text fails.
-- Use real-human imagery when available and permitted. Public availability is not permission
-  to republish; otherwise use a sourced diagram or screenshot and flag the asset request.
+- Recover real subject imagery and source-media proof before layout. Keep provenance,
+  intended audience/use, task authority and broader reuse permission separate. Public
+  availability is not a republication licence; UNKNOWN is not evidence that no suitable
+  private source presentation was available. A diagram may support a particular page but
+  cannot become a universal substitute for the real cover and media proof spreads. If a
+  required asset is unavailable, record the failed requirement and recovery action; only
+  an explicit scope change by the original requester or a human with recorded authority
+  to change scope can remove it.
+- Every page displays readable publisher/source-title/date citations supporting its actual
+  claims and visuals. Source IDs are supplemental; a code-only footer or high link count
+  does not pass. Distinguish publication/event dates from capture dates. Choose enough
+  distinct relevant sources for the claims; do not add padding or duplicate corroboration.
+- Video panels use genuine thumbnails/stills, title, source/speaker and date, direct links
+  and a printed locator or QR for central recordings. Include a supported timestamp for a
+  sampled frame. Label audio-only sources audio; never imply a still plays on paper.
 - Keep `OBSERVED`, `INFERRED`, and `UNKNOWN` visually distinct without using color as the only
   signal. Put evidence IDs beside substantive claims.
 - Do not fabricate chart values. Use `N/A` for non-applicable and `UNKNOWN` for unmeasured;
   never draw either as zero.
+
+## Before the full build
+
+Inspect at least two actual reference audits when references exist. Record their strengths
+and defects, then make a subject-specific media/citation plan rather than copying image or
+link counts. Show the real-subject cover and one rich source-media proof spread at reading
+size to the outcome owner and a separate reviewer. Internal review may approve routine
+layout within existing authority; do not manufacture a new per-page human approval gate.
+
+The plan names exact asset/source IDs, identity basis, dates/timestamps, proposed placements,
+source labels and intended use. Photographs/video frames are classified separately from
+charts, logos, QR codes, artwork and repeated objects. A count is diagnostic, not a verdict.
+The reviewers must explain how the pages make the person and their work recognizable and
+how the printed reader can follow evidence. Preserve the invariant real-subject cover.
 
 ## Pages
 
