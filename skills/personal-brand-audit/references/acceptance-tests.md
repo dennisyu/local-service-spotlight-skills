@@ -15,6 +15,9 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   inference names its supporting IDs.
 - [ ] No UNKNOWN is rendered as zero, failure, an empty chart bar, or a definitive absence.
 - [ ] Public self-claims are not described as independent verification.
+- [ ] Retrieval time is separate from a source's surfaced cache/crawl time. Changeable roles,
+  counts and dates use fresh primary pages/feeds or current authorized captures; cached
+  excerpts are labelled snapshots, and newer evidence does not overwrite older IDs/dates.
 - [ ] Contradictory titles, dates, counts, pricing, roles, or results are grouped and visible;
   unresolved conflicts are not silently normalized.
 - [ ] Search coverage lists names, aliases, handles, languages, markets, sources, date window,
