@@ -50,6 +50,13 @@ next supported route before requesting new authorization.
    when the calendar-list tool is enabled, or a narrow date/keyword event search.
    Inspect the actual provider response and intended account; a Connected badge,
    public web search or an unsupported “zero results” answer is not that proof.
+   A calendar list verifies metadata, not event contents. For upcoming events,
+   use an enabled event-read tool for the intended calendar with a short date
+   window, explicit timezone and small result limit where supported. Inspect
+   the real request and response. A successful query returning no events proves
+   the query ran, not that event contents were read. Summarize event results in
+   the private receipt with only the window, timezone, returned count and whether
+   more results remain; omit event details.
 3. If the current connector flow explicitly requests reconnecting, complete its
    supported sign-in for the same intended account and existing scopes. Leave any
    human verification to the user; new permissions need their own authority.
