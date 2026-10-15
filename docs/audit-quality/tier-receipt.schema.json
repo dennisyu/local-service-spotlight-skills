@@ -822,7 +822,13 @@
             "CAPABILITY_TEST",
             "FINDING_CLOSURE",
             "DELIVERY_READBACK",
-            "CALIBRATION_RECORD"
+            "CALIBRATION_RECORD",
+            "LINK_REACHABILITY",
+            "LINK_CONTENT",
+            "RECIPIENT_ACCESS",
+            "MEDIA_CONTENT",
+            "MECHANICAL_VALIDATION",
+            "EXAM_VALIDATION"
           ]
         },
         "purpose": {
@@ -846,7 +852,13 @@
             "routing",
             "closure",
             "delivery",
-            "calibration"
+            "calibration",
+            "reachable",
+            "expected_content",
+            "recipient_access",
+            "media_inspected",
+            "screening",
+            "specialist_exam"
           ]
         },
         "locator": {
@@ -896,6 +908,13 @@
         },
         "retrieved_at": {
           "type": "string",
+          "minLength": 1
+        },
+        "recipient_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1
         }
       },
@@ -1404,6 +1423,10 @@
         },
         "media_inspected": {
           "$ref": "#/$defs/link_state"
+        },
+        "recipient_ref": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -1414,7 +1437,8 @@
         "reachable",
         "expected_content",
         "recipient_access",
-        "media_inspected"
+        "media_inspected",
+        "recipient_ref"
       ],
       "additionalProperties": false
     },

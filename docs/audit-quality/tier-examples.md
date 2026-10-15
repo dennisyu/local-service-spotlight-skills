@@ -44,3 +44,5 @@ Reference-packet names map as `paid_client` â†’ `paid-full`, `free_diagnostic` â
 distributed as a second policy/checker. Its assertions are integrated with explicit
 population and multiple-artifact review handling. The original six dimension
 meanings and weights control numeric acceptance; the annex adds no new score.
+
+Independent-review regression round2 also covers duplicate/conflicting delivery rows in both receipt paths; metadata or ordinary sources substituted for content/access proofs; mismatched recipients/targets; ordinary sources substituted for per-record mechanical validation; stale record hash/scope; one-way finding/action links; unaccepted S2 dispositions in screening; and unresolved or version-mismatched specialist-exam validation. Mobile comparisons stack every row with visible column labels while preserving explicit table/header/cell roles; they need no horizontal scrolling.

@@ -69,6 +69,10 @@ def _assess_v1(receipt):
         return dict(result, decision="DELIVERY_UNVERIFIED", reasons=["released revision differs"])
     rb = release.get("readback", [])
     required = {"recipient_access", "final_bytes"} if receipt["audience"] == "PRIVATE" else {"anonymous_body", "canonical", "desktop", "mobile", "links", "downloads"}
+    names = [c.get("name") for c in rb]
+    allowed = {"recipient_access", "final_bytes", "anonymous_body", "canonical", "desktop", "mobile", "links", "downloads"}
+    if len(names) != len(set(names)) or any(n not in allowed for n in names) or any(c.get("status") != "PASS" for c in rb):
+        return dict(result, decision="DELIVERY_UNVERIFIED" if receipt["audience"] == "PRIVATE" else "DEPLOYED_UNVERIFIED", reasons=["duplicate, unknown or non-PASS readback check"])
     passed = {c["name"] for c in rb if c.get("status") == "PASS"}
     if not required.issubset(passed):
         return dict(result, decision="DELIVERY_UNVERIFIED" if receipt["audience"] == "PRIVATE" else "DEPLOYED_UNVERIFIED")
@@ -220,6 +224,12 @@ def assess_tier(r):
                     and (purpose is None or e['purpose'] == purpose)
                     and (sha is None or e['artifact_sha256'] == sha)
                     and (reviewer is None or e['reviewer_id'] == reviewer))
+    if r['specialist_exam'] is not None:
+        exam = r['specialist_exam']
+        proof = evidence.get(exam['receipt_ref'])
+        need(bool(proof and receipt(exam['receipt_ref'], 'EXAM_VALIDATION', 'specialist_exam')
+                  and proof['scope'] == exam['id'] + '@' + exam['version'] + '#' + exam['source_revision']
+                  and proof['reviewer_id'] and proof['reviewer_id'] != r['author_id']), 'specialist scoring lacks typed exact-version validation; HOLD scoring until validated')
     for name, kind in profiles['required_checks'].items():
         c = checks.get(name)
         need(c is not None and c['status'] == 'PASS' and c['artifact_sha256'] == final_hash
@@ -262,6 +272,8 @@ def assess_tier(r):
         need(all(e in evidence for e in a['evidence_ids']), 'action evidence unresolved')
         metric = a['business_metric']
         need(metric['baseline'] is None or metric['source'] is not None, 'measured business baseline lacks source')
+    need({(c['id'], aid) for c in r['claims'] for aid in c['action_ids']}
+         == {(cid, a['id']) for a in r['actions'] for cid in a['finding_ids']}, 'finding/action crosslinks must agree in both directions')
     for a in r['artifacts']:
         if a['format'] == 'PDF' and a['required']:
             need(a['page_count'] is not None, 'required PDF page count missing')
@@ -273,9 +285,24 @@ def assess_tier(r):
             need(all(e in evidence for e in v['source_ids']), 'visual evidence unresolved')
             need(receipt(v['render_receipt_id'], 'RENDER_REVIEW', sha=a['sha256']) and v['page'] in evidence.get(v['render_receipt_id'], {}).get('covered_pages', []), 'visual render review missing or stale')
     for link in r['links']:
+        compatible = {
+            'reachable': ('LINK_REACHABILITY', {'HTTP_RESPONSE', 'OEMBED_METADATA'}, {'METADATA_ONLY', 'CONTENT_INSPECTED'}),
+            'expected_content': ('LINK_CONTENT', {'HTML_CONTENT', 'DOCUMENT_CONTENT', 'TRANSCRIPT_AT_CITED_LOCATION', 'VIDEO_AT_CITED_LOCATION'}, {'CONTENT_INSPECTED'}),
+            'recipient_access': ('RECIPIENT_ACCESS', {'ANONYMOUS_RECIPIENT_READ', 'AUTHORIZED_RECIPIENT_READ'}, {'CONTENT_INSPECTED'}),
+            'media_inspected': ('MEDIA_CONTENT', {'TRANSCRIPT_AT_CITED_LOCATION', 'VIDEO_AT_CITED_LOCATION', 'AUDIO_AT_CITED_LOCATION'}, {'CONTENT_INSPECTED'})
+        }
         for field in ['reachable', 'expected_content', 'recipient_access', 'media_inspected']:
             state = link[field]
             need(state['evidence_id'] in evidence, 'link evidence missing: ' + field)
+            if state['status'] == 'PASS':
+                kind, methods, inspections = compatible[field]
+                proof = evidence.get(state['evidence_id'])
+                need(bool(proof and proof['kind'] == kind and proof['purpose'] == field
+                          and proof['inspection'] in inspections and state['method'] in methods
+                          and proof['scope'] == link['url'] and proof['artifact_sha256'] == final_hash),
+                     'incompatible link evidence kind/method/inspection/target: ' + field)
+                if field == 'recipient_access':
+                    need(bool(proof and proof.get('recipient_ref') == link['recipient_ref']), 'recipient access proof covers wrong or unspecified recipient')
             if state['status'] == 'N/A':
                 need(bool(state['reason']), 'N/A link check needs reason')
         if link['material']:
@@ -294,6 +321,8 @@ def assess_tier(r):
                       and receipt(cr['id'], 'FINDING_CLOSURE', 'closure', reviewer=cr['reviewer_id'])), 'closed defect lacks typed exact closure review')
         if defect['severity'] in {'S0', 'S1'}:
             need(defect['closed'], 'hard defect open or closure unverified')
+        if defect['severity'] == 'S2' and not defect['closed']:
+            need(all(defect['disposition'].get(k) for k in ['accepted_by','risk_reason','owner','deadline','completion_test']), 'unaccepted moderate defect; screening does not waive hard gates')
     for name, t in r['timing'].items():
         if t['state'] == 'UNKNOWN':
             need(t['value'] is None, 'UNKNOWN timing/cost must be null: ' + name)
@@ -304,9 +333,14 @@ def assess_tier(r):
     review = r['independent_review']
     need(review['candidate_sha256'] == final_hash, 'top-level review covers stale hash')
     if r['release']['attempted']:
+        unique(r['release']['readback'], 'name')
+        need(all(rb['status'] == 'PASS' for rb in r['release']['readback']), 'non-PASS readback blocks delivery verification')
         need(r['release']['candidate_sha256'] == final_hash, 'released artifact differs')
         for rb in r['release']['readback']:
             need(receipt(rb['evidence'], 'DELIVERY_READBACK', 'delivery'), 'readback lacks typed exact-revision evidence')
+            need(evidence.get(rb['evidence'], {}).get('scope') == rb['name'], 'readback proof covers wrong check scope')
+    else:
+        need(not r['release']['readback'], 'unattempted release cannot contain delivery readback')
     if bulk:
         batch = r['batch']
         need(batch is not None, 'bulk population/sample receipt missing')
@@ -320,7 +354,10 @@ def assess_tier(r):
             need(sample['selected_ids'] == ranked[:sample['sample_size']], 'random sample does not match frozen population and seed')
             need(len(sample['reviewed_ids']) == len(set(sample['reviewed_ids'])) and set(sample['reviewed_ids']) == set(sample['selected_ids']), 'sample review incomplete')
             for record in batch['records']:
-                need(record['mechanical_status'] == 'PASS' and record['mechanical_evidence_id'] in evidence, 'every bulk record needs mechanical validation')
+                proof = evidence.get(record['mechanical_evidence_id'])
+                need(record['mechanical_status'] == 'PASS'
+                     and receipt(record['mechanical_evidence_id'], 'MECHANICAL_VALIDATION', 'screening', sha=record['artifact_sha256'])
+                     and proof['scope'] == record['id'], 'every bulk record needs typed exact-record mechanical validation')
                 need(record['identity_status'] == 'RESOLVED' or record['flagged'], 'ambiguous/unknown identity must be flagged')
                 rr = record['review']
                 reviewed = bool(rr and rr['status'] == 'PASS' and rr['fresh_context'] and rr['reviewer_id'] != r['author_id']

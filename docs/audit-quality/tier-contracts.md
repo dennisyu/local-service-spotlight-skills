@@ -36,7 +36,10 @@ holds release. A proposed rescope is not accepted scope; record authority and a 
 contract before continuing. Do not spend above the allowance to finish.
 
 Keep `specialist_exam` separate: exam ID/version, authoritative source revision and
-exam receipt, or null for unscored strategy work. Never infer a rubric from the
+exam receipt, or null for unscored strategy work. Scoring holds until `receipt_ref`
+resolves to inspected `EXAM_VALIDATION` evidence, independently reviewed for the
+exact artifact and scoped as `exam_id@version#source_revision`. A bare locator or
+ordinary source row is not that validation. Never infer a rubric from the
 product name. [Brand Authority v1.0](../../skills/personal-brand-audit/references/brand-authority-rubric.md),
 [specialist acceptance tests](../../skills/personal-brand-audit/references/acceptance-tests.md)
 and the [20-page blueprint](../../skills/personal-brand-audit/references/20-page-pdf-blueprint.md)
@@ -84,6 +87,16 @@ with volume zero; use a bounded transcript or silent inspection when appropriate
 and record what was actually inspected. Do not convert transcript review into video
 playback. Never claim all links usable because an availability check passed.
 
+The four PASS assertions require different typed evidence, bound to the report
+hash and exact target URL: `LINK_REACHABILITY` may use HTTP or oEmbed metadata;
+`LINK_CONTENT` requires inspected HTML/document/transcript/video content;
+`RECIPIENT_ACCESS` requires an actual anonymous or authorized recipient read and
+a matching non-secret `recipient_ref`; `MEDIA_CONTENT` requires inspected media
+or its cited transcript. Metadata cannot stand in for content or recipient access.
+Delivery readback check names must be unique, and every asserted check must PASS;
+a later failure cannot be hidden by an earlier PASS. Unknown, duplicate or
+conflicting readback rows hold delivery verification.
+
 ## Route by proven capability and evidence
 
 | Stage | Cheapest capable route | Escalation and receipt |
@@ -114,6 +127,11 @@ hard gates and the original six report-quality dimensions, weights
 25/25/20/15/10/5 and 85 threshold **only with recorded calibration**. Uncalibrated
 numbers remain provisional. Do not change scoring to accommodate cheaper work.
 The evidence-backed gate is evaluated per artifact, not a generic Reviewed badge.
+Each bulk record requires inspected `MECHANICAL_VALIDATION` evidence bound to
+that record ID and hash; an ordinary source row cannot establish validation.
+Open S2 defects need the same accepted disposition fields as other tiers; an
+incomplete screening run may retain its leads privately as INCOMPLETE/HOLD,
+but receives no successful SCREENING validation result.
 Bulk screening reports pipeline validation and coverage; it does not claim an
 accepted report-quality score or full-population independent review. Promoting a
 lead to a diagnostic/full product needs a new explicit profile and exact review.

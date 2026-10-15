@@ -28,8 +28,33 @@ def bulk_fixture():
     for i in ids:
         reviewed = i in selected or i == 'a'
         review = {'reviewer_id':'synthetic-reviewer','fresh_context':True,'artifact_sha256':'a'*64,'status':'PASS','evidence_id':'E-reproducibility'} if reviewed else None
-        records.append({'id':i,'artifact_sha256':'a'*64,'identity_status':'RESOLVED','mechanical_status':'PASS','mechanical_evidence_id':'E-provenance','flagged':i=='a','label':'REVIEWED_SCREENING' if reviewed else 'SCREENING','review':review})
+        proof=dict(r['evidence'][0],id='MECH-'+i,kind='MECHANICAL_VALIDATION',purpose='screening',artifact_sha256='a'*64,scope=i)
+        r['evidence'].append(proof)
+        records.append({'id':i,'artifact_sha256':'a'*64,'identity_status':'RESOLVED','mechanical_status':'PASS','mechanical_evidence_id':proof['id'],'flagged':i=='a','label':'REVIEWED_SCREENING' if reviewed else 'SCREENING','review':review})
     r['batch'] = {'population_revision':'synthetic-population1','population_ids':ids,'records':records,'random_sample':{'method':'SHA256_SEEDED_ORDER','seed':'seed1','sample_size':1,'selected_ids':selected,'reviewed_ids':selected},'review_claim':'PIPELINE_SAMPLE_ONLY'}
+    return r
+
+
+def link_fixture():
+    r=copy.deepcopy(BASE)
+    link={'id':'L1','url':'https://example.invalid/synthetic','material':True,'is_media':True,'recipient_ref':'public-anonymous'}
+    kinds={'reachable':('LINK_REACHABILITY','HTTP_RESPONSE'),'expected_content':('LINK_CONTENT','HTML_CONTENT'),'recipient_access':('RECIPIENT_ACCESS','ANONYMOUS_RECIPIENT_READ'),'media_inspected':('MEDIA_CONTENT','TRANSCRIPT_AT_CITED_LOCATION')}
+    for field,(kind,method) in kinds.items():
+        e=dict(r['evidence'][0],id='LINK-'+field,kind=kind,purpose=field,scope=link['url'],artifact_sha256='a'*64,recipient_ref='public-anonymous' if field=='recipient_access' else None)
+        r['evidence'].append(e)
+        link[field]={'status':'PASS','method':method,'evidence_id':e['id'],'observed_at':'2026-10-16T00:00:00Z','reason':None}
+    r['links']=[link]
+    return r
+
+
+def delivered_fixture(audience='PRIVATE'):
+    r=copy.deepcopy(BASE);r['audience']=audience
+    names=['recipient_access','final_bytes'] if audience=='PRIVATE' else ['anonymous_body','canonical','desktop','mobile','links','downloads']
+    rows=[]
+    for name in names:
+        e=dict(r['evidence'][0],id='DELIVERY-'+name,kind='DELIVERY_READBACK',purpose='delivery',scope=name,artifact_sha256='a'*64)
+        r['evidence'].append(e);rows.append({'name':name,'status':'PASS','evidence':e['id']})
+    r['release'].update(attempted=True,candidate_sha256='a'*64,readback=rows)
     return r
 
 
@@ -120,9 +145,7 @@ class AuditQualityTests(unittest.TestCase):
         r['product_profile']['required_outputs'].append('companion');self.hold(r,'every required final artifact')
 
     def test_link_receipt_separates_media_and_access(self):
-        r=copy.deepcopy(BASE)
-        s={'status':'PASS','method':'TRANSCRIPT_AT_CITED_LOCATION','evidence_id':'S1','observed_at':'2026-10-16T00:00:00Z','reason':None}
-        r['links']=[{'id':'L1','url':'https://example.invalid/synthetic','material':True,'is_media':True,**{k:copy.deepcopy(s) for k in ['reachable','expected_content','recipient_access','media_inspected']}}]
+        r=link_fixture();s=copy.deepcopy(r['links'][0]['media_inspected'])
         self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
         r['links'][0]['media_inspected']['method']='OEMBED'; self.hold(r,'metadata is not media')
         r['links'][0]['media_inspected']=copy.deepcopy(s);r['links'][0]['recipient_access']['status']='BLOCKED';self.hold(r,'recipient blocked')
@@ -157,6 +180,58 @@ class AuditQualityTests(unittest.TestCase):
         self.hold(r,'closure review')
         r=copy.deepcopy(BASE);r['release'].update(attempted=True,candidate_sha256='a'*64,readback=[{'name':n,'status':'PASS','evidence':'S1'} for n in ['recipient_access','final_bytes']])
         self.hold(r,'readback lacks typed')
+
+    def test_delivery_duplicate_and_conflicting_names_hold(self):
+        for audience,expected in [('PRIVATE','PRIVATE_DELIVERED_VERIFIED'),('PUBLIC','PUBLISHED_VERIFIED')]:
+            self.assertEqual(checker.assess(delivered_fixture(audience))['decision'],expected)
+            for status,reverse in [('PASS',False),('FAIL',False),('FAIL',True),('UNKNOWN',False),('BLOCKED',False)]:
+                with self.subTest(audience=audience,status=status,reverse=reverse):
+                    r=delivered_fixture(audience)
+                    r['release']['readback'].append(dict(r['release']['readback'][0],status=status))
+                    if reverse:r['release']['readback'].reverse()
+                    self.hold(r,'duplicate name')
+                    old={'audience':audience,'quality':r['quality'],'authority':r['authority'],'checks':[dict(c,evidence='synthetic') for c in r['checks']],'findings':[],'candidate':r['candidate'],'independent_review':{'reviewer':'synthetic-reviewer','fresh_context':True,'candidate_sha256':'a'*64,'content_privacy':'PASS','design':'PASS'},'release':r['release']}
+                    self.assertEqual(checker._assess_v1(old)['decision'],'DELIVERY_UNVERIFIED' if audience=='PRIVATE' else 'DEPLOYED_UNVERIFIED')
+
+    def test_material_links_require_compatible_content_and_recipient_proof(self):
+        for field in ['expected_content','recipient_access','media_inspected']:
+            for mutate in ['metadata','wrong_kind','wrong_target']:
+                with self.subTest(field=field,mutation=mutate):
+                    r=link_fixture();state=r['links'][0][field]
+                    e=next(e for e in r['evidence'] if e['id']==state['evidence_id'])
+                    if mutate=='metadata':state['method']='OEMBED';e['inspection']='METADATA_ONLY'
+                    if mutate=='wrong_kind':e['kind']='SOURCE'
+                    if mutate=='wrong_target':e['scope']='https://example.invalid/other'
+                    self.hold(r,'incompatible link evidence')
+        r=link_fixture();e=next(e for e in r['evidence'] if e['kind']=='RECIPIENT_ACCESS');e['recipient_ref']='another-recipient';self.hold(r,'wrong or unspecified recipient')
+        r=link_fixture();r['links'][0]['reachable']['method']='OEMBED_METADATA';next(e for e in r['evidence'] if e['kind']=='LINK_REACHABILITY')['inspection']='METADATA_ONLY'
+        self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
+
+    def test_bulk_mechanical_validation_is_typed_hash_and_record_bound(self):
+        for mutation in ['ordinary_source','wrong_hash','wrong_record','not_inspected']:
+            with self.subTest(mutation=mutation):
+                r=bulk_fixture();record=r['batch']['records'][0];e=next(e for e in r['evidence'] if e['id']==record['mechanical_evidence_id'])
+                if mutation=='ordinary_source':record['mechanical_evidence_id']='S1'
+                if mutation=='wrong_hash':e['artifact_sha256']='b'*64
+                if mutation=='wrong_record':e['scope']='another-record'
+                if mutation=='not_inspected':e['inspection']='NOT_CHECKED'
+                self.hold(r,'typed exact-record mechanical')
+
+    def test_claim_action_edges_are_bidirectional(self):
+        r=copy.deepcopy(BASE);r['claims'].append(dict(r['claims'][0],id='C2'));self.hold(r,'both directions')
+        r['actions'][0]['finding_ids'].append('C2');self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
+
+    def test_bulk_does_not_waive_s2_disposition(self):
+        r=bulk_fixture();r['defects']=[{'id':'D1','severity':'S2','closed':False,'closure_review_receipt':None,'disposition':dict.fromkeys(['accepted_by','risk_reason','owner','deadline','completion_test'])}]
+        self.hold(r,'screening does not waive')
+        r['defects'][0]['disposition']={k:'synthetic accepted disposition' for k in r['defects'][0]['disposition']}
+        self.assertEqual(checker.assess(r)['decision'],'SCREENING')
+
+    def test_specialist_exam_needs_typed_exact_contract_validation(self):
+        r=copy.deepcopy(BASE);r['specialist_exam']={'id':'Brand Authority','version':'1.0','source_revision':'historical-source','receipt_ref':'arbitrary-string'};self.hold(r,'specialist scoring')
+        e=dict(r['evidence'][0],id='EXAM1',kind='EXAM_VALIDATION',purpose='specialist_exam',scope='Brand Authority@1.0#historical-source',artifact_sha256='a'*64,reviewer_id='synthetic-reviewer')
+        r['evidence'].append(e);r['specialist_exam']['receipt_ref']='EXAM1';self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
+        e['scope']='Brand Authority@1.1#other-source';self.hold(r,'specialist scoring')
 
 
 if __name__=='__main__': unittest.main()
