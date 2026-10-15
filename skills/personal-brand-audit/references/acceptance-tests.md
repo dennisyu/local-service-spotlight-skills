@@ -15,6 +15,9 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   inference names its supporting IDs.
 - [ ] No UNKNOWN is rendered as zero, failure, an empty chart bar, or a definitive absence.
 - [ ] Public self-claims are not described as independent verification.
+- [ ] Retrieval time is separate from a source's surfaced cache/crawl time. Changeable roles,
+  counts and dates use fresh primary pages/feeds or current authorized captures; cached
+  excerpts are labelled snapshots, and newer evidence does not overwrite older IDs/dates.
 - [ ] Contradictory titles, dates, counts, pricing, roles, or results are grouped and visible;
   unresolved conflicts are not silently normalized.
 - [ ] Search coverage lists names, aliases, handles, languages, markets, sources, date window,
@@ -91,8 +94,21 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   record the montage/contact-sheet path and reviewer.
 - [ ] Pages 1, 2, 7, the mapped agent-install page, and 20 received full-size spot checks; any defect triggered review of
   all affected pages.
-- [ ] Every page contains a meaningful approved real photo, source screenshot, data chart, or
-  evidence-backed diagram with caption/evidence IDs.
+- [ ] Actual reference audits were inspected before layout; the receipt records their exact
+  revisions and the media/citation treatment being matched. A cover and source-media proof
+  spread were reviewed at reading size before the full build.
+- [ ] The page-specific asset plan names source/asset IDs, identity basis, publication/event
+  date or supported frame timestamp, capture date, intended use and provenance/reuse limits.
+- [ ] Every page contains a meaningful evidence visual with caption and source. The invariant
+  cover has a real subject/context photograph; rich subject/source-media proof remains
+  present throughout the relevant story. Charts, logos, QR codes, artwork and duplicated
+  portraits cannot stand in for that experience. Blanket diagram substitution fails.
+- [ ] Every page has readable publisher, short-title and date labels supporting nearby claims
+  and visuals; codes and link counts alone fail. Printed citations and central video routes
+  remain usable without a companion spreadsheet. Duplicate citations are not corroboration.
+- [ ] Source-video panels use real thumbnails/stills, accurate titles/source/date and direct
+  video links or decoded printed QRs. Sampled frames have supported timestamps. Audio-only
+  content is labelled audio. All media review follows the silent-playback rule.
 - [ ] No clipped text, overflow, accidental blank page, tiny unreadable type, broken glyph,
   low-resolution hero, obscured face, or chart legend mismatch appears.
 - [ ] Required fonts are embedded, hyperlinks are present, no page is empty/near-empty, and
@@ -151,6 +167,15 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
 - [ ] A fresh-context reviewer tried to refute identity, strongest claims, arithmetic, top
   connections, QR decoding, and visual integrity. Record the reviewer, time, failures, and
   corrections.
+- [ ] The fresh reviewer received the original outcome, reference renders, media plan and
+  exact final PDF, not only the producer's narrowed checklist. Mechanics, evidence integrity,
+  visual/print-citation experience and human acceptance have separate verdicts tied to the
+  final hash. Required failures block readiness; producer/reviewer scope exceptions cannot
+  remove the requested real-media/citation outcome. Human acceptance is UNKNOWN until explicit acceptance of the exact revision is recorded;
+  showing or reviewing it alone does not establish acceptance.
+- [ ] After a rejected revision, the replacement checks were run against the rejected bytes
+  and failed the known defects, then run against the repair. Original artifacts/receipts
+  remain preserved; the new receipt explicitly supersedes the readiness verdict.
 - [ ] The final handoff names remaining UNKNOWNs, who can resolve them, and the exact next
   evidence or decision required.
 
@@ -174,6 +199,13 @@ Normal Google panel status / query / date / locale / location / personalization:
 Owner claim status / owner-dashboard or Google claim-receipt proof locator / UNKNOWN:
 Ranked public-association entity graph outcomes:
 Independent reviewer / context / reviewed at:
+Reference PDF revisions / comparison:
+Media plan / proof-spread review:
+Mechanical verdict / exact hash:
+Evidence verdict / exact hash:
+Visual + printed-citation verdict / exact hash:
+Human acceptance / exact revision or UNKNOWN:
+Rejected-revision negative control:
 Tests passed:
 Tests failed:
 Tests untested and why:

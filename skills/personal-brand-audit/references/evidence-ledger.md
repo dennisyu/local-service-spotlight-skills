@@ -22,6 +22,8 @@ atomic claim or relationship observation. Do not bury contradictory values in pr
 | `event_date` | When the underlying event or statement occurred, if known |
 | `published_date` | Source publication date, if known |
 | `captured_at` | Audit timestamp with timezone |
+| `capture_method` | Direct HTTP, current browser DOM/screenshot, official feed, cached search result, or other exact method |
+| `source_crawl_or_snapshot_time` | Source cache/crawl time when surfaced, or UNKNOWN; not the retrieval time |
 | `quote_or_extract` | Short exact excerpt or field value within copyright limits |
 | `identity_match` | The two independent attributes used to resolve a person, or `NOT_APPLICABLE` |
 | `relationship_basis` | Interview, co-employment, event listing, testimonial, direct user confirmation, or `NONE` |
@@ -57,6 +59,16 @@ Keep the three axes separate:
   action. It is not a score and does not become `NOT_MET`.
 - `N/A` means the test does not apply and includes the reason. UNKNOWN means it may apply but
   was not established.
+
+## Freshness is not retrieval time
+
+A result retrieved today may contain a month-old crawl. Preserve the cache/crawl time when
+surfaced and do not label a cached excerpt a current page check. Verify changeable role,
+channel/episode count, publication-date and scale claims against fresh primary pages,
+official feeds or an authorized current DOM capture. If direct access is blocked, record
+that limit and bound the claim to the available snapshot. Preserve older evidence IDs when
+newer captures supersede them; do not silently rewrite their dates or assert when the source
+changed without proof. Publication, modification, event, crawl and capture dates differ.
 
 ## Identity and collision ledger
 
