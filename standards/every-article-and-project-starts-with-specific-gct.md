@@ -19,6 +19,15 @@
   proof or deliverable that will produce that change; Targeting names the people
   and situation it serves. “Publish an article” or “use AI” is an activity, not
   the desired outcome. Use the same brief for the article and the project behind it.
+- **For an audit, a missing attendee strategy is an open decision, not a gate.**
+  Dennis's October 2, 2026 premium/conference instructions require a base audit
+  from existing evidence first. Record supplied, inferred or UNKNOWN goals,
+  content and targeting; show a confirm/edit/continue hypothesis when useful.
+  Ask only relevant questions whose answers change a recommendation. The
+  attendee may continue without answering. Deliver qualified findings and
+  conditional sales priorities; missing GCT never lowers reputation. The
+  agent's editorial brief still states what this base report helps its reader do.
+  See `skills/personal-brand-audit/references/audit-run-contract.md`.
 - **Apply the same opening standard to every format.** Documents, reports, PDFs,
   presentations, articles, homepages, landing pages, service pages, relationship
   pages and task guides must earn attention at the beginning. Improve their

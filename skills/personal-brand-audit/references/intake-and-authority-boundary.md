@@ -1,7 +1,11 @@
 # Intake and authority boundary
 
-Ask all blocking questions before the long research run. Continue outside-in when private or
-credentialed inputs are unavailable, but make the missing lanes visible.
+Ask identity or authority questions that truly block attribution or an action.
+Build the base proof audit from existing sources first. Follow the shared
+[run contract](audit-run-contract.md) for optional relevant GCT clarification;
+the table is an information inventory, not a mandatory questionnaire. Record
+supplied, inferred and UNKNOWN fields. Continue outside-in when strategy/private
+inputs are unavailable; deliver qualified findings and conditional priorities.
 
 ## Minimum intake
 

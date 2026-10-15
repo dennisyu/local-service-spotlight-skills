@@ -1,0 +1,66 @@
+{
+  "method_version": "AUDIT-METHOD-2026.10.02",
+  "scope": {
+    "snapshot": "2026-10-06T00:00:00Z",
+    "enumerated_sources": [
+      "synthetic channel"
+    ],
+    "completeness": "bounded_public_census"
+  },
+  "counts": {
+    "all": {
+      "unit": "public_asset",
+      "value": 7,
+      "source": "fixture"
+    },
+    "regular": {
+      "unit": "public_asset",
+      "value": 5,
+      "source": "fixture"
+    },
+    "shorts": {
+      "unit": "public_asset",
+      "value": 2,
+      "source": "fixture"
+    },
+    "raw": {
+      "unit": "raw_session",
+      "value": "UNKNOWN",
+      "source": "not supplied"
+    }
+  },
+  "sums": [
+    {
+      "total": "all",
+      "members": [
+        "regular",
+        "shorts"
+      ],
+      "disjoint_verified": true
+    }
+  ],
+  "reuse_yield": "UNKNOWN",
+  "confirmed_derivatives": [
+    {
+      "source_id": "parent-1",
+      "child_id": "clip-1",
+      "proof_kind": "publisher_parent_link",
+      "evidence": "synthetic explicit parent link"
+    }
+  ],
+  "pdf_acceptance": {
+    "physical_page_count": 2,
+    "inspected_pages": [
+      1,
+      2
+    ],
+    "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "accepted_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "geometry_status": "PASS",
+    "visual_status": "PASS",
+    "reviewer": "fixture reviewer",
+    "reviewed_utc": "2026-10-06T01:00:00Z",
+    "minimum_body_points": 11,
+    "minimum_note_points": 9
+  }
+}
