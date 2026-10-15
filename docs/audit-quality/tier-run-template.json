@@ -1,0 +1,680 @@
+{
+  "schema_version": "UAQG-TIER-RECEIPT-1.0.0",
+  "standard": "UAQG-1.1.0",
+  "synthetic": false,
+  "run_id": "REPLACE",
+  "author_id": "REPLACE",
+  "audience": "PRIVATE",
+  "source_revision": "synthetic-input-1",
+  "goal": "Choose a first proof-placement test",
+  "buyer": "Synthetic repair customer",
+  "offer": "Synthetic repair visit",
+  "product_profile": {
+    "id": "free-diagnostic",
+    "version": "1.0.0",
+    "agreement": "PROPOSED",
+    "contract_ref": "synthetic-contract",
+    "scope": [
+      "Proof placement on one offer page"
+    ],
+    "exclusions": [
+      "Revenue attribution",
+      "Full brand exam"
+    ],
+    "source_window": "synthetic snapshot1",
+    "required_outputs": [
+      "report"
+    ],
+    "contracted_pages": 2,
+    "blueprint_ref": "synthetic-two-page-diagnostic"
+  },
+  "specialist_exam": null,
+  "identity": {
+    "status": "UNKNOWN",
+    "receipt_id": "E-identity"
+  },
+  "allowance": {
+    "state": "UNKNOWN",
+    "limit": null,
+    "consumed": null,
+    "unit": "UNKNOWN",
+    "authority_ref": "synthetic-authority",
+    "max_iterations": 3,
+    "rescope_ref": null
+  },
+  "routing": [
+    {
+      "stage": "RETRIEVAL",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    },
+    {
+      "stage": "PARSING",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    },
+    {
+      "stage": "ARITHMETIC",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    },
+    {
+      "stage": "IDENTITY",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    },
+    {
+      "stage": "SYNTHESIS",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    },
+    {
+      "stage": "LAYOUT",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    },
+    {
+      "stage": "FINAL_REVIEW",
+      "executor": "synthetic-worker-or-code",
+      "effort": "UNKNOWN",
+      "capability_evidence_id": "E-routing",
+      "source_access": "NOT_REQUIRED",
+      "fallback": "Hold and give the source/capability gap to the owning function."
+    }
+  ],
+  "primary_artifact_id": "report",
+  "candidate": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "artifacts": [
+    {
+      "id": "report",
+      "path": "synthetic-report.pdf",
+      "format": "PDF",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "required": true,
+      "page_count": 2,
+      "visual_manifest": [
+        {
+          "page": 1,
+          "question": "Where is the proof useful?",
+          "kind": "DIAGRAM",
+          "source_ids": [
+            "S1"
+          ],
+          "caption": "Synthetic proof to offer map",
+          "render_receipt_id": "E-usability"
+        },
+        {
+          "page": 2,
+          "question": "Where is the proof useful?",
+          "kind": "DIAGRAM",
+          "source_ids": [
+            "S1"
+          ],
+          "caption": "Synthetic proof to offer map",
+          "render_receipt_id": "E-usability"
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "S1",
+      "kind": "SOURCE",
+      "purpose": "claim",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-routing",
+      "kind": "CAPABILITY_TEST",
+      "purpose": "routing",
+      "locator": "synthetic-fixture:E-routing",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-authority",
+      "kind": "AUTHORITY",
+      "purpose": "authority",
+      "locator": "synthetic-fixture:E-authority",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-privacy",
+      "kind": "PRIVACY_REVIEW",
+      "purpose": "privacy",
+      "locator": "synthetic-fixture:E-privacy",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-fidelity",
+      "kind": "FIDELITY_CROSSWALK",
+      "purpose": "fidelity",
+      "locator": "synthetic-fixture:E-fidelity",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-provenance",
+      "kind": "SOURCE_LEDGER",
+      "purpose": "provenance",
+      "locator": "synthetic-fixture:E-provenance",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-usability",
+      "kind": "RENDER_REVIEW",
+      "purpose": "usability",
+      "locator": "synthetic-fixture:E-usability",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [
+        1,
+        2
+      ],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-reproducibility",
+      "kind": "INDEPENDENT_REVIEW",
+      "purpose": "reproducibility",
+      "locator": "synthetic-fixture:E-reproducibility",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-identity",
+      "kind": "IDENTITY_MAPPING",
+      "purpose": "identity",
+      "locator": "synthetic-fixture:E-identity",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-gct",
+      "kind": "GCT_CROSSWALK",
+      "purpose": "gct",
+      "locator": "synthetic-fixture:E-gct",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-measurement",
+      "kind": "METRIC_RECONCILIATION",
+      "purpose": "measurement",
+      "locator": "synthetic-fixture:E-measurement",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-visual_function",
+      "kind": "VISUAL_MANIFEST",
+      "purpose": "visual_function",
+      "locator": "synthetic-fixture:E-visual_function",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-actions",
+      "kind": "ACTION_REGISTER",
+      "purpose": "actions",
+      "locator": "synthetic-fixture:E-actions",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-links_access",
+      "kind": "LINK_RECEIPT",
+      "purpose": "links_access",
+      "locator": "synthetic-fixture:E-links_access",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-unknowns",
+      "kind": "SOURCE_LEDGER",
+      "purpose": "unknowns",
+      "locator": "synthetic-fixture:E-unknowns",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-corrections",
+      "kind": "CORRECTION_CROSSWALK",
+      "purpose": "corrections",
+      "locator": "synthetic-fixture:E-corrections",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "E-budget",
+      "kind": "BUDGET_RECORD",
+      "purpose": "budget",
+      "locator": "synthetic-fixture:E-budget",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "CAL-FAIL",
+      "kind": "CALIBRATION_RECORD",
+      "purpose": "calibration",
+      "locator": "synthetic-fixture:CAL-FAIL",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "CAL-BORDERLINE",
+      "kind": "CALIBRATION_RECORD",
+      "purpose": "calibration",
+      "locator": "synthetic-fixture:CAL-BORDERLINE",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "CAL-STRONG",
+      "kind": "CALIBRATION_RECORD",
+      "purpose": "calibration",
+      "locator": "synthetic-fixture:CAL-STRONG",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "NOT_CHECKED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "Synthetic receipt exercise only",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    }
+  ],
+  "claim_scope": "FINDINGS",
+  "no_findings_reason": null,
+  "claims": [],
+  "actions": [],
+  "checks": [
+    {
+      "name": "authority",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-authority"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "privacy",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-privacy"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "fidelity",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-fidelity"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "provenance",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-provenance"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "usability",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-usability"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "reproducibility",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-reproducibility"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "identity",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-identity"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "gct",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-gct"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "measurement",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-measurement"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "visual_function",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-visual_function"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "actions",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-actions"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "links_access",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-links_access"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "unknowns",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-unknowns"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "corrections",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-corrections"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "budget",
+      "required": true,
+      "status": "UNKNOWN",
+      "evidence_ids": [
+        "E-budget"
+      ],
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "links": [],
+  "defects": [],
+  "authority": {
+    "verified": false,
+    "current_holds": [],
+    "record": "synthetic-authority",
+    "owner_function": "content",
+    "publisher": "synthetic-existing-publisher"
+  },
+  "quality": {
+    "weights": [
+      25,
+      25,
+      20,
+      15,
+      10,
+      5
+    ],
+    "ratings": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "rationales_and_evidence": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "calibration": {
+      "status": "NOT_RUN",
+      "receipt_id": null,
+      "anchor_ids": []
+    },
+    "total": null
+  },
+  "independent_review": {
+    "reviewer_id": null,
+    "fresh_context": false,
+    "status": "UNKNOWN",
+    "candidate_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "artifacts": [],
+    "receipt_id": "E-reproducibility"
+  },
+  "batch": null,
+  "timing": {
+    "brief_demo": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "draft": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "qa": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "human": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "agent_runtime": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "waits": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "retries_rework": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    },
+    "actual_cost": {
+      "value": null,
+      "unit": "UNKNOWN",
+      "state": "UNKNOWN",
+      "method": null,
+      "evidence_id": null
+    }
+  },
+  "release": {
+    "attempted": false,
+    "candidate_sha256": null,
+    "observed_harm": false,
+    "readback": []
+  },
+  "closure_receipts": []
+}

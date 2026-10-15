@@ -24,21 +24,32 @@ def main():
     p.add_argument("--native-preimage", required=True)
     p.add_argument("--public-baseline", required=True)
     p.add_argument("--addition", required=True)
+    p.add_argument("--replace-existing-block", help="Exact reviewed native Custom HTML block; never a rendered snapshot")
     p.add_argument("--output-dir", required=True)
     a=p.parse_args()
     current=json.loads(Path(a.native_preimage).read_text())
     baseline=json.loads(Path(a.public_baseline).read_text())
     for k in ["id", "slug", "status", "author", "modified_gmt", "link"]:
         require(current[k] == baseline[k], "Source drift in "+k)
+    for k in ["title", "date", "categories", "tags", "featured_media", "excerpt"]:
+        if k in current or k in baseline:
+            require(current.get(k) == baseline.get(k), "Metadata drift in "+k)
     require(current["id"] == 112500 and current["slug"] == "how-we-audit" and current["status"] == "publish", "Wrong post identity or publication state")
     require(current["link"] == "https://blitzmetrics.com/how-we-audit/", "Wrong destination")
     require(current["content"]["rendered"] == baseline["content"]["rendered"], "Rendered source drift")
     raw=current["content"]["raw"]
     addition=Path(a.addition).read_text()
     marker='id="universal-audit-quality-gate"'
-    require(marker not in raw, "Addition already exists; reconcile instead of appending")
     require(addition.count(marker) == 1, "Addition marker missing or duplicated")
-    candidate=raw+"\n"+addition
+    if a.replace_existing_block:
+        previous=Path(a.replace_existing_block).read_text()
+        require(previous.startswith("<!-- wp:html -->") and previous.rstrip().endswith("<!-- /wp:html -->"), "Replacement preimage must be a complete native Custom HTML block")
+        require(previous.count(marker) == 1 and raw.count(marker) == 1, "Existing marker missing or duplicated")
+        require(raw.count(previous) == 1, "Reviewed native block drifted or duplicated")
+        candidate=raw.replace(previous, addition, 1)
+    else:
+        require(marker not in raw, "Addition already exists; reconcile instead of appending")
+        candidate=raw+"\n"+addition
     out=Path(a.output_dir);out.mkdir(parents=True,exist_ok=True)
     require(not any((out/f).exists() for f in ["content-only-payload.json","rollback-payload.json","guard.json"]), "Output exists; inspect rather than overwrite")
     with (out/"content-only-payload.json").open("x") as f: f.write(json.dumps({"content":candidate},ensure_ascii=False))

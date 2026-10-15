@@ -1,0 +1,23 @@
+// Offline article build. Set MARKED_MODULE to an installed Marked ESM module.
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const here=path.dirname(fileURLToPath(import.meta.url));
+if(!process.env.MARKED_MODULE) throw Error('Set MARKED_MODULE to an installed Marked ESM entrypoint');
+const {marked}=await import(pathToFileURL(process.env.MARKED_MODULE).href);
+const markdown=await fs.readFile(path.join(here,'tier-contracts.md'),'utf8');
+const flow=await fs.readFile(path.join(here,'tier-flow.html'),'utf8');
+const parts=markdown.split(/```mermaid[\s\S]*?```/);
+if(parts.length!==2)throw Error('Expected one workflow diagram');
+const body=marked.parse(parts[0])+flow+marked.parse(parts[1]);
+const css='.uaqg-tier{font:17px/1.6 system-ui,sans-serif;color:#182f38;overflow-wrap:anywhere;max-width:100%}.uaqg-tier *{box-sizing:border-box}.uaqg-tier h1{font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.1;margin:12px 0}.uaqg-tier h2,.uaqg-tier h3,.uaqg-tier h4{line-height:1.25;margin-top:1.7em}.uaqg-tier p{max-width:85ch}.uaqg-tier a{color:#075c81;text-decoration:underline}.uaqg-tier a:focus{outline:3px solid #bd6612;outline-offset:3px}.uaqg-tier figure{margin:20px 0;padding:18px;background:#fff;border:1px solid #b3c9c4}.uaqg-tier svg{display:block;width:100%;height:auto}.uaqg-tier figcaption{font-size:15px;color:#435965}.uaqg-tier .mobile-flow,.uaqg-tier .mobile-repair{display:none}.uaqg-tier table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse}.uaqg-tier th,.uaqg-tier td{padding:12px;vertical-align:top;text-align:left;border:1px solid #b3c9c4;min-width:140px}.uaqg-tier th{background:#e6f0eb}.uaqg-tier pre{white-space:pre-wrap;background:#edf2ef;padding:16px}.uaqg-tier code{overflow-wrap:anywhere}.uaqg-tier .mobile-flow li{list-style:none;background:#e6f0eb;border:1px solid #12665d;border-radius:6px;padding:10px 14px;margin:0;font-weight:650}.uaqg-tier .mobile-flow li+li:before{content:"↓";display:block;margin:-5px 0 5px;color:#12665d}@media(max-width:700px){.uaqg-tier figure svg{display:none}.uaqg-tier .mobile-flow{display:grid;gap:8px;padding:0}.uaqg-tier .mobile-repair{display:block;background:#fff3db;padding:12px}.uaqg-tier figure{padding:12px}.uaqg-tier td,.uaqg-tier th{padding:10px}}';
+const preview='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UAQG tier annex candidate</title><style>body{margin:0;background:#f6f4ee}main{max-width:1120px;margin:auto;padding:24px}@media(max-width:700px){main{padding:18px}}'+css+'</style></head><body><main class="uaqg-tier">'+body+'</main></body></html>\n';
+await fs.writeFile(path.join(here,'tier-annex-preview.html'),preview);
+const base=execFileSync('git',['show','dcc098bf7d8aa96ff627e4998bed6e406db891d8:docs/audit-quality/how-we-audit-addition.html'],{cwd:here,encoding:'utf8'});
+const publicBody=body.replace(/<h1>/g,'<h3>').replace(/<\/h1>/g,'</h3>').replace(/<h2>/g,'<h4>').replace(/<\/h2>/g,'</h4>').replace(/href="(?!https?:|#)([^\"]+)"/g,(_m,ref)=>'href="'+new URL(ref,'https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/audit-quality/').href+'"');
+const annex='<section id="audit-engagement-tiers" class="uaqg-tier"><style>'+css+'</style>'+publicBody+'</section>\n';
+if(base.split('</section>').length!==2)throw Error('Baseline section changed; reconcile before rebuilding');
+const result=base.replace('Version UAQG 1.0.0 · 15 October 2026','Version UAQG 1.1.0 · 16 October 2026').replace('Apply UAQG 1.0.0 to','Apply UAQG 1.1.0 with a pinned tier contract to').replace(/\n<\/section>/, '\n'+annex+'</section>');
+await fs.writeFile(path.join(here,'how-we-audit-addition.html'),result);
+console.log(JSON.stringify({status:'CANDIDATE_BUILT_NOT_PUBLISHED',marked_version:'Record the installed parser version in build receipt',outputs:['tier-annex-preview.html','how-we-audit-addition.html']}));

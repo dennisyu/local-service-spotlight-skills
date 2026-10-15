@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "standard": "UAQG-1.1.0",
+  "required_checks": {
+    "authority": "AUTHORITY",
+    "privacy": "PRIVACY_REVIEW",
+    "fidelity": "FIDELITY_CROSSWALK",
+    "provenance": "SOURCE_LEDGER",
+    "usability": "RENDER_REVIEW",
+    "reproducibility": "INDEPENDENT_REVIEW",
+    "identity": "IDENTITY_MAPPING",
+    "gct": "GCT_CROSSWALK",
+    "measurement": "METRIC_RECONCILIATION",
+    "visual_function": "VISUAL_MANIFEST",
+    "actions": "ACTION_REGISTER",
+    "links_access": "LINK_RECEIPT",
+    "unknowns": "SOURCE_LEDGER",
+    "corrections": "CORRECTION_CROSSWALK",
+    "budget": "BUDGET_RECORD"
+  },
+  "profiles": {
+    "paid-full": {
+      "version": "1.0.0",
+      "independent_review": "ALL_REQUIRED_ARTIFACTS",
+      "accepted_label": "FULL_AUDIT"
+    },
+    "free-diagnostic": {
+      "version": "1.0.0",
+      "independent_review": "ALL_REQUIRED_ARTIFACTS",
+      "accepted_label": "BOUNDED_DIAGNOSTIC"
+    },
+    "bulk-screening": {
+      "version": "1.0.0",
+      "independent_review": "FLAGGED_AND_RANDOM_SAMPLE",
+      "accepted_label": null
+    }
+  },
+  "quality_weights": [
+    25,
+    25,
+    20,
+    15,
+    10,
+    5
+  ],
+  "quality_threshold": 85,
+  "calibration_required": true
+}
