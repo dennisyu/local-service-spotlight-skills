@@ -7,6 +7,7 @@ HTML as the editable preimage. Reconcile source drift before trying again.
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
 
@@ -33,10 +34,22 @@ def main():
         require(current[k] == baseline[k], "Source drift in "+k)
     for k in ["title", "date", "categories", "tags", "featured_media", "excerpt"]:
         if k in current or k in baseline:
-            require(current.get(k) == baseline.get(k), "Metadata drift in "+k)
+            native_value=current.get(k)
+            public_value=baseline.get(k)
+            if k in ["title", "excerpt"]:
+                for value in [native_value,public_value]:
+                    require(isinstance(value,str) or (isinstance(value,dict) and isinstance(value.get("rendered"),str)), "Missing rendered metadata in "+k)
+                native_value=native_value["rendered"] if isinstance(native_value,dict) else native_value
+                public_value=public_value["rendered"] if isinstance(public_value,dict) else public_value
+            require(native_value == public_value, "Metadata drift in "+k)
     require(current["id"] == 112500 and current["slug"] == "how-we-audit" and current["status"] == "publish", "Wrong post identity or publication state")
     require(current["link"] == "https://blitzmetrics.com/how-we-audit/", "Wrong destination")
-    require(current["content"]["rendered"] == baseline["content"]["rendered"], "Rendered source drift")
+    # WordPress adds this loading hint only in the anonymous view. Normalize
+    # that exact image attribute; source, text and all other markup stay guarded.
+    def comparable_rendered(value):
+        require(isinstance(value,str), "Missing rendered content")
+        return re.sub(r'(<img\b[^>]*?) fetchpriority="high"(?=[ >])', r"\1", value)
+    require(comparable_rendered(current["content"]["rendered"]) == comparable_rendered(baseline["content"]["rendered"]), "Rendered source drift")
     raw=current["content"]["raw"]
     addition=Path(a.addition).read_text()
     marker='id="universal-audit-quality-gate"'
@@ -54,7 +67,7 @@ def main():
     require(not any((out/f).exists() for f in ["content-only-payload.json","rollback-payload.json","guard.json"]), "Output exists; inspect rather than overwrite")
     with (out/"content-only-payload.json").open("x") as f: f.write(json.dumps({"content":candidate},ensure_ascii=False))
     with (out/"rollback-payload.json").open("x") as f: f.write(json.dumps({"content":raw},ensure_ascii=False))
-    guard={"post_id":112500,"preimage_sha256":sha(raw),"candidate_sha256":sha(candidate),"addition_sha256":sha(addition),"metadata":{k:current[k] for k in ["slug","status","author","modified_gmt","title","link"]},"write":"NOT_ATTEMPTED","next":"Publisher must re-read exact raw source/metadata immediately before content-only write; stop on drift. Require rendered-design acceptance and all applicable authority gates first. Rollback only if current content/metadata match this deployment; preserve later edits."}
+    guard={"post_id":112500,"preimage_sha256":sha(raw),"candidate_sha256":sha(candidate),"addition_sha256":sha(addition),"metadata":{k:current[k] for k in ["slug","status","author","modified_gmt","title","link","date","categories","tags","featured_media","excerpt"] if k in current},"write":"NOT_ATTEMPTED","next":"Publisher must re-read exact raw source/metadata immediately before content-only write; stop on drift. Require rendered-design acceptance and all applicable authority gates first. Rollback only if current content/metadata match this deployment; preserve later edits."}
     with (out/"guard.json").open("x") as f: f.write(json.dumps(guard,indent=2))
     print(json.dumps({"status":"PAYLOAD_PREPARED_NOT_PUBLISHED","preimage_sha256":sha(raw),"candidate_sha256":sha(candidate)}))
 

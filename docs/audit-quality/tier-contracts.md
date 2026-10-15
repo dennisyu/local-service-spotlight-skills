@@ -1,7 +1,8 @@
 # Engagement tiers and capability routing
 
 Proposed annex UAQG-TIERS 1.0.0 · 16 October 2026 · part of proposed UAQG 1.1.0.
-Status: candidate for independent review; not published, adopted or calibrated.
+Proposed operational profile: publication does not establish calibration, installed
+adoption or an accepted client audit.
 
 An audit should give its reader a supported decision and an action they can check.
 Agree the coverage and delivery format before choosing tools. The three products
@@ -46,9 +47,11 @@ and the [20-page blueprint](../../skills/personal-brand-audit/references/20-page
 are the available public contracts at baseline commit
 `dcc098bf7d8aa96ff627e4998bed6e406db891d8`. The live method describes Brand
 Authority v1.1 while this historical rubric file is v1.0. Pin what was actually
-used; do not relabel old work or compare cross-version scores as a trend. The
-older handoff's `audit-run-contract.md` path is absent from that public tree;
-locate a current authorized source before claiming that contract was read.
+used; do not relabel old work or compare cross-version scores as a trend. The [shared run contract pinned by the live method](https://github.com/dennisyu/local-service-spotlight-skills/blob/a9e7d6690c6cf0653d3b8e39884175a3a1e99819/skills/personal-brand-audit/references/audit-run-contract.md)
+is AUDIT-METHOD-2026.10.02 at commit `a9e7d6690c6cf0653d3b8e39884175a3a1e99819`.
+That exact pinned file was read for this release; it is not present in the
+UAQG1.0.0 baseline main tree. Keep its historical revision explicit rather than
+claiming it is a new specialist scoring version.
 
 ## Make the reasoning and action inspectable
 
@@ -141,6 +144,10 @@ Use [the JSON contract](tier-receipt.schema.json),
 [examples](tier-examples.md). Mechanical checks validate asserted receipts, not
 source truth, reviewer independence or rendered quality. Keep receipts private
 when they identify clients, contacts, private sources or operational access.
+
+## Test the method against public examples
+
+Start with the existing [business-strategy audit exercise](https://blitzmetrics.com/how-we-audit/#business-strategy-audit-starter) and its [downloadable synthetic practice kit](https://blitzmetrics.com/wp-content/uploads/2026/10/wispr-audit-starter-audit-starter-1.0.0.zip). The kit supplies inputs, correction examples and expected outputs so another operator can reproduce its bounded checks. Compare the reasoning and proof presentation in the public [George Leith personal-brand audit demonstration](https://blitzmetrics.com/george-leith-personal-brand-audit/). Pin each example’s actual exam/version and evidence window; it is teaching material, not evidence that the example passed this later quality profile. Then apply the [tier receipt tests](tier-examples.md) to a clearly labeled synthetic copy. Do not invent current business measurements or redistribute a private client benchmark.
 
 ## Benchmark patterns, with their limitations
 

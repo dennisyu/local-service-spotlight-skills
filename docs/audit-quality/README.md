@@ -1,6 +1,6 @@
 # Universal Audit Quality Gate
 
-Version UAQG 1.1.0 · 16 October 2026 · Candidate for independent review; not published
+Version UAQG 1.1.0 · 16 October 2026 · Proposed operational profile; calibration required
 
 The published baseline is [UAQG1.0.0](https://github.com/dennisyu/local-service-spotlight-skills/blob/dcc098bf7d8aa96ff627e4998bed6e406db891d8/docs/audit-quality/README.md).
 This compatible addition proposes [engagement tiers and capability routing](tier-contracts.md),

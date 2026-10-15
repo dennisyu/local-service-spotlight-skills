@@ -259,7 +259,8 @@ save_complete_patch_findings_and_next_owner_action(); return HOLD
 
 <section id="audit-engagement-tiers" class="uaqg-tier"><style>.uaqg-tier{font:17px/1.6 system-ui,sans-serif;color:#182f38;overflow-wrap:anywhere;max-width:100%}.uaqg-tier *{box-sizing:border-box}.uaqg-tier h1{font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.1;margin:12px 0}.uaqg-tier h2,.uaqg-tier h3,.uaqg-tier h4{line-height:1.25;margin-top:1.7em}.uaqg-tier p{max-width:85ch}.uaqg-tier a{color:#075c81;text-decoration:underline}.uaqg-tier a:focus{outline:3px solid #bd6612;outline-offset:3px}.uaqg-tier figure{margin:20px 0;padding:18px;background:#fff;border:1px solid #b3c9c4}.uaqg-tier svg{display:block;width:100%;height:auto}.uaqg-tier figcaption{font-size:15px;color:#435965}.uaqg-tier .mobile-flow,.uaqg-tier .mobile-repair{display:none}.uaqg-tier table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse}.uaqg-tier th,.uaqg-tier td{padding:12px;vertical-align:top;text-align:left;border:1px solid #b3c9c4;min-width:140px}.uaqg-tier th{background:#e6f0eb}.uaqg-tier pre{white-space:pre-wrap;background:#edf2ef;padding:16px}.uaqg-tier code{overflow-wrap:anywhere}.uaqg-tier .mobile-flow li{list-style:none;background:#e6f0eb;border:1px solid #12665d;border-radius:6px;padding:10px 14px;margin:0;font-weight:650}.uaqg-tier .mobile-flow li+li:before{content:"↓";display:block;margin:-5px 0 5px;color:#12665d}@media(max-width:700px){.uaqg-tier figure svg{display:none}.uaqg-tier .mobile-flow{display:grid;gap:8px;padding:0}.uaqg-tier .mobile-repair{display:block;background:#fff3db;padding:12px}.uaqg-tier figure{padding:12px}.uaqg-tier td,.uaqg-tier th{padding:10px}}.uaqg-tier .responsive-table{max-width:100%}.uaqg-tier .responsive-table table{display:table;width:100%;overflow:visible}.uaqg-tier .cell-label{display:none}@media(max-width:700px){.uaqg-tier .responsive-table table,.uaqg-tier .responsive-table tbody,.uaqg-tier .responsive-table tr,.uaqg-tier .responsive-table td{display:block;width:100%;min-width:0}.uaqg-tier .responsive-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.uaqg-tier .responsive-table tr{border:1px solid #b3c9c4;margin-bottom:16px;background:#fff}.uaqg-tier .responsive-table td{border:0;border-bottom:1px solid #d9e4df;padding:12px}.uaqg-tier .cell-label{display:block;font-weight:700;color:#12665d;margin-bottom:5px}}</style><h3>Engagement tiers and capability routing</h3>
 <p>Proposed annex UAQG-TIERS 1.0.0 · 16 October 2026 · part of proposed UAQG 1.1.0.
-Status: candidate for independent review; not published, adopted or calibrated.</p>
+Proposed operational profile: publication does not establish calibration, installed
+adoption or an accepted client audit.</p>
 <p>An audit should give its reader a supported decision and an action they can check.
 Agree the coverage and delivery format before choosing tools. The three products
 below use the <a href="https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/audit-quality/README.md">same quality gates</a>; a smaller allowance changes scope,
@@ -309,9 +310,11 @@ and the <a href="https://github.com/dennisyu/local-service-spotlight-skills/blob
 are the available public contracts at baseline commit
 <code>dcc098bf7d8aa96ff627e4998bed6e406db891d8</code>. The live method describes Brand
 Authority v1.1 while this historical rubric file is v1.0. Pin what was actually
-used; do not relabel old work or compare cross-version scores as a trend. The
-older handoff&#39;s <code>audit-run-contract.md</code> path is absent from that public tree;
-locate a current authorized source before claiming that contract was read.</p>
+used; do not relabel old work or compare cross-version scores as a trend. The <a href="https://github.com/dennisyu/local-service-spotlight-skills/blob/a9e7d6690c6cf0653d3b8e39884175a3a1e99819/skills/personal-brand-audit/references/audit-run-contract.md">shared run contract pinned by the live method</a>
+is AUDIT-METHOD-2026.10.02 at commit <code>a9e7d6690c6cf0653d3b8e39884175a3a1e99819</code>.
+That exact pinned file was read for this release; it is not present in the
+UAQG1.0.0 baseline main tree. Keep its historical revision explicit rather than
+claiming it is a new specialist scoring version.</p>
 <h4>Make the reasoning and action inspectable</h4>
 <p>Every material finding records evidence IDs and exact locations → interpretation
 and uncertainty → consequence for this goal and buyer → proposed action → test.
@@ -417,6 +420,8 @@ lead to a diagnostic/full product needs a new explicit profile and exact review.
 <a href="https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/audit-quality/tier-examples.md">examples</a>. Mechanical checks validate asserted receipts, not
 source truth, reviewer independence or rendered quality. Keep receipts private
 when they identify clients, contacts, private sources or operational access.</p>
+<h4>Test the method against public examples</h4>
+<p>Start with the existing <a href="https://blitzmetrics.com/how-we-audit/#business-strategy-audit-starter">business-strategy audit exercise</a> and its <a href="https://blitzmetrics.com/wp-content/uploads/2026/10/wispr-audit-starter-audit-starter-1.0.0.zip">downloadable synthetic practice kit</a>. The kit supplies inputs, correction examples and expected outputs so another operator can reproduce its bounded checks. Compare the reasoning and proof presentation in the public <a href="https://blitzmetrics.com/george-leith-personal-brand-audit/">George Leith personal-brand audit demonstration</a>. Pin each example’s actual exam/version and evidence window; it is teaching material, not evidence that the example passed this later quality profile. Then apply the <a href="https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/audit-quality/tier-examples.md">tier receipt tests</a> to a clearly labeled synthetic copy. Do not invent current business measurements or redistribute a private client benchmark.</p>
 <h4>Benchmark patterns, with their limitations</h4>
 <p>The supplied 20-page founder/business audit is a strong design exemplar,
 not a certified pass or a new exam. Useful patterns: pages1–2 decision-led proof,
