@@ -1,6 +1,12 @@
 # Universal Audit Quality Gate
 
-Version UAQG 1.0.0 · 15 October 2026 · Publication candidate
+Version UAQG 1.1.0 · 16 October 2026 · Proposed operational profile; calibration required
+
+The published baseline is [UAQG1.0.0](https://github.com/dennisyu/local-service-spotlight-skills/blob/dcc098bf7d8aa96ff627e4998bed6e406db891d8/docs/audit-quality/README.md).
+This compatible addition proposes [engagement tiers and capability routing](tier-contracts.md),
+[product profiles](product-profiles.json), a [typed receipt contract](tier-receipt.schema.json)
+and [examples/tests](tier-examples.md). The six quality dimensions, weights,
+calibrated85 threshold and specialist exam contracts below remain unchanged.
 
 Use this standard to decide whether an audit is trustworthy enough to act on. It applies to content, documents, SEO, websites and operations. A technically valid file can still lose evidence, useful detail or visual explanation. Acceptance requires both hard gates and a calibrated quality score.
 
@@ -138,7 +144,7 @@ Keep public receipts sanitized and detailed evidence in authorized private stora
 
 ## 9. Copyable agent brief
 
-> Apply UAQG 1.0.0 to [artifact/process] for [reader and decision]. Read [approved source locations] and [current owner/hold record]. Baseline: [revision/hash]. Specialist exam: [name/version or unscored]. Scope/window: [bounds]. Allowed fixes: [scope]; publisher: [existing function]; private evidence destination: [location]. Preserve valid detail and visual explanation. Build a source/claim ledger and baseline fidelity crosswalk; label FACT/DECIDED/PROPOSED/UNKNOWN separately from observation state. Fix authorized defects, propagate corrections to all dependent outputs, and retest. Use the pinned six-dimension profile; missing evidence stays null. Obtain required fresh-context review of the exact final revision. Deliver only through the accepted owner and route. For a public web edition verify anonymous body/canonical/mobile/links/downloads; for private delivery verify authorized recipient access and final bytes without making the artifact public. Return the versioned receipt, unresolved defects, exact blocker and next action. Do not invent authority, sources, calibration, independent review or live publication.
+> Apply UAQG 1.1.0 with a pinned tier contract to [artifact/process] for [reader and decision]. Read [approved source locations] and [current owner/hold record]. Baseline: [revision/hash]. Specialist exam: [name/version or unscored]. Scope/window: [bounds]. Allowed fixes: [scope]; publisher: [existing function]; private evidence destination: [location]. Preserve valid detail and visual explanation. Build a source/claim ledger and baseline fidelity crosswalk; label FACT/DECIDED/PROPOSED/UNKNOWN separately from observation state. Fix authorized defects, propagate corrections to all dependent outputs, and retest. Use the pinned six-dimension profile; missing evidence stays null. Obtain required fresh-context review of the exact final revision. Deliver only through the accepted owner and route. For a public web edition verify anonymous body/canonical/mobile/links/downloads; for private delivery verify authorized recipient access and final bytes without making the artifact public. Return the versioned receipt, unresolved defects, exact blocker and next action. Do not invent authority, sources, calibration, independent review or live publication.
 
 ## 10. Executable logic (pseudocode)
 
