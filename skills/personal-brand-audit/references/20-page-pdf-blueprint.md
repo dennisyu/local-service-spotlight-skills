@@ -45,7 +45,7 @@ substantive report content only into a companion file fails acceptance.
 | 14 | Capture and topic plan | Evidence-linked topic wheel plus upcoming moments, customer questions, and available people/assets | What should be recorded next instead of generated from nothing? |
 | 15 | Entity home and structured-data plan | Canonical Person/entity graph with verified `@id`, `sameAs`, company relationship, broken/conflicting nodes, and page ownership | What entity plumbing must be corrected or built? |
 | 16 | Knowledge Panel, search, and AI visibility | Name SERP and peer shelf, known-item versus discovery GEO scorecard by live engine, citation domains, panel state, namesake risk, and untested lanes | Do search and models identify and recommend the subject for the buy box? |
-| 17 | Installable agent operating plan | Agent architecture with each recommended skill, input, output, cadence, human gate, handoff, and receipt; QR and printed link to `https://localservicespotlight.com/install/` | Which agents should be installed and what will each own? |
+| 17 | Installable agent operating plan | Agent architecture with each recommended skill, input, output, cadence, human gate, handoff, and receipt; linked QR and printed link to `https://localservicespotlight.com/install/`, plus a clickable install button and a copy-paste starter prompt for readers on a computer | Which agents should be installed and what will each own? |
 | 18 | Dated 30/60/90-day plan | Timeline or swimlane by durable owning function; include first-seven-day moves and every action-plan field | What happens first, who owns it, and what proves completion? |
 | 19 | Risks, contradictions, and UNKNOWN/HOLD | Conflict ledger, privacy/consent and regulated-claim risks, decisions only the subject can make, and current work/delivery/install states | What cannot safely proceed yet? |
 | 20 | Method, sources, and acceptance receipt | Audit/version, source classes, evidence-workbook and correction path, acceptance-receipt locator, link/QR/page-count/visual QA states, state summary, and next decision; record the final artifact hash in the companion receipt after the PDF is closed | Can a stranger reproduce the method and can the recipient accept the exact artifact? |
@@ -77,3 +77,21 @@ must be mapped in the coverage crosswalk:
 The QR is not proof of installation. Print the full HTTPS URL next to it, decode the rendered
 QR, fetch the destination anonymously, and record the status and final URL in the acceptance
 receipt.
+
+The QR serves phone and print readers. Many readers open the PDF on the computer they will
+implement from, so the panel also carries a one-click path (rule
+`pdf-deliverables-work-on-a-computer`):
+
+- a large clickable button that names the action and shows the destination, for example
+  "Install the agents → localservicespotlight.com/install/", linked to the full `https://` URL;
+- the QR image itself linked to the same URL;
+- a copy-paste starter prompt as selectable text, to paste into a new AI task with the PDF
+  attached. It names this audit's own first-week action IDs from page 18 and keeps every
+  gate, for example: "Use the Local Service Spotlight skills (lss-everything). Read the
+  attached audit and run the first-week actions on page 18 (<IDs>) one at a time: draft each
+  change, list the access you need (never ask for a password in chat), and wait for my
+  approval before anything is published, sent or paid for. Log each step by action ID."
+
+Check the rendered PDF: the button and the QR image both carry a link annotation to the decoded
+QR URL, the prompt extracts as text, and every action ID it names exists on page 18 of the same
+PDF.
