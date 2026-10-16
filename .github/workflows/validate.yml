@@ -1,0 +1,40 @@
+name: Validate skills marketplace
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check shared house rules are current in every skill
+        run: python3 scripts/sync_shared_rules.py --check
+      - name: Prove every house rule's checks actually fire
+        run: python3 scripts/fleet_check.py --self-test
+      - name: Validate repository structure and references
+        run: python3 scripts/validate_marketplace.py
+      - name: Run converter tests
+        run: python3 -m unittest discover -s tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install browser test runtime
+        run: |
+          # Hosted runner's Azure HTTP mirror can stall every apt retry. Use the
+          # official HTTPS Ubuntu archive; preserve dependency and browser tests.
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Prove rendered first-screen gates on real browser fixtures
+        run: node --test tests/rendered_visual_check.test.mjs
+      - name: Run Claude's marketplace validator
+        run: npx -y @anthropic-ai/claude-code@latest plugin validate .
