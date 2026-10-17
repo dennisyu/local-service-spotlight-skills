@@ -753,6 +753,33 @@
         ],
         "additionalProperties": false
       }
+    },
+    "bundle_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "sha256"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
     }
   },
   "required": [
