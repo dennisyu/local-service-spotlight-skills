@@ -387,8 +387,12 @@ def cold_read(text):
     agent that has never seen the job reads the runbook alone and counts the questions it
     would have to ask; zero means handover-ready. Tracked, never an error: a machine cannot
     judge whether a runbook is clear — only a cold reader can."""
-    hits = [(m.group(1), int(m.group(2))) for m in COLD_READ.finditer(COMMENT.sub("", text or ""))]
-    return max(hits) if hits else None
+    hits = [(m.group(1), k, int(m.group(2)))
+            for k, m in enumerate(COLD_READ.finditer(COMMENT.sub("", text or "")))]
+    if not hits:
+        return None
+    date, _, count = max(hits)  # newest date; on a same-day tie, the later line in the file
+    return date, count
 
 
 def check_runbook(path):
@@ -458,6 +462,13 @@ def _check_claude_scheduler(root, today, add, status):
             uncovered += 1
             add("error", "claude", "runbooks/claude/INDEX.md",
                 f"enabled scheduled task {tid} ('{trig.get('name', '')}') has no runbook file")
+    for trig in snap.get("triggers", []):
+        n = trig.get("redactions") or 0
+        if n:
+            add("error", "claude", rel,
+                f"scheduled task {trig.get('id', '')} ('{trig.get('name', '')}') holds {n} credential(s) in "
+                f"its live prompt (redacted in the mirror) — an interactive Claude session moves it to a "
+                f"secret store, references it by name, and re-runs the export")
     if "claude" in status:
         status["claude"]["scheduler"] = {
             "generated_at": snap.get("generated_at"),
