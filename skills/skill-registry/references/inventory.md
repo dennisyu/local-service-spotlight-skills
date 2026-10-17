@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 38 in this candidate; validator-derived from the manifest |
+| Skills in `lss-everything` | 39 in this candidate; validator-derived from the manifest |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -31,17 +31,21 @@ execution authority.
 not proven Installed. It locally audits owner-authorized exports; it does not
 make private relationship data public or guarantee an introduction.
 
+`agent-team-playbook` is Available after merge only, not Installed. It packages how a
+multi-model agent team shares one GitHub record, keeps a runbook for every recurring job,
+files receipts, and enforces it with a checker. It grants no repository or scheduler access.
+
 ## Available bundles
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 38 |
+| `lss-everything` | 39 |
 | `authority-and-reputation` | 9 |
 | `content-engine` | 7 |
 | `client-operations` | 13 |
-| `quality-and-standards` | 9 |
+| `quality-and-standards` | 10 |
 
-The four topical bundles partition the 38-skill master: every skill appears in exactly one
+The four topical bundles partition the 39-skill master: every skill appears in exactly one
 topical bundle. `lss-everything` remains the one complete install.
 
 ## Per-account installation register
