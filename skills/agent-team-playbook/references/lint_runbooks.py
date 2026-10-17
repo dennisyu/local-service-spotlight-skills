@@ -92,6 +92,7 @@ PLACEHOLDER = re.compile(
     r"^\s*(?:[-*]\s*)?(?:(?:todo|tbd)\b.*|to\s+write|fill\s+(?:this\s+)?in|\.{3}|…|<[^<>]+>)\s*[.:]?\s*$",
     re.I)
 
+COLD_READ = re.compile(r"^Cold read:\s*(20\d{2}-\d{2}-\d{2})\b.*?(\d+)\s+open question", re.M | re.I)
 CARD = re.compile(r"(?<![0-9])[0-9](?:[ -]?[0-9]){12,18}(?![0-9])")
 
 
@@ -303,7 +304,7 @@ def check(root, today):
         st = status.setdefault(agent, {"name": expected.get(agent, {}).get("name", agent),
                                        "expected": agent in expected, "registry": False,
                                        "rows": 0, "ok": 0, "to_write": 0, "failing": 0,
-                                       "retired": 0, "errors": 0})
+                                       "retired": 0, "errors": 0, "cold_read": 0, "handover_ready": 0})
         adir = rb_root / agent
         index = adir / "INDEX.md"
         if not index.is_file():
@@ -357,6 +358,10 @@ def check(root, today):
                         add("error", agent, rel, p)
                 else:
                     st["ok"] += 1
+                cr = cold_read(all_runbook_text[rel])
+                if cr is not None:
+                    st["cold_read"] += 1
+                    st["handover_ready"] += 1 if cr[1] == 0 else 0
         if adir.is_dir():
             for f in sorted(adir.glob("*.md")):
                 rel = f"runbooks/{agent}/{f.name}"
@@ -375,6 +380,15 @@ def check(root, today):
         if f.severity == "error" and f.agent in status:
             status[f.agent]["errors"] += 1
     return findings, status, activity
+
+
+def cold_read(text):
+    """(date, open_questions) from the newest 'Cold read:' line, or None. An independent
+    agent that has never seen the job reads the runbook alone and counts the questions it
+    would have to ask; zero means handover-ready. Tracked, never an error: a machine cannot
+    judge whether a runbook is clear — only a cold reader can."""
+    hits = [(m.group(1), int(m.group(2))) for m in COLD_READ.finditer(COMMENT.sub("", text or ""))]
+    return max(hits) if hits else None
 
 
 def check_runbook(path):
@@ -521,14 +535,15 @@ def render_status(findings, status, activity, today):
     out.append("")
     out.append("Standard: `runbooks/README.md`. Registries due 2026-10-19; runbooks due 2026-10-24.")
     out.append("")
-    out.append("| Agent | Task list | Tasks | Runbooks passing | To write | Failing | No runbook needed | Run notes, last 14 days |")
-    out.append("|---|---|---|---|---|---|---|---|")
+    out.append("| Agent | Task list | Tasks | Runbooks passing | Handover-ready (cold read, 0 questions) | To write | Failing | No runbook needed | Run notes, last 14 days |")
+    out.append("|---|---|---|---|---|---|---|---|---|")
     for agent in sorted(status, key=lambda a: (not status[a]["expected"], a)):
         s = status[agent]
         notes = s.get("notes") or activity.get(agent)
         note_txt = f"{notes['count']} (last {notes['last'].isoformat()})" if notes else "0"
         reg = "yes" if s["registry"] else "**missing**"
-        out.append(f"| {s['name']} (`runbooks/{agent}/`) | {reg} | {s['rows']} | {s['ok']} | "
+        ready = f"{s['handover_ready']} of {s['cold_read']} cold-read" if s["cold_read"] else "none cold-read"
+        out.append(f"| {s['name']} (`runbooks/{agent}/`) | {reg} | {s['rows']} | {s['ok']} | {ready} | "
                    f"{s['to_write']} | {s['failing']} | {s['retired']} | {note_txt} |")
     sched = status.get("claude", {}).get("scheduler")
     if sched:

@@ -43,6 +43,20 @@ followed by `(to write)` while the deadline in `runbooks/agents.json` has not pa
 A section that only says `TODO`, `TBD`, `to write`, `...` or a `<placeholder>` counts as
 missing.
 
+### Handover-ready = a cold read with zero questions
+
+Passing the checker means the runbook is complete in shape, not that it is clear. Clarity is proved
+one way: an agent that has never seen the job — on a different model from the author — reads only
+the runbook and lists every question it would have to ask before running the job. Record the result
+as the last line of **Owner + history**:
+
+    Cold read: YYYY-MM-DD by <agent / model> — N open questions
+
+List the questions under **Failure modes** in a subsection `### Open questions before handover`.
+Zero questions means handover-ready. `runbooks/STATUS.md` counts handover-ready runbooks per agent.
+A cold read is never an error in CI — a machine cannot judge clarity — but a job is not handed to
+another agent until its runbook reads zero.
+
 ## The machine check
 
 `python3 tools/lint_runbooks.py` runs on every push and once a day (a deadline can pass
