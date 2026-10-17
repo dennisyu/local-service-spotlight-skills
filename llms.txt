@@ -1,0 +1,17 @@
+# Local Service Spotlight Skills
+
+> Portable skill library that lets AI agents (Claude, Grok, and others) share one canonical source of instructions, standards, and operational memory, so they can pick up each other's work.
+
+## Docs
+
+- [README](README.md): installation, bundles, and what gets installed
+- [Agent collaboration playbook](docs/agent-collaboration-playbook.md): how to equip your agents to work together — start here for the process
+- [How knowledge propagates](HOW-KNOWLEDGE-PROPAGATES.md): how one markdown rule reaches every agent and every check
+- [Acceptance checks](ACCEPTANCE.md): receipts that prove installs, updates, and jobs actually ran
+- [Contributing](CONTRIBUTING.md): branch-and-PR workflow and CI validation
+
+## Key files
+
+- [AGENTS.md](AGENTS.md): the operating manual agents read first
+- [standards/](standards/): house rules, one file each, single source of truth
+- [skills/](skills/): the skills themselves, one folder per skill
