@@ -1,0 +1,45 @@
+{
+  "about": "One entry per topic that has a canonical master. Agents read this before any inventory or definitive-article run (standards/update-the-canonical-master-never-start-a-silo.md). Hand-maintained, not generated. Record unknowns as null with a gap note; never guess a URL or a location; never copy a master's counts here.",
+  "schema_version": 1,
+  "masters": [
+    {
+      "topic": "podcast-appearances",
+      "subject": "Dennis Yu",
+      "owner_function": "Research (authority-and-reputation)",
+      "source_of_truth": {
+        "url": "https://www.podchaser.com/creators/dennis-yu-107aRuUrqM",
+        "note": "Headline counts come from the Podchaser stat bar and nowhere else. Dedupe against this, not the hub table, which is partial."
+      },
+      "master_sheet": {
+        "url": null,
+        "gap": "The hub's method (Phase D) says every appearance is logged in a master sheet, but its location is not recorded anywhere an agent can find. Google Drive search failed (404) on 2026-10-17, so absence is not established. Do not create a new sheet; record the URL here once found."
+      },
+      "hub": {
+        "url": "https://blitzmetrics.com/dennis-yu-podcast-appearances/",
+        "role": "Credit-level inventory and published method (Phases A-H, update cadence)."
+      },
+      "skins": [
+        {
+          "url": "https://dennisyu.com/podcast-appearances/",
+          "role": "Scored highlight reel on the 30-point authority scale."
+        },
+        {
+          "url": "https://dennisyu.com/podcasters/",
+          "role": "Stories behind the hosts."
+        }
+      ],
+      "owning_skill": {
+        "name": "podcast-appearance-syndicator",
+        "in_this_repo": false,
+        "gap": "The hub names and offers a download of this skill, but no skill of that name is in this repository. Find the original before writing a second one."
+      },
+      "cadence": "As published on the hub: per episode, monthly reconcile, quarterly advanced sweep.",
+      "claim_id_pattern": "master:podcast-appearances:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-10-17",
+        "by": "Claude, Cowork session",
+        "what": "Opened the hub (headline states Podchaser verified 2026-08-08) and dennisyu.com/podcast-appearances (sources reviewed 2026-09-05). Podchaser itself not opened."
+      }
+    }
+  ]
+}
