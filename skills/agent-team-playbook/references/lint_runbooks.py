@@ -197,6 +197,13 @@ def resolve_cell(agent, cell):
 FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
 
 
+# Fleet-standard files that live beside runbooks but are not runbooks themselves.
+NON_RUNBOOK_FILES = {
+    "INDEX.md": "the agent's task registry",
+    "STANDING-FACTS-AUDIT.md": "the standing-facts self-audit (agent-notes/2026-10-17-happy-standing-facts-self-audit.md)",
+}
+
+
 def fence_states(lines):
     """Yield (line, inside_fence) honouring CommonMark fence length, so a prompt quoted
     inside a ```` fence can itself contain ``` blocks and '## ' lines without being
@@ -365,7 +372,7 @@ def check(root, today):
         if adir.is_dir():
             for f in sorted(adir.glob("*.md")):
                 rel = f"runbooks/{agent}/{f.name}"
-                if f.name == "INDEX.md" or rel in listed:
+                if f.name in NON_RUNBOOK_FILES or rel in listed:
                     continue
                 add("error", agent, rel, "runbook is not listed in INDEX.md")
                 all_runbook_text.setdefault(rel, f.read_text(encoding="utf-8", errors="replace"))
