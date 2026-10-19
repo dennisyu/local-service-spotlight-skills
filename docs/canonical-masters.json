@@ -8,15 +8,23 @@
       "owner_function": "Research (authority-and-reputation)",
       "source_of_truth": {
         "url": "https://www.podchaser.com/creators/dennis-yu-107aRuUrqM",
-        "note": "Headline counts come from the Podchaser stat bar and nowhere else. Dedupe against this, not the hub table, which is partial."
+        "note": "Headline counts come from the Podchaser stat bar and nowhere else. Dedupe against this and the master sheet, not a page's visible table, which may be partial."
       },
       "master_sheet": {
-        "url": null,
-        "gap": "The hub's method (Phase D) says every appearance is logged in a master sheet, but its location is not recorded anywhere an agent can find. Google Drive search failed (404) on 2026-10-17, so absence is not established. Do not create a new sheet; record the URL here once found."
+        "url": "https://docs.google.com/spreadsheets/d/1TxlIyau8EEpDL7_uPGPQ5hd3S8Jmk2NgJRzPVE6U8SU/edit",
+        "title": "Dennis Yu Podcast Master Inventory (canonical)",
+        "gap": "Found 2026-10-17 in My Drive (created 2026-10-14) but its contents were not readable that day: the Drive connector returned 404, the local Drive OAuth token was expired, and Chrome navigation timed out. Three dated copies sit beside it and must be folded in, not extended: 'links 2026-10-14' (1A5sn2V5QyQ2w_7Xowsf_NgCgqCwJ1Br1PA5818Qosq8), 'links 2026-10-15' (1OLItVhWUqQCLieC3SfqSENUbqU1ylhxcuqa5otVVG64), 'links 2026-10-15b' (12cDkUv9wamcZesme8irBYECOcPxLpuQqTjxASBQSc9w). The older scored sheet 'Dennis Yu Podcast Authority Tracker' (1ZBnNsKzI5KGiyqWOEhik6Z0pCc86fN1mAw6FvjH0Eck) feeds the dennisyu.com skin, not the credit list."
       },
       "hub": {
         "url": "https://blitzmetrics.com/dennis-yu-podcast-appearances/",
-        "role": "Credit-level inventory and published method (Phases A-H, update cadence)."
+        "wp_post_id": 103163,
+        "role": "Credit-level inventory. Owns the topic: oldest record, Podchaser-verified headline, internal links from across the network."
+      },
+      "method": {
+        "url": "https://blitzmetrics.com/podcast-appearance-inventory/",
+        "wp_post_id": 116825,
+        "role": "Task recipe: how to build a podcast appearance inventory. The hub links to it for the method.",
+        "gap": "The hub still carries its own inline copy of the method (Phases A-H). Reconcile the two into the recipe and leave a summary plus link on the hub."
       },
       "skins": [
         {
@@ -26,6 +34,26 @@
         {
           "url": "https://dennisyu.com/podcasters/",
           "role": "Stories behind the hosts."
+        }
+      ],
+      "competing_copies": [
+        {
+          "url": "https://blitzmetrics.com/dennis-yu-podcast-directory/",
+          "wp_post_id": 116829,
+          "found": "2026-10-17",
+          "disposition": "Second hub for the same topic, published 2026-10-09. Its rows are merged into the hub; this URL should 301 to the hub once the merge ships."
+        },
+        {
+          "url": null,
+          "wp_post_id": 103165,
+          "found": "2026-10-17",
+          "disposition": "Empty draft page that a separate agent session staged a script to publish at /podcast-appearances/ with different headline numbers. Do not publish; fold any unique rows into the hub instead."
+        },
+        {
+          "url": null,
+          "wp_post_id": 116824,
+          "found": "2026-10-17",
+          "disposition": "Draft duplicate of the method guide ('The BlitzMetrics Playbook'). Fold into 116825; do not publish."
         }
       ],
       "owning_skill": {
@@ -38,7 +66,7 @@
       "last_verified": {
         "date": "2026-10-17",
         "by": "Claude, Cowork session",
-        "what": "Opened the hub (headline states Podchaser verified 2026-08-08) and dennisyu.com/podcast-appearances (sources reviewed 2026-09-05). Podchaser itself not opened."
+        "what": "Read the hub, the directory page, the method guide and two drafts through the WordPress API; found the master sheet and its three copies in Drive by name only. Podchaser and the sheet contents not opened."
       }
     }
   ]
