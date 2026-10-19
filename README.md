@@ -183,3 +183,10 @@ and Claude marketplace format. Full instructions are in
 Do not rename an existing skill or bundle without a migration. Installed copies
 and scheduled prompts are keyed by name, so a rename can create a duplicate and
 silently break jobs that call the old name.
+
+## Make your agents work together like ours
+
+The process behind this repository — one canonical skill source, a private
+operations log, receipts, and a weekly recursive review — is written up in plain
+language in [docs/agent-collaboration-playbook.md](docs/agent-collaboration-playbook.md).
+Machines should start with [llms.txt](llms.txt).
