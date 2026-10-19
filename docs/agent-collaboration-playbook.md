@@ -46,3 +46,96 @@ A scheduled weekly review reads the operations log, scores entries against the d
 6. Schedule a recurring review that reads the log and feeds lessons back into the repository.
 
 Start small: one skill, one log, one rule. The loop compounds.
+
+## What has the review loop promoted lately?
+
+The weekly ops-log review promotes reusable lessons here, newest first.
+
+### 001 — Always-on instructions earn their slot (promoted 2026-10-19)
+
+Provenance: Dennis Yu, Claude Code session, 2026-10-17, asking for the
+fleet's account-preferences block to be trimmed:
+
+> please trim the block and help us be more efficient, even in ways that I
+> didn't think to ask. of course, effectiveness is more important than
+> efficiency, but we want both.
+
+The block was rewritten in place from 667 words (4,846 characters) to 373
+words (2,602 characters), with a 98-word short version derived for
+token-tight contexts. The rule that came out of the trim:
+
+- **A rule enters an always-on block only when it passes two tests:** it
+  applies to most conversations, and an agent would get it wrong without
+  being told. A rule that fails either test moves to the job prompt or the
+  skill that actually needs it, where it is read exactly when it matters.
+- **Every stale line is a tax paid on every run of every job.** An always-on
+  block is re-read by every seat on every task; length is a standing cost
+  and a standing dilution of the rules that do belong.
+- **Replace superseded rules in the same edit.** Never stack a "this
+  supersedes that" note on the old rule — two overlapping instructions make
+  every reader pick one, and they will not all pick the same one.
+- **One statement per rule.** Job-specific rules live in the job's own
+  prompt or skill, not in the global block.
+- **The canonical text lives in a repository and is edited there first**,
+  then copied to each surface. Never edit one surface ad hoc; the copies
+  drift and nobody can say which is current.
+- **Measure the block and record the delta** — words and characters before
+  and after each edit. What gets measured stays lean. Keep a short version
+  for token-tight contexts, and name which contexts get which version.
+
+**Propagation.** This is a universal agent-behaviour rule, so its final home
+is `standards/`, from where the sync stamps it into `AGENTS.md` and every
+distributed skill. The ready-to-use standard file is in the appendix below;
+promoting it is one file drop plus one sync command. Until that drop lands,
+this entry is the rule's canonical text.
+
+## Appendix — ready-to-scaffold standard for lesson 001
+
+Save as `standards/always-on-instructions-earn-their-slot.md`, then run
+`python3 scripts/fleet_check.py --self-test` and
+`python3 scripts/sync_shared_rules.py`. The sync regenerates `AGENTS.md` and
+the distributed `SKILL.md` copies; those regenerated files go in the same
+pull request as the new standard. Standard file text:
+
+```markdown
+---
+{
+  "title": "Always-on instructions earn their slot",
+  "severity": "error",
+  "captured": "2026-10-19",
+  "captured_from": "Dennis Yu, Claude Code session, 2026-10-17: 'please trim the block and help us be more efficient, even in ways that I didn't think to ask. of course, effectiveness is more important than efficiency, but we want both.'",
+  "applies_to": ["agent-behaviour"]
+}
+---
+
+## Always-on instructions earn their slot
+
+- **A rule enters an always-on block only when it passes two tests:** it
+  applies to most conversations, and an agent would get it wrong without
+  being told. A rule that fails either test moves to the job prompt or the
+  skill that actually needs it, where it is read exactly when it matters.
+- **Every stale line is a tax paid on every run of every job.** An always-on
+  block is re-read by every seat on every task. Length is not a style issue;
+  it is a standing cost and a standing dilution of the rules that do belong.
+- **Replace superseded rules in the same edit.** Never stack a "this
+  supersedes that" note on top of the old rule — two overlapping
+  instructions make every reader pick one, and they will not all pick the
+  same one. Edit the canonical text so only the current rule exists.
+- **One statement per rule.** Two ideas in one bullet means one of them gets
+  dropped by a reader in a hurry. Split it or cut it.
+- **Job-specific rules live in the job's own prompt or skill**, not in the
+  global block. The global block is for what every job gets wrong without it.
+- **The canonical text lives in a repository and is edited there first**,
+  then copied to each surface. Never edit one surface ad hoc; the copies
+  drift and nobody can say which is current.
+- **Measure the block and record the delta.** Word and character counts
+  before and after each edit go into the change record. What gets measured
+  stays lean.
+- **Keep a short version** for token-tight contexts, derived from the
+  canonical block, and name which contexts get which version.
+
+No regex can honestly decide whether a rule earns an always-on slot; that is
+a judgement about frequency and counterfactuality. Enforce this by reviewing
+the block on a cadence — trim it the way code gets refactored, and record
+the delta each time.
+```
