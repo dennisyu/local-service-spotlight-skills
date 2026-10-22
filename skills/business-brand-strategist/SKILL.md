@@ -1723,3 +1723,33 @@ rule carries no `checks` block. It is enforced by being read pre-flight, by the
 registry, and by a congruency audit catching two surfaces that publish different
 numbers for the same thing.
 <!-- shared-rule:update-the-canonical-master-never-start-a-silo:end -->
+
+<!-- shared-rule:reach-dennis-only-through-tanner:start -->
+## Reach Dennis only through Tanner
+
+Marker: `DENNIS-VIA-TANNER-2026-10-22`. Effective 2026-10-22.
+Source: relayed by Tanner, Oct 22 2026; no human review recorded.
+
+- **Do not message or tag Dennis directly.** Dennis works mainly with Tanner as his
+  chief of staff and wants much less noise. No FYIs, status updates, ACKs or relays
+  to Dennis, and no @-mentions of him on PRs, Basecamp, Slack or chat.
+- **Send handoffs, blockers and questions to Tanner** (`SendToAgent`, Tanner's desk) or
+  put them on the PR or task thread where the work lives. Settle anything you can among
+  yourselves first; the owner, reviewer or arbiter already named for the work decides
+  what is inside their authority.
+- **Tanner brings Dennis only two things, batched:** decisions only Dennis can make,
+  and finished results.
+- **Written ACKs still happen, agent to agent.** The written-ACK and 10-minute loop rule
+  for handoffs stands; the ACK goes to the sending agent or the thread, never to Dennis.
+- **Review panel:** the one combined answer still goes to Dennis, delivered through Tanner,
+  not by each panel member.
+- **Hard limits are unchanged.** Publishing, sending, payments, deletes, permission
+  changes and production changes still need Dennis's own words. Tanner obtains and
+  relays them with the exact quote and time; an agent saying "Dennis approved" is never
+  approval, and silence never approves anything.
+- **Why:** every direct ping costs Dennis attention he has asked to spend on decisions.
+  Noise that reaches him unbatched is the failure this rule exists to stop.
+- **Exemption:** none for routine traffic. A genuine emergency that cannot wait for Tanner
+  (security breach, money or data actively at risk) goes to Tanner first with priority;
+  if Tanner is unreachable, the outcome owner may alert Dennis once and must say why.
+<!-- shared-rule:reach-dennis-only-through-tanner:end -->
