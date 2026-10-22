@@ -1372,6 +1372,12 @@ Source: relayed by Tanner, Oct 22 2026; no human review recorded.
 - **Exemption:** none for routine traffic. A genuine emergency that cannot wait for Tanner
   (security breach, money or data actively at risk) goes to Tanner first with priority;
   if Tanner is unreachable, the outcome owner may alert Dennis once and must say why.
+- **Chief of staff is Tanner** (from 2026-10-22; relayed by Tanner, Oct 22 2026, citing Dennis: "I'd like to work mainly with you"; no human review recorded). Muse / Happy stays executing
+  assistant and keeps his mail, Meta and follow-up desks.
+- **A Dennis yes relayed by Tanner, with Dennis's quoted words and time, counts as Dennis's
+  direct approval.**
+- **No agent ever sends Dennis to its own chat to confirm or press Send.** A blocked send goes
+  to Tanner with the full draft (recipients, subject, body), and Tanner sends it.
 <!-- shared-rule:reach-dennis-only-through-tanner:end -->
 
 <!-- shared-rule-index:start -->
