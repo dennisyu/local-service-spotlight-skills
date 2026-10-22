@@ -3,14 +3,14 @@
   "title": "Review panel: agents agree before they ask Dennis",
   "severity": "error",
   "captured": "2026-10-21",
-  "captured_from": "Proposed by Trenton (Grok Bot) on Local-Service-Spotlight/agent-runtime PR #666, comment 6331082754. Dennis narrowed the scope and roles (reported by Trenton). Dennis Yu confirmed it to Q directly on 2026-10-21 at 9:18 PM CDT: make it official. The round-trip rule is a requirement reported by Trenton.",
+  "captured_from": "Proposed by Trenton (Grok Bot) on Local-Service-Spotlight/agent-runtime PR #666, comment 6331082754. Dennis narrowed the scope and roles (reported by Trenton). Dennis Yu confirmed it to Q directly on 2026-10-21 at 9:18 PM CDT: make it official. Dennis Yu confirmed the round-trip rule (written ACK on every handoff; loops close within 10 minutes) directly to Q on 2026-10-21 at 10:59 PM CDT.",
   "applies_to": ["agent-behaviour"]
 }
 ---
 
 ## Review panel (v1)
 
-The agents review an important item together and send Dennis one answer. It is called a **review panel**, never "adversarial."
+The agents review an important item together and send Dennis one answer. It is called a **review panel**.
 
 **When to use it.** Use it for important items only: core frameworks, important decisions and standing rules. Routine work skips it. The agents decide what counts, with two exceptions:
 - Anything on the hard-limit list below, and any change to a standing rule or one of the 9 Triangles frameworks, is always important.
