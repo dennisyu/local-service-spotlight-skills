@@ -207,6 +207,18 @@ If the website is in scope, run `seo-audit` and the public
 Do not average Brand Authority, SEO, Website QA, GEO, reputation, or social metrics into an
 invented composite score.
 
+## Reputation-to-Sales Gap exam
+
+When the engagement calls for the gap exam, apply the pinned rubric in
+[references/reputation-to-sales-gap-rubric.md](references/reputation-to-sales-gap-rubric.md)
+(rubric ID `reputation-to-sales-gap`, version 1.0.0, approved by Dennis Yu 2026-10-22).
+It measures proof relative to the buyer, offer and sales destination across seven weighted
+components. Keep it a separate exam line: never average it with Brand Authority, SEO, or
+any other exam, and never show scores from different rubric versions as a trend. UNKNOWN
+is null, never zero; when a required component is UNKNOWN, report the known subtotal and
+coverage as INCOMPLETE with no pass verdict. Scores are CALIBRATION-PROVISIONAL until
+anchor calibration is recorded under the rubric's calibration protocol.
+
 ## Analysis standard
 
 Lead with evidence that changes action, not praise or an inventory dump. A useful audit
