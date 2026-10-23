@@ -272,6 +272,19 @@ Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
   photographs, screenshots, or diagrams that carry meaning, not decorative stock.
 - **A diagram beats a paragraph** wherever the point is a structure, a sequence or a
   comparison.
+- **Use recognizable service or network icons when they help readers identify a
+  named tool.** Pair the approved mark with its visible name. Record the asset
+  source and permitted use; do not invent a brand mark or imply endorsement.
+- **Give each explanatory diagram one clear job.** Use it to show a sequence,
+  relationship or comparison supported by the text and sources. Label what each
+  arrow means and distinguish an illustrated example from an observed result.
+  For agent diagrams, keep apps, models, execution locations and access routes
+  distinct; a shared logo or line does not establish shared permissions.
+- Icons support recognition; they do not replace the meaningful visual required
+  by `every-public-page-has-real-imagery` and `visuals-above-the-fold`. Keep labels
+  readable on a phone and provide an accessible text equivalent. Decorative
+  duplicate icons should not repeat a label to screen readers; icon-only links
+  follow `icon-only-social-controls-stay-tappable`.
 - Caption them. An uncaptioned image is decoration; a captioned one is evidence.
 - Images also carry the provenance required by `process-real-content-never-generate` —
   a photograph of the work actually done proves more than any sentence about it.
