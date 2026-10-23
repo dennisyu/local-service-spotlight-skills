@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2480" height="1396"
+      viewBox="0 0 2480 1396" role="img"
+      aria-label="Content Factory agency swimlanes from Plumbing through Perform MAA">
+  <defs>
+    <marker id="arrowhead" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto">
+      <polygon points="0 0, 12 5, 0 10" fill="#F5A623"/>
+    </marker>
+  </defs>
+  <rect width="2480" height="1396" fill="#F4F1EA"/>
+  <rect x="0" y="0" width="2480" height="118" fill="#22698A"/>
+  <text x="48" y="48" fill="#FFF7ED" font-family="Georgia, serif" font-size="34">
+    Content Factory as a digital marketing agency</text>
+  <text x="48" y="84" fill="#DBEAFE" font-family="ui-sans-serif, sans-serif" font-size="18">
+    Plumbing → Produce → Process → Post → Promote → Perform / MAA · Local Service Spotlight</text>
+  <rect x="40" y="136" width="1195" height="120" rx="16" fill="#0F172A"/>
+  <text x="64" y="172" fill="#F5A623" font-family="Georgia, serif" font-size="20">Current state (2026-10-01)</text>
+  <text x="64" y="200" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
+    Work is still divided across the named desks. Muse on Spark does high-volume non-frontier work:</text>
+  <text x="64" y="222" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
+    Google/Meta errands, inbox, calendar, bookings, watch-and-ping, volume monitoring.</text>
+  <text x="64" y="244" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
+    Astra (Dot + specific ChatGPT tasks) does the thinking — and Dot is experimental.</text>
+  <rect x="1255" y="136" width="1185" height="120" rx="16" fill="#3B0764"/>
+  <text x="1279" y="172" fill="#F5A623" font-family="Georgia, serif" font-size="20">Future state</text>
+  <text x="1279" y="200" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
+    As there are many Dots, the models absorb the harness.</text>
+  <text x="1279" y="222" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
+    Fewer humans need to divide the work and project-manage the handoffs.</text>
+  <text x="1279" y="244" fill="#E2E8F0" font-family="ui-sans-serif, sans-serif" font-size="14">
+    The locked line does not change. Do not retire a desk because this note exists.</text>
+  <rect x="40" y="274" width="1200" height="78" rx="14" fill="#1D4E89"/><text x="64" y="300" fill="#FFF7ED" font-family="Georgia, serif" font-size="18">Muse on Spark — volume lane (cost order 2)</text><text x="64" y="322" fill="#DBEAFE" font-family="ui-sans-serif, sans-serif" font-size="13">Inbox, calendar, bookings, Google Photos/Docs/Gmail, Meta (FB/IG/WA/Threads), watch-and-ping, volume monitoring. Not frontier reasoning. Local Qwen</text><text x="64" y="341" fill="#DBEAFE" font-family="ui-sans-serif, sans-serif" font-size="13">(free) comes first for offline bulk text that can wait for a Mac.</text><rect x="1260" y="274" width="1180" height="78" rx="14" fill="#BE185D"/><text x="1284" y="300" fill="#FFF7ED" font-family="Georgia, serif" font-size="18">Astra — thinking lane (experimental, cost order 3)</text><text x="1284" y="322" fill="#FCE7F3" font-family="ui-sans-serif, sans-serif" font-size="13">Hard research, strategy/judgment drafts, definitive-article reasoning, MAA analysis that must be right, code/docs that matter. Spot-check Dot; on</text><text x="1284" y="341" fill="#FCE7F3" font-family="ui-sans-serif, sans-serif" font-size="13">critical work a human or a fresh ChatGPT task checks it before anyone acts.</text>
+  <text x="48" y="386" fill="#0F172A" font-family="Georgia, serif" font-size="20">
+    Swimlanes — each badge is a named seat. Gold arrows are handoffs. Nothing public or paid without Dennis.</text>
+  
+            <rect x="40" y="430" width="380" height="400" rx="18" fill="#0F172A"/>
+            <rect x="40" y="430" width="380" height="54" rx="18" fill="#334155"/>
+            <rect x="40" y="460" width="380" height="24" fill="#334155"/>
+            <text x="60" y="464" fill="#FFF7ED" font-family="Georgia, serif" font-size="22">
+              Plumbing</text>
+            <text x="400" y="462" text-anchor="end" fill="#FEF3C7" font-size="11"
+              font-family="ui-sans-serif, sans-serif">BEFORE</text>
+            <text x="60" y="512" fill="#F8FAFC" font-size="14" font-family="ui-sans-serif, sans-serif">
+              Owner: Austin</text>
+            <text x="60" y="534" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">
+              Cheapest capable: Muse for Google logins</text>
+            <text x="60" y="562" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              in: Kickoff list</text>
+            <text x="60" y="580" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              out: Green register → Drive</text>
+            <g><title>Austin</title><circle cx="76" cy="598" r="16" fill="#B45309" stroke="#F8FAFC" stroke-width="2" /><text x="76" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">AU</text></g><g><title>Muse / Happy</title><circle cx="144" cy="598" r="16" fill="#1D4E89" stroke="#F8FAFC" stroke-width="2" /><text x="144" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MU</text></g><g><title>Cursor cloud</title><circle cx="212" cy="598" r="16" fill="#334155" stroke="#F8FAFC" stroke-width="2" /><text x="212" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CU</text></g>
+            <text x="64" y="698" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• GSC / CMS / GA4 / GTM</text><text x="64" y="720" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• YouTube + social + ads</text><text x="64" y="742" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Record access once</text>
+            <rect x="60" y="778" width="340" height="36" rx="8" fill="#9F1239"/><text x="230.0" y="801" text-anchor="middle" fill="#FFF7ED" font-size="13" font-family="ui-sans-serif, sans-serif">GATE · Human adds users</text>
+            <path d="M422 520 h12" stroke="#F5A623" stroke-width="3" fill="none"/><polygon points="434,514 442,520 434,526" fill="#F5A623"/>
+            
+            <rect x="440" y="430" width="380" height="400" rx="18" fill="#0F172A"/>
+            <rect x="440" y="430" width="380" height="54" rx="18" fill="#0F766E"/>
+            <rect x="440" y="460" width="380" height="24" fill="#0F766E"/>
+            <text x="460" y="464" fill="#FFF7ED" font-family="Georgia, serif" font-size="22">
+              Produce</text>
+            <text x="800" y="462" text-anchor="end" fill="#FEF3C7" font-size="11"
+              font-family="ui-sans-serif, sans-serif">FACTORY</text>
+            <text x="460" y="512" fill="#F8FAFC" font-size="14" font-family="ui-sans-serif, sans-serif">
+              Owner: Trenton</text>
+            <text x="460" y="534" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">
+              Cheapest capable: Muse watch + bookings</text>
+            <text x="460" y="562" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              in: MAA Action / calendar</text>
+            <text x="460" y="580" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              out: Recording → Drive</text>
+            <g><title>Trenton</title><circle cx="476" cy="598" r="16" fill="#0E7490" stroke="#F8FAFC" stroke-width="2" /><text x="476" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">TR</text></g><g><title>Tanner</title><circle cx="544" cy="598" r="16" fill="#7C3AED" stroke="#F8FAFC" stroke-width="2" /><text x="544" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">TN</text></g><g><title>Muse / Happy</title><circle cx="612" cy="598" r="16" fill="#1D4E89" stroke="#F8FAFC" stroke-width="2" /><text x="612" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MU</text></g>
+            <text x="464" y="698" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Book + record Zoom</text><text x="464" y="720" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Watch stranded YouTube</text><text x="464" y="742" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Confirm accepted GCT</text>
+            <text x="630.0" y="801" text-anchor="middle" fill="#94A3B8" font-size="13" font-family="ui-sans-serif, sans-serif">No public/paid gate in this station</text>
+            <path d="M822 520 h12" stroke="#F5A623" stroke-width="3" fill="none"/><polygon points="834,514 842,520 834,526" fill="#F5A623"/>
+            
+            <rect x="840" y="430" width="380" height="400" rx="18" fill="#0F172A"/>
+            <rect x="840" y="430" width="380" height="54" rx="18" fill="#1D4ED8"/>
+            <rect x="840" y="460" width="380" height="24" fill="#1D4ED8"/>
+            <text x="860" y="464" fill="#FFF7ED" font-family="Georgia, serif" font-size="22">
+              Process</text>
+            <text x="1200" y="462" text-anchor="end" fill="#FEF3C7" font-size="11"
+              font-family="ui-sans-serif, sans-serif">FACTORY</text>
+            <text x="860" y="512" fill="#F8FAFC" font-size="14" font-family="ui-sans-serif, sans-serif">
+              Owner: Trenton</text>
+            <text x="860" y="534" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">
+              Cheapest capable: Qwen bulk · Astra think</text>
+            <text x="860" y="562" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              in: Drive recording</text>
+            <text x="860" y="580" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              out: Hub + clips → Drive</text>
+            <g><title>Local Qwen</title><circle cx="876" cy="598" r="16" fill="#1B7A4E" stroke="#F8FAFC" stroke-width="2" /><text x="876" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">QW</text></g><g><title>Astra / Dot</title><circle cx="944" cy="598" r="16" fill="#BE185D" stroke="#F5A623" stroke-width="2" stroke-dasharray="3 3"/><text x="944" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">AS</text></g><g><title>Trenton</title><circle cx="1012" cy="598" r="16" fill="#0E7490" stroke="#F8FAFC" stroke-width="2" /><text x="1012" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">TR</text></g>
+            <text x="864" y="698" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Transcript + mine</text><text x="864" y="720" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Definitive reasoning</text><text x="864" y="742" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Descript atomize + A-</text>
+            <rect x="860" y="778" width="340" height="36" rx="8" fill="#9F1239"/><text x="1030.0" y="801" text-anchor="middle" fill="#FFF7ED" font-size="13" font-family="ui-sans-serif, sans-serif">GATE · Fresh check on Dot&#x27;s reasoning</text>
+            <path d="M1222 520 h12" stroke="#F5A623" stroke-width="3" fill="none"/><polygon points="1234,514 1242,520 1234,526" fill="#F5A623"/>
+            
+            <rect x="1240" y="430" width="380" height="400" rx="18" fill="#0F172A"/>
+            <rect x="1240" y="430" width="380" height="54" rx="18" fill="#6B21A8"/>
+            <rect x="1240" y="460" width="380" height="24" fill="#6B21A8"/>
+            <text x="1260" y="464" fill="#FFF7ED" font-family="Georgia, serif" font-size="22">
+              Post</text>
+            <text x="1600" y="462" text-anchor="end" fill="#FEF3C7" font-size="11"
+              font-family="ui-sans-serif, sans-serif">FACTORY</text>
+            <text x="1260" y="512" fill="#F8FAFC" font-size="14" font-family="ui-sans-serif, sans-serif">
+              Owner: Trenton · Sam/Mario (web)</text>
+            <text x="1260" y="534" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">
+              Cheapest capable: Muse drafts · CF Basecamp</text>
+            <text x="1260" y="562" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              in: Staged pack + issue</text>
+            <text x="1260" y="580" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              out: Draft URL / BC comment</text>
+            <g><title>Muse / Happy</title><circle cx="1276" cy="598" r="16" fill="#1D4E89" stroke="#F8FAFC" stroke-width="2" /><text x="1276" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MU</text></g><g><title>Claude Fleet</title><circle cx="1344" cy="598" r="16" fill="#9F1239" stroke="#F8FAFC" stroke-width="2" /><text x="1344" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CF</text></g><g><title>Sam</title><circle cx="1412" cy="598" r="16" fill="#BE185D" stroke="#F8FAFC" stroke-width="2" /><text x="1412" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">SM</text></g><g><title>Mario</title><circle cx="1480" cy="598" r="16" fill="#4338CA" stroke="#F8FAFC" stroke-width="2" /><text x="1480" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MR</text></g><g><title>Cursor cloud</title><circle cx="1548" cy="598" r="16" fill="#334155" stroke="#F8FAFC" stroke-width="2" /><text x="1548" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CU</text></g>
+            <text x="1264" y="698" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Stage hub on site</text><text x="1264" y="720" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• FB/IG/email packs</text><text x="1264" y="742" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• GitHub issue → Basecamp</text>
+            <rect x="1260" y="778" width="340" height="36" rx="8" fill="#9F1239"/><text x="1430.0" y="801" text-anchor="middle" fill="#FFF7ED" font-size="13" font-family="ui-sans-serif, sans-serif">GATE · Dennis publishes</text>
+            <path d="M1622 520 h12" stroke="#F5A623" stroke-width="3" fill="none"/><polygon points="1634,514 1642,520 1634,526" fill="#F5A623"/>
+            
+            <rect x="1640" y="430" width="380" height="400" rx="18" fill="#0F172A"/>
+            <rect x="1640" y="430" width="380" height="54" rx="18" fill="#C2410C"/>
+            <rect x="1640" y="460" width="380" height="24" fill="#C2410C"/>
+            <text x="1660" y="464" fill="#FFF7ED" font-family="Georgia, serif" font-size="22">
+              Promote</text>
+            <text x="2000" y="462" text-anchor="end" fill="#FEF3C7" font-size="11"
+              font-family="ui-sans-serif, sans-serif">FACTORY</text>
+            <text x="1660" y="512" fill="#F8FAFC" font-size="14" font-family="ui-sans-serif, sans-serif">
+              Owner: Alex · 9T</text>
+            <text x="1660" y="534" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">
+              Cheapest capable: Muse Meta chores</text>
+            <text x="1660" y="562" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              in: Engaged posts</text>
+            <text x="1660" y="580" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              out: Staged calendar</text>
+            <g><title>Muse / Happy</title><circle cx="1676" cy="598" r="16" fill="#1D4E89" stroke="#F8FAFC" stroke-width="2" /><text x="1676" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MU</text></g><g><title>Alex · 9T</title><circle cx="1744" cy="598" r="16" fill="#A16207" stroke="#F8FAFC" stroke-width="2" /><text x="1744" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">9T</text></g><g><title>Dennis</title><circle cx="1812" cy="598" r="16" fill="#9F1239" stroke="#F8FAFC" stroke-width="2" /><text x="1812" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">DY</text></g>
+            <text x="1664" y="698" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Rank proven organic</text><text x="1664" y="720" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Stage $1/day × 7</text><text x="1664" y="742" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Day-7 kill / scale rec</text>
+            <rect x="1660" y="778" width="340" height="36" rx="8" fill="#9F1239"/><text x="1830.0" y="801" text-anchor="middle" fill="#FFF7ED" font-size="13" font-family="ui-sans-serif, sans-serif">GATE · Dennis spends</text>
+            <path d="M2022 520 h12" stroke="#F5A623" stroke-width="3" fill="none"/><polygon points="2034,514 2042,520 2034,526" fill="#F5A623"/>
+            
+            <rect x="2040" y="430" width="380" height="400" rx="18" fill="#0F172A"/>
+            <rect x="2040" y="430" width="380" height="54" rx="18" fill="#9F1239"/>
+            <rect x="2040" y="460" width="380" height="24" fill="#9F1239"/>
+            <text x="2060" y="464" fill="#FFF7ED" font-family="Georgia, serif" font-size="22">
+              Perform / MAA</text>
+            <text x="2400" y="462" text-anchor="end" fill="#FEF3C7" font-size="11"
+              font-family="ui-sans-serif, sans-serif">AFTER</text>
+            <text x="2060" y="512" fill="#F8FAFC" font-size="14" font-family="ui-sans-serif, sans-serif">
+              Owner: Kimi/Codex crons (Friday MAA)</text>
+            <text x="2060" y="534" fill="#F5A623" font-size="13" font-family="ui-sans-serif, sans-serif">
+              Cheapest capable: Crons · Qwen tables · Astra analysis</text>
+            <text x="2060" y="562" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              in: Connectors + Buzz</text>
+            <text x="2060" y="580" fill="#94A3B8" font-size="12" font-family="ui-sans-serif, sans-serif">
+              out: Action packet → Produce</text>
+            <g><title>Kimi cron</title><circle cx="2076" cy="598" r="16" fill="#6B21A8" stroke="#F8FAFC" stroke-width="2" /><text x="2076" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">KI</text></g><g><title>Codex / Pollen</title><circle cx="2144" cy="598" r="16" fill="#C2410C" stroke="#F8FAFC" stroke-width="2" /><text x="2144" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CX</text></g><g><title>Astra / Dot</title><circle cx="2212" cy="598" r="16" fill="#BE185D" stroke="#F5A623" stroke-width="2" stroke-dasharray="3 3"/><text x="2212" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">AS</text></g><g><title>Local Qwen</title><circle cx="2280" cy="598" r="16" fill="#1B7A4E" stroke="#F8FAFC" stroke-width="2" /><text x="2280" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">QW</text></g><g><title>Meter Maid</title><circle cx="2348" cy="598" r="16" fill="#047857" stroke="#F8FAFC" stroke-width="2" /><text x="2348" y="603" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MM</text></g><g><title>Data</title><circle cx="2076" cy="642" r="16" fill="#1E3A8A" stroke="#F8FAFC" stroke-width="2" /><text x="2076" y="647" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">DA</text></g>
+            <text x="2064" y="698" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Metrics: $ / profit / clicks</text><text x="2064" y="720" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Analysis that must be right</text><text x="2064" y="742" fill="#E2E8F0" font-size="14" font-family="ui-sans-serif, sans-serif">• Action → next Produce</text>
+            <rect x="2060" y="778" width="340" height="36" rx="8" fill="#9F1239"/><text x="2230.0" y="801" text-anchor="middle" fill="#FFF7ED" font-size="13" font-family="ui-sans-serif, sans-serif">GATE · Dennis if public/paid · Dot checked</text>
+            
+            
+  
+      <path d="M 2230.0 842
+               v 70 H 610.0 v -70"
+            fill="none" stroke="#F5A623" stroke-width="4"
+            marker-end="url(#arrowhead)"/>
+      <text x="1240" y="898" text-anchor="middle"
+            fill="#92400E" font-family="Georgia, serif" font-size="16">
+        MAA Action feeds Produce — revenue, profit, clicks decide the next recording
+      </text>
+    
+  <text x="48" y="964" font-family="Georgia, serif" font-size="18" fill="#0F172A">
+    Cost order (pick-the-cheapest-capable-fleet-lane): local Qwen → Muse → everything else. Lanes are seats, not desk names.</text>
+  <rect x="40" y="978" width="560" height="98" rx="12" fill="#1B7A4E"/><text x="58" y="1006" fill="#FFF7ED" font-size="16" font-family="Georgia, serif">1 · Free — Local Qwen</text><text x="58" y="1030" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">Offline bulk text only: transcript triage, first drafts, MAA/GCT first</text><text x="58" y="1048" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">passes. Trenton&#x27;s seat on the Macs. No browser, no logins, no</text><text x="58" y="1066" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">publishing.</text><rect x="620" y="978" width="760" height="98" rx="12" fill="#1D4E89"/><text x="638" y="1006" fill="#FFF7ED" font-size="16" font-family="Georgia, serif">2 · Muse — the volume lane</text><text x="638" y="1030" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">Muse Maximum is about 3B Muse tokens per week. Non-frontier volume: inbox, calendar, bookings,</text><text x="638" y="1048" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">Google/Meta chores, watch-and-ping, volume monitoring. Do not buy more Muse.</text><rect x="1400" y="978" width="1040" height="98" rx="12" fill="#475569"/><text x="1418" y="1006" fill="#FFF7ED" font-size="16" font-family="Georgia, serif">3 · Everything else</text><text x="1418" y="1030" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">Astra / Dot (experimental; a human or a fresh ChatGPT task checks critical work) · Kimi and Codex crons already live · Grok desks for</text><text x="1418" y="1048" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">judgment, publishing calls, routing (short turns) · any other seat — Cursor cloud, Claude Fleet, the rest — keeps the work already assigned</text><text x="1418" y="1066" fill="#FEF3C7" font-size="12" font-family="ui-sans-serif, sans-serif">to it.</text>
+  <text x="48" y="1130" font-family="Georgia, serif" font-size="20" fill="#0F172A">Named seats — do not invent agents</text>
+  <g><title>Muse / Happy</title><circle cx="66" cy="1166" r="16" fill="#1D4E89" stroke="#F8FAFC" stroke-width="2" /><text x="66" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MU</text></g><text x="92" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Muse / Happy</text><text x="92" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Muse Maximum · 3B tokens/week</text><g><title>Local Qwen</title><circle cx="334" cy="1166" r="16" fill="#1B7A4E" stroke="#F8FAFC" stroke-width="2" /><text x="334" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">QW</text></g><text x="360" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Local Qwen</text><text x="360" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Free · Macs</text><g><title>Astra / Dot</title><circle cx="602" cy="1166" r="16" fill="#BE185D" stroke="#F5A623" stroke-width="2" stroke-dasharray="3 3"/><text x="602" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">AS</text></g><text x="628" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Astra / Dot</text><text x="628" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Experimental thinking</text><g><title>Kimi cron</title><circle cx="870" cy="1166" r="16" fill="#6B21A8" stroke="#F8FAFC" stroke-width="2" /><text x="870" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">KI</text></g><text x="896" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Kimi cron</text><text x="896" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Cheap scheduled</text><g><title>Codex / Pollen</title><circle cx="1138" cy="1166" r="16" fill="#C2410C" stroke="#F8FAFC" stroke-width="2" /><text x="1138" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CX</text></g><text x="1164" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Codex / Pollen</text><text x="1164" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Cheap scheduled</text><g><title>Cursor cloud</title><circle cx="1406" cy="1166" r="16" fill="#334155" stroke="#F8FAFC" stroke-width="2" /><text x="1406" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CU</text></g><text x="1432" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Cursor cloud</text><text x="1432" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Repo + site builds</text><g><title>Claude Fleet</title><circle cx="1674" cy="1166" r="16" fill="#9F1239" stroke="#F8FAFC" stroke-width="2" /><text x="1674" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">CF</text></g><text x="1700" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Claude Fleet</text><text x="1700" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Basecamp poster only</text><g><title>Trenton</title><circle cx="1942" cy="1166" r="16" fill="#0E7490" stroke="#F8FAFC" stroke-width="2" /><text x="1942" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">TR</text></g><text x="1968" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Trenton</text><text x="1968" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Head of content</text><g><title>Tanner</title><circle cx="2210" cy="1166" r="16" fill="#7C3AED" stroke="#F8FAFC" stroke-width="2" /><text x="2210" y="1171" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">TN</text></g><text x="2236" y="1162" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Tanner</text><text x="2236" y="1180" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">EA / calendar</text><g><title>Q</title><circle cx="66" cy="1220" r="16" fill="#0369A1" stroke="#F8FAFC" stroke-width="2" /><text x="66" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">Q</text></g><text x="92" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Q</text><text x="92" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">OS / routing</text><g><title>Alex · docs</title><circle cx="334" cy="1220" r="16" fill="#0F766E" stroke="#F8FAFC" stroke-width="2" /><text x="334" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">AX</text></g><text x="360" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Alex · docs</text><text x="360" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">SOPs / skills</text><g><title>Alex · 9T</title><circle cx="602" cy="1220" r="16" fill="#A16207" stroke="#F8FAFC" stroke-width="2" /><text x="602" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">9T</text></g><text x="628" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Alex · 9T</text><text x="628" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Nine Triangles</text><g><title>Sam</title><circle cx="870" cy="1220" r="16" fill="#BE185D" stroke="#F8FAFC" stroke-width="2" /><text x="870" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">SM</text></g><text x="896" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Sam</text><text x="896" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Personal-brand sites</text><g><title>Mario</title><circle cx="1138" cy="1220" r="16" fill="#4338CA" stroke="#F8FAFC" stroke-width="2" /><text x="1138" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MR</text></g><text x="1164" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Mario</text><text x="1164" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Site work</text><g><title>Austin</title><circle cx="1406" cy="1220" r="16" fill="#B45309" stroke="#F8FAFC" stroke-width="2" /><text x="1406" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">AU</text></g><text x="1432" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Austin</text><text x="1432" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">IT / Plumbing</text><g><title>Meter Maid</title><circle cx="1674" cy="1220" r="16" fill="#047857" stroke="#F8FAFC" stroke-width="2" /><text x="1674" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">MM</text></g><text x="1700" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Meter Maid</text><text x="1700" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Seat usage</text><g><title>Data</title><circle cx="1942" cy="1220" r="16" fill="#1E3A8A" stroke="#F8FAFC" stroke-width="2" /><text x="1942" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">DA</text></g><text x="1968" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Data</text><text x="1968" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Registry / uptime</text><g><title>Dennis</title><circle cx="2210" cy="1220" r="16" fill="#9F1239" stroke="#F8FAFC" stroke-width="2" /><text x="2210" y="1225" text-anchor="middle" fill="#FFF7ED" font-family="ui-sans-serif, sans-serif" font-size="11" font-weight="700">DY</text></g><text x="2236" y="1216" font-size="13" font-family="ui-sans-serif, sans-serif" fill="#0F172A">Dennis</text><text x="2236" y="1234" font-size="11" font-family="ui-sans-serif, sans-serif" fill="#475569">Public + paid gate</text>
+  <text x="48" y="1278" font-family="ui-sans-serif, sans-serif" font-size="13" fill="#475569">
+    Tools on the line, not seats: Zoom recordings · Descript · jennifer A- grader · $1/day boosting.
+    Handoff places: Drive · GitHub issue · Basecamp (Claude Fleet only) · Buzz (Monday MAA catch-up).</text>
+  <text x="48" y="1304" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
+    Badges are monograms, not official marks. If a later revision adds a vendor mark, use a permissive
+    source such as Simple Icons (CC0) and note the license here. Dashed gold ring = experimental seat.</text>
+  <text x="48" y="1326" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
+    Seat picker: standards/pick-the-cheapest-capable-fleet-lane.md (merged 2026-10-01). Factory split per station:
+    skills/content-factory/references/fleet-orchestration.md. Desk names confirmed against the live fleet registry on 2026-10-01.</text>
+  <text x="48" y="1362" font-family="ui-sans-serif, sans-serif" font-size="12" fill="#64748B">
+    Locked names: Plumbing (before) · Produce · Process · Post · Promote · Perform/MAA (after). Do not rename.</text>
+</svg>
