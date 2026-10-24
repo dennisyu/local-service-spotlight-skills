@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -986,6 +987,124 @@ class AuditRound7(unittest.TestCase):
         self.assertEqual(aud["noise"]["first_any_sound_s"], 0.0)     # talk may be under it
 
 
+class AuditRound8(unittest.TestCase):
+    """Eighth independent audit, 24 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+    TALK = [-6.0] * 30 + [-120.0] * 20
+
+    def test_room_noise_lifted_into_the_next_word_is_silence(self):
+        import random
+        rnd = random.Random(5)
+        ramp = [-60.0 + i for i in range(30)]                          # auto-gain attack
+        lift = [-31.0 + rnd.uniform(-2, 2) for _ in range(200)]        # 2 s, 25 dB under
+        peaks = self.TALK * 10 + [-62.0] * 15 + ramp + lift + self.TALK * 10
+        st = video_qa.classify_levels(peaks, 0.01, self.PROF, -16.0)["state"]
+        gap = st[515:745]                                              # one run with the word
+        self.assertGreater(gap.count(0), 200)
+
+    def test_talk_level_is_counted_window_by_window(self):
+        peaks = [-30.0] * 200 + [-5.0] * 50                            # noise, then a word
+        spans = video_qa.talk_loud_spans([(1, 0.0, 2.5)], peaks, 0.01, 0.0, -14.0)
+        self.assertEqual(len(spans), 1)
+        self.assertGreaterEqual(spans[0][0], 1.8)                      # not the whole run
+
+    def test_a_soft_word_under_noise_is_not_bridged_away(self):
+        chain = ([1] * 4 + [0] * 3) * 10                               # a word's peaks, flickering
+        peaks = [-70.0] * 60 + [-40.0 if x else -70.0 for x in chain] + [-70.0] * 60
+        st = bytearray([0] * 60 + chain + [0] * 60)
+        heard = video_qa._talk_guard(len(st), peaks, [(55, 135)], -20.0, 15)  # a soft word
+        video_qa._bridge_blips(st, 8, heard)
+        self.assertEqual(st[60:130].count(1), 40)
+        click = bytearray([0] * 50 + [1] * 5 + [0] * 50 + [1] * 30)
+        video_qa._bridge_blips(click, 8, video_qa._talk_guard(135, [-10.0] * 135,
+                                                              [(110, 135)], -20.0, 15))
+        self.assertEqual(click[50:55].count(1), 0)                     # a click still is
+        # A word the ASR stretched back over a pause (talk-level sound only at its
+        # end) vouches for nothing before that sound: the bed's flicker is a pause.
+        bed = bytearray(([0] * 2 + [1] * 3) * 40 + [1] * 30)
+        peaks = [-45.0] * 200 + [-10.0] * 30
+        video_qa._bridge_blips(bed, 8, video_qa._talk_guard(230, peaks, [(50, 230)], -20.0, 15))
+        self.assertEqual(bed[0:180].count(1), 0)
+
+    def test_an_untitled_chapter_track_is_not_a_decode_error(self):
+        line = "[mov,mp4,m4a,3gp,3g2,mj2 @ 0x55] Referenced QT chapter track not found"
+        self.assertEqual(video_qa.file_errors(line + "\n"), [])
+        self.assertTrue(video_qa.file_errors("[aac @ 0x1] Error decoding AAC frame\n"))
+
+    def test_descripts_label_on_the_first_cue_only_is_stripped(self):
+        srt = ("1\n00:00:00,000 --> 00:00:02,000\nDennis: So everything we\n\n"
+               "2\n00:00:02,000 --> 00:00:04,000\nwere doing here\n\n"
+               "3\n00:00:04,000 --> 00:00:05,000\nBob Smith: Yeah\n")
+        self.assertEqual([x["word"] for x in finish.words_from_srt(srt)],
+                         ["So", "everything", "we", "were", "doing", "here", "Yeah"])
+
+    def test_more_label_shapes(self):
+        for lab in ("SPEAKER 1:", "dennis yu:", "Ludwig van Beethoven:"):
+            srt = (f"1\n00:00:00,000 --> 00:00:02,000\n{lab} hello there\n\n"
+                   f"2\n00:00:02,000 --> 00:00:04,000\n{lab} and more\n")
+            self.assertEqual([x["word"] for x in finish.words_from_srt(srt)][:2],
+                             ["hello", "there"], lab)
+
+    def test_a_hum_as_loud_as_the_talk_keeps_the_pause_edges(self):
+        hum = [-15.0 + (0.2 if i % 2 else 0.0) for i in range(250)]
+        talk = [-6.0] * 30 + [-15.0] * 20                              # syllables over the hum
+        peaks = talk * 20 + [-6.0] * 25 + hum + [-6.0] * 5 + talk * 20
+        st = video_qa.classify_levels(peaks, 0.01, self.PROF, -14.0)["state"]
+        longest = max(b - a for s, a, b in video_qa._runs(st) if s == 0)
+        self.assertGreaterEqual(longest, 245)                          # 2.5 s, not 2.0
+
+    def test_a_cough_kept_before_an_early_first_word_is_a_warn(self):
+        c = {x["check"]: x for x in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], self.PROF,
+            first_speech=1.58, first_audio=0.08,
+            noise={"first_any_sound_s": 0.08, "hook_measurable": True})}
+        self.assertEqual(c["hook_first_speech"]["status"], "WARN")
+        self.assertIn("cough", c["hook_first_speech"]["note"])
+
+    def test_a_loud_cough_attached_to_a_word_is_listed(self):
+        runs = [(1, 30.0, 33.7), (0, 33.7, 35.69), (1, 35.69, 37.0)]  # "200?"+cough, 1.99 s
+        words = [dict(w("200?", 32.3, 32.8), timing="word"),
+                 dict(w("If", 35.7, 36.0), timing="word")]
+        kind, spans = video_qa.talk_spans(words, 0.15, runs)
+        runs = video_qa.split_word_edges(runs, spans, 0.4, lambda a, b: True)
+        kw = {"peak_of": lambda a, b: -10.0, "loud_db": -20.0}
+        sure = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none",), **kw)
+        look = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none", "unknown"), **kw)
+        self.assertLess(max(x["dur"] for x in sure), 2.0)
+        self.assertGreaterEqual(max(x["dur"] for x in look), 2.5)
+
+    def test_word_rules_stay_where_the_words_file_reaches(self):
+        runs = [(1, 0.0, 10.0), (0, 10.0, 11.0), (1, 11.0, 12.0), (0, 12.0, 13.2),
+                (1, 13.2, 14.0)]
+        far = [(5.0, 6.0, True)]                                       # heard words, far off
+        inside = video_qa.merge_pauses(runs, "word", far, 0.6, ("none",))
+        outside = video_qa.merge_pauses(runs, "word", far, 0.6, ("none",),
+                                        cover=video_qa.word_cover([(5.0, 6.0)], 2.5))
+        self.assertGreaterEqual(max(x["dur"] for x in inside), 3.0)    # a 1 s sigh joins
+        self.assertLess(max(x["dur"] for x in outside), 2.0)           # cue rules: it doesn't
+
+    def test_a_string_where_true_or_false_belongs_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "style.json"
+            p.write_text(json.dumps({"qa": {"pauses": {"rate_advisory": "false"}}}))
+            with self.assertRaises(ValueError) as cm:
+                video_qa.load_profile(str(p))
+        self.assertIn("rate_advisory", str(cm.exception))
+
+    def test_a_token_wider_than_the_frame_is_shrunk_to_fit(self):
+        cue = {"start": 0.0, "end": 1.0, "words": [w("localservicespotlight.com", 0.0, 1.0)]}
+        ass = finish.build_ass([cue], CAP, 1080, 1920)
+        m = re.search(r"\{\\fs(\d+)\}", ass)
+        self.assertIsNotNone(m)
+        room = 1080 - 2 * round(1080 * 0.06)
+        self.assertLessEqual(finish._text_px("LOCALSERVICESPOTLIGHT.COM", CAP["font"],
+                                             CAP["bold"], int(m.group(1))), room)
+        short = {"start": 0.0, "end": 1.0, "words": [w("hello", 0.0, 1.0)]}
+        self.assertNotIn("\\fs", finish.build_ass([short], CAP, 1080, 1920).split("[Events]")[1])
+
+
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
@@ -1767,6 +1886,82 @@ class MediaRoundTrip(unittest.TestCase):
                             words=words, burn=False, keywords=[])
         self.assertLess(rep["start_s"], 0.5)
         self.assertTrue(any("before the first transcribed word" in x for x in rep["warnings"]))
+
+    # ---- eighth audit (24 Oct 2026) ----
+
+    def test_auto_gain_noise_running_into_a_word_still_fails_the_pause(self):
+        out = self.tmp / "agc.wav"
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{self.SYL}*(lt(t,8)+gte(t,10.75))':s=48000:d=20",
+                 "-f", "lavfi", "-i", "anoisesrc=a=0.001:c=pink:r=48000:d=20:seed=7",
+                 "-filter_complex", "[1]volume='if(between(t,8.25,10.75),20,1)':eval=frame[n];"
+                 "[0][n]amix=inputs=2:normalize=0", "-c:a", "pcm_s16le", str(out))
+        words = self._words_for([(0.0, 8.0), (10.75, 20.0)])
+        rec = self._quiet_qa(out, words)
+        c = {x["check"]: x["status"] for x in rec["checks"]}
+        self.assertEqual(c["pauses_over_fail"], "FAIL")
+        self.assertGreater(rec["longest_silences"][0]["dur"], 2.4)
+
+    def test_untitled_chapters_decode_cleanly(self):
+        meta = self.tmp / "chapters.txt"
+        meta.write_text(";FFMETADATA1\n\n[CHAPTER]\nTIMEBASE=1/1000\nSTART=0\nEND=3000\n\n"
+                        "[CHAPTER]\nTIMEBASE=1/1000\nSTART=3000\nEND=6000\n")
+        src = self._make("chap_src.mp4", d=6, tone=self.SYL)
+        out = self.tmp / "chap.mp4"
+        self._ff("-i", str(src), "-i", str(meta), "-map_metadata", "1", "-map_chapters", "1",
+                 "-c", "copy", str(out))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["decodes_cleanly"], "PASS")
+
+    def test_mono_is_normalised_as_two_channels(self):
+        src = self.tmp / "mono.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=20", "-f", "lavfi", "-i",
+                 "aevalsrc='0.03*sin(2*PI*220*t)*gt(sin(2*PI*4*t),0)':s=48000:d=20",
+                 "-ac", "1", "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac",
+                 "-shortest", str(src))
+        out = self.tmp / "mono_loud.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=False,
+                            loudness=True, words=None, burn=False, keywords=[])
+        self.assertTrue(rep.get("mono_to_stereo"))
+        ch = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0",
+                             "-show_entries", "stream=channels", "-of", "csv=p=0", str(out)],
+                            capture_output=True, text=True).stdout.strip()
+        self.assertEqual(ch, "2")
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["integrated_loudness"], "PASS")
+
+    def test_trim_head_cuts_a_cough_before_dead_air(self):
+        cough = "0.5*(random(0)-0.5)*between(t,1.2,1.45)"
+        src = self._make("cough_head.mp4", d=12, tone=f"{self.SYL}*gte(t,2.75)+{cough}")
+        rep = finish.finish(str(src), str(self.tmp / "cough_head_out.mp4"),
+                            finish.load_style(None), trim_head=True, loudness=False,
+                            words=self._words_for([(2.75, 12.0)]), burn=False, keywords=[])
+        self.assertGreater(rep["start_s"], 2.5)
+        self.assertEqual(rep["trim_head_to"], "first word")
+        self.assertTrue(any("cut a" in x and "cough" in x for x in rep["warnings"]))
+
+    @unittest.skipUnless(shutil.which("fc-match"), "fontconfig not installed")
+    def test_a_burned_domain_name_stays_inside_a_vertical_frame(self):
+        family = subprocess.run(["fc-match", "-f", "%{family}", "sans"],
+                                capture_output=True, text=True).stdout.split(",")[0]
+        style = finish.load_style(None)
+        style["captions"]["font"] = family
+        src = self.tmp / "wide.mp4"
+        self._ff("-f", "lavfi", "-i", "color=c=0x406080:s=1280x720:r=25:d=4", "-f", "lavfi",
+                 "-i", f"aevalsrc='{self.SYL}':s=48000:d=4", "-c:v", "libx264", "-preset",
+                 "ultrafast", "-c:a", "aac", "-shortest", str(src))
+        words = [w("Go", 0.4, 0.7), w("to", 0.7, 0.9),
+                 w("localservicespotlight.com", 0.9, 2.5), w("today", 2.5, 3.0)]
+        out = self.tmp / "burn916.mp4"
+        rep = finish.finish(str(src), str(out), style, trim_head=False, loudness=False,
+                            words=words, burn=True, keywords=[], reframe="9:16")
+        W, H = rep["reframe"]["size"]
+        raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", "1.5",
+                              "-i", str(out), "-frames:v", "1", "-vf", "format=gray", "-f",
+                              "rawvideo", "-"], capture_output=True).stdout
+        band = [raw[y * W:(y + 1) * W] for y in range(int(H * 0.6), int(H * 0.85))]
+        self.assertTrue(any(max(r) > 200 for r in band))               # the caption is there
+        edge = sum(1 for r in band for x in (0, 1, 2, W - 3, W - 2, W - 1) if r[x] > 200)
+        self.assertEqual(edge, 0)                                      # and not cut off
 
 
 if __name__ == "__main__":

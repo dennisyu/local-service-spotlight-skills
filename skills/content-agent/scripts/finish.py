@@ -33,14 +33,24 @@ Usage:
     It never cuts talk the transcript missed: sound that runs into the first word
     without 2 s of silence is kept, and a bed or crowd as loud as talk before the
     first word means nothing is cut; both are reported (an intro running straight
-    into the first word is then left for a person to cut). --srt also reads
-    WebVTT; plain "Name:" labels are stripped when they open two or more cues.
+    into the first word is then left for a person to cut). A lone short sound
+    with a pause after it (a cough, a breath, a click) is not talk running into
+    the word: it is cut, and reported. --srt also reads WebVTT; speaker labels
+    are stripped ("Speaker 1:", "Name (Role):", a plain "Name:" that opens two or
+    more cues, and every "Name:" in a file whose first cue opens with one, as
+    Descript's default export does). Exporting the SRT with
+    include_speaker_labels "off" avoids the question.
 
     The sidecar .captions.srt for long-form reads like sentences (up to 16 words,
     two lines of 42 characters, normal case); with --burn it matches what is on
     screen. When the picture is re-encoded, an HDR source (an iPhone's HLG, PQ)
     is tone-mapped to SDR BT.709 first and tagged that way (needs ffmpeg with
-    zscale; without it the report warns).
+    zscale; without it the report warns). A burned caption with a token too
+    wide for the frame (a domain name in 9:16) is shrunk until it fits.
+
+    --loudness on a mono source writes two identical channels: ffmpeg's loudnorm
+    lands 1.5-2 LU short on mono when it has to work in dynamic mode, and every
+    player plays mono on both speakers anyway.
 
     An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
     the audio codec always matches the container. The render goes to a hidden
@@ -93,15 +103,36 @@ PUNCT_BREAK = re.compile(r"[.,!?;:\-—–]\"?$")
 CROSSTALK = {"right", "yeah", "yes", "yep", "mhm", "mm", "hmm", "uh", "um",
              "uhhuh", "okay", "ok", "wow", "nice", "sure"}
 NUMBERISH = re.compile(r"[\d$%]")
-# "Dennis Yu: ..." or "[Speaker 2]: ..." — every word capitalised, so "Step one:"
-# and "So here's the thing:" are left alone.
-_NAME = r"[A-Z][\w.'-]*(?: [A-Z][\w.'-]*){0,2}(?: \([^)]{1,24}\))?"
-SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[Ss]peaker \d{1,2}|" + _NAME + r"):\s+")
-# Unmistakable label forms: "[Speaker 2]:", "Speaker 1:", "Dennis Yu (Host):".
-SURE_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[Ss]peaker \d{1,2}|[A-Z][\w.'-]*"
-                        r"(?: [A-Z][\w.'-]*){0,2} \([^)]{1,24}\)):\s+")
+# "Dennis Yu: ..." or "[Speaker 2]: ..." — every word capitalised (name particles
+# such as "van" or "de" aside), so "Step one:" and "So here's the thing:" are
+# left alone.
+_PARTICLE = (r"(?:van|von|der|den|de|del|della|da|di|du|dos|das|la|le|bin|ibn|al|el|"
+             r"ter|ten|zu|y)")
+_CAP = r"[A-Z][\w.'-]*"
+_NAME = (_CAP + r"(?: (?:" + _PARTICLE + r" ){0,2}" + _CAP + r"){0,2}"
+         r"(?: \([^)]{1,24}\))?")
+# The same shape in any case ("dennis yu:" from a Zoom export): a label only when
+# it opens two or more cues, like a plain capitalised one.
+_ANY_NAME = r"[^\W\d_][\w.'-]*(?: [^\W\d_][\w.'-]*){0,3}(?: \([^)]{1,24}\))?"
+_SPEAKER_N = r"(?i:speaker) ?\d{1,2}"
+SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|" + _SPEAKER_N + "|" + _NAME + r"):\s+")
+LOOSE_LABEL = re.compile(r"^\s*(" + _ANY_NAME + r"):\s+")
+# Unmistakable label forms: "[Speaker 2]:", "Speaker 1:", "SPEAKER 1:",
+# "Dennis Yu (Host):".
+SURE_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|" + _SPEAKER_N + "|" + _CAP +
+                        r"(?: " + _CAP + r"){0,2} \([^)]{1,24}\)):\s+")
 # ">> DENNIS:" or a bare ">>" marks a change of speaker anywhere in a cue.
-SPEAKER_CHANGE = re.compile(r">>\s*(?:(?:[Ss]peaker \d{1,2}|" + _NAME + r"):\s*)?")
+SPEAKER_CHANGE = re.compile(r">>\s*(?:(?:" + _SPEAKER_N + "|" + _NAME + r"):\s*)?")
+# Words that open a sentence with a colon ("Remember: ...") rather than name a
+# speaker; the first-cue rule below never strips these.
+NOT_A_SPEAKER = {"remember", "note", "tip", "step", "warning", "question", "answer",
+                 "update", "important", "reminder", "rule", "lesson", "bonus", "fact",
+                 "myth", "example", "problem", "solution", "goal", "why", "how", "what",
+                 "first", "second", "third", "next", "finally", "plus", "ps", "edit",
+                 "spoiler", "truth", "result", "results", "quote", "title", "chapter",
+                 "part", "day", "week", "breaking", "listen", "look", "okay", "ok", "so",
+                 "now", "here", "yes", "no", "well", "and", "but", "caution",
+                 "hint", "summary", "recap", "takeaway", "today", "tomorrow", "yesterday"}
 
 
 def load_style(path: str | None) -> dict:
@@ -239,9 +270,12 @@ def _ts(s: str) -> float:
 def words_from_srt(text: str) -> list[dict]:
     """SRT or WebVTT cues -> words spread evenly across each cue. Sound cues
     ("[Music]", "♪") are dropped, and so are speaker labels: "[Speaker 2]:",
-    "Speaker 1:", "Name (Role):" and ">> NAME:" always; a plain "Name:" or
-    "Dennis Yu:" only when it opens two or more cues, so "Remember:" or
-    "Google:" at the start of one line stays text."""
+    "Speaker 1:", "SPEAKER 1:", "Name (Role):" and ">> NAME:" always; a plain
+    "Name:", "Dennis Yu:", "Ludwig van Beethoven:" or "dennis yu:" when it opens
+    two or more cues; and in a file whose first cue opens with a name label
+    (Descript's default export labels the first cue and every change of
+    speaker), any capitalised "Name:" opening a cue. "Remember:" or "Google:" at
+    the start of one line of an unlabelled file stays text."""
     words = []
     text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
     blocks = re.split(r"\n\s*\n", text.strip())
@@ -256,11 +290,41 @@ def words_from_srt(text: str) -> list[dict]:
         return SPEAKER_CHANGE.sub(" ", MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body)))
 
     seen: dict = {}
+    first_label = None  # the name opening the file's first cue, "" when none
     for block in blocks:
         b = body_of(block)
-        m = SPEAKER_LABEL.match(b) if b else None
+        if b is None:
+            continue
+        m = LOOSE_LABEL.match(b)
         if m:
-            seen[m.group(0).strip()] = seen.get(m.group(0).strip(), 0) + 1
+            key = m.group(1).strip().lower()
+            seen[key] = seen.get(key, 0) + 1
+        if first_label is None and b.strip():
+            first_label = (m.group(1).strip() if m and SPEAKER_LABEL.match(b)
+                           and not SURE_LABEL.match(b) else
+                           ("sure" if SURE_LABEL.match(b) else ""))
+
+    def speaker(name: str) -> bool:
+        return name.split()[0].lower().strip(".") not in NOT_A_SPEAKER
+    # Descript's default SRT export ("changes") labels the first cue and every
+    # change of speaker: a file that opens with a label uses labels (audit round 8:
+    # "Dennis: So" on cue 1 only became the caption "So Dennis:").
+    labelled = bool(first_label) and (first_label == "sure" or speaker(first_label))
+
+    def label_end(body: str) -> int:
+        sure = SURE_LABEL.match(body)
+        if sure:
+            return sure.end()
+        m = LOOSE_LABEL.match(body)
+        if not m:
+            return 0
+        name = m.group(1).strip()
+        if seen.get(name.lower(), 0) >= 2:
+            return m.end()
+        if labelled and SPEAKER_LABEL.match(body) and speaker(name):
+            return m.end()
+        return 0
+
     for cue_id, block in enumerate(blocks):
         lines = [l for l in block.strip().splitlines() if l.strip()]
         timing = next((l for l in lines if "-->" in l), None)
@@ -271,9 +335,7 @@ def words_from_srt(text: str) -> list[dict]:
         start, end = _ts(a), _ts(b)
         # Sound cues first, then the speaker label they may hide ("[Music] Dennis Yu: …").
         body = body_of(block) or ""
-        m = SPEAKER_LABEL.match(body)
-        if m and (SURE_LABEL.match(body) or seen.get(m.group(0).strip(), 0) >= 2):
-            body = body[m.end():]
+        body = body[label_end(body):]
         toks = [t for t in body.split() if not is_sound_tag(t)]
         if not toks or end <= start:
             continue
@@ -553,9 +615,44 @@ def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
         f"1,{outline},0,2,{round(width * 0.06)},{round(width * 0.06)},{margin_v},1\n\n"
         "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
         "Effect, Text\n")
-    rows = [f"Dialogue: 0,{_ass_time(c['start'])},{_ass_time(c['end'])},Cap,,0,0,0,,"
-            f"{cue_text(c, cap, ass=True)}" for c in cues]
+    room = width - 2 * round(width * 0.06)
+    rows = []
+    for c in cues:
+        # libass wraps only at spaces: one token wider than the frame (a domain
+        # name, a URL) runs off both edges. Shrink that cue until its widest
+        # token fits (audit round 8: "LOCALSERVICESPOTLIGHT.COM" on a 9:16 short).
+        widest = max((_text_px(t, cap["font"], cap["bold"], size)
+                      for t in cue_text(c, cap, ass=False).split()), default=0.0)
+        fit = "" if widest <= room else "{\\fs%d}" % max(8, int(size * room / widest * 0.97))
+        rows.append(f"Dialogue: 0,{_ass_time(c['start'])},{_ass_time(c['end'])},Cap,,0,0,0,,"
+                    f"{fit}{cue_text(c, cap, ass=True)}")
     return head + "\n".join(rows) + "\n"
+
+
+_FONTS: dict = {}
+
+
+def _text_px(text: str, family: str, bold: bool, size: int) -> float:
+    """Rendered width of text in pixels, from the font file fontconfig picks for
+    the caption family (Pillow); without Pillow or fontconfig, a wide estimate
+    (0.7 em a character, an uppercase bold face's widest average)."""
+    key = (family, bool(bold), size)
+    if key not in _FONTS:
+        font = None
+        try:
+            from PIL import ImageFont
+            path = subprocess.run(["fc-match", "-f", "%{file}",
+                                   f"{family}:bold" if bold else family],
+                                  capture_output=True, text=True).stdout.strip()
+            if path:
+                font = ImageFont.truetype(path, size)
+        except Exception:  # Pillow or fontconfig missing, or an unreadable font
+            font = None
+        _FONTS[key] = font
+    font = _FONTS[key]
+    if font is not None:
+        return float(font.getlength(text))
+    return len(text) * size * 0.7
 
 
 def _wrap(text: str, width: int) -> str:
@@ -635,19 +732,55 @@ def first_speech_s(path: str, style: dict, offset: float, window: float,
                   if not aud["noise"]["hook_measurable"] else "no sustained sound")
         return None, skipped, reason
     if until is not None:
-        # Longest silence between that start and `until` (source time), for the
-        # caller to judge whether the sound runs on into the first word.
-        gap = max((x["dur"] for x in aud["silences"]
-                   if x["start"] >= aud["first_sound"] and base + x["end"] <= until + 0.05),
-                  default=0.0)
-        return base + aud["first_sound"], skipped, f"{gap:.3f}"
+        return base + aud["first_sound"], skipped, head_into_word(
+            aud, base, base + aud["first_sound"], until, qa_prof)
     return base + aud["first_sound"], skipped, ""
 
 
+def head_into_word(aud: dict, base: float, fs: float, fw: float, prof: dict) -> dict:
+    """Sound before the first transcribed word (fw), from the first real start
+    fs: where talk that runs on into the word begins, if anywhere. Bursts of
+    sound (runs closer than merge_gap_s) shorter than max_skip_sound_s with
+    warn_pause_s or more of silence after them are a cough, a breath or a click,
+    not talk running into the word (audit round 8: a cough plus 1.4 s of dead
+    air was kept at the open). Returns {"start": source seconds or None, "gap":
+    longest silence from start to fw, "isolated": [(at, sound_s, silence_after)]}."""
+    hp, pp = prof["hook"], prof["pauses"]
+    join, short = hp.get("merge_gap_s", 0.25), hp.get("max_skip_sound_s", 0.6)
+    quiet = pp.get("warn_pause_s", 0.6)
+    bursts: list[list[float]] = []  # [start, end, sound seconds], source time
+    for k, a, b in aud["runs"]:
+        a, b = base + a, base + b
+        if k == 0 or b <= fs - 1e-6 or a >= fw:
+            continue
+        a, b = max(a, fs), min(b, fw)
+        if bursts and a - bursts[-1][1] < join:
+            bursts[-1][1], bursts[-1][2] = b, bursts[-1][2] + b - a
+        else:
+            bursts.append([a, b, b - a])
+    isolated, start = [], None
+    for i, (a, b, snd) in enumerate(bursts):
+        after = (bursts[i + 1][0] if i + 1 < len(bursts) else fw) - b
+        if snd < short and after >= quiet:
+            isolated.append((round(a, 3), round(snd, 3), round(after, 3)))
+            continue
+        start = a
+        break
+    gap = 0.0
+    if start is not None:
+        gap = max((base + x["end"] - max(base + x["start"], start) for x in aud["silences"]
+                   if base + x["end"] > start and base + x["end"] <= fw + 0.05), default=0.0)
+    return {"start": start, "gap": round(gap, 3), "isolated": isolated}
+
+
+UPMIX = "pan=stereo|c0=c0|c1=c0"
+
+
 def measure_loudnorm(path: str, start: float, style: dict,
-                     duration: float | None = None) -> dict:
+                     duration: float | None = None, pre: str = "") -> dict:
     lp = style["qa"]["loudness"]
-    flt = (f"loudnorm=I={lp['target_lufs']}:TP={lp['true_peak_max_dbtp']}:"
+    flt = (f"{pre + ',' if pre else ''}loudnorm=I={lp['target_lufs']}:"
+           f"TP={lp['true_peak_max_dbtp']}:"
            f"LRA={style['finish']['lra_target']}:print_format=json")
     cmd = ["ffmpeg", "-hide_banner", "-nostats"]
     if start > 0:
@@ -800,15 +933,26 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
             if fw - clip_start > 1.0:
                 # Never cut talk the transcript missed (an opening under room
                 # chatter): sound that starts earlier and runs into the first word
-                # without 2 s of silence is kept and reported.
+                # without 2 s of silence is kept and reported. A lone short sound
+                # with a pause after it (a cough, a breath, a click) is not talk
+                # running into the word: it is cut, and reported.
                 # Measure with some talk after the first word in the window, so the
                 # level rules have talk to compare the head against.
-                fs, _, gap = first_speech_s(src, style, clip_start,
-                                            min(fw - clip_start + 5.0, clip_end - clip_start,
-                                                120.0),
-                                            info["audio"]["sample_rate"], until=fw)
+                fs, _, head = first_speech_s(src, style, clip_start,
+                                             min(fw - clip_start + 5.0, clip_end - clip_start,
+                                                 120.0),
+                                             info["audio"]["sample_rate"], until=fw)
                 pause = style["qa"]["pauses"]["fail_pause_s"]
-                if fs is None and gap.startswith("the start cannot be told"):
+                if isinstance(head, dict):
+                    for at, snd, after in head["isolated"]:
+                        report["warnings"].append(
+                            f"trim-head cut a {snd:.2f}s sound at {at:.2f}s before the first "
+                            f"word ({after:.1f}s of silence after it): a cough, a breath, a "
+                            "click, or a lone word the transcript missed; listen")
+                    ts = head["start"]
+                else:
+                    ts = None
+                if fs is None and str(head).startswith("the start cannot be told"):
                     # A bed or crowd as loud as talk hides whether the speaker is
                     # already talking under it: cut nothing rather than guess.
                     start = clip_start
@@ -817,12 +961,12 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                         f"trim-head cut nothing: sound as loud as talk runs from "
                         f"{clip_start:.2f}s to the first transcribed word at {fw:.2f}s, "
                         "so talk the transcript missed could be under it; listen")
-                elif fs is not None and fs < fw - 0.5 and float(gap or 0.0) < pause:
-                    start = max(clip_start, fs - fin["head_pad_s"])
+                elif ts is not None and ts < fw - 0.5 and head["gap"] < pause:
+                    start = max(clip_start, ts - fin["head_pad_s"])
                     report["trim_head_to"] = "first sustained sound before the first word"
                     report["warnings"].append(
-                        f"trim-head kept {fw - fs:.1f}s of sound before the first "
-                        f"transcribed word ({fs:.2f}s to {fw:.2f}s): talk the transcript "
+                        f"trim-head kept {fw - ts:.1f}s of sound before the first "
+                        f"transcribed word ({ts:.2f}s to {fw:.2f}s): talk the transcript "
                         "missed, or an intro; listen before publishing")
         else:
             fs, skipped, why = first_speech_s(src, style, clip_start,
@@ -855,8 +999,15 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         afilters.append(f"afade=t=out:st={max(0.0, duration - fin['fade_s']):.3f}"
                         f":d={fin['fade_s']}")
     loud_on = False
+    # ffmpeg's loudnorm lands 1.5-2 LU under target on mono when it has to work
+    # in dynamic mode (audit round 8: -15.5 LUFS for a -14 target). Every player
+    # plays mono on both speakers anyway, so the loudness pass writes that: two
+    # identical channels, measured and normalised as stereo.
+    mono = loudness and (info["audio"].get("channels") or 0) == 1
+    upmix = UPMIX if mono else ""
     if loudness:
-        m = measure_loudnorm(src, start, style, duration if (clip or start > 0) else None)
+        m = measure_loudnorm(src, start, style, duration if (clip or start > 0) else None,
+                             pre=upmix)
         try:
             in_i = float(m["input_i"])
         except (KeyError, ValueError):
@@ -867,6 +1018,9 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         else:
             loud_on = True
             lp = style["qa"]["loudness"]
+            if upmix:
+                afilters.append(upmix)
+                report["mono_to_stereo"] = True
             afilters.append(
                 f"loudnorm=I={lp['target_lufs']}:"
                 # AAC encoding adds inter-sample overs and ffmpeg falls back to

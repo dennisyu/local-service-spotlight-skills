@@ -79,6 +79,7 @@
       "min_analysis_s": 1.0,
       "flat_noise_under_db": 15.0,
       "flat_noise_spread_db": 6.0,
+      "flat_part_s": 0.25,
       "word_pad_s": 0.15,
       "join_min_silence_s": 0.4,
       "word_near_s": 1.0,
