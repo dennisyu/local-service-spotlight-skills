@@ -22,7 +22,15 @@ jobs:
         run: python3 scripts/fleet_check.py --self-test
       - name: Validate repository structure and references
         run: python3 scripts/validate_marketplace.py
+      - name: Install ffmpeg so the video media tests run instead of skipping
+        run: |
+          # Same HTTPS-mirror fix as the browser step below; retries for a stalled mirror.
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 ffmpeg fontconfig fonts-dejavu-core
       - name: Run converter tests
+        env:
+          LSS_REQUIRE_FFMPEG: "1"
         run: python3 -m unittest discover -s tests -v
       - uses: actions/setup-node@v4
         with:
