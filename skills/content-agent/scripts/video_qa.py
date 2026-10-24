@@ -11,31 +11,46 @@ whichever editor produced it (Descript, ffmpeg, video-use, a VA in CapCut).
 
 It never plays sound. Everything is measured from the stream with ffmpeg.
 
-What it can and cannot see (three independent audits, 23 Oct 2026):
-- The file must decode. A half-downloaded file, a decoder error, or a stream that
-  ends early against what the container claims is a FAIL (`decodes_cleanly`),
-  never a clean receipt for the half that played.
+What it can and cannot see (four independent audits, 23 Oct 2026):
+- The file must decode. A decoder error, a stream that ends early against what
+  the container claims, a WAV whose header promises more audio than it holds,
+  or an Ogg/Opus file without its end page is a FAIL (`decodes_cleanly`), never
+  a clean receipt for the part that played. (A cut-off MP3 is a valid shorter
+  MP3; nothing in the file says it was longer.)
 - With a transcript (--srt or --words) the hook check uses the first WORD;
-  "[Music]" and "(applause)" cues are not words. Without a transcript it can only
-  see the first SOUND: a burst must hold 0.15 s of sound at 30% density (so a
-  click or typing does not count), and a short burst followed by 2 s or more of
-  dead air (a cough, a thump) is skipped. Audio that starts after the picture
-  counts as dead air at the head; audio that stops early counts at the tail.
+  "[Music]", "(applause)", "*music*" cues are not words. If nothing is audible
+  where the transcript puts that word, the sound wins and the receipt says the
+  transcript may be for another cut. Without a transcript it can only see the
+  first SOUND: a start needs 30% sound in its first half second (typing and
+  clicks are sparser) and 0.15 s of sound, and a short sound followed by 2 s of
+  dead air (a cough, a thump) is skipped and listed. Audio that starts after the
+  picture counts as dead air at the head; audio that stops early, at the tail
+  (trailing dead air over min(10 s, a quarter of the video) is a FAIL).
 - Pauses come from the peak level of every 10 ms window. Silence is 25 LU under
-  the file's own loudness (clamped to -60..-30 dB), raised 6 dB over the local
-  noise floor wherever that floor would reach it (the lowest half-second floor
-  within +/-2 s), so room noise in part of a file cannot hide a dead gap there. Where
-  noise, music or a steady tone sits within 10 dB of the talk, pauses cannot be
-  told from talk: that stretch is reported as unmeasurable, and if it is a
-  quarter of the file or more the pause checks say WARN, never PASS.
-  Known limit: pause COUNTS still move by a few with heavy noise or a music bed;
-  in the audits the verdicts did not.
-- Black frames are counted frame by frame (so variable-frame-rate screen
-  recordings are covered): a run of two or more frames that are 98% black inside
-  the video is a FAIL; 90-98% black ("near-black": a dead screen with a small
-  camera tile, or a dark-theme slide) is a WARN with the frame saved for a human
-  to look at. Opening on black is a FAIL, ending on black a WARN. Letterbox bars
-  are reported. Cover art in an audio file is not video.
+  the file's own loudness (clamped to -60..-30 dB), raised over the local noise
+  floor wherever that floor would reach it: the quietest half-second within
+  +/-2 s, plus its own spread + 3 dB (6 to 12 dB; pink and brown noise swing
+  wider than white). A steady tone or hum (under 3 dB of movement) is not talk.
+  A sound blip under 80 ms between silences (a click, a noise spike) does not
+  break a pause. Where noise sits within 10 dB of the talk, or where 30 s pass
+  without a quarter-second of quiet (talk over a music bed or a crowd: real talk
+  breathes; the 66-minute replay's longest such stretch was 20.9 s), pauses
+  cannot be heard by level and that stretch is unmeasurable: a quarter of the
+  file or more makes the pause checks WARN, less adds a note.
+  Known limits: a pause filled by a music bed or background talk within about
+  25 dB of the speaker sounds like sound; with a transcript the receipt still
+  flags it (`talk_gaps`). Pause COUNTS move with noise and beds (8 on a clean
+  minute of the replay, 14 to 19 with noise under it); the 2-second verdict held
+  for white, pink, brown and hum noise and a click in the gap.
+- Black is judged frame by frame and timed by display time, so one black frame
+  held for a second in a sparse screen recording is a second of black. A run of
+  two or more black frames (nothing on screen brighter than near-black) or
+  0.08 s of them inside the video is a FAIL; a mostly dark frame with something
+  on it (a dead screen with a camera tile, a dark-theme slide, a title card or a
+  terminal on black) is a near-black WARN with the frame saved for a human to
+  look at. Opening on black is a FAIL, ending on black a WARN. Letterbox bars
+  are reported. Cover art in an audio file is not video; a video with no audio
+  track gets its picture checked and a WARN for the missing sound.
 
 Usage:
     video_qa.py <video> [--profile video-style.json] [--srt captions.srt |
@@ -68,19 +83,23 @@ DEFAULT_PROFILE = {
                "window_s": 0.01, "floor_block_s": 0.5, "floor_span_s": 2.0,
                "block_floor_percentile": 5, "noise_floor_percentile": 10,
                "speech_percentile": 95,
-               "noise_floor_margin_db": 6.0, "min_speech_margin_db": 10.0,
-               "masked_warn_frac": 0.25},
+               "noise_floor_margin_db": 6.0, "max_noise_margin_db": 12.0,
+               "steady_spread_db": 3.0, "min_speech_margin_db": 10.0,
+               "bridge_sound_s": 0.08, "max_talk_without_gap_s": 30.0,
+               "talk_gap_s": 0.25, "min_analysis_s": 1.0, "masked_warn_frac": 0.25},
     # A record-button click, typing or a cough is not a hook.
     "hook": {"max_first_speech_s": 2.0, "min_sound_s": 0.15, "merge_gap_s": 0.25,
-             "min_density": 0.3, "max_skip_sound_s": 0.6},
+             "min_density": 0.3, "density_window_s": 0.5, "max_skip_sound_s": 0.6,
+             "transcript_lag_s": 1.0},
     # Tail silence over max is a WARN; over the smaller of fail_s and fail_frac of
     # the video (a microphone that died) it is a FAIL.
     "tail": {"max_trailing_silence_s": 1.5, "fail_trailing_silence_s": 10.0,
              "fail_trailing_frac": 0.25},
-    # near-black: pic_th of pixels under pix_th of the luma range. black: hard_pic_th
-    # of pixels under hard_pix_th, i.e. truly black, not a dark-theme slide.
+    # Near-black: at least pic_th of pixels at or under pix_th of the luma range.
+    # Black: no pixel brighter than that (nothing on screen at all). A run counts
+    # at min_black_frames frames OR min_black_s of display time (a held frame).
     "black": {"min_black_frames": 2, "min_black_s": 0.08, "pic_th": 0.90,
-              "hard_pic_th": 0.98, "pix_th": 0.10, "hard_pix_th": 0.03, "scan_height": 180,
+              "pix_th": 0.10, "scan_height": 180,
               "letterbox_min_px": 8, "near_black_frames_saved": 10},
     "frames": {"contact_sheet_tiles": 16, "thumbnail_candidates": 6},
 }
@@ -146,8 +165,8 @@ def load_profile(path: str | None) -> dict:
     return merged
 
 
-def run(cmd: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+def run(cmd: list[str], cwd: str | None = None) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, errors="replace", cwd=cwd)
 
 
 def _rotation(stream: dict) -> int:
@@ -189,6 +208,46 @@ def _tag_duration(stream: dict) -> float | None:
     return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3)) if m else None
 
 
+def _tag_length(stream: dict, start: float) -> float | None:
+    """Matroska writes the stream's END time in its DURATION tag; the length is that
+    minus the stream's start (audio delayed 0.8 s is 0.8 s shorter, not truncated)."""
+    end = _tag_duration(stream)
+    return None if end is None else max(0.0, end - max(0.0, start))
+
+
+def container_truncation(path: str) -> str | None:
+    """What the container's own header says about a cut-off file, for formats whose
+    decoders stop quietly at the end of the data: a WAV data chunk larger than the
+    bytes present, an Ogg/Opus stream without its end-of-stream page."""
+    try:
+        size = os.path.getsize(path)
+        with open(path, "rb") as fh:
+            head = fh.read(12)
+            if head[:4] in (b"RIFF", b"RF64") and head[8:12] == b"WAVE":
+                pos = 12
+                while pos + 8 <= size:
+                    fh.seek(pos)
+                    cid, raw = fh.read(4), fh.read(4)
+                    if len(raw) < 4:
+                        break
+                    csz = int.from_bytes(raw, "little")
+                    if cid == b"data":
+                        if csz not in (0, 0xFFFFFFFF) and pos + 8 + csz > size + 1:
+                            return (f"the WAV header promises {csz:,} bytes of audio but "
+                                    f"the file holds {size - pos - 8:,} (cut off)")
+                        return None
+                    pos += 8 + csz + (csz & 1)
+            elif head[:4] == b"OggS":
+                fh.seek(max(0, size - 65536))
+                tail = fh.read()
+                i = tail.rfind(b"OggS")
+                if i >= 0 and i + 5 < len(tail) and not tail[i + 5] & 0x04:
+                    return "the Ogg stream has no end-of-stream page (cut off)"
+    except OSError:
+        return None
+    return None
+
+
 def probe(path: str) -> dict:
     """Container facts, with the picture size as DISPLAYED (phone rotation applied).
     Cover art inside an audio file (attached_pic) is not treated as video."""
@@ -219,18 +278,18 @@ def probe(path: str) -> dict:
             if rot in (90, 270):
                 w, h = h, w
             pix = str(st.get("pix_fmt") or "")
+            vstart = _float(st.get("start_time")) or 0.0
             info["video"] = {"codec": st.get("codec_name"), "width": w, "height": h,
-                             "fps": round(fps, 3), "rotation": rot,
-                             "start_s": _float(st.get("start_time")) or 0.0,
-                             "duration_s": _float(st.get("duration")) or _tag_duration(st),
+                             "fps": round(fps, 3), "rotation": rot, "start_s": vstart,
+                             "duration_s": _float(st.get("duration")) or _tag_length(st, vstart),
                              "full_range": st.get("color_range") == "pc"
                              or pix.startswith("yuvj")}
         elif st.get("codec_type") == "audio" and info["audio"] is None:
+            astart = _float(st.get("start_time")) or 0.0
             info["audio"] = {"codec": st.get("codec_name"),
                              "sample_rate": int(st.get("sample_rate", 0) or 0),
-                             "channels": st.get("channels"),
-                             "start_s": _float(st.get("start_time")) or 0.0,
-                             "duration_s": _float(st.get("duration")) or _tag_duration(st)}
+                             "channels": st.get("channels"), "start_s": astart,
+                             "duration_s": _float(st.get("duration")) or _tag_length(st, astart)}
     return info
 
 
@@ -352,20 +411,28 @@ def classify_levels(peaks: list[float], w: float, prof: dict,
     """Label every window silent (0), sound (1) or unmeasurable (2).
 
     The threshold starts at the relative rule (silence_threshold) and is raised
-    block by block to clear the local noise floor. Each half-second block's floor
-    is its quietest 5% of windows; the local floor is the LOWEST block floor within
-    +/- floor_span_s, because even fast, dense talk drops to the room's own level
-    between words somewhere in a 4-second span, while steady noise never drops
-    below itself. (A 2-second block with the 10th percentile, the first design,
-    read dense real speech as noise: tested on the 66-minute replay before ship.)
-    A block is unmeasurable where that raised threshold would sit within
-    min_speech_margin_db of the talk (the 95th percentile of windows clearly above
-    the file's floor): noise, music or a steady tone there hides any pause."""
+    block by block to clear the local noise floor: the half-second block with the
+    lowest 5th percentile within +/- floor_span_s gives the floor (even fast talk
+    drops to the room's level between words somewhere in 4 s; steady noise never
+    drops below itself), and the margin over it is that quiet block's own spread
+    plus 3 dB, between 6 and 12 dB (pink and brown noise swing wider than white;
+    audit round 4). A block whose own spread is under steady_spread_db is a tone
+    or hum, not talk, and counts as silence unless something rises 6 dB over it.
+    A block is unmeasurable where the raised threshold sits within
+    min_speech_margin_db of the talk. Files shorter than min_analysis_s use the
+    relative threshold alone (too little sound to estimate a floor).
+    After labelling: sound blips shorter than bridge_sound_s between silences (a
+    mouse click, a noise spike) are silence, and any stretch of max_talk_without_gap_s
+    with no silence of talk_gap_s is unmeasurable: real talk breathes (the
+    66-minute replay's longest stretch was 20.9 s), so a minute with no gap at all
+    is talk over a music bed or crowd, where pauses cannot be heard by level."""
     pp = prof["pauses"]
     n = len(peaks)
     base = silence_threshold(prof, integrated_lufs)
     fixed = pp.get("silence_threshold_db", "auto") != "auto"
     margin = float(pp.get("noise_floor_margin_db", 6.0))
+    max_margin = float(pp.get("max_noise_margin_db", 12.0))
+    steady_db = float(pp.get("steady_spread_db", 3.0))
     smargin = float(pp.get("min_speech_margin_db", 10.0))
     fpct, spct = pp.get("noise_floor_percentile", 10), pp.get("speech_percentile", 95)
     bpct = pp.get("block_floor_percentile", 5)
@@ -377,29 +444,70 @@ def classify_levels(peaks: list[float], w: float, prof: dict,
     else:
         speech = round(max(audible), 1) if audible else -120.0
     has_sound = speech > -100.0
+    short = n * w < float(pp.get("min_analysis_s", 1.0))
     B = max(1, int(round(pp.get("floor_block_s", 0.5) / w)))
     nb = max(1, -(-n // B))
-    bfloor = []
+    lo5, hi95 = [], []
     for b in range(nb):
-        chunk = peaks[b * B:(b + 1) * B]
-        bfloor.append(_percentile(chunk, bpct) if chunk else -120.0)
+        chunk = sorted(peaks[b * B:(b + 1) * B]) or [-120.0]
+        lo5.append(chunk[min(len(chunk) - 1, int(len(chunk) * bpct / 100.0))])
+        hi95.append(chunk[min(len(chunk) - 1, int(len(chunk) * 0.95))])
     span = max(0, int(round(pp.get("floor_span_s", 2.0) / (B * w))))
-    thr, masked = [], []
+    thr, masked, steady = [], [], []
     for b in range(nb):
-        need = min(bfloor[max(0, b - span):b + span + 1]) + margin
+        q = min(range(max(0, b - span), min(nb, b + span + 1)), key=lambda k: lo5[k])
+        spread = hi95[q] - lo5[q]
+        m = margin if spread >= max_margin else min(max_margin, max(margin, spread + 3.0))
+        need = -120.0 if short else lo5[q] + m
         if fixed:
-            t, m = base, has_sound and need > base
+            t, msk = base, has_sound and not short and need > base
         else:
             t = max(base, need)
-            m = has_sound and t > speech - smargin
+            msk = has_sound and not short and t > speech - smargin
         thr.append(round(t, 1))
-        masked.append(bool(m))
+        masked.append(bool(msk))
+        steady.append(not short and lo5[b] > -100.0 and hi95[b] - lo5[b] < steady_db)
     state = bytearray(n)
     for i, p in enumerate(peaks):
         b = i // B
-        state[i] = 2 if masked[b] else (0 if p < thr[b] else 1)
+        if masked[b]:
+            state[i] = 2
+        elif p < thr[b] or (steady[b] and p < lo5[b] + margin):
+            state[i] = 0
+        else:
+            state[i] = 1
+    if not short:  # under a second there is too little to call anything a blip
+        _bridge_blips(state, max(1, int(round(pp.get("bridge_sound_s", 0.08) / w))))
+        _mask_gapless_talk(state, w, float(pp.get("max_talk_without_gap_s", 30.0)),
+                           float(pp.get("talk_gap_s", 0.25)))
     return {"state": state, "block": B, "thresholds": thr, "masked_blocks": masked,
             "base_threshold_db": base, "floor_db": gfloor, "speech_db": speech}
+
+
+def _bridge_blips(state: bytearray, max_windows: int) -> None:
+    """A sound run of at most max_windows with silence on both sides (or silence on
+    one side and the file edge on the other) is a click or a noise spike: silence."""
+    runs = _runs(state)
+    for k, (s, i0, i1) in enumerate(runs):
+        if s != 1 or i1 - i0 > max_windows:
+            continue
+        before = runs[k - 1][0] if k > 0 else 0
+        after = runs[k + 1][0] if k + 1 < len(runs) else 0
+        if before == 0 and after == 0 and len(runs) > 1:
+            state[i0:i1] = bytes(i1 - i0)
+
+
+def _mask_gapless_talk(state: bytearray, w: float, max_s: float, gap_s: float) -> None:
+    """Mark as unmeasurable every stretch of max_s or longer that never falls silent
+    for gap_s: pauses there are covered by a music bed, a crowd or noise."""
+    if max_s <= 0:
+        return
+    runs = _runs(state)
+    cuts = [(i0, i1) for s, i0, i1 in runs if s == 0 and (i1 - i0) * w >= gap_s]
+    edges = [0] + [x for c in cuts for x in c] + [len(state)]
+    for a, b in zip(edges[0::2], edges[1::2]):
+        if (b - a) * w >= max_s:
+            state[a:b] = bytes([2]) * (b - a)
 
 
 def _runs(state: bytearray) -> list[tuple[int, int, int]]:
@@ -416,38 +524,49 @@ def _runs(state: bytearray) -> list[tuple[int, int, int]]:
 
 def pick_start(sound: list[tuple[float, float]], masked: list[tuple[float, float]],
                length: float, hp: dict, fail_pause_s: float):
-    """First burst of sound that is a real start. Runs closer than merge_gap_s join
-    one burst (a word broken by a stop consonant stays whole). A burst needs
-    min_sound_s of sound at min_density (typing is too sparse, a click too short),
-    and a short burst (under max_skip_sound_s) followed by fail_pause_s or more of
-    silence is skipped (a cough before dead air). Returns (start, skipped, masked):
-    masked=True when an unmeasurable stretch comes before any start."""
-    bursts: list[dict] = []
-    for a, b in sound:
-        if bursts and a - bursts[-1]["end"] < hp.get("merge_gap_s", 0.25):
-            bursts[-1]["end"] = b
-            bursts[-1]["sound"] += b - a
-        else:
-            bursts.append({"start": a, "end": b, "sound": b - a})
+    """The first real start. A candidate is the onset of a sound run whose next
+    density_window_s is at least min_density sound (typing and clicks are sparse,
+    even when talk follows straight after them). From there, runs closer than
+    merge_gap_s form one burst, which needs min_sound_s of sound; a short burst
+    (under max_skip_sound_s) followed by fail_pause_s of silence is skipped and
+    reported (a cough before dead air). Returns (start, skipped, masked), where
+    masked=True means an unmeasurable stretch comes before any start."""
+    win = hp.get("density_window_s", 0.5)
+    need = hp.get("min_density", 0.3) * win
+    gap_join = hp.get("merge_gap_s", 0.25)
     first_masked = masked[0][0] if masked else None
     skipped = []
-    for k, bu in enumerate(bursts):
-        if first_masked is not None and first_masked <= bu["start"]:
+    k, n = 0, len(sound)
+    while k < n:
+        a = sound[k][0]
+        if first_masked is not None and first_masked <= a:
             return None, skipped, True
-        span = bu["end"] - bu["start"]
-        dense = bu["sound"] / span if span > 0 else 1.0
-        if bu["sound"] < hp.get("min_sound_s", 0.15) or dense < hp.get("min_density", 0.3):
+        cover, j = 0.0, k
+        while j < n and sound[j][0] < a + win:
+            cover += min(sound[j][1], a + win) - sound[j][0]
+            j += 1
+        if cover < need:
+            k += 1
             continue
-        nxt = bursts[k + 1]["start"] if k + 1 < len(bursts) else length
+        end, total, j = sound[k][1], sound[k][1] - sound[k][0], k + 1
+        while j < n and sound[j][0] - end < gap_join:
+            total += sound[j][1] - sound[j][0]
+            end = sound[j][1]
+            j += 1
+        if total < hp.get("min_sound_s", 0.15):
+            k = j
+            continue
+        nxt = sound[j][0] if j < n else length
         gap_end = nxt
-        if first_masked is not None and bu["end"] <= first_masked < nxt:
+        if first_masked is not None and end <= first_masked < nxt:
             gap_end = None  # what follows cannot be measured: do not skip on it
-        if (gap_end is not None and bu["sound"] < hp.get("max_skip_sound_s", 0.6)
-                and gap_end - bu["end"] >= fail_pause_s):
-            skipped.append({"at_s": round(bu["start"], 3), "sound_s": round(bu["sound"], 3),
-                            "silence_after_s": round(gap_end - bu["end"], 3)})
+        if (gap_end is not None and total < hp.get("max_skip_sound_s", 0.6)
+                and gap_end - end >= fail_pause_s):
+            skipped.append({"at_s": round(a, 3), "sound_s": round(total, 3),
+                            "silence_after_s": round(gap_end - end, 3)})
+            k = j
             continue
-        return round(bu["start"], 3), skipped, False
+        return round(a, 3), skipped, False
     return None, skipped, first_masked is not None
 
 
@@ -463,7 +582,7 @@ def first_sustained_sound(silences: list[dict], length: float,
     if t < length:
         runs.append((t, length))
     hp = {"min_sound_s": min_sound_s, "merge_gap_s": merge_gap_s,
-          "min_density": min_density, "max_skip_sound_s": 0.6}
+          "min_density": min_density, "density_window_s": 0.5, "max_skip_sound_s": 0.6}
     return pick_start(runs, [], length, hp, fail_pause_s)[0]
 
 
@@ -493,8 +612,12 @@ def analyze_audio(path: str, prof: dict, start: float = 0.0,
             sound.append((a, b))
         elif s == 2:
             masked_iv.append((a, b))
-    first, skipped, hook_masked = pick_start(sound, masked_iv, length, hp,
-                                             pp["fail_pause_s"])
+    if length < float(pp.get("min_analysis_s", 1.0)):
+        # A clip under a second: the first sound is the start, no burst rules.
+        first, skipped, hook_masked = (sound[0][0] if sound else None), [], False
+    else:
+        first, skipped, hook_masked = pick_start(sound, masked_iv, length, hp,
+                                                 pp["fail_pause_s"])
     masked_s = round(sum(b - a for a, b in masked_iv), 2)
     thr = cl["thresholds"]
     raised_s = round(sum(1 for t in thr if t > cl["base_threshold_db"] + 0.05)
@@ -533,68 +656,80 @@ def black_min_s(prof: dict, fps: float | None) -> float:
 
 
 def measure_video(path: str, prof: dict, info: dict | None = None) -> dict:
-    """Black and near-black runs counted frame by frame, plus how much of the
-    picture actually decoded. Two blackframe passes share one decode: one counts
-    frames at least pic_th dark (near-black), the other frames at least hard_pic_th
-    truly black. A run is 'black' when every frame in it is truly black, otherwise
-    'near-black' (a dead screen with a small camera tile, or a dark-theme slide,
-    whose background is dark grey, not black). Runs: start, end, dur, frames,
-    first_frame, min_black_pct, kind."""
+    """Black and near-black runs from every frame's luma statistics, with each run
+    timed by DISPLAY time (a black frame held for a second in a sparse screen
+    recording is a second of black), plus how much of the picture decoded.
+
+    Per frame, on a limited-range copy scaled to scan_height: near-black when the
+    90th-percentile luma is at or under the pix_th level (90% of the picture is
+    dark); black when even the brightest pixel is (nothing on screen at all). A run
+    is 'black' when it holds min_black_frames consecutive black frames or
+    min_black_s of black display time, otherwise 'near-black' (a dead screen with a
+    camera tile, a dark-theme slide, a title card or terminal on black)."""
+    import tempfile
     bp = prof["black"]
     v = (info or {}).get("video") or {}
-    # Thresholds are a share of the luma range; blackframe wants a level. The scan
-    # converts every source to limited range first (blackframe cannot take the
-    # full-range yuvj formats, and ffmpeg's silent conversion moved black from 1
-    # to 17 on the replay), so one set of levels fits every file.
-    lo, rng = 16.0, 219.0
-    near_level = int(round(lo + bp["pix_th"] * rng))
-    hard_level = int(round(lo + bp.get("hard_pix_th", 0.03) * rng))
-    near_amt = int(round(bp["pic_th"] * 100))
-    hard_amt = int(round(bp.get("hard_pic_th", 0.98) * 100))
-    res = run(["ffmpeg", "-nostdin", "-hide_banner", "-nostats", "-i", path, "-an",
-               "-map", "0:v:0", "-vf",
-               f"scale=-2:{bp['scan_height']}:out_range=tv,format=yuv420p,split[near][hard];"
-               f"[near]blackframe=amount={near_amt}:threshold={near_level},nullsink;"
-               f"[hard]blackframe=amount={hard_amt}:threshold={hard_level}",
-               "-progress", "pipe:1", "-f", "null", "-"])
-    if res.returncode != 0:
+    level = int(round(16 + bp["pix_th"] * 219))
+    if abs(bp.get("pic_th", 0.90) - 0.90) > 1e-6:
+        raise ValueError("black.pic_th must be 0.90 (the scan reads the 90th-percentile "
+                         "luma of each frame)")
+    work = tempfile.mkdtemp(prefix="vqa-")
+    try:
+        res = run(["ffmpeg", "-nostdin", "-hide_banner", "-nostats", "-loglevel", "error",
+                   "-i", os.path.abspath(path), "-an", "-map", "0:v:0", "-vf",
+                   f"scale=-2:{bp['scan_height']}:out_range=tv,format=yuv420p,signalstats,"
+                   "metadata=mode=print:key=lavfi.signalstats.YHIGH:file=yhigh.txt,"
+                   "metadata=mode=print:key=lavfi.signalstats.YMAX:file=ymax.txt",
+                   "-f", "null", "-"], cwd=work)
+        hi_txt = Path(work, "yhigh.txt").read_text(errors="replace") \
+            if Path(work, "yhigh.txt").exists() else ""
+        mx_txt = Path(work, "ymax.txt").read_text(errors="replace") \
+            if Path(work, "ymax.txt").exists() else ""
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    if res.returncode != 0 and not hi_txt:
         raise RuntimeError(f"video scan failed: {first_error(res.stderr)}")
-    by_inst: dict[int, list] = {}
-    for m in re.finditer(r"Parsed_blackframe_(\d+)[^\n]*?frame:(\d+)\s+pblack:(\d+)\s+"
-                         r"pts:\S+\s+t:" + _FLOAT, res.stderr):
-        by_inst.setdefault(int(m.group(1)), []).append(
-            (int(m.group(2)), int(m.group(3)), float(m.group(4))))
-    insts = sorted(by_inst)  # the near-black instance comes first in the graph
-    frames = by_inst.get(insts[0], []) if insts else []
-    truly_black = {n for n, _, _ in by_inst.get(insts[1], [])} if len(insts) > 1 else set()
+    pat = (r"frame:(\d+)\s+pts:\S+\s+pts_time:" + _FLOAT +
+           r"\s+lavfi\.signalstats\.{key}=" + _FLOAT)
+    highs = {int(m.group(1)): (float(m.group(2)), float(m.group(3)))
+             for m in re.finditer(pat.replace("{key}", "YHIGH"), hi_txt)}
+    maxes = {int(m.group(1)): float(m.group(3))
+             for m in re.finditer(pat.replace("{key}", "YMAX"), mx_txt)}
+    order = sorted(highs)
     fps = v.get("fps") or 25.0
-    step = 1.0 / fps
-    runs: list[dict] = []
-    for n, pct, t in frames:
-        if runs and n == runs[-1]["_last"] + 1:
-            r = runs[-1]
-            r["_last"], r["end"], r["frames"] = n, t + step, r["frames"] + 1
-            r["min_black_pct"] = min(r["min_black_pct"], pct)
-            r["black_frames"] += n in truly_black
-        else:
-            runs.append({"start": t, "end": t + step, "frames": 1, "min_black_pct": pct,
-                         "_last": n, "_first": n, "black_frames": int(n in truly_black)})
+    times = [highs[n][0] for n in order]
+    shows = [max(0.0, b - a) for a, b in zip(times, times[1:])] + ([1.0 / fps] if times else [])
+    decoded = round(times[-1] + shows[-1], 3) if times else None
+    near = [highs[n][1] <= level for n in order]
+    black = [maxes.get(n, 255.0) <= level for n in order]
     min_frames = int(bp.get("min_black_frames", 2))
-    out = []
-    for r in runs:
-        if r["frames"] < min_frames:
+    min_s = float(bp.get("min_black_s", 0.08))
+    out, i, total = [], 0, len(order)
+    while i < total:
+        if not near[i]:
+            i += 1
             continue
-        out.append({"start": round(r["start"], 3), "end": round(r["end"], 3),
-                    "dur": round(r["end"] - r["start"], 3), "frames": r["frames"],
-                    "first_frame": r["_first"], "min_black_pct": r["min_black_pct"],
-                    "kind": "black" if r["black_frames"] == r["frames"] else "near-black"})
-    out_time = re.findall(r"out_time_us=(\d+)", res.stdout)
-    decoded = round(int(out_time[-1]) / 1e6 + step, 3) if out_time else None
-    # Component lines only ("[h264 @ 0x..] ..."), so a title tag that happens to
-    # contain the word "error" is not mistaken for a decoder error.
+        j = i
+        while j < total and near[j]:
+            j += 1
+        disp = sum(shows[i:j])
+        best_f, best_s, run_f, run_s = 0, 0.0, 0, 0.0
+        for k in range(i, j):
+            if black[k]:
+                run_f, run_s = run_f + 1, run_s + shows[k]
+                best_f, best_s = max(best_f, run_f), max(best_s, run_s)
+            else:
+                run_f, run_s = 0, 0.0
+        if j - i >= min_frames or disp >= min_s:
+            out.append({"start": round(times[i], 3), "end": round(times[i] + disp, 3),
+                        "dur": round(disp, 3), "frames": j - i, "first_frame": i,
+                        "last_frame": j - 1, "frame_count": total,
+                        "black_frames": sum(black[i:j]),
+                        "kind": "black" if (best_f >= min_frames or best_s >= min_s)
+                        else "near-black"})
+        i = j
     errors = [l.strip() for l in res.stderr.splitlines()
-              if l.lstrip().startswith("[") and "blackframe" not in l
-              and re.search(r"error|invalid|corrupt|partial file", l, re.I)]
+              if l.strip() and re.search(r"error|invalid|corrupt|partial file", l, re.I)]
     return {"runs": out, "decoded_s": decoded, "errors": errors}
 
 
@@ -697,7 +832,7 @@ def pick_thumbnail_times(path: str, duration: float, n: int, outdir: Path,
             f = probe_dir / f"p{i:03d}.jpg"
             run(["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-ss",
                  f"{t:.3f}", "-i", path, "-frames:v", "1", "-vf", "scale=640:-2", str(f)])
-            img = cv2.imread(str(f))
+            img = cv2.imread(str(f)) if f.exists() and f.stat().st_size > 0 else None
             if img is None:
                 continue
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -748,7 +883,7 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
              prof: dict, first_speech: float | None = None,
              first_audio=NOT_MEASURED, threshold_db: float | None = None,
              bars: dict | None = None, noise: dict | None = None,
-             decode: dict | None = None) -> list[dict]:
+             decode: dict | None = None, words: list[dict] | None = None) -> list[dict]:
     """Turn measurements into checks. `first_speech` (first transcribed word) wins
     over `first_audio` (first real sound, None = none found); without either, the
     leading silence is used. `noise` is analyze_audio()'s summary: unmeasurable
@@ -767,6 +902,11 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
         add("decodes_cleanly", "PASS" if decode.get("ok", True) else "FAIL",
             "yes" if decode.get("ok", True) else "no", "whole file decodes, no errors",
             decode.get("note", ""))
+    if "audio" in info and info["audio"] is None:
+        add("audio", "WARN", "none", "an audio track",
+            "no audio stream: loudness, hook and pauses cannot be checked (fine for "
+            "silent b-roll, a defect for anything with talk)")
+        return checks + _video_checks(info, black, prof, bars)
 
     lp = prof["loudness"]
     il = loud.get("integrated_lufs")
@@ -803,7 +943,15 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
     trail = (silences[-1] if silences and silences[-1]["end"] >= audio_end - 0.15
              else None)
     hook_max = prof["hook"]["max_first_speech_s"]
-    if first_speech is not None:
+    lag = prof["hook"].get("transcript_lag_s", 1.0)
+    if (first_speech is not None and isinstance(first_audio, (int, float))
+            and not isinstance(first_audio, bool) and first_audio - first_speech > lag):
+        # Nothing is audible where the transcript puts the first word: trust the
+        # sound, and say the transcript is out of step with this file.
+        name, start_s = "hook_first_speech", first_audio
+        note = (f"the transcript puts the first word at {first_speech:.2f}s but nothing "
+                f"is audible until {first_audio:.2f}s; is the transcript for another cut?")
+    elif first_speech is not None:
         name, start_s, note = "hook_first_speech", first_speech, "first transcribed word"
     else:
         name = "hook_first_audio"
@@ -865,6 +1013,22 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
     else:
         add("pauses_over_fail", "PASS", 0,
             f"0 pauses ≥ {pp['fail_pause_s']}s inside the video", thr_note)
+    # The transcript hears pauses in TALK that the level cannot: the speaker stops
+    # while a music bed or a crowd 20-25 dB down keeps sounding (audit round 4).
+    if words:
+        ws = sorted(words, key=lambda x: x["start"])
+        talk_gaps = []
+        for a_w, b_w in zip(ws, ws[1:]):
+            gs, ge = a_w["end"], b_w["start"]
+            if ge - gs >= pp["fail_pause_s"] and not any(
+                    s_["start"] <= gs + 0.3 and s_["end"] >= ge - 0.3 for s_ in long_pauses):
+                talk_gaps.append((gs, ge - gs))
+        if talk_gaps:
+            add("talk_gaps", "WARN", len(talk_gaps),
+                f"0 gaps ≥ {pp['fail_pause_s']}s between transcribed words",
+                "the talk stops while other sound continues (a music bed, a crowd, "
+                "noise); check each is meant: "
+                + "; ".join(f"{g:.1f}s ({d:.1f}s)" for g, d in talk_gaps[:5]))
     expected_rate = (f"≤ {pp['max_warn_pauses_per_minute']}/min of {pp['warn_pause_s']}–"
                      f"{pp['fail_pause_s']}s pauses")
     if unmeasurable:
@@ -894,10 +1058,18 @@ def _video_checks(info: dict, black: list[dict], prof: dict,
     head, tail, body = [], [], []
     for b in black:
         long_run = b["dur"] >= 0.5
-        if b.get("first_frame") == 0 or b["start"] <= frame * 0.5 + 0.01 or (
-                long_run and b["start"] <= 0.5):
+        if "first_frame" in b:  # frame-indexed scan: the first frame opens the video
+            opens = b["first_frame"] == 0 or (long_run and b["start"] <= 0.5)
+        else:
+            opens = b["start"] <= frame * 0.5 + 0.01 or (long_run and b["start"] <= 0.5)
+        if "last_frame" in b and "frame_count" in b:
+            closes = b["last_frame"] == b["frame_count"] - 1 or (
+                long_run and b["end"] >= dur - 0.5)
+        else:
+            closes = b["end"] >= dur - (frame + 0.05) or (long_run and b["end"] >= dur - 0.5)
+        if opens:
             head.append(b)
-        elif b["end"] >= dur - (frame + 0.05) or (long_run and b["end"] >= dur - 0.5):
+        elif closes:
             tail.append(b)
         else:
             body.append(b)
@@ -905,15 +1077,16 @@ def _video_checks(info: dict, black: list[dict], prof: dict,
     near = [b for b in body if b.get("kind") == "near-black"]
     frames = bp.get("min_black_frames", 2)
     add("black_frames", "FAIL" if hard else "PASS", len(hard),
-        f"0 runs of {frames}+ truly black frames inside the video",
+        f"0 runs of {frames}+ black frames (or {bp.get('min_black_s', 0.08)}s of a held "
+        "black frame) inside the video",
         "; ".join(f"{b['start']:.2f}s ({b['dur']:.2f}s)" for b in hard[:5]))
     if near:
         add("near_black", "WARN", len(near),
             f"0 runs of {frames}+ frames ≥ {round(bp['pic_th'] * 100)}% dark",
-            "a dead screen (a small camera tile on black) or a dark-theme slide; look "
-            "at the near-black frame(s) saved with this receipt: "
-            + "; ".join(f"{b['start']:.2f}s ({b['dur']:.2f}s, {b['min_black_pct']}% "
-                        "black)" for b in near[:5]))
+            "mostly dark with something on screen: a dead screen with a camera tile, a "
+            "dark-theme slide, or a title card on black; look at the near-black frame(s) "
+            "saved with this receipt: "
+            + "; ".join(f"{b['start']:.2f}s ({b['dur']:.2f}s)" for b in near[:5]))
     if head:
         h = head[0]
         hard_open = h.get("kind", "black") == "black"
@@ -1001,9 +1174,10 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise RuntimeError("ffmpeg and ffprobe must be on PATH")
     info = probe(path)
+    if info["audio"] is None and info["video"] is None:
+        raise RuntimeError("no audio or video stream to measure")
     if info["audio"] is None:
-        raise RuntimeError("no audio stream: nothing to measure for loudness, hook "
-                           "or pauses")
+        return _qa_video_only(path, info, profile, outdir, frames)
     loud = measure_loudness(path)
     aud = analyze_audio(path, profile, sample_rate=info["audio"]["sample_rate"],
                         integrated_lufs=loud.get("integrated_lufs"))
@@ -1014,6 +1188,9 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     vid = measure_video(path, profile, info) if v else {"runs": [], "decoded_s": None,
                                                         "errors": []}
     problems = []
+    cut = container_truncation(path)
+    if cut:
+        problems.append(cut)
     if aud["errors"]:
         problems.append(f"{len(aud['errors'])} audio decoder error(s), first: "
                         f"{aud['errors'][0][:160]}")
@@ -1055,7 +1232,7 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     checks = evaluate(eval_info, loud, silences, vid["runs"], profile,
                       first_speech=first_word_s(words), first_audio=first_audio,
                       threshold_db=aud["noise"]["base_threshold_db"], bars=bars,
-                      noise=aud["noise"], decode=decode)
+                      noise=aud["noise"], decode=decode, words=words)
     rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
            "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "tool": "content-agent/scripts/video_qa.py", "probe": info,
@@ -1066,7 +1243,8 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
            "audio_tail_gap_s": round(max(0.0, file_len - audio_end_on_file), 3),
            "black_min_s": black_min_s(profile, v["fps"]) if v else None,
            "first_audio_s": first_audio, "first_word_s": first_word_s(words),
-           "skipped_sounds": aud["skipped"],
+           "skipped_sounds": [dict(x, at_s=round(x["at_s"] + head_gap, 3))
+                              for x in aud["skipped"]],
            "silences_detected": len(silences),
            "longest_silences": sorted(silences, key=lambda s: -s["dur"])[:10],
            "black_runs": vid["runs"], "letterbox": bars,
@@ -1081,14 +1259,46 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     return rec
 
 
+def _qa_video_only(path: str, info: dict, profile: dict, outdir: Path,
+                   frames: bool) -> dict:
+    """A picture with no audio track: check the picture, say plainly what could not
+    be checked."""
+    vid = measure_video(path, profile, info)
+    v = info["video"]
+    claimed = v["duration_s"] or info["duration_s"]
+    problems = list(vid["errors"][:1])
+    if vid["decoded_s"] is not None and claimed and claimed - vid["decoded_s"] > 0.5:
+        problems.append(f"video decoded {vid['decoded_s']:.2f}s of the {claimed:.2f}s "
+                        "the file claims (truncated?)")
+    decode = {"ok": not problems, "note": "; ".join(problems)}
+    bars = letterbox(path, info, profile)
+    checks = evaluate(info, {}, [], vid["runs"], profile, bars=bars, decode=decode)
+    rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
+           "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+           "tool": "content-agent/scripts/video_qa.py", "probe": info, "loudness": {},
+           "silence_threshold_db": None, "decode": decode,
+           "video_decoded_s": vid["decoded_s"], "black_runs": vid["runs"],
+           "letterbox": bars, "checks": checks,
+           "verdict": verdict_for([c["status"] for c in checks]), "profile": profile}
+    if frames:
+        rec["frames"] = grab_frames(path, info["duration_s"], outdir, profile,
+                                    [b for b in vid["runs"] if b["kind"] == "near-black"])
+    outdir.mkdir(parents=True, exist_ok=True)
+    (outdir / "qa-receipt.json").write_text(json.dumps(rec, indent=2), encoding="utf-8")
+    (outdir / "qa-receipt.md").write_text(render_markdown(rec), encoding="utf-8")
+    return rec
+
+
 def _load_words_arg(srt: str | None, words: str | None) -> list[dict] | None:
     if not srt and not words:
         return None
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import finish  # local helper; finish imports this module lazily-safe
-    if words:
-        return finish.read_words_file(words)
-    return finish.read_srt_file(srt)
+    got = finish.read_words_file(words) if words else finish.read_srt_file(srt)
+    if not got:
+        raise ValueError(f"{'--words ' + words if words else '--srt ' + srt} holds no "
+                         "words; check the file and its encoding")
+    return got
 
 
 def main(argv: list[str] | None = None) -> int:

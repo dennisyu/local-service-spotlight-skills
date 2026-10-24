@@ -538,6 +538,107 @@ class AuditRound3(unittest.TestCase):
                 video_qa.load_profile(str(prof))
 
 
+class AuditRound4(unittest.TestCase):
+    """Fourth independent audit, 23 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+
+    def test_a_click_or_noise_spike_does_not_split_a_dead_gap(self):
+        talk = ([-6.0] * 30 + [-120.0] * 20) * 10       # 5 s of talk with short gaps
+        gap = [-120.0] * 125 + [-6.0] * 2 + [-120.0] * 125  # 20 ms click mid-gap
+        cl = video_qa.classify_levels(talk + gap + talk, 0.01, self.PROF, -15.0)
+        longest = max((b - a) * 0.01 for s, a, b in video_qa._runs(cl["state"]) if s == 0)
+        self.assertGreaterEqual(longest, 2.5)             # one gap, not two halves
+
+    def test_a_steady_tone_or_hum_is_not_talk(self):
+        tone = [-27.0, -26.8] * 250                       # 5 s, 0.2 dB of movement
+        talk = ([-6.0] * 30 + [-120.0] * 20) * 10
+        cl = video_qa.classify_levels(tone + talk, 0.01, self.PROF, -15.0)
+        self.assertEqual(set(cl["state"][:450]), {0})      # the tone reads as silence
+        self.assertEqual(cl["state"][500], 1)
+
+    def test_a_minute_of_talk_that_never_breathes_is_unmeasurable(self):
+        syllables = [-6.0] * 15 + [-45.0] * 5 + [-9.0] * 15 + [-120.0] * 5
+        bed = ([-6.0] * 20 + [-30.0] * 15) * 1000          # 35 s, gaps filled by a bed
+        cl = video_qa.classify_levels(bed, 0.01, self.PROF, -15.0)
+        self.assertEqual(set(cl["state"]), {2})
+        breathing = (syllables * 8 + [-120.0] * 40) * 12   # a 0.4 s breath every 3.6 s
+        cl = video_qa.classify_levels(breathing, 0.01, self.PROF, -15.0)
+        self.assertNotIn(2, set(cl["state"]))
+
+    def test_typing_straight_into_talk_is_not_the_start(self):
+        hp = self.PROF["hook"]
+        typing = [(round(i * 0.18, 2), round(i * 0.18 + 0.01, 2)) for i in range(17)]
+        talk = [(3.0 + i * 0.25, 3.0 + i * 0.25 + 0.125) for i in range(20)]
+        start = video_qa.pick_start(typing + talk, [], 10.0, hp, 2.0)[0]
+        self.assertGreaterEqual(start, 2.8)
+
+    def test_a_transcript_cannot_hide_dead_air(self):
+        checks = {c["check"]: c for c in video_qa.evaluate(
+            {"duration_s": 10.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], self.PROF,
+            first_speech=0.05, first_audio=3.05)}
+        self.assertEqual(checks["hook_first_speech"]["status"], "FAIL")
+        self.assertIn("another cut", checks["hook_first_speech"]["note"])
+
+    def test_talk_gaps_under_a_music_bed_are_flagged_with_a_transcript(self):
+        words = [w("a", 0.0, 0.3), w("b", 0.4, 0.7), w("c", 3.5, 3.8)]
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            {"duration_s": 10.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], self.PROF,
+            first_speech=0.0, first_audio=0.0, words=words)}
+        self.assertEqual(checks["talk_gaps"], "WARN")
+
+    def test_frame_one_flash_is_inside_the_video_at_any_rate(self):
+        for fps in (30.0, 120.0):
+            info = {"duration_s": 4.0, "video": {"width": 320, "height": 240, "fps": fps}}
+            run = [{"start": 1 / fps, "end": 3 / fps, "dur": 2 / fps, "frames": 2,
+                    "first_frame": 1, "last_frame": 2, "frame_count": int(4 * fps),
+                    "kind": "black"}]
+            c = {x["check"]: x["status"] for x in video_qa._video_checks(info, run, self.PROF,
+                                                                       None)}
+            self.assertEqual(c["black_frames"], "FAIL", fps)
+            self.assertNotIn("black_open", c, fps)
+
+    def test_matroska_duration_tag_is_an_end_time(self):
+        st = {"tags": {"DURATION": "00:00:20.000000000"}}
+        self.assertAlmostEqual(video_qa._tag_length(st, 0.8), 19.2)
+
+    def test_caption_leftovers(self):
+        cap = dict(CAP)
+        words = [w("</b>", 0, 0.5), w("{\\b1}bold", 0.5, 1.0), w("C:\\path\\to", 1.0, 1.5)]
+        srt = finish.build_srt(finish.chunk_words(words, dict(cap, max_words=1)), cap)
+        self.assertNotIn("\n\n\n", srt)
+        self.assertEqual(srt.count("-->"), 2)              # the tag-only word made no cue
+        self.assertIn("C:\\PATH\\TO", srt)
+        ass = finish.cue_text({"words": words}, cap, ass=True)
+        self.assertNotIn("&H00FFFF", ass)                  # no digit left to highlight
+        vtt = finish.words_from_srt("WEBVTT\n\n00:00.000 --> 00:01.000\nTom &amp; Jerry\n")
+        self.assertEqual([x["word"] for x in vtt], ["Tom", "&", "Jerry"])
+        for cue in ("(clapping)", "(door closes)", "（音楽）", "*music*"):
+            self.assertTrue(finish.is_sound_tag(cue), cue)
+        self.assertFalse(finish.is_sound_tag("*really*"))
+
+    def test_utf16_and_empty_transcripts(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as tmp:
+            u16 = Path(tmp) / "u16.srt"
+            u16.write_text("1\n00:00:00,500 --> 00:00:02,000\nHello there\n", encoding="utf-16")
+            self.assertEqual([x["word"] for x in finish.read_srt_file(str(u16))],
+                             ["Hello", "there"])
+            empty = Path(tmp) / "empty.srt"
+            empty.write_text("")
+            src = Path(tmp) / "x.mp4"
+            src.write_bytes(b"x")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                code = finish.main([str(src), "-o", str(Path(tmp) / "o.mp4"),
+                                    "--srt", str(empty)])
+            self.assertEqual(code, 2)
+            self.assertIn("holds no words", err.getvalue())
+
+
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
@@ -836,14 +937,18 @@ class MediaRoundTrip(unittest.TestCase):
         rec, c = self._qa(half)
         self.assertEqual(c["decodes_cleanly"]["status"], "FAIL")
         self.assertEqual(rec["verdict"], "FAIL")
-        self.assertEqual(video_qa.main([str(half), "--no-frames", "--out",
-                                        str(self.tmp / "half.cli")]), 1)
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(video_qa.main([str(half), "--no-frames", "--out",
+                                            str(self.tmp / "half.cli")]), 1)
         # Index at the end and cut off: nothing can be measured, exit 2, never 0.
         tail_index = self._make("tailindex.mp4", d=6, tone=self.SYL)
         cut = self.tmp / "cut.mp4"
         cut.write_bytes(tail_index.read_bytes()[:-2000])
-        self.assertEqual(video_qa.main([str(cut), "--no-frames", "--out",
-                                        str(self.tmp / "cut.cli")]), 2)
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(video_qa.main([str(cut), "--no-frames", "--out",
+                                            str(self.tmp / "cut.cli")]), 2)
 
     def test_aac_inside_a_wav_fails_instead_of_measuring_wrong(self):
         bad = self.tmp / "aac.wav"
@@ -929,6 +1034,115 @@ class MediaRoundTrip(unittest.TestCase):
         leftovers = [p.name for p in self.tmp.iterdir()
                      if p.name.startswith((".v.", "v.")) and p.suffix in (".webm", ".xyz")]
         self.assertEqual(leftovers, [])
+
+    # ---- audit round 4 (23 Oct 2026) ----
+
+    def _quiet_qa(self, src, words=None):
+        return video_qa.qa(str(src), video_qa.load_profile(None),
+                           Path(str(src) + ".qa"), frames=False, words=words)
+
+    def test_brown_noise_cannot_hide_a_dead_gap(self):
+        out = self.tmp / "brown.wav"
+        sp = ("0.25*sin(2*PI*220*t)*gt(sin(2*PI*4*t),0)*lt(mod(t,6),5.2)*"
+              "(lt(t,40)+gte(t,42.5))")
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", f"aevalsrc='{sp}':s=48000:d=60", "-f", "lavfi", "-i",
+                        "anoisesrc=a=0.0308:c=brown:r=48000:d=60", "-filter_complex",
+                        "[0][1]amix=inputs=2:normalize=0", "-c:a", "pcm_s16le", str(out)],
+                       check=True)
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["pauses_over_fail"], "FAIL")
+
+    def _held(self, name, items):
+        slide, black = self.tmp / "slide.png", self.tmp / "black.png"
+        for f, src in ((slide, "testsrc2=s=320x240:d=1"), (black, "color=c=black:s=320x240:d=1")):
+            if not f.exists():
+                subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f",
+                                "lavfi", "-i", src, "-frames:v", "1", str(f)], check=True)
+        lst = self.tmp / f"{name}.txt"
+        body = "ffconcat version 1.0\n" + "".join(
+            f"file {'black.png' if b else 'slide.png'}\nduration {d}\n" for b, d in items)
+        lst.write_text(body + "file slide.png\n")
+        out = self.tmp / f"{name}.mp4"
+        total = sum(d for _, d in items)
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "concat",
+                        "-safe", "0", "-i", str(lst), "-f", "lavfi", "-i",
+                        f"aevalsrc='{self.SYL}':s=48000:d={total}", "-fps_mode", "passthrough",
+                        "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+                        "-c:a", "aac", "-shortest", str(out)], check=True)
+        return out
+
+    def test_one_black_frame_held_for_a_second_fails(self):
+        c = {x["check"]: x["status"]
+             for x in self._quiet_qa(self._held("held", [(0, 3), (1, 1), (0, 3)]))["checks"]}
+        self.assertEqual(c["black_frames"], "FAIL")
+        c = {x["check"]: x["status"]
+             for x in self._quiet_qa(self._held("heldopen", [(1, 1.5), (0, 3)]))["checks"]}
+        self.assertEqual(c["black_open"], "FAIL")
+
+    def test_a_fade_through_black_and_a_title_card_on_black(self):
+        dip = self.tmp / "dip.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                        "-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=3",
+                        "-f", "lavfi", "-i", "color=c=black:s=320x240:r=30:d=1",
+                        "-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=3",
+                        "-f", "lavfi", "-i", f"aevalsrc='{self.SYL}':s=48000:d=7",
+                        "-filter_complex", "[0:v]fade=t=out:st=2.5:d=0.5[a];"
+                        "[2:v]fade=t=in:st=0:d=0.5[b];[a][1:v][b]concat=n=3:v=1:a=0,"
+                        "format=yuv420p[v]", "-map", "[v]", "-map", "3:a", "-c:v", "libx264",
+                        "-preset", "ultrafast", "-c:a", "aac", "-shortest", str(dip)], check=True)
+        c = {x["check"]: x["status"] for x in self._quiet_qa(dip)["checks"]}
+        self.assertEqual(c["black_frames"], "FAIL")       # the held black inside the fade
+        card = self.tmp / "card.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                        "-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=2",
+                        "-f", "lavfi", "-i", "color=c=black:s=320x240:r=25:d=2",
+                        "-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=2",
+                        "-f", "lavfi", "-i", f"aevalsrc='{self.SYL}':s=48000:d=6",
+                        "-filter_complex", "[1:v]drawbox=x=110:y=112:w=100:h=16:c=white:"
+                        "t=fill[c];[0:v][c][2:v]concat=n=3:v=1:a=0[v]", "-map", "[v]",
+                        "-map", "3:a", "-c:v", "libx264", "-preset", "ultrafast", "-c:a",
+                        "aac", "-shortest", str(card)], check=True)
+        c = {x["check"]: x["status"] for x in self._quiet_qa(card)["checks"]}
+        self.assertEqual(c["black_frames"], "PASS")       # something is on screen
+        self.assertEqual(c["near_black"], "WARN")
+
+    def test_cut_off_wav_and_ogg_fail_to_decode_cleanly(self):
+        wav = self.tmp / "long.wav"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", f"aevalsrc='{self.SYL}':s=48000:d=10", "-c:a", "pcm_s16le",
+                        str(wav)], check=True)
+        ogg = self.tmp / "long.ogg"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(wav),
+                        "-c:a", "libvorbis", str(ogg)], check=True)
+        for full in (wav, ogg):
+            data = full.read_bytes()
+            cut = self.tmp / f"cut{full.suffix}"
+            cut.write_bytes(data[: len(data) * 6 // 10])
+            self.assertIsNotNone(video_qa.container_truncation(str(cut)), full.suffix)
+            self.assertIsNone(video_qa.container_truncation(str(full)), full.suffix)
+            c = {x["check"]: x["status"] for x in self._quiet_qa(cut)["checks"]}
+            self.assertEqual(c["decodes_cleanly"], "FAIL", full.suffix)
+
+    def test_late_audio_in_matroska_is_not_truncation(self):
+        mkv = self.tmp / "late.mkv"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=25:d=10", "-itsoffset", "0.8", "-f",
+                        "lavfi", "-i", f"aevalsrc='{self.SYL}':s=48000:d=9.2", "-map", "0:v",
+                        "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-c:a",
+                        "aac", str(mkv)], check=True)
+        c = {x["check"]: x["status"] for x in self._quiet_qa(mkv)["checks"]}
+        self.assertEqual(c["decodes_cleanly"], "PASS")
+
+    def test_video_without_audio_still_gets_the_picture_checked(self):
+        mute = self.tmp / "mute.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=25:d=3", "-vf",
+                        "drawbox=c=black:t=fill:enable='between(t,1,1.2)'", "-c:v", "libx264",
+                        "-preset", "ultrafast", str(mute)], check=True)
+        c = {x["check"]: x["status"] for x in self._quiet_qa(mute)["checks"]}
+        self.assertEqual(c["audio"], "WARN")
+        self.assertEqual(c["black_frames"], "FAIL")
 
 
 if __name__ == "__main__":

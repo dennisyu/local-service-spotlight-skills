@@ -46,7 +46,7 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 2b. **Finish and prove it — every video, whichever editor cut it.** Needs ffmpeg on the machine; without it, skip 2b, ship anyway and mark the video **UNMEASURED** in the report — never block on tooling. Load the client's `video-style.json` (start from `references/video-style.example.json`; save it once in the Knowledge Base and never ask for the style again). Then:
    - Long-form for YouTube: `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a clean caption file to upload beside the video (captions are a sidecar unless you ask for `--burn`). On a raw file (LIGHT tier) add `--trim-head`: it cuts to the first transcribed word, or without a transcript to the first sustained sound, never to a record-button click.
    - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Clip edges snap to word boundaries; captions use Descript's corrected words on the word-level clock.
-   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: whether the whole file decodes (a half-downloaded file or a decoder error is a FAIL, never a clean receipt); loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, "[Music]" cues ignored; otherwise the first real sound: clicks, typing and a cough before dead air are skipped, and audio that starts after the picture counts as dead air); the longest pauses and the pause rate, with silence measured against the file's own loudness and its local noise floor (WARN "unmeasurable" where noise or music never lets the sound drop, never a false PASS); trailing dead air (a FAIL when the microphone died); truly black runs of two frames or more (FAIL) and 90%-dark runs such as a dead screen or a dark slide (WARN, with the frame saved to look at), at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
+   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: whether the whole file decodes (a half-downloaded mp4, a cut-off WAV or Ogg, or a decoder error is a FAIL, never a clean receipt); loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, "[Music]" cues ignored; otherwise the first real sound: clicks, typing and a cough before dead air are skipped, and audio that starts after the picture counts as dead air); the longest pauses and the pause rate, with silence measured against the file's own loudness and its local noise floor (WARN "unmeasurable" where noise or a music bed never lets the sound drop, and with a transcript a `talk_gaps` WARN where the talk stops under a bed); trailing dead air (a FAIL when the microphone died); black runs of two frames or a held black frame (FAIL) and mostly dark frames with something on screen, such as a dead screen with a camera tile or a dark slide (WARN, with the frame saved to look at), at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
    - Titles and descriptions come from step 6, thumbnails from the receipt's real-frame candidates. If you ask Underlord for anything beyond the edit, add: **"thumbnail: choose a real frame, never generate one."**
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
 4. **Target keyword.** From the transcript's strongest theme + your positioning: one keyword you can actually win (specific beats glamorous). One line of why.
@@ -231,108 +231,59 @@ screen share switching, only a small camera thumbnail lit) in the first ten seco
 **5 s of black**. The edit was clean where we had a
 rule: the first word lands at 0.5 s and no pause inside the video reaches 2 s. Where we had
 published a rule but never measured it ("shorten pauses over 0.6 seconds", on our Descript setup
-walkthrough), the file had 454 such gaps, 6.8 a minute — a rule nobody checks is a wish.
+walkthrough), the file had about 7 such gaps a minute — a rule nobody checks is a wish.
 
 What changed: `scripts/finish.py` (loudness, word-snapped clips, letterbox-aware 9:16 reframe,
 sidecar or burned captions from one `video-style.json`) and `scripts/video_qa.py` (the receipt). A
 33-second 9:16 short cut from the same replay came out at −14.4 LUFS / −2.0 dBTP, first word at
 0.00 s, QA PASS, in 47 s on two CPU cores with zero Descript credits.
 
-### The checker was audited the same evening, and it over-reported
+### The checker was broken four times before it shipped
 
-A fresh-context auditor re-measured everything with its own ffmpeg commands and broke the first
-version of the receipt six ways, each now a regression test:
+Four fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
+break below is now a regression test that fails on the code before its fix; the full reports are on
+pull request #94 of the skills repo.
 
-- **Scientific notation.** ffmpeg prints `silence_start: 2.26757e-05`; a parser without the
-  exponent read 2.27 s, so a click followed by 3 s of dead air passed the hook check.
-- **"First speech" was first sound.** A 5-second tone intro passed. With a transcript the check now
-  uses the first word (`hook_first_speech`); without one it is named `hook_first_audio` and says
-  so (since round 3 a steady music bed reads as unmeasurable, a WARN, not a pass). The replay's
-  real first word is at 0.50 s, not 0.00 s.
-- **Black flashes were invisible** (0.5 s minimum, 5 fps sampling, 98% black). Every frame is now
-  checked at 90% black, which is how the 0:08 near-black screen surfaced.
-- **Pause counts tracked loudness, not editing.** At a fixed −38 dB the replay showed 620 pauses of
-  0.6–2 s; turned up 10 dB to the −14 reference, the same file showed 483. Silence is now 25 LU
-  under the file's own loudness.
-- **Long-form had 0.1 dB of true-peak margin.** The replay needs +10 dB of gain on a −6.1 dBTP
-  peak, so linear gain would clip and ffmpeg switched to dynamic mode without saying so; the
-  auditor's long-form run landed at −1.1 dBTP against the −1.0 ceiling. `finish.py` now reports the
-  mode and keeps 1 dB headroom.
-- **Edge cases failed quietly**: a quiet speaker lost 30 s to `--trim-head`, an all-silent file
-  "succeeded", reversed clips gave a cryptic error, `--burn` was implied, multi-word keywords lit up
-  a lone "A". All fixed.
+- **Numbers misread.** ffmpeg prints tiny times as `2.26757e-05`; a parser without the exponent read
+  that as 2.27 s, so a click followed by 3 s of dead air passed the hook check.
+- **The start mistaken.** First sound was taken for the first word (a tone intro passed); later a
+  "[Music]" cue counted as a word, a cough or typing before dead air counted as the start, and a
+  transcript from another cut hid 3 s of dead air. Now: the first word when there is a transcript,
+  the sound when nothing is audible where the transcript puts that word, and without a transcript a
+  dense start that is not followed by 2 s of silence.
+- **Black misjudged.** Flashes were invisible (0.5 s minimum at 5 fps), then a two-frame flash at
+  30 or 60 fps, then a black frame held for a second in a sparse screen recording; and dark-theme
+  slides and title cards on black failed as black. Now: frame by frame, timed by display, and
+  "black" means nothing on screen; mostly dark with something on it is a WARN with the frame saved.
+- **Pauses hidden by noise.** A fixed −38 dB threshold counted 620 pauses on the replay and 483 on
+  the same file turned up 10 dB, so the threshold became relative to the file's loudness. Then white
+  noise 20 dB under the talk hid a 2.5 s dead gap; then noise over part of the file did; then pink
+  or brown noise, or one mouse click in the gap, split it in two. Now: a local noise floor with a
+  margin set by the noise's own spread, clicks bridged, and "unmeasurable" (never PASS) where noise
+  sits within 10 dB of the talk or the sound never drops for 30 s.
+- **Broken files passed.** A half-downloaded mp4, a cut-off WAV or Ogg, and AAC inside a `.wav` each
+  got a clean receipt for the part that played. Now `decodes_cleanly` fails them.
+- **Loudness on the edge.** Long-form landed 0.1 dB inside the true-peak ceiling with 0.5 dB of
+  headroom, and ffmpeg switched to dynamic loudness without saying so. `finish.py` now keeps 1 dB
+  and reports the mode.
+- **Plus the dull ones**: stub files after a failed render, cryptic errors on bad input, captions a
+  player would read as commands, keywords that missed "Dollar-a-Day's".
 
-### A second audit checked the fixes, and found three more holes
+Measured with the checker as shipped, the replay reads: −24.0 LUFS and −6.1 dBTP, first word at
+0.50 s, the file decodes cleanly, no pause of 2 s or more, 5 s of black at the end, and the 0:08
+screen (about 97% dark with a camera tile) is a near-black WARN with the frame saved; we looked, and
+it is a dead screen during a screen-share switch, worth cutting in Descript. The 0.6–2 s pause count
+has read between 454 and 490 across the checker's versions (6.8 to 7.3 a minute; 490 now, because a
+click no longer splits a pause in two) against a ceiling of 3 a minute: the published 0.6-second
+rule is broken under every version. `finish.py --loudness` took 13 minutes on the replay, without
+re-encoding the picture, and the result measures −14.4 LUFS and −1.7 dBTP; its receipt is a WARN
+that still points at the 0:08 screen, the black ending and the pause rate.
 
-A second fresh-context auditor confirmed all six fixes on files it built itself, then broke the
-receipt three new ways. Each is now a test that fails on the old code:
-
-- **Two frames is not a number of seconds.** The 0.08 s minimum is two frames at 25 fps, but it
-  passed a two-frame flash at 30 fps and a four-frame one at 60. The minimum then followed the
-  file's frame rate (round 3: frames are now counted one by one); a single black frame (a cut) is
-  still allowed.
-- **Room noise hid every pause.** A pause only counts if every sample stays under the threshold, so
-  white noise 20 dB under the talk hid a 2.5 s dead gap. The threshold now clears the measured
-  noise floor by 6 dB (round 3: measured locally, not once per file). When that would come within
-  10 dB of the talk (a fan, a music bed, a steady tone), the pause checks say WARN "unmeasurable"
-  instead of PASS. The same clip now gets the same verdict clean, noisy, 30 dB quieter and 6 dB
-  louder.
-- **`--trim-head` trusted the first sound.** With a tone intro and a transcript it trimmed nothing;
-  with a record-button click before 3.7 s of dead air it stopped at the click. It now cuts to the
-  first transcribed word, or to the first burst holding 0.15 s of sound, and the hook check uses the
-  same rule (round 3 added density and the cough rule below).
-- Smaller ones: the sidecar `.srt` kept `{\b1}` and `\N`, which players obey; a newline inside a
-  word dropped it from burned captions; a missing `--profile` printed a traceback; a words file
-  without times said only `'start'`; cover art in an mp3 counted as video; "Dollar-a-Day" did not
-  light up. All fixed. Fixing them turned up one more of our own: AAC written into a `.wav` could
-  not be decoded and QA read it as silence. The audio codec now follows the output container.
-
-### A third audit broke it again, harder
-
-A third fresh-context auditor confirmed the round-2 fixes on the cases reported, then built
-variations and found 16 more problems, two of them serious. All are fixed, and each has a test
-that fails on the round-2 code:
-
-- **Noise in part of a file still hid a dead gap** (high). The noise floor was one number for the
-  whole file, so when a tenth of it was clean, noise in the rest hid its pauses, and a 5-second
-  silent tail switched the guard off. Pauses now come from the peak of every 10 ms window against a
-  local floor (the lowest half-second floor within ±2 s), so the 2.5 s gap is found whether noise
-  covers all, half or none of the file. The first local design (the 10th percentile of 2-second
-  blocks) read dense real speech as noise; that was caught on one-minute slices of the replay
-  before it shipped.
-- **A half-downloaded file got a clean receipt** (high). Every stream is now decoded once and
-  compared with what the container claims; decoder errors or a stream that ends early are a FAIL
-  (`decodes_cleanly`). AAC inside a `.wav`, which measured 5 LU wrong, fails the same way.
-- **Missing audio at either end was invisible.** Audio that starts after the picture is dead air
-  at the head; audio that stops early is dead air at the tail. Trailing dead air longer than 10 s
-  or a quarter of the video (a microphone that died) is a FAIL, not a WARN.
-- **Variable-frame-rate screen recordings hid two-frame flashes, and dark-theme slides failed as
-  black.** Black is now counted frame by frame, and a run is black only when its frames are truly
-  black. A 90%-dark frame (a dead screen with a small camera tile, or a #0d1117 slide) is a WARN
-  with the frame saved for a person to look at.
-- **"[Music]" counted as the first word, and a cough or typing counted as the start.** Sound cues
-  are dropped from transcripts. A burst needs 30% density (typing is sparser), and a short sound
-  followed by 2 s of silence is skipped, and `--trim-head` reports what it skipped.
-- **A video written to `.wav` failed and left a stub file.** Audio-only outputs drop the picture;
-  renders go to a temporary file renamed only on success; errors print the line that matters.
-- Smaller ones: false "unmeasurable" on short clips; a `<` meeting a `>` across two words opened a
-  tag in SRT readers; codec copy into containers that refuse it; keywords missed "Dollar-a-Day's",
-  plurals, curly apostrophes and non-breaking hyphens; WebVTT, `,5`-style times, a `9:0` aspect and
-  a string where the profile wants a number gave cryptic errors; a flash just before the end was
-  labelled as the ending. All fixed.
-
-Known limit: pause counts still shift by a few under heavy noise or a music bed (8 against 11 on
-the same minute of talk in one test); the verdicts did not change in any audit run.
-
-Re-measured with the final checker, the replay reads the same where it matters: −24.0 LUFS, first
-word at 0.50 s, no pause of 2 s or more, 5 s of black at the end, and the file decodes cleanly.
-Two readings moved, both for a stated reason. The 0:08 screen is 97.6% dark with a camera tile, so
-it is now a near-black WARN with the frame saved; we looked, and it is a dead screen during a
-screen-share switch, worth cutting in Descript. The 0.6–2 s pauses read 454 (6.8 a minute) instead
-of 473, because 130 s of louder room sound now get a raised threshold and pauses are measured in
-10 ms windows. The published 0.6-second rule is broken either way. `finish.py --loudness` on the
-replay itself gives −14.4 LUFS and −1.7 dBTP in 13 minutes without re-encoding the picture, and
-its receipt is a WARN that still points at the 0:08 screen and the black ending.
+**Known limits**, said plainly in every receipt that hits them: a pause filled by a music bed or
+background talk within about 25 dB of the speaker is heard as sound (give `--srt` and the receipt
+flags it as a `talk_gaps` WARN); pause counts move with noise (8 on a clean minute of the replay, 14
+to 19 with noise mixed under it) while the 2-second verdict held; a cut-off MP3 is a valid shorter
+MP3, so nothing in the file says it was longer.
 
 **Rules:**
 
@@ -350,10 +301,11 @@ its receipt is a WARN that still points at the 0:08 screen and the black ending.
    generation failed; the receipt ranks real frames by face size and sharpness instead.
 6. **AAC adds inter-sample peaks.** With 0.5 dB of headroom the long-form replay landed at
    −1.1 dBTP, 0.1 dB inside the ceiling; with 1 dB it lands at −1.7 dBTP. Keep 1 dB.
-7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt; a second
-   context broke it in an hour, a third found three more holes after the fixes, and a fourth found
-   sixteen more after those. Commission the refuting audit before telling anyone the number, and
-   again after fixing what it found; stop when an audit finds nothing high or medium.
+7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt. The first
+   independent audit broke it six ways; after each round of fixes the next audit found
+   more (three, then sixteen, then twenty-one), mostly in cases the fixes themselves opened. Commission
+   the refuting audit before telling anyone the number, run it again after every fix, and ship only
+   when an audit finds nothing high or medium.
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback

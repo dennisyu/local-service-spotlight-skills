@@ -45,6 +45,7 @@ Nothing is ever played aloud.
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
@@ -101,15 +102,24 @@ def load_style(path: str | None) -> dict:
 
 # Caption conventions for sound, not speech: "[Music]", "[Applause]", "(laughs)",
 # "♪ ♪". They are never the first word and never caption text.
+_SOUND_WORDS = (r"music\w*|song|sing\w*|applau\w*|clap\w*|cheer\w*|laugh\w*|chuckl\w*|"
+                r"giggl\w*|sigh\w*|cough\w*|sneez\w*|breath\w*|gasp\w*|inaudible|"
+                r"crosstalk|silence|noise\w*|static|beep\w*|bell\w*|ring\w*|knock\w*|"
+                r"door\w*|footstep\w*|phone|typing|click\w*|wind|rain|thunder|engine|"
+                r"whoosh|background|foreign|speaking|speaks|whisper\w*|groan\w*|"
+                r"音楽|拍手|笑")
 SOUND_TAG = re.compile(
-    r"\[[^\]]{0,40}\]|\((?:[^)]*\b(?:music|applause|laugh\w*|inaudible|crosstalk|"
-    r"silence|noise|cheer\w*|sigh\w*|cough\w*|chuckl\w*|static|beep\w*|"
-    r"background|foreign|speaking)\b[^)]*)\)", re.I)
+    r"\[[^\]]{0,40}\]|［[^］]{0,40}］|"
+    r"[(（](?:[^)）]*(?:\b(?:" + _SOUND_WORDS + r")\b|音楽|拍手|笑)[^)）]*)[)）]|"
+    r"\*(?:[^*]{0,30}\b(?:" + _SOUND_WORDS + r")\b[^*]{0,30})\*", re.I)
 MUSIC_NOTES = re.compile(r"[♪♫♬♩🎵🎶]+")
 
 
 def is_sound_tag(text: str) -> bool:
-    """True for a token that is only a sound cue: "[Music]", "(applause)", "♪"."""
+    """True for a token that is only a sound cue: "[Music]", "(applause)", "♪".
+    A token with no cue in it at all ("&", "-") is text, not a cue."""
+    if not SOUND_TAG.search(text) and not MUSIC_NOTES.search(text):
+        return False
     rest = MUSIC_NOTES.sub("", SOUND_TAG.sub("", text)).strip()
     return not re.sub(r"[^\w$%]", "", rest)
 
@@ -169,9 +179,20 @@ def read_words_file(path: str) -> list[dict]:
         raise ValueError(f"--words {path}: {exc}") from None
 
 
+def _decode_text(raw: bytes) -> str:
+    """Subtitle files arrive as UTF-8, UTF-8 with a BOM, or UTF-16 (Windows tools)."""
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return raw.decode("utf-16", errors="replace")
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw[3:].decode("utf-8", errors="replace")
+    if len(raw) > 4 and raw[1:4:2] == b"\x00\x00" and raw[0] != 0:
+        return raw.decode("utf-16-le", errors="replace")
+    return raw.decode("utf-8", errors="replace")
+
+
 def read_srt_file(path: str) -> list[dict]:
     try:
-        return words_from_srt(Path(path).read_text(encoding="utf-8", errors="replace"))
+        return words_from_srt(_decode_text(Path(path).read_bytes()))
     except OSError as exc:
         raise ValueError(f"could not read --srt {path}: {exc.strerror or exc}") from None
     except ValueError as exc:
@@ -205,7 +226,7 @@ def words_from_srt(text: str) -> list[dict]:
         a, b = parts[0].strip().split()[-1], parts[1].strip().split()[0]
         start, end = _ts(a), _ts(b)
         body = " ".join(lines[lines.index(timing) + 1:])
-        body = re.sub(r"<[^>]+>|\{[^}]+\}", "", body)
+        body = html.unescape(re.sub(r"<[^>]+>|\{[^}]+\}", "", body))
         body = SPEAKER_LABEL.sub("", body, count=1)
         body = MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body))
         toks = [t for t in body.split() if not is_sound_tag(t)]
@@ -374,7 +395,10 @@ def _caption_safe(text: str) -> str:
     HTML tags (<b>, <i>, <font>…) as commands in BOTH .ass and .srt (libass, VLC,
     YouTube). Remove those; keep ordinary text ("a<b", "vector<int>", "C++")."""
     text = ASS_OVERRIDE.sub("", TAG_LIKE.sub("", text))
-    return text.replace("\\", "").replace("{", "(").replace("}", ")")
+    # Only \N, \n and \h are commands outside braces: drop the backslash there and
+    # keep every other one ("C:\path\to" stays readable).
+    text = re.sub(r"\\(?=[Nnh])", "", text)
+    return text.replace("{", "(").replace("}", ")")
 
 
 def _srt_safe(line: str) -> str:
@@ -389,9 +413,11 @@ _ass_safe = _caption_safe  # kept for callers of the round-1 name
 def cue_text(cue: dict, cap: dict, ass: bool) -> str:
     parts = []
     for w in cue["words"]:
-        txt = _caption_safe(w["word"].upper() if cap["uppercase"] else w["word"])
-        txt = " ".join(txt.split())
-        hot = w.get("hot") or (cap["highlight_numbers"] and NUMBERISH.search(w["word"]))
+        clean = " ".join(_caption_safe(w["word"]).split())
+        if not clean:
+            continue  # a word that was only a tag
+        txt = clean.upper() if cap["uppercase"] else clean
+        hot = w.get("hot") or (cap["highlight_numbers"] and NUMBERISH.search(clean))
         if ass:
             if hot:
                 txt = "{\\c&H%s&}%s{\\r}" % (cap["highlight_bgr"], txt)
@@ -415,7 +441,13 @@ def _srt_time(t: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
+def _nonempty(cues: list[dict], cap: dict) -> list[dict]:
+    """Cues whose words were only tags have nothing to show: drop them."""
+    return [c for c in cues if cue_text(c, cap, ass=False).strip()]
+
+
 def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
+    cues = _nonempty(cues, cap)
     size = max(18, round(height * cap["font_size_ratio"]))
     outline = max(1, round(height * cap["outline_ratio"]))
     margin_v = round(height * cap["margin_v_ratio"])
@@ -436,6 +468,7 @@ def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
 
 
 def build_srt(cues: list[dict], cap: dict) -> str:
+    cues = _nonempty(cues, cap)
     return "\n".join(f"{i}\n{_srt_time(c['start'])} --> {_srt_time(c['end'])}\n"
                      f"{_srt_safe(cue_text(c, cap, ass=False))}\n"
                      for i, c in enumerate(cues, 1))
@@ -467,12 +500,19 @@ def first_speech_s(path: str, style: dict, offset: float, window: float,
     loud = video_qa.measure_loudness(path, offset, window)
     aud = video_qa.analyze_audio(path, qa_prof, offset, window, sample_rate,
                                  loud.get("integrated_lufs"))
-    skipped = [dict(s, at_s=round(s["at_s"] + offset, 3)) for s in aud["skipped"]]
+    # The decoded audio starts at the window or at the audio's own first sample,
+    # whichever is later (a recording whose sound starts after the picture).
+    info = video_qa.probe(path)
+    a_rel = 0.0
+    if info["audio"] and info["video"]:
+        a_rel = max(0.0, info["audio"]["start_s"] - info["video"]["start_s"])
+    base = max(offset, a_rel)
+    skipped = [dict(s, at_s=round(s["at_s"] + base, 3)) for s in aud["skipped"]]
     if aud["first_sound"] is None:
         reason = ("the start cannot be told from noise or music"
                   if not aud["noise"]["hook_measurable"] else "no sustained sound")
         return None, skipped, reason
-    return offset + aud["first_sound"], skipped, ""
+    return base + aud["first_sound"], skipped, ""
 
 
 def measure_loudnorm(path: str, start: float, style: dict,
@@ -605,6 +645,9 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
     if clip and (clip_start >= total or clip_end <= clip_start):
         raise ValueError(f"--clip {clip_start}-{clip_end} is outside the "
                          f"{total:.2f}s source")
+    if clip and clip_end > total + 0.05:
+        report["warnings"].append(f"--clip ends at {clip_end:g}s but the source is "
+                                  f"{total:.2f}s long; the clip stops at the end")
     clip_end = min(clip_end, total)
     if clip and words:
         clip_start, clip_end = snap_to_words(words, clip_start, clip_end,
@@ -760,8 +803,13 @@ def load_words(args) -> list[dict] | None:
     timed = text = None
     if args.words:
         timed = read_words_file(args.words)
+        if not timed:
+            raise ValueError(f"--words {args.words} holds no words")
     if args.srt:
         text = read_srt_file(args.srt)
+        if not text:
+            raise ValueError(f"--srt {args.srt} holds no words; check the file and "
+                             "its encoding")
     if timed and text:
         return align_text_to_timing(text, timed)
     return timed or text

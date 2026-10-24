@@ -61,14 +61,22 @@
       "speech_percentile": 95,
       "noise_floor_margin_db": 6.0,
       "min_speech_margin_db": 10.0,
-      "masked_warn_frac": 0.25
+      "masked_warn_frac": 0.25,
+      "max_noise_margin_db": 12.0,
+      "steady_spread_db": 3.0,
+      "bridge_sound_s": 0.08,
+      "max_talk_without_gap_s": 30.0,
+      "talk_gap_s": 0.25,
+      "min_analysis_s": 1.0
     },
     "hook": {
       "max_first_speech_s": 2.0,
       "min_sound_s": 0.15,
       "merge_gap_s": 0.25,
       "min_density": 0.3,
-      "max_skip_sound_s": 0.6
+      "max_skip_sound_s": 0.6,
+      "density_window_s": 0.5,
+      "transcript_lag_s": 1.0
     },
     "tail": {
       "max_trailing_silence_s": 1.5,
@@ -82,8 +90,6 @@
       "pix_th": 0.1,
       "scan_height": 180,
       "letterbox_min_px": 8,
-      "hard_pic_th": 0.98,
-      "hard_pix_th": 0.03,
       "near_black_frames_saved": 10
     },
     "frames": {
