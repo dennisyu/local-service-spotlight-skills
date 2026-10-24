@@ -23,7 +23,13 @@ Usage:
     Descript's corrected words on the ASR's word clock (best of each). --clip
     edges snap to word boundaries so no cut lands inside a word. Captions are
     written as a sidecar .captions.srt unless --burn is given (burning re-encodes
-    the picture, so it is never the default).
+    the picture, so it is never the default). Caption text is cleaned of anything
+    a player would read as a command ({\\b1}, \\N, <font>) in both outputs.
+
+    --trim-head cuts to the first transcribed word when --words or --srt is given,
+    otherwise to the first sustained sound (a record-button click followed by dead
+    air is not a start). Bad input (a missing profile, a words file without times,
+    a malformed --clip or --reframe) prints one plain line and exits 2.
 
 Video is copied untouched when only --loudness is asked for; any trim or burn
 re-encodes once with libx264 (preset veryfast unless the profile says otherwise).
@@ -68,37 +74,82 @@ SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[A-Z][\w.'-]*(?: [A-Z][\w.'-
 
 
 def load_style(path: str | None) -> dict:
+    """DEFAULT_STYLE merged with a video-style.json. Raises ValueError with a plain
+    message (missing file, bad JSON) so main() can exit 2, never a traceback."""
     style = json.loads(json.dumps(DEFAULT_STYLE))
     qa_prof = video_qa.load_profile(None)
     if path:
+        qa_prof = video_qa.load_profile(path)  # validates the file first
         with open(path, encoding="utf-8") as fh:
             raw = json.load(fh)
         style = video_qa.deep_merge(style, {k: raw[k] for k in ("captions", "finish")
                                             if k in raw})
-        qa_prof = video_qa.load_profile(path)
     style["qa"] = qa_prof
     return style
 
 
 # ---------------------------------------------------------------- words in
 
+WORDS_SHAPE = ("expected ElevenLabs Scribe, faster-whisper, or a list of "
+               "{word, start, end} objects with times in seconds")
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
+
+
 def normalize_words(data) -> list[dict]:
-    """Accept Scribe, faster-whisper or plain [{word,start,end}] JSON."""
+    """Accept Scribe, faster-whisper or plain [{word,start,end}] JSON.
+    Whitespace inside a word (a stray newline from an editor) collapses to one
+    space so a caption line can never split. Raises ValueError naming the entry
+    when a time is missing or not a number."""
     if isinstance(data, dict):
         if "words" in data:
             data = data["words"]
         elif "segments" in data:
-            data = [w for seg in data["segments"] for w in seg.get("words", [])]
+            data = [w for seg in data["segments"] for w in (seg.get("words") or [])]
+    if not isinstance(data, list):
+        raise ValueError(f"words file has no word list; {WORDS_SHAPE}")
     words = []
-    for w in data:
+    for i, w in enumerate(data):
+        if not isinstance(w, dict):
+            raise ValueError(f"words entry {i} is not an object; {WORDS_SHAPE}")
         if w.get("type") not in (None, "word"):
             continue  # Scribe spacing and audio_event entries
-        text = str(w.get("word", w.get("text", ""))).strip()
+        text = " ".join(_CONTROL.sub(" ", str(w.get("word", w.get("text", "")))).split())
         if not text:
             continue
-        words.append({"word": text, "start": float(w["start"]), "end": float(w["end"])})
+        try:
+            start, end = float(w["start"]), float(w["end"])
+        except KeyError as exc:
+            raise ValueError(f"words entry {i} ({text!r}) has no '{exc.args[0]}' time; "
+                             f"{WORDS_SHAPE}") from None
+        except (TypeError, ValueError):
+            raise ValueError(f"words entry {i} ({text!r}) has a time that is not a "
+                             f"number; {WORDS_SHAPE}") from None
+        if start != start or end != end or end < start:
+            raise ValueError(f"words entry {i} ({text!r}) ends before it starts")
+        words.append({"word": text, "start": start, "end": end})
     words.sort(key=lambda w: w["start"])
     return words
+
+
+def read_words_file(path: str) -> list[dict]:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except OSError as exc:
+        raise ValueError(f"could not read --words {path}: {exc.strerror or exc}") from None
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--words {path} is not valid JSON: {exc}") from None
+    try:
+        return normalize_words(data)
+    except ValueError as exc:
+        raise ValueError(f"--words {path}: {exc}") from None
+
+
+def read_srt_file(path: str) -> list[dict]:
+    try:
+        return words_from_srt(Path(path).read_text(encoding="utf-8", errors="replace"))
+    except OSError as exc:
+        raise ValueError(f"could not read --srt {path}: {exc.strerror or exc}") from None
 
 
 def _ts(s: str) -> float:
@@ -232,33 +283,57 @@ def _clean(word: str) -> str:
     return re.sub(r"[^\w$%'-]", "", word).lower()
 
 
+def _parts(text: str) -> list[str]:
+    """'Dollar-a-Day' and 'Dollar a Day' both become ['dollar', 'a', 'day']."""
+    out: list[str] = []
+    for chunk in re.split(r"[\s\-—–]+", text):
+        out += [p for p in _clean(chunk).split("-") if p]
+    return out
+
+
 def mark_keywords(words: list[dict], keywords: list[str]) -> list[dict]:
     """Flag words that belong to a WHOLE keyword phrase ("Dollar a Day" lights up
-    only as three words in a row, never a lone "a")."""
-    phrases = [[_clean(t) for t in kw.split()] for kw in keywords if kw.strip()]
-    toks = [_clean(w["word"]) for w in words]
+    only as three words in a row, never a lone "a"). Hyphens count as spaces on
+    both sides, so "Dollar-a-Day" matches too; a match must start and end on a
+    word boundary, so "a Day" never lights the whole of "Dollar-a-Day"."""
+    phrases = [ph for ph in (_parts(kw) for kw in keywords) if ph]
+    flat: list[tuple[int, str, bool, bool]] = []  # (word index, part, first, last)
+    for wi, w in enumerate(words):
+        parts = _parts(w["word"])
+        for pi, part in enumerate(parts):
+            flat.append((wi, part, pi == 0, pi == len(parts) - 1))
+    toks = [f[1] for f in flat]
     out = [dict(w) for w in words]
     for ph in phrases:
         n = len(ph)
         for i in range(len(toks) - n + 1):
-            if toks[i:i + n] == ph:
+            if toks[i:i + n] == ph and flat[i][2] and flat[i + n - 1][3]:
                 for j in range(i, i + n):
-                    out[j]["hot"] = True
+                    out[flat[j][0]]["hot"] = True
     return out
 
 
-def _ass_safe(text: str) -> str:
-    """libass reads backslash sequences (\\N) and {braces} as commands."""
+TAG_LIKE = re.compile(r"</?[A-Za-z][^<>]*>")
+
+
+def _caption_safe(text: str) -> str:
+    """Players read backslash sequences (\\N), {override tags} and <html tags> as
+    commands in BOTH .ass and .srt (libass, VLC, YouTube). Strip them so a word is
+    always shown as a word."""
+    text = TAG_LIKE.sub("", text)
     return text.replace("\\", "").replace("{", "(").replace("}", ")")
+
+
+_ass_safe = _caption_safe  # kept for callers of the round-1 name
 
 
 def cue_text(cue: dict, cap: dict, ass: bool) -> str:
     parts = []
     for w in cue["words"]:
-        txt = w["word"].upper() if cap["uppercase"] else w["word"]
+        txt = _caption_safe(w["word"].upper() if cap["uppercase"] else w["word"])
+        txt = " ".join(txt.split())
         hot = w.get("hot") or (cap["highlight_numbers"] and NUMBERISH.search(w["word"]))
         if ass:
-            txt = _ass_safe(txt)
             if hot:
                 txt = "{\\c&H%s&}%s{\\r}" % (cap["highlight_bgr"], txt)
         parts.append(txt)
@@ -322,13 +397,22 @@ def assert_font(family: str) -> str:
 
 # ---------------------------------------------------------------- media ops
 
-def first_speech_s(path: str, style: dict, offset: float, window: float) -> float | None:
-    """Source-timeline seconds where sound first starts inside [offset, offset+window].
-    The threshold follows the window's own loudness, so a quiet speaker is not
-    mistaken for silence. None = the whole window is silent (never trim then)."""
+def first_speech_s(path: str, style: dict, offset: float, window: float,
+                   sample_rate: int | None = None) -> float | None:
+    """Source-timeline seconds where SUSTAINED sound first starts inside
+    [offset, offset+window]. The threshold follows the window's own loudness and
+    clears its noise floor, so neither a quiet speaker nor room noise fools it;
+    a click followed by dead air is skipped. None = no such sound (never trim)."""
+    qa_prof = style["qa"]
     loud = video_qa.measure_loudness(path, offset, window)
-    thr = video_qa.silence_threshold(style["qa"], loud.get("integrated_lufs"))
-    t = video_qa.first_sound_s(path, thr, offset, window)
+    thr = video_qa.silence_threshold(qa_prof, loud.get("integrated_lufs"))
+    guard = video_qa.noise_guard(qa_prof, thr, video_qa.window_peaks(
+        path, offset, window, sample_rate))
+    if not guard["measurable"]:
+        return None
+    hp = qa_prof["hook"]
+    t = video_qa.first_sound_s(path, guard["threshold_db"], offset, window,
+                               hp.get("min_sound_s", 0.15), hp.get("merge_gap_s", 0.25))
     return None if t is None else offset + t
 
 
@@ -405,6 +489,30 @@ def _loudnorm_json(stderr: str) -> dict:
         return {}
 
 
+def audio_codec_args(dst: str, src_codec: str | None, bitrate: str,
+                     copy_ok: bool) -> list[str]:
+    """Pick the audio codec the OUTPUT container can hold. AAC written into a
+    .wav is undecodable (found 23 Oct 2026: QA read it as -70 LUFS silence)."""
+    ext = os.path.splitext(dst)[1].lower()
+    src_codec = (src_codec or "").lower()
+    if ext in (".wav", ".aif", ".aiff"):
+        pcm = src_codec if src_codec.startswith("pcm_") else "pcm_s16le"
+        if ext != ".wav" and pcm.endswith("le"):
+            pcm = pcm[:-2] + "be"  # AIFF is big-endian
+        return ["-c:a", pcm]
+    if ext == ".flac":
+        return ["-c:a", "flac"]
+    if ext == ".mp3":
+        return ["-c:a", "copy"] if copy_ok and src_codec == "mp3" else \
+            ["-c:a", "libmp3lame", "-b:a", bitrate]
+    if ext in (".ogg", ".opus", ".webm"):
+        return ["-c:a", "copy"] if copy_ok and src_codec in ("opus", "vorbis") else \
+            ["-c:a", "libopus", "-b:a", bitrate]
+    if copy_ok and src_codec in ("aac", "mp3", "ac3", "eac3", "alac", "opus"):
+        return ["-c:a", "copy"]
+    return ["-c:a", "aac", "-b:a", bitrate]
+
+
 def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
            words: list[dict] | None, burn: bool, keywords: list[str],
            reframe: str | None = None, focus_x: float = 0.5,
@@ -431,12 +539,24 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         report["clip_snapped_to_words"] = [round(clip_start, 3), round(clip_end, 3)]
     start = clip_start
     if trim_head:
-        fs = first_speech_s(src, style, clip_start, min(clip_end - clip_start, 120.0))
-        if fs is None:
-            report["warnings"].append("trim-head found no sound in the window; "
-                                      "nothing trimmed")
+        # The hook rule is about the first WORD: with a transcript, cut to it.
+        first_word = next((w for w in (words or [])
+                           if w["start"] >= clip_start - 0.02 and w["start"] < clip_end),
+                          None)
+        if first_word is not None:
+            start = max(clip_start, first_word["start"] - fin["head_pad_s"])
+            report["trim_head_to"] = "first word"
         else:
-            start = max(clip_start, fs - fin["head_pad_s"])
+            fs = first_speech_s(src, style, clip_start,
+                                min(clip_end - clip_start, 120.0),
+                                info["audio"]["sample_rate"])
+            if fs is None:
+                report["warnings"].append(
+                    "trim-head found no sustained sound it could tell from noise in "
+                    "the window; nothing trimmed")
+            else:
+                start = max(clip_start, fs - fin["head_pad_s"])
+                report["trim_head_to"] = "first sustained sound"
     duration = clip_end - start
     if duration <= 0.1:
         raise ValueError("nothing left to render after trimming; check --clip and "
@@ -525,9 +645,9 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                  str(fin["x264_crf"]), "-pix_fmt", "yuv420p"] if reencode
                 else ["-c:v", "copy"])
     if afilters:
-        cmd += ["-af", ",".join(afilters), "-c:a", "aac", "-b:a", fin["audio_bitrate"]]
-    else:
-        cmd += ["-c:a", "copy"]
+        cmd += ["-af", ",".join(afilters)]
+    cmd += audio_codec_args(dst, info["audio"].get("codec"), fin["audio_bitrate"],
+                            copy_ok=not afilters)
     if has_video or dst.lower().endswith((".mp4", ".m4a", ".mov")):
         cmd += ["-movflags", "+faststart"]
     cmd += [os.path.abspath(dst)]
@@ -552,10 +672,9 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
 def load_words(args) -> list[dict] | None:
     timed = text = None
     if args.words:
-        with open(args.words, encoding="utf-8") as fh:
-            timed = normalize_words(json.load(fh))
+        timed = read_words_file(args.words)
     if args.srt:
-        text = words_from_srt(Path(args.srt).read_text(encoding="utf-8"))
+        text = read_srt_file(args.srt)
     if timed and text:
         return align_text_to_timing(text, timed)
     return timed or text
@@ -583,8 +702,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--clip", help="START-END seconds on the source, e.g. 3301.2-3342.8")
     ap.add_argument("--no-qa", action="store_true", help="skip the QA receipt")
     args = ap.parse_args(argv)
-    style = load_style(args.profile)
     try:
+        style = load_style(args.profile)
+        if args.reframe and not re.fullmatch(r"\d+(?:\.\d+)?:\d+(?:\.\d+)?", args.reframe):
+            raise ValueError(f"--reframe must look like 9:16, got {args.reframe!r}")
+        if not 0.0 <= args.focus_x <= 1.0:
+            raise ValueError(f"--focus-x must be between 0 and 1, got {args.focus_x}")
+        if not os.path.exists(args.src):
+            raise ValueError(f"source {args.src} does not exist")
         words = load_words(args)
         rep = finish(args.src, args.out, style, args.trim_head, args.loudness, words,
                      burn=args.burn,

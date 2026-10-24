@@ -52,15 +52,22 @@
       ],
       "warn_pause_s": 0.6,
       "fail_pause_s": 2.0,
-      "max_warn_pauses_per_minute": 3.0
+      "max_warn_pauses_per_minute": 3.0,
+      "noise_floor_percentile": 10,
+      "speech_percentile": 95,
+      "noise_floor_margin_db": 6.0,
+      "min_speech_margin_db": 10.0
     },
     "hook": {
-      "max_first_speech_s": 2.0
+      "max_first_speech_s": 2.0,
+      "min_sound_s": 0.15,
+      "merge_gap_s": 0.25
     },
     "tail": {
       "max_trailing_silence_s": 1.5
     },
     "black": {
+      "min_black_frames": 2,
       "min_black_s": 0.08,
       "pic_th": 0.9,
       "pix_th": 0.1,

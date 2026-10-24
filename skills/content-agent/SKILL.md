@@ -44,9 +44,9 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
    - **No tool:** proceed with the raw video unedited and say so — a real upload this week beats a perfect one next month.
    - **Backlogs: route the edit by authority, not by habit.** The recording you picked for this week always gets the full run above. A backlog (dozens or thousands of old recordings) does not: Descript credits and media hours are bought per seat. Transcribe the backlog free on the machine (`scripts/transcribe_words.py`), score each recording against the client's GCT, and give it an **edit tier** using the same four words the repurposing agent uses for article effort: **SKIP** = no edit, log the reason; **LIGHT** = no Descript, just step 2b on the raw file (loudness and captions); **MODERATE / STRONG** = the Descript edit above, then step 2b. A SKIP is logged with its reason and leaves the queue; it is never "pending".
 2b. **Finish and prove it — every video, whichever editor cut it.** Needs ffmpeg on the machine; without it, skip 2b, ship anyway and mark the video **UNMEASURED** in the report — never block on tooling. Load the client's `video-style.json` (start from `references/video-style.example.json`; save it once in the Knowledge Base and never ask for the style again). Then:
-   - Long-form for YouTube: `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a clean caption file to upload beside the video (captions are a sidecar unless you ask for `--burn`).
+   - Long-form for YouTube: `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a clean caption file to upload beside the video (captions are a sidecar unless you ask for `--burn`). On a raw file (LIGHT tier) add `--trim-head`: it cuts to the first transcribed word, or without a transcript to the first sustained sound, never to a record-button click.
    - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Clip edges snap to word boundaries; captions use Descript's corrected words on the word-level clock.
-   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, otherwise only the first sound, which a music intro would pass, and the receipt says so); the longest pauses and the pause rate, with silence measured relative to the file's own loudness; black and near-black frames and flashes of two frames or more at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
+   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, otherwise the first sustained sound: a click is skipped, a music intro would pass, and the receipt says so); the longest pauses and the pause rate, with silence measured relative to the file's own loudness and lifted over any room noise (WARN "unmeasurable" when noise or music never lets the sound drop, never a false PASS); black and near-black frames, including two-frame flashes at the file's own frame rate, at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
    - Titles and descriptions come from step 6, thumbnails from the receipt's real-frame candidates. If you ask Underlord for anything beyond the edit, add: **"thumbnail: choose a real frame, never generate one."**
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
 4. **Target keyword.** From the transcript's strongest theme + your positioning: one keyword you can actually win (specific beats glamorous). One line of why.
@@ -248,14 +248,43 @@ version of the receipt six ways, each now a regression test:
   uses the first word (`hook_first_speech`); without one it is named `hook_first_audio` and the
   receipt says a music intro would pass it. The replay's real first word is at 0.50 s, not 0.00 s.
 - **Black flashes were invisible** (0.5 s minimum, 5 fps sampling, 98% black). Every frame is now
-  checked at 90% black for two frames or more, which is how the 0:08 near-black screen surfaced.
-- **Pause counts tracked loudness, not editing.** At a fixed −38 dB the replay showed 620 pauses;
-  normalized, the same file showed about 477. Silence is now 25 LU under the file's own loudness.
-- **The true-peak margin was 0.1 dB on long-form.** Linear normalization would have clipped, so
-  ffmpeg silently switched to dynamic mode. `finish.py` now reports the mode and keeps 1 dB headroom.
+  checked at 90% black, which is how the 0:08 near-black screen surfaced.
+- **Pause counts tracked loudness, not editing.** At a fixed −38 dB the replay showed 620 pauses of
+  0.6–2 s; turned up 10 dB to the −14 reference, the same file showed 483. Silence is now 25 LU
+  under the file's own loudness.
+- **Long-form had 0.1 dB of true-peak margin.** The replay needs +10 dB of gain on a −6.1 dBTP
+  peak, so linear gain would clip and ffmpeg switched to dynamic mode without saying so; the
+  auditor's long-form run landed at −1.1 dBTP against the −1.0 ceiling. `finish.py` now reports the
+  mode and keeps 1 dB headroom.
 - **Edge cases failed quietly**: a quiet speaker lost 30 s to `--trim-head`, an all-silent file
   "succeeded", reversed clips gave a cryptic error, `--burn` was implied, multi-word keywords lit up
   a lone "A". All fixed.
+
+### A second audit checked the fixes, and found three more holes
+
+A second fresh-context auditor confirmed all six fixes on files it built itself, then broke the
+receipt three new ways. Each is now a test that fails on the old code:
+
+- **Two frames is not a number of seconds.** The 0.08 s minimum is two frames at 25 fps, but it
+  passed a two-frame flash at 30 fps and a four-frame one at 60. The minimum now follows the file's
+  own frame rate; a single black frame (a cut) is still allowed.
+- **Room noise hid every pause.** A pause only counts if every sample stays under the threshold, so
+  white noise 20 dB under the talk hid a 2.5 s dead gap. The threshold now clears the measured
+  noise floor by 6 dB. When that would come within 10 dB of the talk (a fan, a music bed, a steady
+  tone), the pause checks say WARN "unmeasurable" instead of PASS. The same clip now gets the same
+  verdict clean, noisy, 30 dB quieter and 6 dB louder.
+- **`--trim-head` trusted the first sound.** With a tone intro and a transcript it trimmed nothing;
+  with a record-button click before 3.7 s of dead air it stopped at the click. It now cuts to the
+  first transcribed word, or to the first burst holding 0.15 s of sound, and the hook check uses the
+  same rule.
+- Smaller ones: the sidecar `.srt` kept `{\b1}` and `\N`, which players obey; a newline inside a
+  word dropped it from burned captions; a missing `--profile` printed a traceback; a words file
+  without times said only `'start'`; cover art in an mp3 counted as video; "Dollar-a-Day" did not
+  light up. All fixed. Fixing them turned up one more of our own: AAC written into a `.wav` could
+  not be decoded and QA read it as silence. The audio codec now follows the output container.
+
+The replay's numbers did not move under the stricter checker: −24.0 LUFS, the 1.6 s near-black run
+at 0:08, 5 s of black at the end, first word at 0.50 s, 473 pauses of 0.6–2 s, none of 2 s or more.
 
 **Rules:**
 
@@ -274,7 +303,8 @@ version of the receipt six ways, each now a regression test:
 6. **AAC adds inter-sample peaks.** Normalizing to exactly −1 dBTP measured −0.9 after encode, and
    0.5 dB of headroom still landed at −1.1 on long-form. Keep 1 dB.
 7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt; a second
-   context broke it in an hour. Commission the refuting audit before telling anyone the number.
+   context broke it in an hour, and a third found three more holes after the fixes. Commission the
+   refuting audit before telling anyone the number, and again after fixing what it found.
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
