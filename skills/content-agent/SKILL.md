@@ -46,7 +46,7 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 2b. **Finish and prove it — every video, whichever editor cut it.** Needs ffmpeg on the machine; without it, skip 2b, ship anyway and mark the video **UNMEASURED** in the report — never block on tooling. Load the client's `video-style.json` (start from `references/video-style.example.json`; save it once in the Knowledge Base and never ask for the style again). Then:
    - Long-form for YouTube: `scripts/transcribe_words.py edited.mp4 -o words.json`, then `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt --words words.json` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a sentence-style caption file to upload beside the video (Descript's words on the word clock; captions are a sidecar unless you ask for `--burn`). The word timing is what lets the receipt tell a breath or a cough inside dead air from a word; it is free and local (66 s for a 3-minute slice on two cores). With `--srt` alone the receipt says so in a `word_timing` WARN. On a raw file (LIGHT tier) add `--trim-head`: it cuts to the first transcribed word, or without a transcript to the first sustained sound, never to a record-button click.
    - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Clip edges snap to word boundaries; captions use Descript's corrected words on the word-level clock.
-   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: whether the whole file decodes (a half-downloaded mp4, a cut-off WAV or Ogg, or a decoder error is a FAIL, never a clean receipt); loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, "[Music]" cues ignored; otherwise the first real sound: clicks, noise-like typing and a cough before dead air are skipped, and audio that starts after the picture counts as dead air); the longest pauses and the pause rate, with silence measured against the file's own loudness and its local noise floor (WARN "unmeasurable" where noise or a music bed never lets the sound drop; with word timing a breath, a soft "mm", a sigh or a thump inside dead air does not end the pause, a loud sound right next to a word is listed rather than failed, and a `talk_gaps` WARN marks where the talk stops under a bed; with an SRT alone, a `possible_pauses` WARN lists the stretches to listen to); trailing dead air (a FAIL when the microphone died); a picture that stops before the sound; black runs of two frames or a held black frame (FAIL) and mostly dark frames with something on screen, such as a dead screen with a camera tile or a dark slide (WARN, with the frame saved to look at), at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt --words words.json` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
+   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: whether the whole file decodes (a half-downloaded mp4, a cut-off WAV or Ogg, or a decoder error is a FAIL, never a clean receipt); loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, "[Music]" cues ignored; otherwise the first real sound: clicks, noise-like typing and a cough before dead air are skipped, and audio that starts after the picture counts as dead air); the longest pauses and the pause rate (a NOTE, not a WARN, while the edit removes only pauses over 2 s), with silence measured against the file's own loudness and its local noise floor (WARN "unmeasurable" where noise or a music bed never lets the sound drop; with word timing a breath, a soft "mm", a sigh or a thump inside dead air does not end the pause, a loud sound right next to a word is listed rather than failed, and a `talk_gaps` WARN marks where the talk stops under a bed; with an SRT alone, a `possible_pauses` WARN lists the stretches to listen to); trailing dead air (a FAIL when the microphone died); a picture that stops before the sound; black runs of two frames or a held black frame (FAIL) and mostly dark frames with something on screen, such as a dead screen with a camera tile or a dark slide (WARN, with the frame saved to look at), at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt --words words.json` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
    - Titles and descriptions come from step 6, thumbnails from the receipt's real-frame candidates. If you ask Underlord for anything beyond the edit, add: **"thumbnail: choose a real frame, never generate one."**
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
 4. **Target keyword.** From the transcript's strongest theme + your positioning: one keyword you can actually win (specific beats glamorous). One line of why.
@@ -238,9 +238,9 @@ sidecar or burned captions from one `video-style.json`) and `scripts/video_qa.py
 33-second 9:16 short cut from the same replay came out at −14.4 LUFS / −2.0 dBTP, first word at
 0.00 s, QA PASS, in 47 s on two CPU cores with zero Descript credits.
 
-### The checker was broken six times before it shipped
+### The checker was broken seven times before it shipped
 
-Six fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
+Seven fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
 break below is now a regression test that fails on the code before its fix; the full reports are on
 pull request #94 of the skills repo.
 
@@ -270,7 +270,13 @@ pull request #94 of the skills repo.
   stretched a word back over a gap, which hid a soft "mm" inside it. Now a sound as loud as talk
   within a second of a heard word, or a word only Descript heard, is listed rather than failed; a
   word that holds 0.4 s of level silence starts after it; and the hook is the later of the first
-  word and the first audible sound.
+  word and the first audible sound. Round seven used real speech with real crowds and edits: a 3.6 s
+  stop in the talk under room chatter passed clean, a loud cough or door longer than half a second
+  next to a word was neither failed nor listed, and when the room was still chatting as the speaker
+  began, the ASR missed the opening, so `--trim-head` cut real words. Now a stop with more than a
+  second clear of both neighbouring words is flagged under any crowd, a talk-loud sound up to 1.2 s
+  next to a word is listed, Descript's words before the ASR's first word are kept, and
+  `--trim-head` never cuts sound that runs into the first word or hides under a loud bed.
 - **Broken files passed.** A half-downloaded mp4, a cut-off WAV or Ogg, and AAC inside a `.wav` each
   got a clean receipt for the part that played. Now `decodes_cleanly` fails them, and no longer
   fails a screen recording that holds its last frame or a stream-copied cut.
@@ -284,28 +290,30 @@ pull request #94 of the skills repo.
 
 Measured with the checker as shipped and the documented command (`--srt --words`), the replay reads:
 −24.0 LUFS and −6.1 dBTP, first word at 0.50 s, the file decodes cleanly, no pause of 2 s or more,
-5 s of black at the end, and the 0:08 screen (about 97% dark with a camera tile) is a near-black
-WARN with the frame saved; we looked, and it is a dead screen during a screen-share switch, worth
-cutting in Descript. The 0.6–2 s pause count has read between 454 and 502 across the checker's
-versions (6.8 to 7.5 a minute; 502 now) against a ceiling of 3 a minute: the published 0.6-second
-rule is broken under every version. With the Descript SRT alone the same file reads 500 pauses and
-lists three stretches of about 2.7 s to listen to, silent but for a third of a second of sound (a
-lone "Okay.", an "Okay?" and the "But" that starts a sentence); word timing shows all three are
-words. The full check takes about 9 minutes on two cores. `finish.py --loudness` took 13 minutes on
-the replay, without re-encoding the picture, and the result measures −14.4 LUFS and −1.7 dBTP. The
-receipt it wrote that day was a FAIL under that day's checker; measured with today's it is a WARN,
-pointing at the 0:08 screen, the black ending, the last 5.4 s of dead audio, the side bars and the
-pause rate.
+5 s of black at the end, and the 0:08 screen (about 97% dark with a camera tile) is a near-black WARN
+with the frame saved; we looked, and it is a dead screen during a screen-share switch, worth cutting
+in Descript. The 0.6–2 s pause count has read between 454 and 502 across the checker's versions
+(6.8 to 7.5 a minute; 502 now) against a ceiling of 3 a minute: the published 0.6-second rule is broken
+under every version. The receipt reports that rate as a NOTE rather than a WARN until the Descript
+prompt shortens pauses over 0.6 s, so a WARN always means something new to look at. With the
+Descript SRT alone the same file reads 500 pauses and lists three stretches of about 2.7 s to listen
+to, silent but for a third of a second of sound (a lone "Okay.", an "Okay?" and the "But" that
+starts a sentence); word timing shows all three are words. The full check takes 9 to 13 minutes on
+two cores, more while other jobs run. `finish.py --loudness` took 13 minutes on the replay, without
+re-encoding the picture, and the result measures −14.4 LUFS and −1.7 dBTP. The receipt it wrote that
+day was a FAIL under that day's checker; measured with today's it is a WARN, pointing at the 0:08
+screen, the black ending, the last 5.4 s of dead audio and the side bars.
 
 **Known limits**, said plainly in every receipt that hits them: a pause filled by a music bed or
 background talk is heard as sound, so only word timing catches it (`talk_gaps`); with an SRT alone a
-gap inside one cue is not checked, and the receipt says so (`word_timing` WARN). A loud cough or a
-notification right next to a word is listed to listen to, not failed, because it may be that word
-with its clock off. Without any
+gap inside one cue is not checked, and the receipt says so (`word_timing` WARN). A loud cough, a
+notification or a door right next to a word is listed to listen to, not failed, because it may be
+that word with its clock off; a soft laugh in a pause counts as part of the pause. `--trim-head`
+leaves an intro that runs straight into the first word for a person to cut, and says so. Without any
 transcript, keyboard sounds that ring (rather than click like noise) can still read as the start.
-Pause counts move with noise (8 on a clean minute of the replay, 14 to 19 with noise mixed under it).
-A blank screen lighter than about RGB 31 is not flagged as black. An MP3 cut short by under half a
-second can pass, because nothing in the file says it was longer.
+Pause counts move with noise (8 on a clean minute of the replay, 14 to 19 with noise mixed under
+it). A blank screen lighter than about RGB 31 is not flagged as black. An MP3 cut short by under
+half a second can pass, because nothing in the file says it was longer.
 
 **Rules:**
 
@@ -326,8 +334,8 @@ second can pass, because nothing in the file says it was longer.
    −1.1 dBTP, 0.1 dB inside the ceiling; with 1 dB it lands at −1.7 dBTP. Keep 1 dB.
 7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt. The first
    independent audit broke it six ways; after each round of fixes the next audit found
-   more (six, then sixteen, then twenty-one, then fourteen, then twelve), mostly in cases the
-   fixes themselves opened or the documented command never exercised. Commission
+   more (six, then sixteen, then twenty-one, then fourteen, then twelve, then twelve), mostly in
+   cases the fixes themselves opened or the documented command never exercised. Commission
    the refuting audit before telling anyone the number, run it again after every fix, and ship only
    when an audit finds nothing high or medium.
 

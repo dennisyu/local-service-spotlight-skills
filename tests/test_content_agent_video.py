@@ -117,11 +117,13 @@ class TranscriptInputs(unittest.TestCase):
 
     def test_srt_spreads_words_and_strips_speaker_labels(self):
         srt = ("1\n00:00:01,000 --> 00:00:03,000\nDennis Yu: Hello there world\n\n"
-               "2\n00:00:03,500 --> 00:00:04,000\n<i>Next</i>\n")
+               "2\n00:00:03,500 --> 00:00:04,000\n<i>Next</i>\n\n"
+               "3\n00:00:04,000 --> 00:00:05,000\nDennis Yu: again\n")
         words = finish.words_from_srt(srt)
-        self.assertEqual([x["word"] for x in words], ["Hello", "there", "world", "Next"])
+        self.assertEqual([x["word"] for x in words],
+                         ["Hello", "there", "world", "Next", "again"])
         self.assertAlmostEqual(words[1]["start"], 1.6667, places=3)
-        self.assertAlmostEqual(words[-1]["end"], 4.0)
+        self.assertAlmostEqual(words[-2]["end"], 4.0)
 
     def test_scribe_spacing_and_events_are_ignored(self):
         data = {"words": [{"text": "Hi", "start": 0, "end": 0.2, "type": "word"},
@@ -735,8 +737,9 @@ class AuditRound5(unittest.TestCase):
 
     def test_speaker_label_after_a_sound_cue_is_stripped(self):
         got = finish.words_from_srt(
-            "1\n00:00:00,000 --> 00:00:02,000\n[Music] Dennis Yu: We start now\n")
-        self.assertEqual([x["word"] for x in got], ["We", "start", "now"])
+            "1\n00:00:00,000 --> 00:00:02,000\n[Music] Dennis Yu: We start now\n\n"
+            "2\n00:00:02,000 --> 00:00:03,000\nDennis Yu: Go\n")
+        self.assertEqual([x["word"] for x in got], ["We", "start", "now", "Go"])
         self.assertTrue(all(x["timing"] == "cue" for x in got))
 
     def test_long_form_sidecar_reads_like_sentences(self):
@@ -879,6 +882,108 @@ class AuditRound6(unittest.TestCase):
                 code = tw.main([str(media), "-o", str(out), "--model", "small.en"])
             self.assertEqual(code, 2)                                # not served from cache
             self.assertEqual(set(Path(tempfile.gettempdir()).glob("tmp*.wav")), before)
+
+
+class AuditRound7(unittest.TestCase):
+    """Seventh independent audit, 24 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+
+    def _ev(self, **kw):
+        base = dict(first_speech=0.0, first_audio=0.0)
+        base.update(kw)
+        return {c["check"]: c for c in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, kw.pop("silences", []),
+            [], self.PROF, **{k: v for k, v in base.items() if k != "silences"})}
+
+    def test_a_crowd_that_keeps_the_level_up_still_shows_a_stop(self):
+        words = [dict(w("200?", 30.0, 32.8), timing="word"), dict(w("If", 36.4, 36.8), timing="word")]
+        crowd = [(32.8, 33.6), (33.65, 35.9), (35.95, 36.4)]          # peaks as loud as talk
+        c = self._ev(words=words, loud_runs=crowd)
+        self.assertEqual(c["talk_gaps"]["status"], "WARN")
+        short = [dict(w("a", 30.0, 32.8), timing="word"), dict(w("b", 34.8, 35.2), timing="word")]
+        self.assertNotIn("talk_gaps", self._ev(words=short, loud_runs=[(32.8, 34.8)]))
+
+    def test_the_srt_opening_survives_an_asr_that_missed_it(self):
+        srt = ("1\n00:00:00,400 --> 00:00:03,500\nSo think about how easy it is\n\n"
+               "2\n00:00:04,000 --> 00:00:05,000\nWhy are we\n")
+        timed = [w("Why", 4.0, 4.3), w("are", 4.3, 4.5), w("we", 4.5, 4.8)]
+        out = finish.align_text_to_timing(finish.words_from_srt(srt), timed, keep_unheard=True)
+        self.assertEqual(out[0]["word"], "So")
+        self.assertEqual((out[0]["timing"], out[0]["heard"], out[0].get("caption", True)),
+                         ("cue", False, True))
+        self.assertEqual(video_qa.first_word_s(out), 0.4)
+
+    def test_words_only_the_asr_heard_are_talk_not_captions(self):
+        srt = "1\n00:00:00,000 --> 00:00:02,000\nhello there\n"
+        timed = [w("hello", 0.0, 0.4), w("there", 0.5, 0.9), w("is", 1.6, 1.8),
+                 w("it", 1.8, 2.0)]
+        out = finish.align_text_to_timing(finish.words_from_srt(srt), timed, keep_unheard=True)
+        extra = [x for x in out if x["word"] in ("is", "it")]
+        self.assertTrue(extra and all(x["heard"] and x["caption"] is False for x in extra))
+        kind, spans = video_qa.talk_spans(out, 0.15)
+        self.assertTrue(any(a <= 1.7 <= b and sure for a, b, sure in spans))
+
+    def test_a_loud_cough_right_after_a_word_is_listed(self):
+        runs = [(1, 30.0, 32.8), (0, 32.8, 33.05), (1, 33.05, 33.95), (0, 33.95, 35.84),
+                (1, 35.84, 37.0)]
+        words = [dict(w("200?", 32.3, 32.8), timing="word"), dict(w("If", 35.85, 36.2), timing="word")]
+        kind, spans = video_qa.talk_spans(words, 0.15, runs)
+        kw = {"peak_of": lambda a, b: -14.0, "loud_db": -24.8}
+        sure = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none",), **kw)
+        look = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none", "unknown"), **kw)
+        self.assertLess(max(x["dur"] for x in sure), 2.0)              # not failed
+        self.assertGreaterEqual(max(x["dur"] for x in look), 2.8)      # but listed
+
+    def test_the_pause_rate_is_a_note_until_the_edit_enforces_it(self):
+        many = [{"start": 1.0 + i * 3, "end": 1.7 + i * 3, "dur": 0.7} for i in range(12)]
+        c = self._ev(silences=many)
+        self.assertEqual(c["pauses_over_warn_rate"]["status"], "NOTE")
+        strict = video_qa.deep_merge(self.PROF, {"pauses": {"rate_advisory": False}})
+        c = {x["check"]: x["status"] for x in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, many, [], strict,
+            first_speech=0.0, first_audio=0.0)}
+        self.assertEqual(c["pauses_over_warn_rate"], "WARN")
+        self.assertEqual(video_qa.verdict_for(["PASS", "NOTE"]), "PASS")
+
+    def test_an_srt_for_another_cut_is_named(self):
+        words = [dict(w("a", i, i + 0.3), timing="cue" if i % 5 else "word",
+                      heard=not i % 5) for i in range(20)]
+        c = self._ev(words=words)
+        self.assertEqual(c["transcript_match"]["status"], "WARN")
+
+    def test_a_label_on_one_line_is_text(self):
+        srt = ("1\n00:00:00,000 --> 00:00:02,000\nRemember: this matters\n\n"
+               "2\n00:00:02,000 --> 00:00:04,000\nGoogle: the answer\n")
+        self.assertEqual([x["word"] for x in finish.words_from_srt(srt)][:2],
+                         ["Remember:", "this"])
+
+    def test_long_tokens_and_pauses_in_the_sidecar(self):
+        url = "https://blitzmetrics.com/a-very-long-path/that-keeps-going/and-going"
+        self.assertTrue(all(len(l) <= 42 for l in finish._wrap(url, 42).splitlines()))
+        side = dict(CAP, **finish.DEFAULT_STYLE["sidecar_captions"])
+        talk = [w("Okay.", 0.0, 0.3), w("So", 2.1, 2.3), w("here", 2.3, 2.6),
+                w("we", 2.6, 2.8), w("go.", 2.8, 3.4)]
+        self.assertEqual(len(finish.chunk_words(talk, side)), 2)      # 1.8 s apart
+
+    def test_a_loud_steady_hum_holds_no_talk(self):
+        talk = ([-6.0] * 30 + [-120.0] * 20) * 10
+        hum = [-13.0, -12.8] * 400                                     # 8 s, 7 dB under talk
+        cl = video_qa.classify_levels(talk + hum + talk, 0.01, self.PROF, -15.0)
+        self.assertEqual(set(cl["state"][800:1000]), {0})              # silence, not masked
+
+    def test_a_loud_bed_under_the_opening_is_audible(self):
+        import random
+        rnd = random.Random(3)
+        bed = [rnd.choice([-4.0, -6.0, -9.0, -5.0]) for _ in range(400)]  # 4 s, moving
+        peaks = bed + ([-6.0] * 30 + [-120.0] * 20) * 40
+        scan = {"peaks": peaks, "window_s": 0.01, "decoded_s": len(peaks) * 0.01,
+                "errors": [], "flatness": None}
+        aud = video_qa.analyze_audio(None, self.PROF, scan=scan, integrated_lufs=-12.0)
+        self.assertGreater(aud["noise"]["masked_s"], 1.0)
+        self.assertEqual(aud["noise"]["first_any_sound_s"], 0.0)     # talk may be under it
 
 
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
@@ -1087,7 +1192,9 @@ class MediaRoundTrip(unittest.TestCase):
         rec = video_qa.qa(str(self._speech("drowned.wav", 0.2)), video_qa.load_profile(None),
                           self.tmp / "drowned.qa")
         c = {x["check"]: x["status"] for x in rec["checks"]}
-        self.assertEqual(c["pauses_over_fail"], "WARN")    # unmeasurable, never PASS
+        # Never PASS: unmeasurable (WARN), or, since a steady hiss holds no talk
+        # however loud (audit round 7), the gap itself (FAIL).
+        self.assertIn(c["pauses_over_fail"], ("WARN", "FAIL"))
 
     def test_trim_head_cuts_to_the_first_word_not_the_intro(self):
         src = self._make("intro.mp4", d=9, tone=(
@@ -1638,6 +1745,28 @@ class MediaRoundTrip(unittest.TestCase):
         words.sort(key=lambda x: x["start"])
         c = {x["check"]: x["status"] for x in self._quiet_qa(out, words)["checks"]}
         self.assertEqual(c["pauses_over_fail"], "PASS")
+
+    # ---- seventh audit (24 Oct 2026) ----
+
+    def test_an_inhale_before_the_first_word_is_not_the_start(self):
+        out = self.tmp / "inhale.wav"
+        expr = ("0.06*(random(0)-0.5)*sin(PI*(t-1.6)/0.4)*between(t,1.6,2.0)"
+                f"+{self.SYL}*gte(t,2.25)")
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{expr}':s=48000:d=20", "-c:a",
+                 "pcm_s16le", str(out))
+        words = self._words_for([(1.9, 20.0)])                          # ASR clock early
+        c = {x["check"]: x for x in self._quiet_qa(out, words)["checks"]}
+        self.assertEqual(c["hook_first_speech"]["status"], "FAIL")
+        self.assertGreaterEqual(float(c["hook_first_speech"]["measured"].rstrip("s")), 2.2)
+
+    def test_trim_head_keeps_talk_the_transcript_missed(self):
+        src = self._make("missed_open.mp4", d=12, tone=f"{self.SYL}*gte(t,0.4)")
+        words = self._words_for([(4.0, 12.0)])                          # opening not heard
+        rep = finish.finish(str(src), str(self.tmp / "missed_open_out.mp4"),
+                            finish.load_style(None), trim_head=True, loudness=False,
+                            words=words, burn=False, keywords=[])
+        self.assertLess(rep["start_s"], 0.5)
+        self.assertTrue(any("before the first transcribed word" in x for x in rep["warnings"]))
 
 
 if __name__ == "__main__":

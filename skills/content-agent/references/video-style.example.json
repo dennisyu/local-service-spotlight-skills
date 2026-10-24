@@ -85,7 +85,8 @@
       "far_sound_max_s": 1.2,
       "silence_in_word_s": 0.4,
       "talk_gap_slack_s": 0.5,
-      "talk_like_within_db": 12.0
+      "talk_like_within_db": 12.0,
+      "rate_advisory": true
     },
     "hook": {
       "max_first_speech_s": 2.0,

@@ -30,7 +30,11 @@ Usage:
     ("[Music]" and "♪" cues are not words), otherwise to the first real sound by
     the QA hook rule: clicks, noise-like typing and static do not count, and a
     short sound followed by 2 s of dead air (a cough) is skipped and reported.
-    --srt also reads WebVTT.
+    It never cuts talk the transcript missed: sound that runs into the first word
+    without 2 s of silence is kept, and a bed or crowd as loud as talk before the
+    first word means nothing is cut; both are reported (an intro running straight
+    into the first word is then left for a person to cut). --srt also reads
+    WebVTT; plain "Name:" labels are stripped when they open two or more cues.
 
     The sidecar .captions.srt for long-form reads like sentences (up to 16 words,
     two lines of 42 characters, normal case); with --burn it matches what is on
@@ -93,6 +97,9 @@ NUMBERISH = re.compile(r"[\d$%]")
 # and "So here's the thing:" are left alone.
 _NAME = r"[A-Z][\w.'-]*(?: [A-Z][\w.'-]*){0,2}(?: \([^)]{1,24}\))?"
 SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[Ss]peaker \d{1,2}|" + _NAME + r"):\s+")
+# Unmistakable label forms: "[Speaker 2]:", "Speaker 1:", "Dennis Yu (Host):".
+SURE_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[Ss]peaker \d{1,2}|[A-Z][\w.'-]*"
+                        r"(?: [A-Z][\w.'-]*){0,2} \([^)]{1,24}\)):\s+")
 # ">> DENNIS:" or a bare ">>" marks a change of speaker anywhere in a cue.
 SPEAKER_CHANGE = re.compile(r">>\s*(?:(?:[Ss]peaker \d{1,2}|" + _NAME + r"):\s*)?")
 
@@ -230,11 +237,31 @@ def _ts(s: str) -> float:
 
 
 def words_from_srt(text: str) -> list[dict]:
-    """SRT or WebVTT cues -> words spread evenly across each cue. Speaker labels
-    and sound cues ("[Music]", "♪") are dropped."""
+    """SRT or WebVTT cues -> words spread evenly across each cue. Sound cues
+    ("[Music]", "♪") are dropped, and so are speaker labels: "[Speaker 2]:",
+    "Speaker 1:", "Name (Role):" and ">> NAME:" always; a plain "Name:" or
+    "Dennis Yu:" only when it opens two or more cues, so "Remember:" or
+    "Google:" at the start of one line stays text."""
     words = []
     text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
-    for cue_id, block in enumerate(re.split(r"\n\s*\n", text.strip())):
+    blocks = re.split(r"\n\s*\n", text.strip())
+
+    def body_of(block: str) -> str | None:
+        lines = [l for l in block.strip().splitlines() if l.strip()]
+        timing = next((l for l in lines if "-->" in l), None)
+        if not timing:
+            return None
+        body = " ".join(lines[lines.index(timing) + 1:])
+        body = html.unescape(re.sub(r"<[^>]+>|\{[^}]+\}", "", body))
+        return SPEAKER_CHANGE.sub(" ", MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body)))
+
+    seen: dict = {}
+    for block in blocks:
+        b = body_of(block)
+        m = SPEAKER_LABEL.match(b) if b else None
+        if m:
+            seen[m.group(0).strip()] = seen.get(m.group(0).strip(), 0) + 1
+    for cue_id, block in enumerate(blocks):
         lines = [l for l in block.strip().splitlines() if l.strip()]
         timing = next((l for l in lines if "-->" in l), None)
         if not timing:
@@ -242,11 +269,11 @@ def words_from_srt(text: str) -> list[dict]:
         parts = timing.split("-->")
         a, b = parts[0].strip().split()[-1], parts[1].strip().split()[0]
         start, end = _ts(a), _ts(b)
-        body = " ".join(lines[lines.index(timing) + 1:])
-        body = html.unescape(re.sub(r"<[^>]+>|\{[^}]+\}", "", body))
         # Sound cues first, then the speaker label they may hide ("[Music] Dennis Yu: …").
-        body = MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body))
-        body = SPEAKER_LABEL.sub("", SPEAKER_CHANGE.sub(" ", body), count=1)
+        body = body_of(block) or ""
+        m = SPEAKER_LABEL.match(body)
+        if m and (SURE_LABEL.match(body) or seen.get(m.group(0).strip(), 0) >= 2):
+            body = body[m.end():]
         toks = [t for t in body.split() if not is_sound_tag(t)]
         if not toks or end <= start:
             continue
@@ -272,18 +299,28 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict],
     Words the ASR never heard are marked heard=False. A lone interjection the ASR
     never heard is left out of the captions; with keep_unheard it is returned
     anyway with caption=False and its cue's own timing, because for the QA
-    receipt it is still talk (someone said "Yeah" there)."""
+    receipt it is still talk (someone said "Yeah" there). keep_unheard also keeps
+    the SRT's words outside the ASR's window, and the ones before the first heard
+    word, on their cue timing (an ASR that missed an opening under room chatter
+    must not erase it), and the ASR's own words the SRT lacks as caption=False
+    talk (a second voice Descript left out)."""
     import difflib
     if not timed:
         return text_words
     lo, hi = timed[0]["start"] - 1.0, timed[-1]["end"] + 1.0
     text = [w for w in text_words if lo <= w["start"] <= hi]
+    outside = ([dict(w, timing="cue", heard=False) for w in text_words
+                if not lo <= w["start"] <= hi] if keep_unheard else [])
     sm = difflib.SequenceMatcher(a=[_norm(w["word"]) for w in text],
                                  b=[_norm(w["word"]) for w in timed], autojunk=False)
     out: list[dict] = []
     for op, a0, a1, b0, b1 in sm.get_opcodes():
         span = text[a0:a1]
         if not span:
+            if keep_unheard:
+                out += [{"word": s_["word"], "start": s_["start"], "end": s_["end"],
+                         "timing": "word", "heard": True, "caption": False}
+                        for s_ in timed[b0:b1]]
             continue
         if op in ("equal", "replace") and (a1 - a0) == (b1 - b0):
             out += [{"word": t["word"], "start": s["start"], "end": s["end"],
@@ -302,6 +339,10 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict],
             span = [t for t in span if _norm(t["word"]) not in CROSSTALK]
             if not span:
                 continue
+            if keep_unheard and not any(x.get("heard") for x in out):
+                # Before the first word the ASR heard: keep the SRT's own times.
+                out += [dict(t, timing="cue", heard=False) for t in span]
+                continue
             s0 = out[-1]["end"] if out else timed[0]["start"]
             s1 = timed[b0]["start"] if b0 < len(timed) else s0 + 0.2 * len(span)
             s1 = max(s1, s0)
@@ -312,7 +353,7 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict],
                  **({k: t[k] for k in ("cue_start", "cue_end") if k in t})}
                 for i, t in enumerate(span)]
     if keep_unheard:
-        out.sort(key=lambda w: w["start"])
+        out = sorted(out + outside, key=lambda w: w["start"])
     return out
 
 
@@ -356,6 +397,7 @@ def chunk_words(words: list[dict], cap: dict) -> list[dict]:
         joined = " ".join(x["word"] for x in (merged[-1]["words"] if merged else [])
                           + cue["words"])
         if (merged and cue["end"] - cue["start"] < cap["min_cue_s"]
+                and cue["words"][0]["start"] - merged[-1]["words"][-1]["end"] < cap["break_gap_s"]
                 and (cap.get("merge_sentences")
                      or not re.search(r"[.!?]\"?$", merged[-1]["words"][-1]["word"]))
                 and len(merged[-1]["words"]) + len(cue["words"]) <= cap["max_words"]
@@ -522,10 +564,20 @@ def _wrap(text: str, width: int) -> str:
     if not width or len(text) <= width:
         return text
     cuts = [i for i, ch in enumerate(text) if ch == " "]
-    if not cuts:
-        return text
-    cut = min(cuts, key=lambda i: (max(i, len(text) - i - 1), abs(2 * i - len(text))))
-    return text[:cut] + "\n" + text[cut + 1:]
+    if cuts:
+        cut = min(cuts, key=lambda i: (max(i, len(text) - i - 1), abs(2 * i - len(text))))
+        lines = [text[:cut], text[cut + 1:]]
+    else:
+        lines = [text]
+    out = []
+    for line in lines:
+        # A single token longer than a line (a URL) breaks after / . - when it can.
+        while len(line) > width:
+            at = max((i + 1 for i, ch in enumerate(line[:width]) if ch in "/.-"), default=width)
+            out.append(line[:at])
+            line = line[at:]
+        out.append(line)
+    return "\n".join(out)
 
 
 def _fits(text: str, width: int) -> bool:
@@ -558,7 +610,8 @@ def assert_font(family: str) -> str:
 # ---------------------------------------------------------------- media ops
 
 def first_speech_s(path: str, style: dict, offset: float, window: float,
-                   sample_rate: int | None = None) -> tuple[float | None, list[dict], str]:
+                   sample_rate: int | None = None, until: float | None = None
+                   ) -> tuple[float | None, list[dict], str]:
     """Source-timeline seconds of the first real start inside [offset,
     offset+window], by the same rule as the QA hook check: the threshold follows
     the window's loudness and its local noise floor; clicks, typing and other
@@ -581,6 +634,13 @@ def first_speech_s(path: str, style: dict, offset: float, window: float,
         reason = ("the start cannot be told from noise or music"
                   if not aud["noise"]["hook_measurable"] else "no sustained sound")
         return None, skipped, reason
+    if until is not None:
+        # Longest silence between that start and `until` (source time), for the
+        # caller to judge whether the sound runs on into the first word.
+        gap = max((x["dur"] for x in aud["silences"]
+                   if x["start"] >= aud["first_sound"] and base + x["end"] <= until + 0.05),
+                  default=0.0)
+        return base + aud["first_sound"], skipped, f"{gap:.3f}"
     return base + aud["first_sound"], skipped, ""
 
 
@@ -734,8 +794,36 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                            if w["start"] >= clip_start - 0.02 and w["start"] < clip_end),
                           None)
         if first_word is not None:
-            start = max(clip_start, first_word["start"] - fin["head_pad_s"])
+            fw = first_word["start"]
+            start = max(clip_start, fw - fin["head_pad_s"])
             report["trim_head_to"] = "first word"
+            if fw - clip_start > 1.0:
+                # Never cut talk the transcript missed (an opening under room
+                # chatter): sound that starts earlier and runs into the first word
+                # without 2 s of silence is kept and reported.
+                # Measure with some talk after the first word in the window, so the
+                # level rules have talk to compare the head against.
+                fs, _, gap = first_speech_s(src, style, clip_start,
+                                            min(fw - clip_start + 5.0, clip_end - clip_start,
+                                                120.0),
+                                            info["audio"]["sample_rate"], until=fw)
+                pause = style["qa"]["pauses"]["fail_pause_s"]
+                if fs is None and gap.startswith("the start cannot be told"):
+                    # A bed or crowd as loud as talk hides whether the speaker is
+                    # already talking under it: cut nothing rather than guess.
+                    start = clip_start
+                    report["trim_head_to"] = "nothing (noise or music hides the start)"
+                    report["warnings"].append(
+                        f"trim-head cut nothing: sound as loud as talk runs from "
+                        f"{clip_start:.2f}s to the first transcribed word at {fw:.2f}s, "
+                        "so talk the transcript missed could be under it; listen")
+                elif fs is not None and fs < fw - 0.5 and float(gap or 0.0) < pause:
+                    start = max(clip_start, fs - fin["head_pad_s"])
+                    report["trim_head_to"] = "first sustained sound before the first word"
+                    report["warnings"].append(
+                        f"trim-head kept {fw - fs:.1f}s of sound before the first "
+                        f"transcribed word ({fs:.2f}s to {fw:.2f}s): talk the transcript "
+                        "missed, or an intro; listen before publishing")
         else:
             fs, skipped, why = first_speech_s(src, style, clip_start,
                                               min(clip_end - clip_start, 120.0),
