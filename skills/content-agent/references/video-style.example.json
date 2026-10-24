@@ -27,6 +27,14 @@
       "knowledge panel"
     ]
   },
+  "sidecar_captions": {
+    "max_words": 16,
+    "max_chars": 84,
+    "line_chars": 42,
+    "uppercase": false,
+    "break_gap_s": 0.7,
+    "min_cue_s": 1.0
+  },
   "finish": {
     "head_pad_s": 0.08,
     "fade_s": 0.03,
@@ -67,7 +75,11 @@
       "bridge_sound_s": 0.08,
       "max_talk_without_gap_s": 30.0,
       "talk_gap_s": 0.25,
-      "min_analysis_s": 1.0
+      "min_analysis_s": 1.0,
+      "flat_noise_under_db": 15.0,
+      "flat_noise_spread_db": 6.0,
+      "word_pad_s": 0.15,
+      "join_min_silence_s": 0.4
     },
     "hook": {
       "max_first_speech_s": 2.0,
@@ -76,7 +88,11 @@
       "min_density": 0.3,
       "max_skip_sound_s": 0.6,
       "density_window_s": 0.5,
-      "transcript_lag_s": 1.0
+      "transcript_lag_s": 1.0,
+      "voiced_flatness": 0.3,
+      "min_voiced_s": 0.05,
+      "max_unvoiced_lead_s": 0.5,
+      "voiced_min_frac": 0.8
     },
     "tail": {
       "max_trailing_silence_s": 1.5,
@@ -87,7 +103,7 @@
       "min_black_frames": 2,
       "min_black_s": 0.08,
       "pic_th": 0.9,
-      "pix_th": 0.1,
+      "pix_th": 0.12,
       "scan_height": 180,
       "letterbox_min_px": 8,
       "near_black_frames_saved": 10

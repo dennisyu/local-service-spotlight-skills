@@ -133,7 +133,8 @@ class TranscriptInputs(unittest.TestCase):
 
     def test_faster_whisper_segments(self):
         data = {"segments": [{"words": [{"word": " Go", "start": 0.1, "end": 0.3}]}]}
-        self.assertEqual(finish.normalize_words(data), [w("Go", 0.1, 0.3)])
+        self.assertEqual(finish.normalize_words(data),
+                         [dict(w("Go", 0.1, 0.3), timing="word")])
 
     def test_descript_text_on_asr_clock(self):
         # Real case, 23 Oct 2026: local Whisper heard "state law", Descript had
@@ -639,6 +640,121 @@ class AuditRound4(unittest.TestCase):
             self.assertIn("holds no words", err.getvalue())
 
 
+class AuditRound5(unittest.TestCase):
+    """Fifth independent audit, 24 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+    # silence 1.5 s | a 0.3 s breath | silence 1.5 s, between two stretches of talk
+    RUNS = [(1, 0.0, 2.0), (0, 2.0, 3.5), (1, 3.5, 3.8), (0, 3.8, 5.3), (1, 5.3, 8.0)]
+
+    def test_a_breath_inside_dead_air_does_not_end_the_pause(self):
+        words = [w("talk", 0.2, 1.9), w("again", 5.4, 7.9)]
+        kind, spans = video_qa.talk_spans([dict(x, timing="word") for x in words])
+        self.assertEqual(kind, "word")
+        sure = video_qa.merge_pauses(self.RUNS, kind, spans, 0.6, ("none",))
+        self.assertEqual([round(x["dur"], 2) for x in sure], [3.3])  # one 3.3 s pause
+        said = words + [w("okay", 3.5, 3.8)]                         # a real one-word reply
+        kind, spans = video_qa.talk_spans([dict(x, timing="word") for x in said])
+        sure = video_qa.merge_pauses(self.RUNS, kind, spans, 0.6, ("none",))
+        self.assertEqual([round(x["dur"], 2) for x in sure], [1.5, 1.5])
+
+    def test_without_word_timing_the_stretch_is_flagged_not_failed(self):
+        cue = [dict(w("talk", 0.0, 8.0), timing="cue", cue=1)]      # one cue over it all
+        for words in (cue, None):
+            kind, spans = video_qa.talk_spans(words)
+            sure = video_qa.merge_pauses(self.RUNS, kind, spans, 0.6, ("none",))
+            look = video_qa.merge_pauses(self.RUNS, kind, spans, 0.6, ("none", "unknown"))
+            self.assertEqual(max(x["dur"] for x in sure), 1.5, kind)
+            self.assertEqual(max(x["dur"] for x in look), 3.3, kind)
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            {"duration_s": 8.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], self.PROF,
+            first_speech=0.0, first_audio=0.0,
+            possible_pauses=[{"start": 2.0, "end": 5.3, "dur": 3.3, "joined": 1}])}
+        self.assertEqual(checks["possible_pauses"], "WARN")
+
+    def test_a_sound_outside_every_cue_is_not_talk(self):
+        cues = [dict(w("a", 0.0, 2.0), timing="cue", cue=1),
+                dict(w("b", 5.3, 8.0), timing="cue", cue=2)]
+        kind, spans = video_qa.talk_spans(cues)
+        self.assertEqual(kind, "cue")
+        sure = video_qa.merge_pauses(self.RUNS, kind, spans, 0.6, ("none",))
+        self.assertEqual(max(x["dur"] for x in sure), 3.3)
+
+    def test_choppy_syllables_never_chain_into_a_pause(self):
+        runs, t = [], 0.0
+        for _ in range(40):                                         # 10 s of short bursts
+            runs += [(1, t, t + 0.125), (0, t + 0.125, t + 0.25)]
+            t += 0.25
+        look = video_qa.merge_pauses(runs, "none", [], 0.6, ("none", "unknown"))
+        self.assertLess(max(x["dur"] for x in look), 0.2)
+
+    def test_gain_pumped_noise_inside_a_gap_is_silence(self):
+        talk = ([-6.0] * 30 + [-120.0] * 20) * 10
+        gap = [-55.0] * 60 + [-36.0, -35.0, -37.0, -36.0] * 30 + [-55.0] * 70  # lifted noise
+        cl = video_qa.classify_levels(talk + gap + talk, 0.01, self.PROF, -15.0)
+        longest = max((b - a) * 0.01 for s, a, b in video_qa._runs(cl["state"]) if s == 0)
+        self.assertGreaterEqual(longest, 2.4)
+
+    def test_brick_limited_talk_is_not_a_steady_tone(self):
+        phrase = [-2.0, -1.7, -2.2, -1.9] * 50                       # 2 s pinned at -2 dBFS
+        talk = (phrase + [-60.0] * 40) * 5                           # with real breaths
+        cl = video_qa.classify_levels(talk, 0.01, self.PROF, -7.0)
+        for k in range(5):
+            middle = cl["state"][k * 240 + 20:k * 240 + 180]
+            self.assertEqual(set(middle), {1}, k)                   # loud talk is talk
+
+    def test_noise_like_sound_before_the_voice_is_not_the_start(self):
+        hp = self.PROF["hook"]
+        sound = [(0.12, 6.0)]                                       # typing runs into talk
+        voice = [(3.19, 3.4), (3.45, 6.0)]
+        start, skipped, _ = video_qa.pick_start(sound, [], 10.0, hp, 2.0, voice)
+        self.assertEqual(start, 3.19)
+        self.assertTrue(skipped[0]["no_voice"])
+        start, skipped, _ = video_qa.pick_start([(0.1, 1.0), (4.0, 6.0)], [], 10.0, hp,
+                                                2.0, [(4.1, 6.0)])
+        self.assertEqual(start, 4.0)                                # the voiceless burst
+        self.assertEqual(skipped[0]["at_s"], 0.1)                   # is skipped and listed
+        start, _, _ = video_qa.pick_start([(0.5, 3.0)], [], 10.0, hp, 2.0, [(0.6, 3.0)])
+        self.assertEqual(start, 0.5)                                # "s" before a vowel
+        self.assertEqual(video_qa.pick_start([(0.5, 3.0)], [], 10.0, hp, 2.0, None)[0], 0.5)
+
+    def test_hook_compares_the_transcript_with_what_is_audible(self):
+        checks = {c["check"]: c for c in video_qa.evaluate(
+            {"duration_s": 10.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], self.PROF,
+            first_speech=0.05, first_audio=3.29, noise={"first_any_sound_s": 0.05})}
+        self.assertEqual(checks["hook_first_speech"]["status"], "PASS")  # "So" is audible
+        self.assertNotIn("another cut", checks["hook_first_speech"]["note"])
+
+    def test_tight_edit_is_unmeasurable_for_the_right_reason(self):
+        syll = [-6.0] * 15 + [-30.0] * 3 + [-9.0] * 15 + [-45.0] * 2
+        cl = video_qa.classify_levels(syll * 120, 0.01, self.PROF, -15.0)  # 42 s, no gap
+        self.assertGreater(cl["gapless_masked_s"], 10.0)
+        self.assertEqual(cl["noise_masked_s"], 0.0)
+
+    def test_speaker_label_after_a_sound_cue_is_stripped(self):
+        got = finish.words_from_srt(
+            "1\n00:00:00,000 --> 00:00:02,000\n[Music] Dennis Yu: We start now\n")
+        self.assertEqual([x["word"] for x in got], ["We", "start", "now"])
+        self.assertTrue(all(x["timing"] == "cue" for x in got))
+
+    def test_long_form_sidecar_reads_like_sentences(self):
+        words = [w(f"word{i}", i * 0.3, i * 0.3 + 0.25) for i in range(60)]
+        side = dict(CAP, **finish.DEFAULT_STYLE["sidecar_captions"])
+        cues = finish.chunk_words(words, side)
+        self.assertLessEqual(len(cues), 6)                          # not 20 three-word cues
+        srt = finish.build_srt(cues, side)
+        self.assertIn("word1", srt)                                 # not ALL CAPS
+        self.assertTrue(all(len(line) <= 42 for line in srt.splitlines()))
+
+    def test_letterbox_advice_fits_long_form(self):
+        info = {"duration_s": 60.0, "video": {"width": 1920, "height": 1080, "fps": 30.0}}
+        bars = {"top_bottom_px_total": 0, "side_px_total": 240}
+        c = {x["check"]: x for x in video_qa._video_checks(info, [], self.PROF, bars)}
+        self.assertIn("long-form", c["letterbox"]["note"])
+
+
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
@@ -1142,6 +1258,206 @@ class MediaRoundTrip(unittest.TestCase):
                         "-preset", "ultrafast", str(mute)], check=True)
         c = {x["check"]: x["status"] for x in self._quiet_qa(mute)["checks"]}
         self.assertEqual(c["audio"], "WARN")
+        self.assertEqual(c["black_frames"], "FAIL")
+
+    # ---- fifth audit (24 Oct 2026) ----
+
+    def _ff(self, *args):
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args],
+                       check=True)
+
+    def _words_for(self, spans):
+        """Word timing that matches the SYL syllables inside the given spans."""
+        out = []
+        for a, b in spans:
+            t = a
+            while t + 0.375 <= b:
+                out.append(dict(w("la", t, t + 0.375), timing="word"))
+                t += 0.5
+        return out
+
+    def test_a_breath_in_dead_air_fails_with_word_timing(self):
+        out = self.tmp / "breath.wav"
+        expr = (f"{self.SYL}*(lt(t,8)+gte(t,11))"
+                "+0.2*(random(0)-0.5)*sin(PI*(t-9.4)/0.3)*between(t,9.4,9.7)")  # breath
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{expr}':s=48000:d=20", "-c:a",
+                 "pcm_s16le", str(out))
+        words = self._words_for([(0.0, 8.0), (11.0, 20.0)])
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out, words)["checks"]}
+        self.assertEqual(c["pauses_over_fail"], "FAIL")
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["pauses_over_fail"], "PASS")              # cannot be sure...
+        self.assertEqual(c["possible_pauses"], "WARN")               # ...so it is flagged
+
+    def test_noise_like_typing_into_talk_is_not_the_start(self):
+        if not video_qa.has_filter("aspectralstats"):
+            self.skipTest("ffmpeg without aspectralstats")
+        out = self.tmp / "typing.wav"
+        expr = ("0.4*(random(0)-0.5)*exp(-30*mod(t,0.125))*lt(t,2.5)"  # 8 keys a second
+                f"+{self.SYL}*gte(t,3)")
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{expr}':s=48000:d=30", "-c:a",
+                 "pcm_s16le", str(out))
+        rec = self._quiet_qa(out)
+        c = {x["check"]: x for x in rec["checks"]}
+        self.assertEqual(c["hook_first_audio"]["status"], "FAIL")
+        self.assertGreaterEqual(float(c["hook_first_audio"]["measured"].rstrip("s")), 2.9)
+        self.assertTrue(any(x.get("no_voice") for x in rec["skipped_sounds"]))
+
+    def test_talk_under_hiss_is_not_mistaken_for_typing(self):
+        out = self.tmp / "hiss.wav"
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{self.SYL}*gte(t,0.5)':s=48000:d=20",
+                 "-f", "lavfi", "-i", "anoisesrc=c=white:a=0.02:r=48000:d=20",
+                 "-filter_complex", "[0][1]amix=inputs=2:normalize=0", "-c:a", "pcm_s16le",
+                 str(out))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["hook_first_audio"], "PASS")
+
+    def _hold_last_mp4(self, src, dst, extra_s):
+        """Lengthen the last video sample, as a screen recorder that only writes a
+        frame on change does (stts, mdhd, tkhd, elst and mvhd durations)."""
+        import struct
+        data = bytearray(Path(src).read_bytes())
+
+        def boxes(a, b):
+            while a + 8 <= b:
+                size, typ = struct.unpack(">I4s", data[a:a + 8])
+                yield a, size, typ
+                a += size
+
+        def find(a, b, path):
+            for i, size, typ in boxes(a, b):
+                if typ == path[0]:
+                    return (i, size) if len(path) == 1 else find(i + 8, i + size, path[1:])
+            return None
+
+        mi, ms = find(0, len(data), [b"moov"])
+        mv = find(mi + 8, mi + ms, [b"mvhd"])[0]
+        mv_ts = struct.unpack(">I", data[mv + 20:mv + 24])[0]
+        for ti, tsz, typ in boxes(mi + 8, mi + ms):
+            hd = find(ti + 8, ti + tsz, [b"mdia", b"hdlr"]) if typ == b"trak" else None
+            if not hd or data[hd[0] + 16:hd[0] + 20] != b"vide":
+                continue
+            md = find(ti + 8, ti + tsz, [b"mdia", b"mdhd"])[0]
+            md_ts = struct.unpack(">I", data[md + 20:md + 24])[0]
+            add_m, add_mv = int(extra_s * md_ts), int(extra_s * mv_ts)
+
+            def bump(off, by):
+                struct.pack_into(">I", data, off, struct.unpack(">I", data[off:off + 4])[0] + by)
+            bump(md + 24, add_m)
+            st = find(ti + 8, ti + tsz, [b"mdia", b"minf", b"stbl", b"stts"])[0]
+            n = struct.unpack(">I", data[st + 12:st + 16])[0]
+            last = st + 16 + (n - 1) * 8
+            self.assertEqual(struct.unpack(">I", data[last:last + 4])[0], 1)
+            bump(last + 4, add_m)
+            tk = find(ti + 8, ti + tsz, [b"tkhd"])[0]
+            bump(tk + 28, add_mv)
+            el = find(ti + 8, ti + tsz, [b"edts", b"elst"])
+            if el:
+                bump(el[0] + 16, add_mv)
+            tk_d = struct.unpack(">I", data[tk + 28:tk + 32])[0]
+            if struct.unpack(">I", data[mv + 24:mv + 28])[0] < tk_d:
+                struct.pack_into(">I", data, mv + 24, tk_d)
+        Path(dst).write_bytes(bytes(data))
+
+    def test_a_held_last_frame_and_a_copied_cut_are_not_truncation(self):
+        slide = self.tmp / "slide.png"
+        self._held("vfrbase", [(0, 3)])                                # makes slide.png
+        lst = self.tmp / "vfr.txt"
+        lst.write_text("ffconcat version 1.0\nfile slide.png\nduration 3\n"
+                       "file slide.png\nduration 0.04\n")
+        base = self.tmp / "vfr_base.mp4"
+        self._ff("-f", "concat", "-safe", "0", "-i", str(lst), "-fps_mode", "passthrough",
+                 "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(base))
+        silent_v = self.tmp / "vfr_held_v.mp4"
+        self._hold_last_mp4(base, silent_v, 5.0)
+        held = self.tmp / "vfr_held.mp4"
+        self._ff("-i", str(silent_v), "-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}':s=48000:d=8", "-map", "0:v", "-map", "1:a",
+                 "-c:v", "copy", "-c:a", "aac", "-t", "8", str(held))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(held)["checks"]}
+        self.assertEqual(c["decodes_cleanly"], "PASS")
+        self.assertNotIn("picture_ends_early", c)
+        full = self._make("gop.mp4", d=10, tone=self.SYL, vf="format=yuv420p")
+        cut = self.tmp / "copied_cut.mp4"
+        self._ff("-ss", "3.3", "-i", str(full), "-c", "copy", str(cut))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(cut)["checks"]}
+        self.assertEqual(c["decodes_cleanly"], "PASS")
+
+    def test_picture_that_stops_before_the_sound_is_flagged(self):
+        out = self.tmp / "shortpic.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=4", "-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}':s=48000:d=7", "-c:v", "libx264", "-preset",
+                 "ultrafast", "-c:a", "aac", str(out))
+        c = {x["check"]: x for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["picture_ends_early"]["status"], "WARN")
+
+    def test_a_live_webm_without_a_duration_is_measured_by_what_decodes(self):
+        out = self.tmp / "live.webm"
+        enc = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i",
+             "testsrc2=s=320x240:r=25:d=6", "-f", "lavfi", "-i",
+             f"aevalsrc='{self.SYL}':s=48000:d=6", "-c:v", "libvpx", "-deadline",
+             "realtime", "-cpu-used", "8", "-b:v", "200k", "-c:a", "libopus", "-f", "webm",
+             "-"], capture_output=True, check=True)
+        out.write_bytes(enc.stdout)                                    # no seek: no duration
+        rec = self._quiet_qa(out)
+        self.assertGreater(rec["probe"]["duration_s"], 5.5)
+
+    def test_hdr_is_tone_mapped_when_the_picture_is_re_encoded(self):
+        src = self.tmp / "hlg.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=3", "-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}':s=48000:d=3", "-c:v", "libx264", "-preset",
+                 "ultrafast", "-pix_fmt", "yuv420p", "-color_primaries", "bt2020",
+                 "-color_trc", "arib-std-b67", "-colorspace", "bt2020nc", "-c:a", "aac",
+                 str(src))
+        out = self.tmp / "hlg_vertical.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=False,
+                            loudness=False, words=None, burn=False, keywords=[],
+                            reframe="9:16")
+        trc = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+                              "-show_entries", "stream=color_transfer", "-of", "csv=p=0",
+                              str(out)], capture_output=True, text=True).stdout.strip()
+        if finish.tonemap_filter("arib-std-b67"):
+            self.assertEqual(rep.get("hdr_tonemapped"), "arib-std-b67")
+            self.assertEqual(trc, "bt709")
+        else:
+            self.assertTrue(any("HDR" in x for x in rep["warnings"]))
+
+    def test_a_failed_render_leaves_no_temp_folder(self):
+        scratch = self.tmp / "tmpdirs"
+        scratch.mkdir()
+        style = finish.load_style(None)
+        style["captions"]["font"] = "No Such Font LSS"               # fails after mkdtemp
+        old = tempfile.tempdir
+        tempfile.tempdir = str(scratch)
+        try:
+            for dst, burn in ((self.tmp / "nofont.mp4", True),
+                              (self.tmp / "missing" / "out.mp4", False)):
+                with self.assertRaises(Exception):
+                    finish.finish(str(self.src), str(dst), style, trim_head=False,
+                                  loudness=False, words=[w("hello", 3.0, 3.4)], burn=burn,
+                                  keywords=[], reframe="9:16")
+        finally:
+            tempfile.tempdir = old
+        self.assertEqual(list(scratch.iterdir()), [])
+
+    def test_ten_bit_letterbox_and_a_dark_gray_dead_screen(self):
+        tenbit = self.tmp / "bars10.mkv"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x180:r=25:d=3", "-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}':s=48000:d=3", "-vf",
+                 "pad=320:240:0:30:black,format=yuv420p10le", "-c:v", "ffv1", "-c:a",
+                 "flac", str(tenbit))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(tenbit)["checks"]}
+        self.assertEqual(c["letterbox"], "WARN")
+        gray = self.tmp / "gray30.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=2", "-f", "lavfi", "-i",
+                 "color=c=0x1E1E1E:s=320x240:r=25:d=2", "-f", "lavfi", "-i",
+                 "testsrc2=s=320x240:r=25:d=2", "-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}':s=48000:d=6", "-filter_complex",
+                 "[0:v][1:v][2:v]concat=n=3:v=1:a=0,format=yuv420p[v]", "-map", "[v]",
+                 "-map", "3:a", "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac",
+                 str(gray))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(gray)["checks"]}
         self.assertEqual(c["black_frames"], "FAIL")
 
 

@@ -11,8 +11,12 @@ WHY TWO BACKENDS (23 Oct 2026)
   entries; Scribe's spacing and audio-event entries are dropped, and no speaker
   diarization is requested. Needs ELEVENLABS_API_KEY; never paste the key into
   chat or files. Untested here without a key: verify the first response.
-Descript already transcribes everything it imports; when the video came from
-Descript, prefer its export_transcript srt and skip this script entirely.
+Descript already transcribes everything it imports, and its export_transcript
+srt has the right WORDS. It does not have word TIMES: an SRT spreads each cue's
+words evenly. Give both to finish.py / video_qa.py (--srt descript.srt --words
+words.json): captions keep Descript's words on this script's clock, and the QA
+receipt can tell a breath or a cough inside dead air from a word (24 Oct 2026;
+66 s for a 3-minute slice with small.en on two cores).
 
 Usage:
     transcribe_words.py MEDIA -o words.json [--backend local|scribe]

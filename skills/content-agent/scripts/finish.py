@@ -28,8 +28,15 @@ Usage:
 
     --trim-head cuts to the first transcribed word when --words or --srt is given
     ("[Music]" and "♪" cues are not words), otherwise to the first real sound by
-    the QA hook rule: clicks and typing do not count, and a short sound followed by
-    2 s of dead air (a cough) is skipped and reported. --srt also reads WebVTT.
+    the QA hook rule: clicks, noise-like typing and static do not count, and a
+    short sound followed by 2 s of dead air (a cough) is skipped and reported.
+    --srt also reads WebVTT.
+
+    The sidecar .captions.srt for long-form reads like sentences (up to 16 words,
+    two lines of 42 characters, normal case); with --burn it matches what is on
+    screen. When the picture is re-encoded, an HDR source (an iPhone's HLG, PQ)
+    is tone-mapped to SDR BT.709 first and tagged that way (needs ffmpeg with
+    zscale; without it the report warns).
 
     An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
     the audio codec always matches the container. The render goes to a hidden
@@ -67,6 +74,11 @@ DEFAULT_STYLE = {
         "primary_bgr": "FFFFFF", "outline_bgr": "000000", "highlight_bgr": "00FFFF",
         "highlight_numbers": True, "keywords": [],
     },
+    # The caption FILE uploaded beside a long-form video (YouTube, LinkedIn) reads
+    # as sentences: sentence case, up to two 42-character lines. Burned shorts keep
+    # the 2-3 word style above, and their sidecar matches what is on screen.
+    "sidecar_captions": {"max_words": 16, "max_chars": 84, "line_chars": 42,
+                         "uppercase": False, "break_gap_s": 0.7, "min_cue_s": 1.0},
     "finish": {"head_pad_s": 0.08, "fade_s": 0.03, "x264_preset": "veryfast",
                "x264_crf": 18, "audio_bitrate": "192k", "lra_target": 11.0,
                "true_peak_headroom_db": 1.0},
@@ -90,9 +102,10 @@ def load_style(path: str | None) -> dict:
         qa_prof = video_qa.load_profile(path)  # validates the file first
         with open(path, encoding="utf-8") as fh:
             raw = json.load(fh)
-        style = video_qa.deep_merge(style, {k: raw[k] for k in ("captions", "finish")
+        style = video_qa.deep_merge(style, {k: raw[k] for k in
+                                            ("captions", "finish", "sidecar_captions")
                                             if k in raw})
-        for block in ("captions", "finish"):
+        for block in ("captions", "finish", "sidecar_captions"):
             video_qa._check_types(style[block], DEFAULT_STYLE[block], block)
     style["qa"] = qa_prof
     return style
@@ -160,7 +173,7 @@ def normalize_words(data) -> list[dict]:
                              f"number; {WORDS_SHAPE}") from None
         if start != start or end != end or end < start:
             raise ValueError(f"words entry {i} ({text!r}) ends before it starts")
-        words.append({"word": text, "start": start, "end": end})
+        words.append({"word": text, "start": start, "end": end, "timing": "word"})
     words.sort(key=lambda w: w["start"])
     return words
 
@@ -217,7 +230,7 @@ def words_from_srt(text: str) -> list[dict]:
     and sound cues ("[Music]", "♪") are dropped."""
     words = []
     text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
-    for block in re.split(r"\n\s*\n", text.strip()):
+    for cue_id, block in enumerate(re.split(r"\n\s*\n", text.strip())):
         lines = [l for l in block.strip().splitlines() if l.strip()]
         timing = next((l for l in lines if "-->" in l), None)
         if not timing:
@@ -227,15 +240,17 @@ def words_from_srt(text: str) -> list[dict]:
         start, end = _ts(a), _ts(b)
         body = " ".join(lines[lines.index(timing) + 1:])
         body = html.unescape(re.sub(r"<[^>]+>|\{[^}]+\}", "", body))
-        body = SPEAKER_LABEL.sub("", body, count=1)
+        # Sound cues first, then the speaker label they may hide ("[Music] Dennis Yu: …").
         body = MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body))
+        body = SPEAKER_LABEL.sub("", body, count=1)
         toks = [t for t in body.split() if not is_sound_tag(t)]
         if not toks or end <= start:
             continue
         step = (end - start) / len(toks)
         for i, tok in enumerate(toks):
             words.append({"word": tok, "start": round(start + i * step, 3),
-                          "end": round(start + (i + 1) * step, 3)})
+                          "end": round(start + (i + 1) * step, 3),
+                          "timing": "cue", "cue": cue_id})
     return words
 
 
@@ -261,7 +276,7 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict]) -> list[dict
         if not span:
             continue
         if op in ("equal", "replace") and (a1 - a0) == (b1 - b0):
-            out += [{"word": t["word"], "start": s["start"], "end": s["end"]}
+            out += [{"word": t["word"], "start": s["start"], "end": s["end"], "timing": "word"}
                     for t, s in zip(span, timed[b0:b1])]
             continue
         if b1 > b0:
@@ -279,7 +294,8 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict]) -> list[dict
             s1 = max(s1, s0)
         step = (s1 - s0) / len(span)
         out += [{"word": t["word"], "start": round(s0 + i * step, 3),
-                 "end": round(s0 + (i + 1) * step, 3)} for i, t in enumerate(span)]
+                 "end": round(s0 + (i + 1) * step, 3), "timing": "word"}
+                for i, t in enumerate(span)]
     return out
 
 
@@ -467,10 +483,22 @@ def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
     return head + "\n".join(rows) + "\n"
 
 
+def _wrap(text: str, width: int) -> str:
+    """Two balanced lines when a cue is longer than one line."""
+    if not width or len(text) <= width:
+        return text
+    mid = len(text) // 2
+    cuts = [i for i, ch in enumerate(text) if ch == " "]
+    if not cuts:
+        return text
+    cut = min(cuts, key=lambda i: abs(i - mid))
+    return text[:cut] + "\n" + text[cut + 1:]
+
+
 def build_srt(cues: list[dict], cap: dict) -> str:
     cues = _nonempty(cues, cap)
     return "\n".join(f"{i}\n{_srt_time(c['start'])} --> {_srt_time(c['end'])}\n"
-                     f"{_srt_safe(cue_text(c, cap, ass=False))}\n"
+                     f"{_wrap(_srt_safe(cue_text(c, cap, ass=False)), cap.get('line_chars', 0))}\n"
                      for i, c in enumerate(cues, 1))
 
 
@@ -493,8 +521,9 @@ def first_speech_s(path: str, style: dict, offset: float, window: float,
                    sample_rate: int | None = None) -> tuple[float | None, list[dict], str]:
     """Source-timeline seconds of the first real start inside [offset,
     offset+window], by the same rule as the QA hook check: the threshold follows
-    the window's loudness and its local noise floor; clicks and typing do not
-    count; a short sound followed by 2 s of dead air (a cough) is skipped.
+    the window's loudness and its local noise floor; clicks, typing and other
+    sound with no voice in it do not count; a short sound followed by 2 s of
+    dead air (a cough) is skipped.
     Returns (start or None, skipped sounds, reason when None)."""
     qa_prof = style["qa"]
     loud = video_qa.measure_loudness(path, offset, window)
@@ -674,10 +703,12 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                 start = max(clip_start, fs - fin["head_pad_s"])
                 report["trim_head_to"] = "first sustained sound"
                 for sk in skipped:
+                    what = ("with no voice in it (typing, clicks or noise)"
+                            if sk.get("no_voice") else
+                            f"followed by {sk['silence_after_s']}s of silence")
                     report["warnings"].append(
                         f"trim-head skipped a {sk['sound_s']}s sound at {sk['at_s']}s "
-                        f"followed by {sk['silence_after_s']}s of silence; if it was a "
-                        "word, rerun with --words or --srt")
+                        f"{what}; if it was a word, rerun with --words or --srt")
     duration = clip_end - start
     if duration <= 0.1:
         raise ValueError("nothing left to render after trimming; check --clip and "
@@ -718,6 +749,28 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                                     "true_peak_in_dbtp": float(m["input_tp"])})
 
     work = Path(tempfile.mkdtemp(prefix="finish-"))
+    try:
+        return _render(src, dst, style, info, report, fin, cap, words, burn, reframe,
+                       focus_x, clip, start, duration, afilters, loud_on, work, ext)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+HDR_TRANSFERS = ("arib-std-b67", "smpte2084")
+
+
+def tonemap_filter(transfer: str) -> str | None:
+    """An ffmpeg filter chain that tone-maps HLG or PQ (BT.2020) to 8-bit SDR
+    BT.709, or None when this ffmpeg lacks zscale (libzimg) or tonemap."""
+    if not (video_qa.has_filter("zscale") and video_qa.has_filter("tonemap")):
+        return None
+    return (f"zscale=tin={transfer}:pin=bt2020:min=bt2020nc:t=linear:npl=100,"
+            "format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=mobius:desat=0,"
+            "zscale=t=bt709:m=bt709:r=tv,format=yuv420p")
+
+
+def _render(src, dst, style, info, report, fin, cap, words, burn, reframe, focus_x,
+            clip, start, duration, afilters, loud_on, work, ext) -> dict:
     vfilters = []
     if info["video"]:
         out_w, out_h = info["video"]["width"], info["video"]["height"]
@@ -740,7 +793,13 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         out_words = [{**w, "start": max(0.0, w["start"] - start),
                       "end": w["end"] - start} for w in inside]
         sidecar = Path(dst).with_suffix(".captions.srt")
-        srt_text = build_srt(cues, cap)  # written only after the render succeeds
+        if burn:
+            srt_text = build_srt(cues, cap)  # the file matches what is on screen
+        else:
+            side = dict(cap, **style.get("sidecar_captions", DEFAULT_STYLE["sidecar_captions"]))
+            side["highlight_numbers"] = False
+            srt_text = build_srt(shift_cues(chunk_words(inside, side), start), side)
+        # written only after the render succeeds
         report["steps"].append({"caption_cues": len(cues), "sidecar_srt": sidecar.name,
                                 "burned": bool(burn)})
         if burn:
@@ -752,6 +811,22 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         report["warnings"].append("--burn given without --words or --srt; no captions")
     has_video = info["video"] is not None
     reencode = has_video and (bool(vfilters) or start > 0 or bool(clip))
+    hdr = str(info["video"].get("transfer") or "") if has_video else ""
+    sdr_tags = []
+    if reencode and hdr in HDR_TRANSFERS:
+        tm = tonemap_filter(hdr)
+        if tm:
+            # The re-encode is 8-bit H.264: tone-map HDR (an iPhone's HLG, PQ) down
+            # to SDR first, so it plays right everywhere, and tag it as SDR.
+            vfilters.insert(0, tm)
+            sdr_tags = ["-color_primaries", "bt709", "-color_trc", "bt709",
+                        "-colorspace", "bt709", "-color_range", "tv"]
+            report["hdr_tonemapped"] = hdr
+        else:
+            report["warnings"].append(
+                "HDR source (HLG/PQ) and this ffmpeg has no zscale/tonemap: the re-encode "
+                "is 8-bit without tone mapping and may look washed out; export SDR from "
+                "the editor first")
     cmd = ["ffmpeg", "-hide_banner", "-nostats", "-y"]
     if start > 0:
         cmd += ["-ss", f"{start:.3f}"]
@@ -763,7 +838,7 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         cmd += ["-vf", ",".join(vfilters)]
     if has_video:
         cmd += (["-c:v", "libx264", "-preset", fin["x264_preset"], "-crf",
-                 str(fin["x264_crf"]), "-pix_fmt", "yuv420p"] if reencode
+                 str(fin["x264_crf"]), "-pix_fmt", "yuv420p"] + sdr_tags if reencode
                 else ["-c:v", "copy"])
     if afilters:
         cmd += ["-af", ",".join(afilters)]
@@ -778,7 +853,6 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                            f".{os.path.basename(final)}.partial{ext}")
     cmd += [partial]
     res = subprocess.run(cmd, cwd=work, capture_output=True, text=True, errors="replace")
-    shutil.rmtree(work, ignore_errors=True)
     if res.returncode != 0 or not os.path.exists(partial):
         if os.path.exists(partial):
             os.remove(partial)
