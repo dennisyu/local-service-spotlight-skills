@@ -44,6 +44,34 @@ def media_key(path: str, start: float, end: float) -> str:
                           f"{start}|{end}".encode()).hexdigest()[:16]
 
 
+def mono_filter(path: str, start: float, end: float) -> list[str]:
+    """How to fold a stereo file to mono for the transcriber. Averaging the two
+    channels silences a file whose second channel is polarity-inverted (the
+    transcriber then hears no words; audit round 10) and halves talk that sits in
+    one channel only: take the louder channel alone in those cases."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import finish
+    except Exception:
+        return ["-ac", "1"]
+    cmd = ["ffmpeg", "-hide_banner", "-nostats"]
+    if start:
+        cmd += ["-ss", str(start)]
+    span = (end - start) if end else 0
+    cmd += ["-t", str(min(span, 600.0) if span else 600.0)]
+    cmd += ["-i", path, "-vn", "-map", "0:a:0", "-af",
+            f"{finish.FOLD3},astats", "-f", "null", "-"]
+    res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+    ch = finish.astats_channels(res.stderr) if res.returncode == 0 else []
+    if len(ch) != 3:
+        return ["-ac", "1"]           # mono, or not two channels
+    rho = finish.channel_corr(ch[0]["rms"], ch[1]["rms"], ch[2]["rms"])
+    louder = 0 if ch[0]["rms"] >= ch[1]["rms"] else 1
+    if (rho is not None and rho <= -0.5) or abs(ch[0]["rms"] - ch[1]["rms"]) >= 15.0:
+        return ["-af", f"pan=mono|c0=c{louder}"]
+    return ["-ac", "1"]
+
+
 def extract_audio(path: str, start: float, end: float) -> str:
     fd, wav = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
@@ -52,7 +80,8 @@ def extract_audio(path: str, start: float, end: float) -> str:
         cmd += ["-ss", str(start)]
     if end:
         cmd += ["-t", str(end - start)]
-    cmd += ["-i", path, "-vn", "-ac", "1", "-ar", "16000", wav]
+    cmd += ["-i", path, "-vn", "-map", "0:a:0"] + mono_filter(path, start, end) + \
+        ["-ar", "16000", wav]
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
         if res.returncode != 0:
