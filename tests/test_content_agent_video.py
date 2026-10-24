@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -200,8 +201,13 @@ class ReceiptParsing(unittest.TestCase):
         self.assertTrue(style["captions"]["uppercase"])
 
 
-@unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"),
-                     "ffmpeg not installed")
+HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
+if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
+    # CI sets this so the media tests can never silently turn into skips.
+    raise RuntimeError("LSS_REQUIRE_FFMPEG is set but ffmpeg/ffprobe are missing")
+
+
+@unittest.skipUnless(HAVE_FFMPEG, "ffmpeg not installed")
 class MediaRoundTrip(unittest.TestCase):
     """A quiet video with dead air at the head and a long pause must fail QA,
     and finish.py must fix what it claims to fix."""
