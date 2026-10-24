@@ -1,0 +1,38 @@
+{
+  "schema": "runbook-agents/1",
+  "purpose": "Which agents owe runbooks/<dir>/INDEX.md. Read by tools/lint_runbooks.py. Your coordinator agent maintains this list; any agent that runs recurring work adds itself.",
+  "registry_due": "2026-12-01",
+  "runbooks_due": "2026-12-15",
+  "agents": [
+    {
+      "dir": "chief-of-staff",
+      "name": "Coordinator agent (sweeps the board, one digest to the human)",
+      "note_prefixes": [
+        "cos",
+        "coordinator"
+      ]
+    },
+    {
+      "dir": "claude",
+      "name": "Claude (scheduled tasks, Claude Code)",
+      "note_prefixes": [
+        "claude"
+      ]
+    },
+    {
+      "dir": "codex",
+      "name": "Codex / ChatGPT",
+      "note_prefixes": [
+        "codex",
+        "chatgpt"
+      ]
+    },
+    {
+      "dir": "grok",
+      "name": "Grok desks",
+      "note_prefixes": [
+        "grok"
+      ]
+    }
+  ]
+}

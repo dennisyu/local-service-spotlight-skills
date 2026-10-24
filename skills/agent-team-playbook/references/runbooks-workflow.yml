@@ -1,0 +1,36 @@
+# Copy to .github/workflows/runbooks.yml and copy lint_runbooks.py to tools/.
+# Runs on every push that touches runbooks, and daily — a deadline can pass
+# while nobody commits, and that is exactly when the check matters.
+name: Runbooks — every recurring task documented
+
+on:
+  push:
+    paths:
+      - "runbooks/**"
+      - "tools/lint_runbooks.py"
+      - ".github/workflows/runbooks.yml"
+  pull_request:
+    paths:
+      - "runbooks/**"
+  schedule:
+    - cron: "17 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runbooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Every agent's registry and runbooks meet the standard
+        run: |
+          set +e
+          python3 tools/lint_runbooks.py --write-status
+          rc=$?
+          cat runbooks/STATUS.md >> "$GITHUB_STEP_SUMMARY"
+          exit $rc

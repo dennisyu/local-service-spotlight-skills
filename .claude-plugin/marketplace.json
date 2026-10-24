@@ -11,10 +11,11 @@
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install \u2014 all 38 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 39 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/agent-team-playbook",
         "./skills/agents-first-reassignment",
         "./skills/ai-search-visibility",
         "./skills/boil-the-ocean",
@@ -122,7 +123,8 @@
         "./skills/outbound-action-closeout",
         "./skills/skill-registry",
         "./skills/nine-triangles",
-        "./skills/shared-memory"
+        "./skills/shared-memory",
+        "./skills/agent-team-playbook"
       ]
     }
   ]
