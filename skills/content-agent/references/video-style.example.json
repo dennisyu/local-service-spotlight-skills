@@ -53,18 +53,27 @@
       "warn_pause_s": 0.6,
       "fail_pause_s": 2.0,
       "max_warn_pauses_per_minute": 3.0,
+      "window_s": 0.01,
+      "floor_block_s": 0.5,
+      "floor_span_s": 2.0,
+      "block_floor_percentile": 5,
       "noise_floor_percentile": 10,
       "speech_percentile": 95,
       "noise_floor_margin_db": 6.0,
-      "min_speech_margin_db": 10.0
+      "min_speech_margin_db": 10.0,
+      "masked_warn_frac": 0.25
     },
     "hook": {
       "max_first_speech_s": 2.0,
       "min_sound_s": 0.15,
-      "merge_gap_s": 0.25
+      "merge_gap_s": 0.25,
+      "min_density": 0.3,
+      "max_skip_sound_s": 0.6
     },
     "tail": {
-      "max_trailing_silence_s": 1.5
+      "max_trailing_silence_s": 1.5,
+      "fail_trailing_silence_s": 10.0,
+      "fail_trailing_frac": 0.25
     },
     "black": {
       "min_black_frames": 2,
@@ -72,7 +81,10 @@
       "pic_th": 0.9,
       "pix_th": 0.1,
       "scan_height": 180,
-      "letterbox_min_px": 8
+      "letterbox_min_px": 8,
+      "hard_pic_th": 0.98,
+      "hard_pix_th": 0.03,
+      "near_black_frames_saved": 10
     },
     "frames": {
       "contact_sheet_tiles": 16,

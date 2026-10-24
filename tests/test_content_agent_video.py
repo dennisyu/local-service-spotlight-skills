@@ -219,9 +219,16 @@ class ReceiptParsing(unittest.TestCase):
             info, {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0},
             [{"start": 0.9, "end": 3.9, "dur": 3.0}], [], video_qa.load_profile(None),
             first_audio=0.0)}
-        self.assertEqual(checks["trailing_silence"], "WARN")
+        # 3 s of a 4 s clip is three quarters of it: the microphone died, a FAIL.
+        self.assertEqual(checks["trailing_silence"], "FAIL")
         self.assertEqual(checks["pauses_over_fail"], "PASS")
         self.assertEqual(checks["black_frames"], "N/A")
+        info = {"duration_s": 60.0, "audio": {"duration_s": 59.9}, "video": None}
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            info, {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0},
+            [{"start": 56.9, "end": 59.9, "dur": 3.0}], [], video_qa.load_profile(None),
+            first_audio=0.0)}
+        self.assertEqual(checks["trailing_silence"], "WARN")   # 3 s of 60: untidy
 
     def test_hook_uses_first_word_when_given(self):
         prof = video_qa.load_profile(None)
@@ -309,19 +316,32 @@ class AuditRound2(unittest.TestCase):
 
     def test_noise_floor_raises_the_threshold_or_gives_up(self):
         prof = video_qa.load_profile(None)
-        clean = [-120.0] * 30 + [-6.0] * 70
-        self.assertEqual(video_qa.noise_guard(prof, -40.0, clean)["threshold_db"], -40.0)
-        noisy = [-30.0] * 30 + [-5.0] * 70        # room noise peaks at -30 dB
-        g = video_qa.noise_guard(prof, -40.0, noisy)
-        self.assertTrue(g["raised"] and g["measurable"])
-        self.assertEqual(g["threshold_db"], -24.0)
-        drowned = [-14.0] * 30 + [-3.0] * 70      # noise 11 dB under the talk
-        g = video_qa.noise_guard(prof, -40.0, drowned)
-        self.assertFalse(g["measurable"])
+        w = 0.01
+
+        def talk(quiet):  # 0.3 s of talk then 0.2 s of quiet, for 20 s
+            return ([-6.0] * 30 + [quiet] * 20) * 40
+
+        clean = video_qa.classify_levels(talk(-120.0), w, prof, -15.0)
+        self.assertEqual(max(clean["thresholds"]), -40.0)   # 25 LU under, not raised
+        noisy = video_qa.classify_levels(talk(-30.0), w, prof, -15.0)
+        self.assertEqual(max(noisy["thresholds"]), -24.0)   # 6 dB over the noise
+        self.assertFalse(any(noisy["masked_blocks"]))
+        self.assertEqual(noisy["state"][45], 0)              # the quiet is silence
+        drowned = video_qa.classify_levels(talk(-14.0), w, prof, -15.0)
+        self.assertTrue(all(drowned["masked_blocks"]))       # noise 8 dB under talk
         prof["pauses"]["silence_threshold_db"] = -45
-        g = video_qa.noise_guard(prof, -45.0, noisy)  # a fixed threshold is never moved
-        self.assertFalse(g["measurable"])
-        self.assertEqual(g["threshold_db"], -45.0)
+        fixed = video_qa.classify_levels(talk(-30.0), w, prof, -15.0)
+        self.assertEqual(max(fixed["thresholds"]), -45.0)    # a fixed threshold stays
+        self.assertTrue(all(fixed["masked_blocks"]))
+
+    def test_dense_talk_is_not_mistaken_for_noise(self):
+        # Fast talk: 1.8 s of sound, one 60 ms gap at room level, repeated. The
+        # first design (10th percentile of 2 s blocks) read this as a noise floor.
+        prof = video_qa.load_profile(None)
+        peaks = ([-8.0] * 180 + [-68.0] * 6) * 20
+        cl = video_qa.classify_levels(peaks, 0.01, prof, -16.0)
+        self.assertFalse(any(cl["masked_blocks"]))
+        self.assertEqual(max(cl["thresholds"]), -41.0)
 
     def test_unmeasurable_pauses_warn_instead_of_passing(self):
         noise = {"measurable": False, "note": "the quiet parts sit within 3 dB"}
@@ -396,6 +416,128 @@ class AuditRound2(unittest.TestCase):
                          ["-c:a", "aac", "-b:a", "192k"])
 
 
+class AuditRound3(unittest.TestCase):
+    """Third independent audit, 23 Oct 2026: each test pins one finding."""
+
+    def test_music_and_sound_cues_are_not_words(self):
+        srt = ("WEBVTT\n\n00:00.000 --> 00:04.000\n[Music]\n\n"
+               "00:04.000 --> 00:06.000 align:start\n(applause) Hello there\n\n"
+               "00:06.000 --> 00:08,5\n♪ ♪\n")
+        words = finish.words_from_srt(srt)
+        self.assertEqual([x["word"] for x in words], ["Hello", "there"])
+        self.assertEqual(words[0]["start"], 4.0)
+        self.assertEqual(finish._ts("00:00:01,5"), 1.5)       # not 1.005
+        self.assertEqual(finish.normalize_words(
+            [{"word": "[Music]", "start": 0, "end": 4}, {"word": "Hi", "start": 4, "end": 5}]
+        )[0]["word"], "Hi")
+        self.assertFalse(finish.is_sound_tag("(and founder)"))  # real words stay
+
+    def test_a_cough_or_typing_before_dead_air_is_not_the_start(self):
+        hp = video_qa.load_profile(None)["hook"]
+        cough = [(0.3, 0.55), (4.0, 9.0)]                     # 0.25 s, then 3.45 s quiet
+        start, skipped, masked = video_qa.pick_start(cough, [], 9.0, hp, 2.0)
+        self.assertEqual(start, 4.0)
+        self.assertEqual(skipped[0]["at_s"], 0.3)
+        typing = [(0.2 + i * 0.1, 0.215 + i * 0.1) for i in range(30)] + [(4.0, 9.0)]
+        self.assertEqual(video_qa.pick_start(typing, [], 9.0, hp, 2.0)[0], 4.0)
+        word = [(0.5, 0.75), (1.35, 3.0)]                      # "So," then the sentence
+        self.assertEqual(video_qa.pick_start(word, [], 9.0, hp, 2.0)[0], 0.5)
+        talk_then_dead = [(0.0, 3.0)]                          # never skip real talk
+        self.assertEqual(video_qa.pick_start(talk_then_dead, [], 60.0, hp, 2.0)[0], 0.0)
+
+    def test_trailing_dead_air_fails_when_the_microphone_dies(self):
+        checks = {c["check"]: c for c in video_qa.evaluate(
+            {"duration_s": 60.0, "audio": {"duration_s": 60.0}, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0},
+            [{"start": 3.0, "end": 60.0, "dur": 57.0}], [], video_qa.load_profile(None),
+            first_audio=0.0)}
+        self.assertEqual(checks["trailing_silence"]["status"], "FAIL")
+
+    def test_late_start_hidden_by_music_still_fails(self):
+        noise = {"hook_measurable": False, "hook_masked_from_s": 20.0, "masked_frac": 0.5,
+                 "note": "music"}
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [],
+            video_qa.load_profile(None), first_audio=None, noise=noise)}
+        self.assertEqual(checks["hook_first_audio"], "FAIL")
+        measured = [c for c in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [],
+            video_qa.load_profile(None), first_audio=None, noise=noise)
+            if c["check"] == "hook_first_audio"][0]["measured"]
+        self.assertEqual(measured, "≥ 20.00s")   # a lower bound, said as one
+
+    def test_too_short_for_loudness_is_a_warning_not_silence(self):
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            {"duration_s": 0.3, "audio": {"duration_s": 0.3}, "video": None},
+            {"integrated_lufs": -70.0, "true_peak_dbtp": -6.0}, [], [],
+            video_qa.load_profile(None), first_audio=0.0)}
+        self.assertEqual(checks["integrated_loudness"], "WARN")
+
+    def test_edge_flashes_are_labelled_by_where_they_are(self):
+        prof = video_qa.load_profile(None)
+        info = {"duration_s": 6.0, "video": {"width": 320, "height": 240, "fps": 30.0}}
+        late = [{"start": 5.5, "end": 5.6, "dur": 0.1, "frames": 3, "first_frame": 165,
+                 "kind": "black"}]
+        c = {x["check"]: x["status"] for x in video_qa._video_checks(info, late, prof, None)}
+        self.assertEqual(c["black_frames"], "FAIL")
+        self.assertNotIn("black_close", c)
+        early = [{"start": 0.067, "end": 0.133, "dur": 0.067, "frames": 2,
+                  "first_frame": 2, "kind": "black"}]
+        c = {x["check"]: x["status"] for x in video_qa._video_checks(info, early, prof, None)}
+        self.assertEqual(c["black_frames"], "FAIL")
+        self.assertNotIn("black_open", c)
+
+    def test_caption_text_survives_and_srt_tags_cannot_form(self):
+        cue = {"words": [w("x<b", 0, 1), w("y>z", 1, 2), w("vector<int>", 2, 3),
+                         w("C++", 3, 4), w("{\\b1}bold", 4, 5), w("<i>it</i>", 5, 6)]}
+        cap = dict(CAP, uppercase=False, highlight_numbers=False)
+        srt = finish.build_srt([dict(cue, start=0.0, end=6.0)], cap)
+        text = srt.splitlines()[2]
+        self.assertNotIn("<", text)
+        self.assertNotIn(">", text)
+        self.assertIn("vector\u2039int\u203a", srt)
+        self.assertIn("C++", srt)
+        self.assertIn(" bold ", srt)            # override tag removed, word kept
+        self.assertIn(" it", srt)
+        ass = finish.cue_text(cue, cap, ass=True)
+        self.assertNotIn("{\\b1}", ass)
+
+    def test_keyword_forms_people_actually_write(self):
+        words = [w("Dollar-a-Day's", 0, 1), w("GCT\u2019s", 1, 2),
+                 w("Dollar\u2011a\u2011Days", 2, 3), w("today", 3, 4)]
+        hot = [x["word"] for x in finish.mark_keywords(words, ["Dollar a Day", "GCT"])
+               if x.get("hot")]
+        self.assertEqual(hot, ["Dollar-a-Day's", "GCT\u2019s", "Dollar\u2011a\u2011Days"])
+
+    def test_copy_only_into_containers_that_take_the_codec(self):
+        self.assertEqual(finish.audio_codec_args("o.m4a", "mp3", "192k", True),
+                         ["-c:a", "aac", "-b:a", "192k"])
+        self.assertEqual(finish.audio_codec_args("o.mov", "opus", "192k", True),
+                         ["-c:a", "aac", "-b:a", "192k"])
+        self.assertEqual(finish.audio_codec_args("o.mkv", "opus", "192k", True),
+                         ["-c:a", "copy"])
+
+    def test_more_bad_inputs_are_plain_lines(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "x.mp4"
+            src.write_bytes(b"x")
+            prof = Path(tmp) / "p.json"
+            prof.write_text('{"qa": {"loudness": {"target_lufs": "-14"}}}')
+            for extra in (["--reframe", "9:0"], ["--reframe", "0:16"],
+                          ["--profile", str(prof)]):
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    code = finish.main([str(src), "-o", str(Path(tmp) / "o.mp4")] + extra)
+                self.assertEqual(code, 2, extra)
+                self.assertEqual(len(err.getvalue().strip().splitlines()), 1, extra)
+            with self.assertRaisesRegex(ValueError, "target_lufs must be a number"):
+                video_qa.load_profile(str(prof))
+
+
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
@@ -411,7 +553,10 @@ class MediaRoundTrip(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = Path(tempfile.mkdtemp(prefix="lss-video-test-"))
         cls.src = cls.tmp / "bad.mp4"
-        tone = "0.04*sin(2*PI*440*t)*(between(t,2.6,9)+between(t,11.6,16))"
+        # Syllable-like bursts: a steady tone is indistinguishable from a hum, and
+        # the checker rightly calls a hum unmeasurable.
+        tone = ("0.04*sin(2*PI*440*t)*gt(sin(2*PI*4*t),0)*"
+                "(between(t,2.6,9)+between(t,11.6,16))")
         subprocess.run([
             "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
             "-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=16",
@@ -471,7 +616,7 @@ class MediaRoundTrip(unittest.TestCase):
 
     def test_click_then_dead_air_fails_the_hook(self):
         src = self._make("click.mp4", tone="0.5*sin(2*PI*1000*t)*lt(t,0.01)"
-                                           "+0.2*sin(2*PI*440*t)*gte(t,3)")
+                                           "+0.2*sin(2*PI*440*t)*gt(sin(2*PI*4*t),0)*gte(t,3)")
         rec = video_qa.qa(str(src), video_qa.load_profile(None), self.tmp / "click.qa",
                           frames=False)
         c = {x["check"]: x for x in rec["checks"]}
@@ -485,8 +630,12 @@ class MediaRoundTrip(unittest.TestCase):
         rec = video_qa.qa(str(src), video_qa.load_profile(None), self.tmp / "flash.qa",
                           frames=False)
         c = {x["check"]: x for x in rec["checks"]}
+        # The 3-frame full-black flash is a FAIL; the 95%-black screen is near-black,
+        # which could be a dark slide, so it is a WARN with a saved frame.
         self.assertEqual(c["black_frames"]["status"], "FAIL")
-        self.assertEqual(c["black_frames"]["measured"], 2)
+        self.assertEqual(c["black_frames"]["measured"], 1)
+        self.assertEqual(c["near_black"]["status"], "WARN")
+        self.assertEqual(c["near_black"]["measured"], 1)
 
     def test_letterbox_is_reported(self):
         src = self._make("bars.mp4", vf="scale=320:200,pad=320:240:0:20:black")
@@ -651,6 +800,135 @@ class MediaRoundTrip(unittest.TestCase):
         self.assertEqual(rec["probe"]["audio"]["codec"], "pcm_s16le")
         c = {x["check"]: x["status"] for x in rec["checks"]}
         self.assertEqual(c["integrated_loudness"], "PASS")
+
+    # ---- audit round 3 (23 Oct 2026) ----
+
+    SYL = "0.3*sin(2*PI*220*t)*gt(sin(2*PI*4*t),0)"
+
+    def _qa(self, src, words=None):
+        rec = video_qa.qa(str(src), video_qa.load_profile(None),
+                          Path(str(src) + ".qa"), frames=False, words=words)
+        return rec, {x["check"]: x for x in rec["checks"]}
+
+    def test_noise_in_part_of_the_file_cannot_hide_a_dead_gap(self):
+        out = self.tmp / "partnoise.wav"
+        sp = ("0.25*sin(2*PI*220*t)*gt(sin(2*PI*4*t),0)*lt(mod(t,6),5.2)*"
+              "(lt(t,40)+gte(t,42.5))")
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", f"aevalsrc='{sp}':s=48000:d=60", "-f", "lavfi", "-i",
+                        "anoisesrc=a=0.0308:c=white:r=48000:d=60", "-filter_complex",
+                        "[1]volume='gte(t,30)':eval=frame[n];[0][n]amix=inputs=2:normalize=0",
+                        "-c:a", "pcm_s16le", str(out)], check=True)
+        rec, c = self._qa(out)
+        self.assertEqual(c["pauses_over_fail"]["status"], "FAIL")
+        self.assertIn("39.9s", c["pauses_over_fail"]["note"])
+
+    def test_a_half_downloaded_file_fails(self):
+        full = self.tmp / "full.mp4"   # index first, like a web download
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=25:d=12", "-f", "lavfi", "-i",
+                        f"aevalsrc='{self.SYL}':s=48000:d=12", "-c:v", "libx264", "-preset",
+                        "ultrafast", "-c:a", "aac", "-movflags", "+faststart", "-shortest",
+                        str(full)], check=True)
+        half = self.tmp / "half.mp4"
+        data = full.read_bytes()
+        half.write_bytes(data[: len(data) // 2])
+        rec, c = self._qa(half)
+        self.assertEqual(c["decodes_cleanly"]["status"], "FAIL")
+        self.assertEqual(rec["verdict"], "FAIL")
+        self.assertEqual(video_qa.main([str(half), "--no-frames", "--out",
+                                        str(self.tmp / "half.cli")]), 1)
+        # Index at the end and cut off: nothing can be measured, exit 2, never 0.
+        tail_index = self._make("tailindex.mp4", d=6, tone=self.SYL)
+        cut = self.tmp / "cut.mp4"
+        cut.write_bytes(tail_index.read_bytes()[:-2000])
+        self.assertEqual(video_qa.main([str(cut), "--no-frames", "--out",
+                                        str(self.tmp / "cut.cli")]), 2)
+
+    def test_aac_inside_a_wav_fails_instead_of_measuring_wrong(self):
+        bad = self.tmp / "aac.wav"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", f"aevalsrc='{self.SYL}':s=48000:d=6", "-c:a", "aac", str(bad)],
+                       check=True)
+        rec, c = self._qa(bad)
+        self.assertEqual(c["decodes_cleanly"]["status"], "FAIL")
+
+    def test_audio_that_starts_late_or_stops_early_is_dead_air(self):
+        late = self.tmp / "late.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=25:d=10", "-itsoffset", "3", "-f", "lavfi",
+                        "-i", f"aevalsrc='{self.SYL}':s=48000:d=7", "-map", "0:v", "-map",
+                        "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac",
+                        str(late)], check=True)
+        rec, c = self._qa(late)
+        self.assertEqual(c["hook_first_audio"]["status"], "FAIL")
+        early = self.tmp / "early.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=25:d=20", "-f", "lavfi", "-i",
+                        f"aevalsrc='{self.SYL}':s=48000:d=8", "-c:v", "libx264", "-preset",
+                        "ultrafast", "-c:a", "aac", str(early)], check=True)
+        rec, c = self._qa(early)
+        self.assertEqual(c["trailing_silence"]["status"], "FAIL")
+
+    def test_speech_after_room_tone_fails_the_hook(self):
+        out = self.tmp / "roomtone.wav"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", f"aevalsrc='{self.SYL}*gte(t,8)':s=48000:d=16", "-f", "lavfi",
+                        "-i", "anoisesrc=a=0.0055:c=pink:r=48000:d=16", "-filter_complex",
+                        "[0][1]amix=inputs=2:normalize=0", "-c:a", "pcm_s16le", str(out)],
+                       check=True)
+        rec, c = self._qa(out)
+        self.assertEqual(c["hook_first_audio"]["status"], "FAIL")
+        self.assertAlmostEqual(rec["first_audio_s"], 8.0, delta=0.1)
+
+    def test_variable_frame_rate_flash_is_caught(self):
+        out = self.tmp / "vfr.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=30:d=10", "-f", "lavfi", "-i",
+                        f"aevalsrc='{self.SYL}':s=48000:d=10", "-vf",
+                        "drawbox=c=black:t=fill:enable='between(n,120,121)',"
+                        "select='between(t,3,6)+not(mod(n,15))'", "-fps_mode", "vfr",
+                        "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac",
+                        "-shortest", str(out)], check=True)
+        rec, c = self._qa(out)
+        self.assertEqual(c["black_frames"]["status"], "FAIL")
+
+    def test_dark_theme_slide_is_a_look_not_a_fail(self):
+        slide = self.tmp / "slide.mp4"
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=s=320x240:r=25:d=2", "-f", "lavfi", "-i",
+                        "color=c=0x0d1117:s=320x240:r=25:d=3", "-f", "lavfi", "-i",
+                        "testsrc2=s=320x240:r=25:d=2", "-f", "lavfi", "-i",
+                        f"aevalsrc='{self.SYL}':s=48000:d=7", "-filter_complex",
+                        "[1:v]drawbox=x=100:y=110:w=120:h=4:c=white:t=fill[s];"
+                        "[0:v][s][2:v]concat=n=3:v=1:a=0[v]", "-map", "[v]", "-map", "3:a",
+                        "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac",
+                        "-shortest", str(slide)], check=True)
+        rec = video_qa.qa(str(slide), video_qa.load_profile(None), self.tmp / "slide.qa")
+        c = {x["check"]: x["status"] for x in rec["checks"]}
+        self.assertEqual(c["black_frames"], "PASS")
+        self.assertEqual(c["near_black"], "WARN")
+        self.assertTrue(rec["frames"]["near_black_frames"])   # a frame to look at
+
+    def test_video_to_audio_only_output_and_no_stub_on_failure(self):
+        src = self._make("vid.mp4", d=4, tone=self.SYL)
+        style = finish.load_style(None)
+        for ext in (".wav", ".mp3", ".m4a"):
+            out = self.tmp / f"pod{ext}"
+            finish.finish(str(src), str(out), style, trim_head=False, loudness=True,
+                          words=None, burn=False, keywords=[])
+            info = video_qa.probe(str(out))
+            self.assertIsNone(info["video"], ext)
+            self.assertIsNotNone(info["audio"], ext)
+        with self.assertRaises(ValueError):
+            finish.finish(str(src), str(self.tmp / "v.webm"), style, trim_head=False,
+                          loudness=False, words=None, burn=False, keywords=[])
+        with self.assertRaises(RuntimeError):
+            finish.finish(str(src), str(self.tmp / "v.xyz"), style, trim_head=False,
+                          loudness=False, words=None, burn=False, keywords=[])
+        leftovers = [p.name for p in self.tmp.iterdir()
+                     if p.name.startswith((".v.", "v.")) and p.suffix in (".webm", ".xyz")]
+        self.assertEqual(leftovers, [])
 
 
 if __name__ == "__main__":

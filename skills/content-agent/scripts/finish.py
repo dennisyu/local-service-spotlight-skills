@@ -26,10 +26,17 @@ Usage:
     the picture, so it is never the default). Caption text is cleaned of anything
     a player would read as a command ({\\b1}, \\N, <font>) in both outputs.
 
-    --trim-head cuts to the first transcribed word when --words or --srt is given,
-    otherwise to the first sustained sound (a record-button click followed by dead
-    air is not a start). Bad input (a missing profile, a words file without times,
-    a malformed --clip or --reframe) prints one plain line and exits 2.
+    --trim-head cuts to the first transcribed word when --words or --srt is given
+    ("[Music]" and "♪" cues are not words), otherwise to the first real sound by
+    the QA hook rule: clicks and typing do not count, and a short sound followed by
+    2 s of dead air (a cough) is skipped and reported. --srt also reads WebVTT.
+
+    An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
+    the audio codec always matches the container. The render goes to a hidden
+    temporary file beside the output and is renamed only on success, so a failure
+    never leaves a stub. Bad input (a missing profile, a string where a number
+    belongs, a words file without times, a malformed --clip or --reframe, .webm
+    video) prints one plain line and exits 2.
 
 Video is copied untouched when only --loudness is asked for; any trim or burn
 re-encodes once with libx264 (preset veryfast unless the profile says otherwise).
@@ -84,11 +91,28 @@ def load_style(path: str | None) -> dict:
             raw = json.load(fh)
         style = video_qa.deep_merge(style, {k: raw[k] for k in ("captions", "finish")
                                             if k in raw})
+        for block in ("captions", "finish"):
+            video_qa._check_types(style[block], DEFAULT_STYLE[block], block)
     style["qa"] = qa_prof
     return style
 
 
 # ---------------------------------------------------------------- words in
+
+# Caption conventions for sound, not speech: "[Music]", "[Applause]", "(laughs)",
+# "♪ ♪". They are never the first word and never caption text.
+SOUND_TAG = re.compile(
+    r"\[[^\]]{0,40}\]|\((?:[^)]*\b(?:music|applause|laugh\w*|inaudible|crosstalk|"
+    r"silence|noise|cheer\w*|sigh\w*|cough\w*|chuckl\w*|static|beep\w*|"
+    r"background|foreign|speaking)\b[^)]*)\)", re.I)
+MUSIC_NOTES = re.compile(r"[♪♫♬♩🎵🎶]+")
+
+
+def is_sound_tag(text: str) -> bool:
+    """True for a token that is only a sound cue: "[Music]", "(applause)", "♪"."""
+    rest = MUSIC_NOTES.sub("", SOUND_TAG.sub("", text)).strip()
+    return not re.sub(r"[^\w$%]", "", rest)
+
 
 WORDS_SHAPE = ("expected ElevenLabs Scribe, faster-whisper, or a list of "
                "{word, start, end} objects with times in seconds")
@@ -114,7 +138,7 @@ def normalize_words(data) -> list[dict]:
         if w.get("type") not in (None, "word"):
             continue  # Scribe spacing and audio_event entries
         text = " ".join(_CONTROL.sub(" ", str(w.get("word", w.get("text", "")))).split())
-        if not text:
+        if not text or is_sound_tag(text):
             continue
         try:
             start, end = float(w["start"]), float(w["end"])
@@ -150,27 +174,41 @@ def read_srt_file(path: str) -> list[dict]:
         return words_from_srt(Path(path).read_text(encoding="utf-8", errors="replace"))
     except OSError as exc:
         raise ValueError(f"could not read --srt {path}: {exc.strerror or exc}") from None
+    except ValueError as exc:
+        raise ValueError(f"--srt {path}: {exc} (expected SRT or WebVTT)") from None
+
+
+_TS = re.compile(r"(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[,.](\d{1,3}))?")
 
 
 def _ts(s: str) -> float:
-    h, m, rest = s.strip().replace(".", ",").split(":")
-    sec, ms = rest.split(",")
-    return int(h) * 3600 + int(m) * 60 + int(sec) + int(ms) / 1000.0
+    """SRT "00:00:01,500", WebVTT "00:01.500" or "00:00:01.500"; "…,5" is 0.5 s."""
+    m = _TS.fullmatch(s.strip())
+    if not m:
+        raise ValueError(f"not a subtitle time: {s.strip()!r}")
+    h, mi, sec, frac = m.groups()
+    return (int(h or 0) * 3600 + int(mi) * 60 + int(sec)
+            + (int(frac.ljust(3, "0")) / 1000.0 if frac else 0.0))
 
 
 def words_from_srt(text: str) -> list[dict]:
+    """SRT or WebVTT cues -> words spread evenly across each cue. Speaker labels
+    and sound cues ("[Music]", "♪") are dropped."""
     words = []
+    text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
     for block in re.split(r"\n\s*\n", text.strip()):
         lines = [l for l in block.strip().splitlines() if l.strip()]
         timing = next((l for l in lines if "-->" in l), None)
         if not timing:
-            continue
-        a, b = (p.strip().split(" ")[0] for p in timing.split("-->"))
+            continue  # WEBVTT header, NOTE and STYLE blocks
+        parts = timing.split("-->")
+        a, b = parts[0].strip().split()[-1], parts[1].strip().split()[0]
         start, end = _ts(a), _ts(b)
         body = " ".join(lines[lines.index(timing) + 1:])
         body = re.sub(r"<[^>]+>|\{[^}]+\}", "", body)
         body = SPEAKER_LABEL.sub("", body, count=1)
-        toks = body.split()
+        body = MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body))
+        toks = [t for t in body.split() if not is_sound_tag(t)]
         if not toks or end <= start:
             continue
         step = (end - start) / len(toks)
@@ -279,16 +317,28 @@ def shift_cues(cues: list[dict], offset: float) -> list[dict]:
     return out
 
 
+_HYPHENS = re.compile(r"[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]")
+
+
 def _clean(word: str) -> str:
+    word = _HYPHENS.sub("-", word).replace("\u2019", "'").replace("\u2018", "'")
     return re.sub(r"[^\w$%'-]", "", word).lower()
 
 
 def _parts(text: str) -> list[str]:
     """'Dollar-a-Day' and 'Dollar a Day' both become ['dollar', 'a', 'day']."""
     out: list[str] = []
-    for chunk in re.split(r"[\s\-—–]+", text):
+    for chunk in re.split(r"\s+", _HYPHENS.sub("-", text)):
         out += [p for p in _clean(chunk).split("-") if p]
     return out
+
+
+def _same(token: str, key: str) -> bool:
+    """'day' matches "Day", "Day's", "Days" and "days'"; "GCT" matches "GCT's"."""
+    t = token.strip("'")
+    if t.endswith("'s"):
+        t = t[:-2]
+    return t == key or t in (key + "s", key + "es")
 
 
 def mark_keywords(words: list[dict], keywords: list[str]) -> list[dict]:
@@ -307,21 +357,30 @@ def mark_keywords(words: list[dict], keywords: list[str]) -> list[dict]:
     for ph in phrases:
         n = len(ph)
         for i in range(len(toks) - n + 1):
-            if toks[i:i + n] == ph and flat[i][2] and flat[i + n - 1][3]:
+            if (all(toks[i + j] == ph[j] for j in range(n - 1))
+                    and _same(toks[i + n - 1], ph[-1])
+                    and flat[i][2] and flat[i + n - 1][3]):
                 for j in range(i, i + n):
                     out[flat[j][0]]["hot"] = True
     return out
 
 
-TAG_LIKE = re.compile(r"</?[A-Za-z][^<>]*>")
+TAG_LIKE = re.compile(r"</?(?:b|i|u|s|font|c|v|ruby|rt|lang)\b[^<>]*>", re.I)
+ASS_OVERRIDE = re.compile(r"\{\\[^}]*\}")
 
 
 def _caption_safe(text: str) -> str:
-    """Players read backslash sequences (\\N), {override tags} and <html tags> as
-    commands in BOTH .ass and .srt (libass, VLC, YouTube). Strip them so a word is
-    always shown as a word."""
-    text = TAG_LIKE.sub("", text)
+    """Players read backslash sequences (\\N), {override tags} and the subtitle
+    HTML tags (<b>, <i>, <font>…) as commands in BOTH .ass and .srt (libass, VLC,
+    YouTube). Remove those; keep ordinary text ("a<b", "vector<int>", "C++")."""
+    text = ASS_OVERRIDE.sub("", TAG_LIKE.sub("", text))
     return text.replace("\\", "").replace("{", "(").replace("}", ")")
+
+
+def _srt_safe(line: str) -> str:
+    """A '<' that meets a later '>' across two words ("x<b y>z") would open a tag
+    in an SRT reader; show angle brackets as look-alike quotes instead."""
+    return line.replace("<", "\u2039").replace(">", "\u203a")
 
 
 _ass_safe = _caption_safe  # kept for callers of the round-1 name
@@ -378,7 +437,7 @@ def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
 
 def build_srt(cues: list[dict], cap: dict) -> str:
     return "\n".join(f"{i}\n{_srt_time(c['start'])} --> {_srt_time(c['end'])}\n"
-                     f"{cue_text(c, cap, ass=False)}\n"
+                     f"{_srt_safe(cue_text(c, cap, ass=False))}\n"
                      for i, c in enumerate(cues, 1))
 
 
@@ -398,22 +457,22 @@ def assert_font(family: str) -> str:
 # ---------------------------------------------------------------- media ops
 
 def first_speech_s(path: str, style: dict, offset: float, window: float,
-                   sample_rate: int | None = None) -> float | None:
-    """Source-timeline seconds where SUSTAINED sound first starts inside
-    [offset, offset+window]. The threshold follows the window's own loudness and
-    clears its noise floor, so neither a quiet speaker nor room noise fools it;
-    a click followed by dead air is skipped. None = no such sound (never trim)."""
+                   sample_rate: int | None = None) -> tuple[float | None, list[dict], str]:
+    """Source-timeline seconds of the first real start inside [offset,
+    offset+window], by the same rule as the QA hook check: the threshold follows
+    the window's loudness and its local noise floor; clicks and typing do not
+    count; a short sound followed by 2 s of dead air (a cough) is skipped.
+    Returns (start or None, skipped sounds, reason when None)."""
     qa_prof = style["qa"]
     loud = video_qa.measure_loudness(path, offset, window)
-    thr = video_qa.silence_threshold(qa_prof, loud.get("integrated_lufs"))
-    guard = video_qa.noise_guard(qa_prof, thr, video_qa.window_peaks(
-        path, offset, window, sample_rate))
-    if not guard["measurable"]:
-        return None
-    hp = qa_prof["hook"]
-    t = video_qa.first_sound_s(path, guard["threshold_db"], offset, window,
-                               hp.get("min_sound_s", 0.15), hp.get("merge_gap_s", 0.25))
-    return None if t is None else offset + t
+    aud = video_qa.analyze_audio(path, qa_prof, offset, window, sample_rate,
+                                 loud.get("integrated_lufs"))
+    skipped = [dict(s, at_s=round(s["at_s"] + offset, 3)) for s in aud["skipped"]]
+    if aud["first_sound"] is None:
+        reason = ("the start cannot be told from noise or music"
+                  if not aud["noise"]["hook_measurable"] else "no sustained sound")
+        return None, skipped, reason
+    return offset + aud["first_sound"], skipped, ""
 
 
 def measure_loudnorm(path: str, start: float, style: dict,
@@ -508,9 +567,16 @@ def audio_codec_args(dst: str, src_codec: str | None, bitrate: str,
     if ext in (".ogg", ".opus", ".webm"):
         return ["-c:a", "copy"] if copy_ok and src_codec in ("opus", "vorbis") else \
             ["-c:a", "libopus", "-b:a", bitrate]
-    if copy_ok and src_codec in ("aac", "mp3", "ac3", "eac3", "alac", "opus"):
+    can_copy = {".m4a": ("aac", "alac"), ".mp4": ("aac", "mp3", "ac3", "eac3", "alac",
+                                                    "opus"),
+                ".mov": ("aac", "alac", "mp3", "ac3"), ".mkv": None}.get(ext, ("aac",))
+    if copy_ok and (can_copy is None or src_codec in can_copy):
         return ["-c:a", "copy"]
     return ["-c:a", "aac", "-b:a", bitrate]
+
+
+AUDIO_ONLY_EXT = (".wav", ".aif", ".aiff", ".flac", ".mp3", ".ogg", ".opus", ".m4a",
+                  ".aac")
 
 
 def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
@@ -520,8 +586,15 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
     info = video_qa.probe(src)
     if info["audio"] is None:
         raise RuntimeError("source has no audio stream; nothing to normalise or caption")
+    ext = os.path.splitext(dst)[1].lower()
+    if ext in AUDIO_ONLY_EXT:
+        info = dict(info, video=None)  # an audio file out: drop the picture
     if info["video"] is None and (burn or reframe):
-        raise RuntimeError("source has no video stream; --burn and --reframe need a picture")
+        raise RuntimeError("--burn and --reframe need a picture: the source has no "
+                           "video, or the output is an audio-only file")
+    if info["video"] is not None and ext == ".webm":
+        raise ValueError("a .webm video needs a VP9 re-encode this script does not do; "
+                         "write .mp4, .mov or .mkv (or .opus/.ogg for audio only)")
     fin, cap = style["finish"], dict(style["captions"])
     cap["keywords"] = list(cap.get("keywords", [])) + keywords
     report = {"source": os.path.basename(src), "output": os.path.basename(dst),
@@ -547,16 +620,21 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
             start = max(clip_start, first_word["start"] - fin["head_pad_s"])
             report["trim_head_to"] = "first word"
         else:
-            fs = first_speech_s(src, style, clip_start,
-                                min(clip_end - clip_start, 120.0),
-                                info["audio"]["sample_rate"])
+            fs, skipped, why = first_speech_s(src, style, clip_start,
+                                              min(clip_end - clip_start, 120.0),
+                                              info["audio"]["sample_rate"])
             if fs is None:
-                report["warnings"].append(
-                    "trim-head found no sustained sound it could tell from noise in "
-                    "the window; nothing trimmed")
+                report["warnings"].append(f"trim-head: {why} in the window; nothing "
+                                          "trimmed (give --words or --srt to cut to "
+                                          "the first word)")
             else:
                 start = max(clip_start, fs - fin["head_pad_s"])
                 report["trim_head_to"] = "first sustained sound"
+                for sk in skipped:
+                    report["warnings"].append(
+                        f"trim-head skipped a {sk['sound_s']}s sound at {sk['at_s']}s "
+                        f"followed by {sk['silence_after_s']}s of silence; if it was a "
+                        "word, rerun with --words or --srt")
     duration = clip_end - start
     if duration <= 0.1:
         raise ValueError("nothing left to render after trimming; check --clip and "
@@ -619,7 +697,7 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         out_words = [{**w, "start": max(0.0, w["start"] - start),
                       "end": w["end"] - start} for w in inside]
         sidecar = Path(dst).with_suffix(".captions.srt")
-        sidecar.write_text(build_srt(cues, cap), encoding="utf-8")
+        srt_text = build_srt(cues, cap)  # written only after the render succeeds
         report["steps"].append({"caption_cues": len(cues), "sidecar_srt": sidecar.name,
                                 "burned": bool(burn)})
         if burn:
@@ -648,14 +726,23 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         cmd += ["-af", ",".join(afilters)]
     cmd += audio_codec_args(dst, info["audio"].get("codec"), fin["audio_bitrate"],
                             copy_ok=not afilters)
-    if has_video or dst.lower().endswith((".mp4", ".m4a", ".mov")):
+    if ext in (".mp4", ".m4a", ".mov"):
         cmd += ["-movflags", "+faststart"]
-    cmd += [os.path.abspath(dst)]
+    # Render beside the destination, then rename: a failed render never leaves a
+    # stub file where the finished one should be.
+    final = os.path.abspath(dst)
+    partial = os.path.join(os.path.dirname(final),
+                           f".{os.path.basename(final)}.partial{ext}")
+    cmd += [partial]
     res = subprocess.run(cmd, cwd=work, capture_output=True, text=True, errors="replace")
     shutil.rmtree(work, ignore_errors=True)
-    if res.returncode != 0:
-        tail = [l for l in res.stderr.splitlines() if l.strip()][-6:]
-        raise RuntimeError("render failed: " + " | ".join(tail))
+    if res.returncode != 0 or not os.path.exists(partial):
+        if os.path.exists(partial):
+            os.remove(partial)
+        raise RuntimeError("render failed: " + video_qa.first_error(res.stderr))
+    os.replace(partial, final)
+    if words:
+        sidecar.write_text(srt_text, encoding="utf-8")
     if loud_on:
         ln = _loudnorm_json(res.stderr)
         report["loudnorm_mode"] = ln.get("normalization_type", "unknown")
@@ -704,8 +791,10 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         style = load_style(args.profile)
-        if args.reframe and not re.fullmatch(r"\d+(?:\.\d+)?:\d+(?:\.\d+)?", args.reframe):
-            raise ValueError(f"--reframe must look like 9:16, got {args.reframe!r}")
+        if args.reframe and not (re.fullmatch(r"\d+(?:\.\d+)?:\d+(?:\.\d+)?", args.reframe)
+                                 and all(float(x) > 0 for x in args.reframe.split(":"))):
+            raise ValueError(f"--reframe must look like 9:16 with both sides above 0, "
+                             f"got {args.reframe!r}")
         if not 0.0 <= args.focus_x <= 1.0:
             raise ValueError(f"--focus-x must be between 0 and 1, got {args.focus_x}")
         if not os.path.exists(args.src):
