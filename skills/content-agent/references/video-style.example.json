@@ -1,0 +1,47 @@
+{
+  "_about": "Save your video style ONCE. content-agent, finish.py and video_qa.py all read this file, so every agent ships the same look and is graded against the same numbers. Copy it to your Knowledge Base as video-style.json and change the values, not the keys.",
+  "brand": {
+    "name": "Your Business Name",
+    "hook_rule": "No intro, no logo sting. The first spoken sentence says who this is for and why it matters.",
+    "thumbnail_rule": "A real frame from this video (face visible, sharp). Never generated art, never stock.",
+    "b_roll_folder": "Knowledge Base/B-roll (real job photos and clips only)"
+  },
+  "captions": {
+    "font": "Inter",
+    "bold": true,
+    "uppercase": true,
+    "max_words": 3,
+    "max_chars": 18,
+    "break_gap_s": 0.3,
+    "min_cue_s": 0.35,
+    "font_size_ratio": 0.055,
+    "outline_ratio": 0.004,
+    "margin_v_ratio": 0.22,
+    "primary_bgr": "FFFFFF",
+    "outline_bgr": "000000",
+    "highlight_bgr": "00FFFF",
+    "highlight_numbers": true,
+    "keywords": ["Dollar a Day", "Content Factory", "knowledge panel"]
+  },
+  "finish": {
+    "head_pad_s": 0.08,
+    "fade_s": 0.03,
+    "x264_preset": "veryfast",
+    "x264_crf": 18,
+    "audio_bitrate": "192k",
+    "lra_target": 11.0,
+    "true_peak_headroom_db": 0.5
+  },
+  "qa": {
+    "loudness": {"target_lufs": -14.0, "pass_tolerance_lu": 1.0, "warn_tolerance_lu": 2.5, "true_peak_max_dbtp": -1.0},
+    "pauses": {"silence_threshold_db": -38.0, "warn_pause_s": 0.6, "fail_pause_s": 2.0, "max_warn_pauses_per_minute": 3.0},
+    "hook": {"max_first_speech_s": 2.0},
+    "tail": {"max_trailing_silence_s": 1.5},
+    "black": {"min_black_s": 0.5},
+    "frames": {"contact_sheet_tiles": 16, "thumbnail_candidates": 6}
+  },
+  "deliverables": {
+    "long_form": {"aspect": "16:9", "captions": "sidecar", "descript_prompt": "Apply Studio Sound to the whole composition, remove filler words conservatively so it still sounds human, remove silences over 2 seconds, and render/export the result."},
+    "short": {"aspect": "9:16", "captions": "burn", "length_s": [20, 60]}
+  }
+}

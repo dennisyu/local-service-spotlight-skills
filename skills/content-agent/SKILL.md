@@ -42,6 +42,12 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
    - **Descript** (account / connector available): create a project from the raw file, then run exactly: *"Apply Studio Sound to the whole composition, remove filler words conservatively so it still sounds human, remove silences over 2 seconds, and render/export the result."* Nothing fancier. Then report receipts: fillers removed, trims made, before/after duration. **Zero fillers found = zero removed is a valid result — never invent work.** (Measured reality from our own runs: a 1-minute video edits in ~4 minutes for ~9 AI credits; a full HOUR of raw video edited in ~13 minutes for **49 credits** — 35 fillers and 15m39s of dead air removed, 59:48→42:21. Descript's free plan covers a first full run but watermarks video exports — fine for testing, not publishing.)
    - **Your own tool** (CapCut, Final Cut, etc.): use the 3-line edit checklist (filler pass · silence trim · loudness normalize) and continue with the raw file meanwhile.
    - **No tool:** proceed with the raw video unedited and say so — a real upload this week beats a perfect one next month.
+   - **Route effort by authority, not by habit.** Descript credits and media hours are per seat, so spend them on recordings that earned the edit. Triage a backlog with a free local transcript first (`scripts/transcribe_words.py`), let the SKIP / LIGHT / MODERATE / STRONG verdict from `video-repurposing-agent` decide, and send only MODERATE and STRONG material through Descript. SKIP is a finished verdict, not a backlog.
+2b. **Finish and prove it — every video, whichever editor cut it.** Load the client's `video-style.json` (start from `references/video-style.example.json`; save it once in the Knowledge Base and never ask for the style again). Then:
+   - Long-form for YouTube: `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt --sidecar` → hits −14 LUFS / ≤ −1 dBTP without re-encoding the picture and writes a clean caption file to upload beside the video.
+   - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Clip edges snap to word boundaries; captions use Descript's corrected words on the word-level clock.
+   - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: loudness and true peak, first-speech time (the hook rule: no intro, speech within 2 s), every pause over the style file's limits, black frames at the open, inside and at the close, a contact sheet, and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
+   - Prompt Underlord for titles and descriptions only; tell it **"thumbnail: choose a real frame, never generate one."** Thumbnails come from the QA receipt's candidates.
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
 4. **Target keyword.** From the transcript's strongest theme + your positioning: one keyword you can actually win (specific beats glamorous). One line of why.
 5. **Blog draft.** Restructure the transcript into an article in your voice: hook open, H2/H3s, verbatim quote callouts, 3-line TL;DR up top, key takeaways, video embed placeholder, cleaned transcript at the bottom. Wire in your offer/lead-magnet link FROM YOUR LINKS FILE. Passes in this order: outline → draft → expand → tighten → style gate LAST.
@@ -52,7 +58,7 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 10. **Deliver + verify.** Honor the requested Draft/Private mode, or complete routine authorized publication and sending through the configured destinations after required QA. If authority is missing, stage paste-ready assets. Verify each actual status, save everything to `Outputs/<video-slug>/`, update the log, and report delivered assets plus only the decisions that still need review.
 
 ## Output
-- `Outputs/<video-slug>/` with: `transcript.md` · `blog-post.md` (+ `.html`) · `youtube-upload.md` · `clips-plan.md` · `social-posts.md` · `email.md` · `schema.json` · `internal-links.md`.
+- `Outputs/<video-slug>/` with: `transcript.md` · `blog-post.md` (+ `.html`) · `youtube-upload.md` · `clips-plan.md` · `social-posts.md` · `email.md` · `schema.json` · `internal-links.md` · `qa-receipt.md` (+ `.json`, contact sheet, thumbnail candidates) for every video file that ships.
 - The lightly edited video on YouTube in the requested, authorized visibility (or the upload kit), with receipts: what changed, before/after duration.
 - The WordPress/GHL asset in the requested, authorized status — actual status verified and reported.
 - One appended line in `Outputs/processing-log.md`.
@@ -61,12 +67,13 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
 - Routine authorized assets are delivered and verified; requested drafts or decisions needing review are complete and easy to act on.
 - Zero invented facts, quotes, links, or offers — three claims spot-checked against the transcript before handover.
 - YouTube visibility and blog status match the requested delivery and recorded authority — verified and stated.
+- Every shipped video file has a `qa-receipt.md` whose verdict is PASS, or WARN with each warning named in the report. A FAIL never ships unmentioned.
 - Every asset points home (blog ← video ← clips ← social ← email), in your voice, in your language.
 - The log line exists. Next week's run knows what this week did.
 
 ## Notes
 - Weekly rhythm: record once → drop it in Raw → run this agent → verify authorized delivery, or review requested drafts and consequential decisions. 52 recordings a year becomes 52 posts, ~500 shorts, ~150 social posts, 52 emails.
-- What the edit does NOT do (say it out loud, it prevents heartbreak): no b-roll, no music, no burned-in captions, no jump-cut style, no color grade, no auto-thumbnails. It gets a raw recording over the publish line; it is not a video editor with bells and whistles.
+- What the edit does NOT do (say it out loud, it prevents heartbreak): no b-roll, no music, no jump-cut style, no color grade, no intro or title card (the hook is the first sentence). Burned-in captions, loudness to −14 LUFS, word-snapped short clips, vertical reframes and real-frame thumbnail candidates now come from step 2b. It gets a raw recording over the publish line with a measured receipt; it is not a motion-graphics studio. When a cutaway diagram genuinely helps, build it in Claude Motion and send it to Descript with `import-claude-motion-from-url`; it lands as its own scene (no transparency), never as an intro.
 - Model note: plans on the big model, drafts on the fast one (see model-judgment). No special setup.
 
 ## Pairs with
@@ -204,6 +211,46 @@ Rebuilding the bundle made the published zip stale by two bytes. Republishing it
 `verify_directory_and_somba.py` caught it. **When you re-run one stage of a pipeline by hand, you have
 re-run one stage of a pipeline by hand** — the stages downstream of it are now describing the state you
 just replaced.
+
+<!-- learning:2026-10-23-measure-the-file-you-shipped -->
+**October 23, 2026** (from: comparing our Descript lane with an open-source Claude Code editing flow, video-use + HyperFrames, that Anik Singal published; measured on that day's published Descript replay)
+
+### Measure the file you shipped, not the edit you asked for
+
+The open-source flow had three habits we lacked: it measured its own render (loudness, every cut),
+it burned captions for silent scrolling, and it saved the brand style once. We had better intake,
+better audio repair (Studio Sound) and a whole repurposing loop after the edit — and no numbers
+about the video itself.
+
+The first measurement proved the gap. A 66-minute summit replay published unlisted from Descript
+that morning (90.8 min raw → 66.7 min) measured **−24.0 LUFS integrated, −6.1 dBTP peak**: ten
+loudness units under the −14 LUFS YouTube reference. YouTube turns loud videos down; it does not
+turn quiet ones up, so it plays roughly half as loud as a normalized video beside it. It also ended on
+**4.8 s of black**. The edit itself was clean where we had a rule: speech at 0.00 s and no pause of
+2 s or more anywhere. Where we had published a rule but never measured it ("shorten pauses over
+0.6 s"), the file had 620 such gaps, 9.3 a minute — a rule nobody checks is a wish.
+
+What changed: `scripts/finish.py` (loudness, word-snapped clips, 9:16 reframe, burned or sidecar
+captions from one `video-style.json`) and `scripts/video_qa.py` (the receipt). A 33-second 9:16 short
+cut from the same replay came out at −14.2 LUFS / −1.5 dBTP, speech at 0.00 s, QA PASS, in 48 s on
+two CPU cores with zero Descript credits.
+
+**Rules:**
+
+1. **A video is not done until a receipt says how loud it is and where it starts talking.** Run
+   `video_qa.py` on the exact file that ships, including Descript publishes (an unlisted or public
+   share page exposes a signed `/download` URL; private shares do not).
+2. **Captions take Descript's words on the ASR's clock.** Local Whisper heard "don't be mad at the
+   state law"; Descript had "the scale". Whisper also drops fillers and smooths false starts, so it is
+   fine for caption timing and triage, and never the basis for a filler cut.
+3. **Crosstalk is not caption text.** A lone "Right" or "Yeah" the speaker's ASR never heard is
+   someone else talking; leave it out of the speaker's captions.
+4. **Fonts fail silently.** `finish.py` refuses to burn captions when fontconfig resolves the style's
+   font to a fallback face.
+5. **No generated thumbnails.** Underlord tried and failed to generate one for this replay; the
+   receipt now ranks real frames by face size and sharpness instead.
+6. **AAC adds inter-sample peaks.** Normalizing to exactly −1 dBTP measured −0.9 dBTP after encode;
+   aim 0.5 dB under the ceiling.
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
