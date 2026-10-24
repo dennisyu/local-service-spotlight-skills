@@ -64,13 +64,30 @@ class CaptionChunking(unittest.TestCase):
         self.assertGreaterEqual(cues[-1]["end"] - cues[-1]["start"], CAP["min_cue_s"])
 
     def test_uppercase_and_highlights_in_ass_only(self):
-        cap = dict(CAP, keywords=["Dollar a Day"])
-        cue = {"words": [w("spend", 0, 1), w("$1", 1, 2), w("dollar", 2, 3)]}
-        ass = finish.cue_text(cue, cap, ass=True)
+        words = finish.mark_keywords(
+            [w("spend", 0, 1), w("$1", 1, 2), w("a", 2, 3), w("dollar", 3, 4),
+             w("a", 4, 5), w("day.", 5, 6)], ["Dollar a Day"])
+        cue = {"words": words}
+        ass = finish.cue_text(cue, CAP, ass=True)
         self.assertIn("{\\c&H00FFFF&}$1{\\r}", ass)
-        self.assertIn("{\\c&H00FFFF&}DOLLAR{\\r}", ass)
+        self.assertIn("{\\c&H00FFFF&}DOLLAR{\\r} {\\c&H00FFFF&}A{\\r} "
+                      "{\\c&H00FFFF&}DAY.{\\r}", ass)
+        self.assertIn("$1{\\r} A {\\c", ass)   # the lone "a" before it stays white
         self.assertTrue(ass.startswith("SPEND"))
-        self.assertEqual(finish.cue_text(cue, cap, ass=False), "SPEND $1 DOLLAR")
+        self.assertEqual(finish.cue_text(cue, CAP, ass=False), "SPEND $1 A DOLLAR A DAY.")
+
+    def test_ass_control_characters_cannot_leak(self):
+        cue = {"words": [w("a\\Nb", 0, 1), w("{\\b1}x", 1, 2)]}
+        txt = finish.cue_text(cue, dict(CAP, uppercase=False, highlight_numbers=False),
+                              ass=True)
+        self.assertNotIn("\\", txt)
+        self.assertNotIn("{", txt)
+
+    def test_merged_cues_respect_max_chars(self):
+        words = [w("reputation,", 0.0, 0.5), w("not", 0.52, 0.6), w("people-", 0.62, 0.7)]
+        for cue in finish.chunk_words(words, CAP):
+            self.assertLessEqual(len(" ".join(x["word"] for x in cue["words"])),
+                                 CAP["max_chars"])
 
     def test_shift_drops_cues_before_the_new_start(self):
         cues = [{"words": [], "start": 0.0, "end": 0.5},
@@ -81,6 +98,23 @@ class CaptionChunking(unittest.TestCase):
 
 
 class TranscriptInputs(unittest.TestCase):
+    def test_speaker_labels_only_strip_names(self):
+        srt = ("1\n00:00:01,000 --> 00:00:02,000\nStep one: open it\n\n"
+               "2\n00:00:02,000 --> 00:00:03,000\n[Speaker 2]: Hi\n\n"
+               "3\n00:00:03,000 --> 00:00:04,000\nSo here's the thing: go\n")
+        words = [x["word"] for x in finish.words_from_srt(srt)]
+        self.assertEqual(words[:3], ["Step", "one:", "open"])
+        self.assertIn("Hi", words)
+        self.assertNotIn("[Speaker", words)
+        self.assertIn("thing:", words)
+
+    def test_clip_text_is_validated(self):
+        self.assertEqual(finish.parse_clip("3193.8-3227.1"), (3193.8, 3227.1))
+        with self.assertRaises(ValueError):
+            finish.parse_clip("5-2")
+        with self.assertRaises(ValueError):
+            finish.parse_clip("abc")
+
     def test_srt_spreads_words_and_strips_speaker_labels(self):
         srt = ("1\n00:00:01,000 --> 00:00:03,000\nDennis Yu: Hello there world\n\n"
                "2\n00:00:03,500 --> 00:00:04,000\n<i>Next</i>\n")
@@ -162,6 +196,52 @@ class ReceiptParsing(unittest.TestCase):
         self.assertEqual(video_qa.parse_ebur128_summary(text),
                          {"integrated_lufs": -24.0, "lra_lu": 5.5, "true_peak_dbtp": -6.1})
 
+    def test_scientific_notation_is_not_misread(self):
+        # ffmpeg prints tiny times like 2.26757e-05; reading that as 2.27 s hid
+        # three seconds of dead air in the first version (audit, 23 Oct 2026).
+        sil = video_qa.parse_silences(
+            "silence_start: 2.26757e-05\nsilence_end: 3.0 | silence_duration: 3\n", 10.0)
+        self.assertEqual(sil[0]["start"], 0.0)
+        self.assertEqual(sil[0]["end"], 3.0)
+
+    def test_relative_silence_threshold(self):
+        prof = video_qa.load_profile(None)
+        self.assertEqual(video_qa.silence_threshold(prof, -24.0), -49.0)
+        self.assertEqual(video_qa.silence_threshold(prof, -14.0), -39.0)
+        self.assertEqual(video_qa.silence_threshold(prof, -80.0), -60.0)
+        self.assertEqual(video_qa.silence_threshold(prof, -2.0), -30.0)
+        prof["pauses"]["silence_threshold_db"] = -38
+        self.assertEqual(video_qa.silence_threshold(prof, -24.0), -38.0)
+
+    def test_trailing_silence_uses_the_audio_end(self):
+        info = {"duration_s": 4.0, "audio": {"duration_s": 3.9}, "video": None}
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            info, {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0},
+            [{"start": 0.9, "end": 3.9, "dur": 3.0}], [], video_qa.load_profile(None),
+            first_audio=0.0)}
+        self.assertEqual(checks["trailing_silence"], "WARN")
+        self.assertEqual(checks["pauses_over_fail"], "PASS")
+        self.assertEqual(checks["black_frames"], "N/A")
+
+    def test_hook_uses_first_word_when_given(self):
+        prof = video_qa.load_profile(None)
+        base = ({"duration_s": 60.0, "video": None},
+                {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], prof)
+        named = {c["check"]: c for c in video_qa.evaluate(*base, first_speech=4.2,
+                                                          first_audio=0.0)}
+        self.assertEqual(named["hook_first_speech"]["status"], "FAIL")  # music intro
+        named = {c["check"]: c for c in video_qa.evaluate(*base, first_audio=0.5)}
+        self.assertEqual(named["hook_first_audio"]["status"], "PASS")
+        self.assertIn("not first word", named["hook_first_audio"]["note"])
+
+    def test_silent_audio_cannot_pass(self):
+        checks = {c["check"]: c["status"] for c in video_qa.evaluate(
+            {"duration_s": 5.0, "video": None}, {"integrated_lufs": -70.0,
+                                                 "true_peak_dbtp": -90.0},
+            [], [], video_qa.load_profile(None), first_audio=None)}
+        self.assertEqual(checks["integrated_loudness"], "FAIL")
+        self.assertEqual(checks["hook_first_audio"], "FAIL")
+
     def test_open_silence_runs_to_end(self):
         text = "silence_start: 0\nsilence_end: 1.5 | silence_duration: 1.5\nsilence_start: 9.2\n"
         sil = video_qa.parse_silences(text, 10.0)
@@ -173,17 +253,17 @@ class ReceiptParsing(unittest.TestCase):
         sil = [{"start": 0.0, "end": 3.0, "dur": 3.0},
                {"start": 20.0, "end": 23.0, "dur": 3.0}]
         checks = {c["check"]: c["status"] for c in video_qa.evaluate(
-            info, loud, sil, [], video_qa.load_profile(None))}
+            dict(info, video=None), loud, sil, [], video_qa.load_profile(None))}
         self.assertEqual(checks["integrated_loudness"], "FAIL")
-        self.assertEqual(checks["hook_first_speech"], "FAIL")
+        self.assertEqual(checks["hook_first_audio"], "FAIL")
         self.assertEqual(checks["pauses_over_fail"], "FAIL")
 
     def test_black_at_the_end_is_a_warning_not_a_body_fail(self):
         prof = video_qa.load_profile(None)
         black = [{"start": 55.0, "end": 59.8, "dur": 4.8}]
         checks = {c["check"]: c["status"] for c in video_qa.evaluate(
-            {"duration_s": 60.0}, {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0},
-            [], black, prof)}
+            {"duration_s": 60.0, "video": {"width": 320, "height": 240}},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], black, prof)}
         self.assertEqual(checks["black_frames"], "PASS")
         self.assertEqual(checks["black_close"], "WARN")
 
@@ -235,7 +315,7 @@ class MediaRoundTrip(unittest.TestCase):
         checks = {c["check"]: c["status"] for c in rec["checks"]}
         self.assertEqual(rec["verdict"], "FAIL")
         self.assertEqual(checks["integrated_loudness"], "FAIL")
-        self.assertEqual(checks["hook_first_speech"], "FAIL")
+        self.assertEqual(checks["hook_first_audio"], "FAIL")
         self.assertEqual(checks["pauses_over_fail"], "FAIL")
         self.assertEqual(checks["black_open"], "FAIL")
         self.assertTrue((self.tmp / "bad.qa" / "qa-receipt.md").exists())
@@ -245,17 +325,75 @@ class MediaRoundTrip(unittest.TestCase):
         style = finish.load_style(None)
         rep = finish.finish(str(self.src), str(out), style, trim_head=True,
                             loudness=True, words=None, burn=False, keywords=[])
-        self.assertGreater(rep["trimmed_head_s"], 2.0)
+        self.assertGreater(rep["start_s"], 2.0)
+        self.assertEqual(rep["warnings"], [])
         rec = video_qa.qa(str(out), style["qa"], self.tmp / "fixed.qa", frames=False)
         checks = {c["check"]: c["status"] for c in rec["checks"]}
         self.assertEqual(checks["integrated_loudness"], "PASS")
         self.assertEqual(checks["true_peak"], "PASS")
-        self.assertEqual(checks["hook_first_speech"], "PASS")
+        self.assertEqual(checks["hook_first_audio"], "PASS")
         self.assertNotIn("black_open", checks)
         # finish.py never hides a problem it did not fix: the 2.6 s pause remains.
         self.assertEqual(checks["pauses_over_fail"], "FAIL")
         self.assertAlmostEqual(rec["probe"]["duration_s"], rep["expected_duration_s"],
                                delta=0.25)
+
+    def _make(self, name, vf=None, tone=None, d=8, audio=True, video=True):
+        out = self.tmp / name
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
+        if video:
+            cmd += ["-f", "lavfi", "-i", f"testsrc2=s=320x240:r=25:d={d}"]
+        if audio:
+            cmd += ["-f", "lavfi", "-i",
+                    f"aevalsrc='{tone or '0.2*sin(2*PI*440*t)'}':s=48000:d={d}"]
+        if vf:
+            cmd += ["-vf", vf]
+        if video:
+            cmd += ["-c:v", "libx264", "-preset", "ultrafast"]
+        cmd += ["-c:a", "aac", "-shortest", str(out)] if audio else [str(out)]
+        subprocess.run(cmd, check=True)
+        return out
+
+    def test_click_then_dead_air_fails_the_hook(self):
+        src = self._make("click.mp4", tone="0.5*sin(2*PI*1000*t)*lt(t,0.01)"
+                                           "+0.2*sin(2*PI*440*t)*gte(t,3)")
+        rec = video_qa.qa(str(src), video_qa.load_profile(None), self.tmp / "click.qa",
+                          frames=False)
+        c = {x["check"]: x for x in rec["checks"]}
+        self.assertEqual(c["hook_first_audio"]["status"], "FAIL")
+        self.assertGreater(rec["first_audio_s"], 2.5)
+
+    def test_black_flash_and_near_black_screen_are_caught(self):
+        src = self._make("flash.mp4", vf="drawbox=c=black:t=fill:enable='between(t,3,3.12)',"
+                         "drawbox=x=0:y=0:w=320:h=228:c=black:t=fill:"
+                         "enable='between(t,5,6)'")
+        rec = video_qa.qa(str(src), video_qa.load_profile(None), self.tmp / "flash.qa",
+                          frames=False)
+        c = {x["check"]: x for x in rec["checks"]}
+        self.assertEqual(c["black_frames"]["status"], "FAIL")
+        self.assertEqual(c["black_frames"]["measured"], 2)
+
+    def test_letterbox_is_reported(self):
+        src = self._make("bars.mp4", vf="scale=320:200,pad=320:240:0:20:black")
+        rec = video_qa.qa(str(src), video_qa.load_profile(None), self.tmp / "bars.qa",
+                          frames=False)
+        self.assertIn("letterbox", {x["check"] for x in rec["checks"]})
+
+    def test_audio_only_marks_black_check_not_applicable(self):
+        src = self._make("tone.m4a", video=False, d=3)
+        rec = video_qa.qa(str(src), video_qa.load_profile(None), self.tmp / "tone.qa",
+                          frames=False)
+        c = {x["check"]: x["status"] for x in rec["checks"]}
+        self.assertEqual(c["black_frames"], "N/A")
+
+    def test_trim_head_on_silence_trims_nothing(self):
+        src = self._make("silent.mp4", tone="0", d=3)
+        out = self.tmp / "silent-out.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=True,
+                            loudness=True, words=None, burn=False, keywords=[])
+        self.assertEqual(rep["start_s"], 0.0)
+        self.assertEqual(len(rep["warnings"]), 2)   # nothing trimmed, loudness skipped
+        self.assertAlmostEqual(rep["expected_duration_s"], 3.0, delta=0.1)
 
     def test_letterbox_bars_are_found(self):
         boxed = self.tmp / "boxed.mp4"

@@ -5,10 +5,12 @@ WHY TWO BACKENDS (23 Oct 2026)
 - `local` (faster-whisper, free, offline): good enough to place captions. Whisper
   quietly drops "um"/"uh" and smooths false starts, which makes clean captions
   and a WRONG basis for deciding where to cut. Never feed it to a filler pass.
-- `scribe` (ElevenLabs Scribe v2, about $0.22 per audio hour in Oct 2026):
-  verbatim, keeps fillers and audio events, diarizes. Use it when an agent (not
-  Descript) is choosing the cuts. Needs ELEVENLABS_API_KEY; never paste the key
-  into chat or files.
+- `scribe` (ElevenLabs Scribe v2, $0.22 per audio hour on elevenlabs.io/pricing/api,
+  Oct 2026): a verbatim transcript that keeps fillers, which is what an agent
+  needs when IT (not Descript) chooses the cuts. This script keeps only the word
+  entries; Scribe's spacing and audio-event entries are dropped, and no speaker
+  diarization is requested. Needs ELEVENLABS_API_KEY; never paste the key into
+  chat or files. Untested here without a key: verify the first response.
 Descript already transcribes everything it imports; when the video came from
 Descript, prefer its export_transcript srt and skip this script entirely.
 
@@ -106,9 +108,16 @@ def main(argv: list[str] | None = None) -> int:
         if cached.get("media_key") == key and cached.get("backend") == args.backend:
             print(f"cached: {args.out} ({len(cached['words'])} words)")
             return 0
-    wav = extract_audio(args.media, args.start, args.end)
+    try:
+        wav = extract_audio(args.media, args.start, args.end)
+    except subprocess.CalledProcessError as exc:
+        print(f"could not read audio from {args.media}: {exc}", file=sys.stderr)
+        return 2
     try:
         words = local_words(wav, args.model) if args.backend == "local" else scribe_words(wav)
+    except Exception as exc:  # network, key, model download: report, never pretend
+        print(f"transcription failed ({args.backend}): {exc}", file=sys.stderr)
+        return 2
     finally:
         os.unlink(wav)
     for w in words:

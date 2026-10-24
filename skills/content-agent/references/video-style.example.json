@@ -21,7 +21,11 @@
     "outline_bgr": "000000",
     "highlight_bgr": "00FFFF",
     "highlight_numbers": true,
-    "keywords": ["Dollar a Day", "Content Factory", "knowledge panel"]
+    "keywords": [
+      "Dollar a Day",
+      "Content Factory",
+      "knowledge panel"
+    ]
   },
   "finish": {
     "head_pad_s": 0.08,
@@ -30,18 +34,57 @@
     "x264_crf": 18,
     "audio_bitrate": "192k",
     "lra_target": 11.0,
-    "true_peak_headroom_db": 0.5
+    "true_peak_headroom_db": 1.0
   },
   "qa": {
-    "loudness": {"target_lufs": -14.0, "pass_tolerance_lu": 1.0, "warn_tolerance_lu": 2.5, "true_peak_max_dbtp": -1.0},
-    "pauses": {"silence_threshold_db": -38.0, "warn_pause_s": 0.6, "fail_pause_s": 2.0, "max_warn_pauses_per_minute": 3.0},
-    "hook": {"max_first_speech_s": 2.0},
-    "tail": {"max_trailing_silence_s": 1.5},
-    "black": {"min_black_s": 0.5},
-    "frames": {"contact_sheet_tiles": 16, "thumbnail_candidates": 6}
+    "loudness": {
+      "target_lufs": -14.0,
+      "pass_tolerance_lu": 1.0,
+      "warn_tolerance_lu": 2.5,
+      "true_peak_max_dbtp": -1.0
+    },
+    "pauses": {
+      "silence_threshold_db": "auto",
+      "relative_silence_lu": 25.0,
+      "threshold_bounds_db": [
+        -60.0,
+        -30.0
+      ],
+      "warn_pause_s": 0.6,
+      "fail_pause_s": 2.0,
+      "max_warn_pauses_per_minute": 3.0
+    },
+    "hook": {
+      "max_first_speech_s": 2.0
+    },
+    "tail": {
+      "max_trailing_silence_s": 1.5
+    },
+    "black": {
+      "min_black_s": 0.08,
+      "pic_th": 0.9,
+      "pix_th": 0.1,
+      "scan_height": 180,
+      "letterbox_min_px": 8
+    },
+    "frames": {
+      "contact_sheet_tiles": 16,
+      "thumbnail_candidates": 6
+    }
   },
   "deliverables": {
-    "long_form": {"aspect": "16:9", "captions": "sidecar", "descript_prompt": "Apply Studio Sound to the whole composition, remove filler words conservatively so it still sounds human, remove silences over 2 seconds, and render/export the result."},
-    "short": {"aspect": "9:16", "captions": "burn", "length_s": [20, 60]}
+    "long_form": {
+      "aspect": "16:9",
+      "captions": "sidecar",
+      "descript_prompt": "Apply Studio Sound to the whole composition, remove filler words conservatively so it still sounds human, remove silences over 2 seconds, and render/export the result."
+    },
+    "short": {
+      "aspect": "9:16",
+      "captions": "burn",
+      "length_s": [
+        20,
+        60
+      ]
+    }
   }
 }

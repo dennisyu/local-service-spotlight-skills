@@ -11,8 +11,19 @@ whichever editor produced it (Descript, ffmpeg, video-use, a VA in CapCut).
 
 It never plays sound. Everything is measured from the stream with ffmpeg.
 
+What it can and cannot see (independently audited 23 Oct 2026):
+- With a transcript (--srt or --words) the hook check uses the first WORD.
+  Without one it can only see the first SOUND, so a music or tone intro passes;
+  the receipt names the check `hook_first_audio` and says so.
+- Pause counts use a silence threshold set relative to the file's own loudness
+  (25 LU under integrated, clamped to -60..-30 dB), so a quiet file and the same
+  file normalised count the same pauses.
+- Black frames are checked on every frame, including near-black screens (90% of
+  pixels black) and flashes as short as two frames, plus letterbox bars.
+
 Usage:
-    video_qa.py <video> [--profile video-style.json] [--out <dir>] [--no-frames]
+    video_qa.py <video> [--profile video-style.json] [--srt captions.srt |
+                --words words.json] [--out <dir>] [--no-frames]
 
 Writes <out>/qa-receipt.json, <out>/qa-receipt.md, a contact sheet and
 real-frame thumbnail candidates (never generated art).
@@ -34,15 +45,21 @@ from pathlib import Path
 DEFAULT_PROFILE = {
     "loudness": {"target_lufs": -14.0, "pass_tolerance_lu": 1.0,
                  "warn_tolerance_lu": 2.5, "true_peak_max_dbtp": -1.0},
-    "pauses": {"silence_threshold_db": -38.0, "warn_pause_s": 0.6,
+    "pauses": {"silence_threshold_db": "auto", "relative_silence_lu": 25.0,
+               "threshold_bounds_db": [-60.0, -30.0], "warn_pause_s": 0.6,
                "fail_pause_s": 2.0, "max_warn_pauses_per_minute": 3.0},
     "hook": {"max_first_speech_s": 2.0},
     "tail": {"max_trailing_silence_s": 1.5},
-    "black": {"min_black_s": 0.5},
+    "black": {"min_black_s": 0.08, "pic_th": 0.90, "pix_th": 0.10,
+              "scan_height": 180, "letterbox_min_px": 8},
     "frames": {"contact_sheet_tiles": 16, "thumbnail_candidates": 6},
 }
 
-_FLOAT = r"(-?\d+(?:\.\d+)?|-?inf|nan)"
+# ffmpeg prints tiny times in scientific notation ("silence_start: 2.26757e-05");
+# a parser without the exponent reads that as 2.27 s and hides the dead air.
+_FLOAT = r"(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?|-?inf|nan)"
+SILENT_LUFS = -69.0  # ebur128 reports about -70 LUFS for digital silence
+NOT_MEASURED = object()  # sentinel: the first-sound scan was not run
 
 
 def deep_merge(base: dict, override: dict) -> dict:
@@ -67,10 +84,27 @@ def run(cmd: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, errors="replace")
 
 
+def _rotation(stream: dict) -> int:
+    rot = 0
+    try:
+        rot = int(float(stream.get("tags", {}).get("rotate", 0)))
+    except (TypeError, ValueError):
+        rot = 0
+    for sd in stream.get("side_data_list", []) or []:
+        if "rotation" in sd:
+            try:
+                rot = int(float(sd["rotation"]))
+            except (TypeError, ValueError):
+                pass
+    return rot % 360
+
+
 def probe(path: str) -> dict:
+    """Container facts, with the picture size as DISPLAYED (phone rotation applied)."""
     res = run(["ffprobe", "-v", "error", "-show_entries",
                "format=duration,bit_rate,size:stream=codec_type,codec_name,width,height,"
-               "r_frame_rate,sample_rate,channels", "-of", "json", path])
+               "r_frame_rate,sample_rate,channels,duration:stream_tags=rotate:"
+               "stream_side_data=rotation", "-of", "json", path])
     if res.returncode != 0:
         raise RuntimeError(f"ffprobe failed: {res.stderr.strip()[:400]}")
     data = json.loads(res.stdout)
@@ -83,12 +117,18 @@ def probe(path: str) -> dict:
         if st.get("codec_type") == "video" and info["video"] is None:
             num, _, den = str(st.get("r_frame_rate", "0/1")).partition("/")
             fps = float(num) / float(den or 1) if float(den or 1) else 0.0
-            info["video"] = {"codec": st.get("codec_name"), "width": st.get("width"),
-                             "height": st.get("height"), "fps": round(fps, 3)}
+            w, h, rot = st.get("width"), st.get("height"), _rotation(st)
+            if rot in (90, 270):
+                w, h = h, w
+            info["video"] = {"codec": st.get("codec_name"), "width": w, "height": h,
+                             "fps": round(fps, 3), "rotation": rot}
         elif st.get("codec_type") == "audio" and info["audio"] is None:
+            dur = st.get("duration")
             info["audio"] = {"codec": st.get("codec_name"),
                              "sample_rate": int(st.get("sample_rate", 0) or 0),
-                             "channels": st.get("channels")}
+                             "channels": st.get("channels"),
+                             "duration_s": float(dur) if dur not in (None, "N/A")
+                             else None}
     return info
 
 
@@ -134,25 +174,97 @@ def parse_black(text: str) -> list[dict]:
     return out
 
 
-def measure_audio(path: str, prof: dict) -> dict:
-    thr = prof["pauses"]["silence_threshold_db"]
-    d = min(prof["pauses"]["warn_pause_s"], prof["tail"]["max_trailing_silence_s"])
-    res = run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-vn", "-af",
-               f"ebur128=peak=true,silencedetect=noise={thr}dB:d={d}",
-               "-f", "null", "-"])
+def silence_threshold(prof: dict, integrated_lufs: float | None) -> float:
+    """Absolute dB from the profile, or 'auto' = N LU under the file's loudness."""
+    pp = prof["pauses"]
+    thr = pp.get("silence_threshold_db", "auto")
+    if thr != "auto":
+        return float(thr)
+    lo, hi = pp.get("threshold_bounds_db", [-60.0, -30.0])
+    if integrated_lufs is None or integrated_lufs != integrated_lufs \
+            or integrated_lufs <= SILENT_LUFS:
+        return float(lo)
+    return round(max(lo, min(hi, integrated_lufs - pp.get("relative_silence_lu", 25.0))), 1)
+
+
+def measure_loudness(path: str, start: float = 0.0, seconds: float | None = None) -> dict:
+    cmd = ["ffmpeg", "-hide_banner", "-nostats"]
+    if start:
+        cmd += ["-ss", f"{start:.3f}"]
+    if seconds:
+        cmd += ["-t", f"{seconds:.3f}"]
+    cmd += ["-i", path, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"]
+    res = run(cmd)
     if res.returncode != 0:
-        raise RuntimeError(f"audio scan failed: {res.stderr.strip()[-400:]}")
-    return {"stderr": res.stderr}
+        raise RuntimeError(f"loudness scan failed: {res.stderr.strip()[-400:]}")
+    return parse_ebur128_summary(res.stderr)
+
+
+def detect_silences(path: str, threshold_db: float, min_s: float, duration: float,
+                    start: float = 0.0, seconds: float | None = None) -> list[dict]:
+    """Silences on the window's own timeline (0 = start of the window)."""
+    cmd = ["ffmpeg", "-hide_banner", "-nostats"]
+    if start:
+        cmd += ["-ss", f"{start:.3f}"]
+    if seconds:
+        cmd += ["-t", f"{seconds:.3f}"]
+    cmd += ["-i", path, "-vn", "-af", f"silencedetect=noise={threshold_db}dB:d={min_s}",
+            "-f", "null", "-"]
+    res = run(cmd)
+    if res.returncode != 0:
+        raise RuntimeError(f"silence scan failed: {res.stderr.strip()[-400:]}")
+    return parse_silences(res.stderr, seconds or duration)
+
+
+def first_sound_s(path: str, threshold_db: float, start: float = 0.0,
+                  seconds: float = 30.0) -> float | None:
+    """Seconds from `start` to the first sound above threshold (50 ms resolution).
+    None when the whole window is silent."""
+    sil = detect_silences(path, threshold_db, 0.05, seconds, start, seconds)
+    if not sil or sil[0]["start"] > 0.05:
+        return 0.0
+    if sil[0]["end"] >= seconds - 0.01:
+        return None
+    return sil[0]["end"]
 
 
 def measure_video(path: str, prof: dict) -> list[dict]:
-    d = prof["black"]["min_black_s"]
+    bp = prof["black"]
     res = run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-an", "-vf",
-               f"fps=5,scale=320:-2,blackdetect=d={d}:pix_th=0.10",
-               "-f", "null", "-"])
+               f"scale=-2:{bp['scan_height']},blackdetect=d={bp['min_black_s']}:"
+               f"pic_th={bp['pic_th']}:pix_th={bp['pix_th']}", "-f", "null", "-"])
     if res.returncode != 0:
         raise RuntimeError(f"video scan failed: {res.stderr.strip()[-400:]}")
     return parse_black(res.stderr)
+
+
+def active_area(path: str, start: float, seconds: float = 4.0) -> tuple[int, int, int, int]:
+    """The picture inside any letterbox bars (Zoom and webinar exports often carry
+    a few black rows). (0, 0, 0, 0) when nothing could be detected."""
+    res = run(["ffmpeg", "-hide_banner", "-nostats", "-ss", f"{start:.3f}", "-t",
+               f"{seconds:.3f}", "-i", path, "-an", "-vf",
+               "cropdetect=limit=24:round=2:reset=0", "-f", "null", "-"])
+    found = re.findall(r"crop=(\d+):(\d+):(\d+):(\d+)", res.stderr)
+    if not found:
+        return (0, 0, 0, 0)
+    w, h, x, y = (int(v) for v in max(set(found), key=found.count))
+    return (w, h, x, y)
+
+
+def letterbox(path: str, info: dict, prof: dict) -> dict | None:
+    """Bars that persist at three points of the video; None when there are none."""
+    v, dur = info["video"], info["duration_s"]
+    bars = []
+    for frac in (0.1, 0.5, 0.9):
+        w, h, x, y = active_area(path, max(0.0, dur * frac - 1.0), min(2.0, dur))
+        if not w or not h:
+            return None
+        bars.append((v["width"] - w, v["height"] - h))
+    lim = prof["black"]["letterbox_min_px"]
+    side, top = min(b[0] for b in bars), min(b[1] for b in bars)
+    if side >= lim or top >= lim:
+        return {"side_px_total": side, "top_bottom_px_total": top}
+    return None
 
 
 def grab_frames(path: str, duration: float, outdir: Path, prof: dict) -> dict:
@@ -170,13 +282,12 @@ def grab_frames(path: str, duration: float, outdir: Path, prof: dict) -> dict:
     thumbs = []
     for i, (t, score) in enumerate(times):
         dest = outdir / f"thumb-candidate-{i + 1:02d}.jpg"
-        # thumbnail= picks the most representative of the next 50 frames, which
-        # skips blinks and motion blur. A real frame, never generated art.
-        run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{t:.2f}",
-             "-i", path, "-vf", "thumbnail=50,scale=1280:-2", "-frames:v", "1",
+        # Save exactly the frame that was scored: a real frame, never generated art.
+        run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{t:.3f}",
+             "-i", path, "-frames:v", "1", "-vf", "scale=1280:-2", "-q:v", "2",
              str(dest)])
         if dest.exists() and dest.stat().st_size > 0:
-            thumbs.append({"file": dest.name, "at_s": round(t, 2), "score": score})
+            thumbs.append({"file": dest.name, "at_s": round(t, 3), "score": score})
     return {"contact_sheet": sheet.name if sheet.exists() else None,
             "thumbnail_method": "face+sharpness" if times and times[0][1] is not None
             else "even spacing",
@@ -185,49 +296,51 @@ def grab_frames(path: str, duration: float, outdir: Path, prof: dict) -> dict:
 
 def pick_thumbnail_times(path: str, duration: float, n: int, outdir: Path,
                          samples: int = 48) -> list[tuple[float, float | None]]:
-    """Rank sampled frames by face size and sharpness when OpenCV is installed.
+    """Rank sampled frames by face size and sharpness when OpenCV 4.x is installed.
 
     A face filling the frame makes a thumbnail; a screen share does not. Without
-    OpenCV this falls back to even spacing and says so in the receipt.
+    OpenCV, or on any OpenCV error, this falls back to even spacing and the
+    receipt says so. It never aborts the QA run.
     """
     even = [(duration * (i + 1) / (n + 1), None) for i in range(n)]
+    probe_dir = outdir / ".thumb-probe"
     try:
         import cv2  # optional; OpenCV 4.x (5.x dropped the Haar CascadeClassifier)
         cascade = cv2.CascadeClassifier(cv2.data.haarcascades +
                                         "haarcascade_frontalface_default.xml")
         if cascade.empty():
             return even
-    except (ImportError, AttributeError):
+        probe_dir.mkdir(parents=True, exist_ok=True)
+        scored = []
+        for i in range(samples):
+            t = duration * (i + 0.5) / samples
+            f = probe_dir / f"p{i:03d}.jpg"
+            run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss",
+                 f"{t:.3f}", "-i", path, "-frames:v", "1", "-vf", "scale=640:-2", str(f)])
+            img = cv2.imread(str(f))
+            if img is None:
+                continue
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            if gray.mean() < 25:  # black or near-black frame
+                continue
+            fh = gray.shape[0]
+            faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6,
+                                             minSize=(int(fh * 0.12), int(fh * 0.12)))
+            big = max((h for (_, _, _, h) in faces), default=0) / float(fh)
+            # A screen share full of photos has many small faces; a speaker on
+            # camera has one or two big ones. Reward the big face, punish the crowd.
+            crowd = max(1, len(faces) - 1)
+            # Screen shares are dense with text edges (measured Oct 2026 on a Zoom
+            # replay: camera frames 0.03 Canny edge density, screen shares
+            # 0.08–0.16). A face inside a screenshot is not the speaker.
+            busy = float((cv2.Canny(gray, 100, 200) > 0).mean())
+            screen = 0.25 if busy > 0.06 else 1.0
+            sharp = min(cv2.Laplacian(gray, cv2.CV_64F).var(), 600) / 600
+            scored.append((t, round(big * big * 100 / crowd * screen + sharp, 3)))
+    except Exception:  # noqa: BLE001 - a thumbnail helper must never sink the receipt
         return even
-    probe_dir = outdir / ".thumb-probe"
-    probe_dir.mkdir(parents=True, exist_ok=True)
-    scored = []
-    for i in range(samples):
-        t = duration * (i + 0.5) / samples
-        f = probe_dir / f"p{i:03d}.jpg"
-        run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{t:.2f}",
-             "-i", path, "-frames:v", "1", "-vf", "scale=640:-2", str(f)])
-        img = cv2.imread(str(f))
-        if img is None:
-            continue
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if gray.mean() < 25:  # black or near-black frame
-            continue
-        fh = gray.shape[0]
-        faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6,
-                                         minSize=(int(fh * 0.12), int(fh * 0.12)))
-        big = max((h for (_, _, _, h) in faces), default=0) / float(fh)
-        # A screen share full of photos has many small faces; a speaker on
-        # camera has one or two big ones. Reward the big face, punish the crowd.
-        crowd = max(1, len(faces) - 1)
-        # Screen shares are dense with text edges (measured Oct 2026 on a Zoom
-        # replay: camera frames 0.03 Canny edge density, screen shares 0.08–0.16).
-        # A face inside a screenshot is not the speaker; keep it, rank it low.
-        busy = float((cv2.Canny(gray, 100, 200) > 0).mean())
-        screen = 0.25 if busy > 0.06 else 1.0
-        sharp = min(cv2.Laplacian(gray, cv2.CV_64F).var(), 600) / 600
-        scored.append((t, round(big * big * 100 / crowd * screen + sharp, 3)))
-    shutil.rmtree(probe_dir, ignore_errors=True)
+    finally:
+        shutil.rmtree(probe_dir, ignore_errors=True)
     if not scored:
         return even
     scored.sort(key=lambda x: -x[1])
@@ -250,8 +363,15 @@ def verdict_for(values: list[str]) -> str:
 
 
 def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
-             prof: dict) -> list[dict]:
+             prof: dict, first_speech: float | None = None,
+             first_audio=NOT_MEASURED, threshold_db: float | None = None,
+             bars: dict | None = None) -> list[dict]:
+    """Turn measurements into checks. `first_speech` (first transcribed word) wins
+    over `first_audio` (first sound, None = measured silent); without either, the
+    leading silence is used.
+    Statuses: PASS, WARN, FAIL, or N/A for a check that could not apply."""
     dur = info["duration_s"]
+    audio_end = (info.get("audio") or {}).get("duration_s") or dur
     checks = []
 
     def add(name, status, measured, expected, note=""):
@@ -260,9 +380,10 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
 
     lp = prof["loudness"]
     il = loud.get("integrated_lufs")
-    if il is None or il != il or il == float("-inf"):
-        add("integrated_loudness", "FAIL", None, f"{lp['target_lufs']} LUFS",
-            "could not measure; silent or missing audio")
+    silent = il is None or il != il or il <= SILENT_LUFS
+    if silent:
+        add("integrated_loudness", "FAIL", None if il is None else f"{il:.1f} LUFS",
+            f"{lp['target_lufs']} LUFS", "silent or unmeasurable audio")
     else:
         off = abs(il - lp["target_lufs"])
         status = ("PASS" if off <= lp["pass_tolerance_lu"]
@@ -270,9 +391,9 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
         add("integrated_loudness", status, f"{il:.1f} LUFS",
             f"{lp['target_lufs']} ±{lp['pass_tolerance_lu']} LU",
             "" if status == "PASS" else
-            f"{il - lp['target_lufs']:+.1f} LU from target; run finish.py loudness")
+            f"{il - lp['target_lufs']:+.1f} LU from target; run finish.py --loudness")
     tp = loud.get("true_peak_dbtp")
-    if tp is not None:
+    if tp is not None and not silent:
         status = "PASS" if tp <= lp["true_peak_max_dbtp"] else (
             "FAIL" if tp > 0 else "WARN")
         add("true_peak", status, f"{tp:.1f} dBTP", f"≤ {lp['true_peak_max_dbtp']} dBTP",
@@ -280,12 +401,24 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
 
     pp = prof["pauses"]
     lead = silences[0] if silences and silences[0]["start"] <= 0.05 else None
-    trail = silences[-1] if silences and silences[-1]["end"] >= dur - 0.05 else None
-    first_speech = lead["end"] if lead else 0.0
+    trail = (silences[-1] if silences and silences[-1]["end"] >= audio_end - 0.15
+             else None)
     hook_max = prof["hook"]["max_first_speech_s"]
-    add("hook_first_speech", "PASS" if first_speech <= hook_max else "FAIL",
-        f"{first_speech:.2f}s", f"≤ {hook_max}s",
-        "" if first_speech <= hook_max else "dead air before the hook; trim the head")
+    if first_speech is not None:
+        name, start_s, note = "hook_first_speech", first_speech, "first transcribed word"
+    else:
+        name = "hook_first_audio"
+        # None = measured and silent; NOT_MEASURED = fall back to the leading silence.
+        start_s = (first_audio if first_audio is not NOT_MEASURED
+                   else (lead["end"] if lead else 0.0))
+        note = ("first SOUND, not first word: a music or tone intro passes this check; "
+                "give --srt or --words to check the first word")
+    if start_s is None:
+        add(name, "FAIL", "no sound", f"≤ {hook_max}s", "no audible start found")
+    else:
+        ok = start_s <= hook_max
+        add(name, "PASS" if ok else "FAIL", f"{start_s:.2f}s", f"≤ {hook_max}s",
+            note if ok else f"dead air before the hook; trim the head. ({note})")
     tail_s = trail["dur"] if trail and trail is not lead else 0.0
     tail_max = prof["tail"]["max_trailing_silence_s"]
     add("trailing_silence", "PASS" if tail_s <= tail_max else "WARN",
@@ -296,31 +429,44 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
     warn_pauses = [s for s in body if pp["warn_pause_s"] <= s["dur"] < pp["fail_pause_s"]]
     minutes = max(dur / 60.0, 1 / 60.0)
     rate = len(warn_pauses) / minutes
+    thr_note = f"silence = under {threshold_db} dB" if threshold_db is not None else ""
     add("pauses_over_fail", "FAIL" if long_pauses else "PASS",
-        len(long_pauses), f"0 pauses ≥ {pp['fail_pause_s']}s",
-        "; ".join(f"{s['start']:.1f}s ({s['dur']:.1f}s)"
-                  for s in sorted(long_pauses, key=lambda s: -s["dur"])[:5]))
+        len(long_pauses), f"0 pauses ≥ {pp['fail_pause_s']}s inside the video",
+        "; ".join([f"{s['start']:.1f}s ({s['dur']:.1f}s)"
+                   for s in sorted(long_pauses, key=lambda s: -s["dur"])[:5]]
+                  + ([thr_note] if thr_note else [])))
     add("pauses_over_warn_rate",
         "PASS" if rate <= pp["max_warn_pauses_per_minute"] else "WARN",
         f"{rate:.2f}/min ({len(warn_pauses)} total)",
         f"≤ {pp['max_warn_pauses_per_minute']}/min of {pp['warn_pause_s']}–"
-        f"{pp['fail_pause_s']}s pauses")
+        f"{pp['fail_pause_s']}s pauses", thr_note)
 
+    if info["video"] is None:
+        add("black_frames", "N/A", None, "video only", "no video stream")
+        return checks
     bp = prof["black"]
-    edge = 0.6  # blackdetect runs at 5 fps on a scaled copy; allow one sample of slop
+    edge = 0.1
     head_black = [b for b in black if b["start"] <= edge]
-    tail_black = [b for b in black if b["end"] >= dur - edge and b not in head_black]
+    tail_black = [b for b in black if b["end"] >= dur - edge - 0.5 and b not in head_black]
     body_black = [b for b in black if b not in head_black and b not in tail_black]
     add("black_frames", "FAIL" if body_black else "PASS", len(body_black),
-        f"0 black runs ≥ {bp['min_black_s']}s inside the video",
-        "; ".join(f"{b['start']:.1f}s ({b['dur']:.1f}s)" for b in body_black[:5]))
+        f"0 black or near-black runs ≥ {bp['min_black_s']}s inside the video",
+        "; ".join(f"{b['start']:.2f}s ({b['dur']:.2f}s)" for b in body_black[:5]))
     if head_black:
         add("black_open", "FAIL", f"{head_black[0]['dur']:.2f}s", "0s",
             "video opens on black; the hook frame must be the first frame")
     if tail_black:
         add("black_close", "WARN", f"{tail_black[-1]['dur']:.2f}s", "0s",
             "video ends on black; trim it or put the next step on screen")
+    if bars:
+        add("letterbox", "WARN",
+            f"{bars['top_bottom_px_total']}px top+bottom, {bars['side_px_total']}px sides",
+            "no bars", "crop them (finish.py --reframe strips bars automatically)")
     return checks
+
+
+def first_word_s(words: list[dict] | None) -> float | None:
+    return min((w["start"] for w in words), default=None) if words else None
 
 
 def sha256_head(path: str, limit: int = 64 * 1024 * 1024) -> str:
@@ -335,6 +481,7 @@ def render_markdown(rec: dict) -> str:
              f"- File: `{rec['file']}` ({rec['probe']['size_bytes']:,} bytes, "
              f"sha256 of first 64 MiB `{rec['sha256_head'][:16]}…`)",
              f"- Duration: {rec['probe']['duration_s']:.2f}s",
+             f"- Silence threshold: {rec.get('silence_threshold_db')} dB",
              f"- Measured: {rec['measured_at']} with {rec['tool']}", "",
              "| Check | Status | Measured | Expected | Note |",
              "|---|---|---|---|---|"]
@@ -343,31 +490,42 @@ def render_markdown(rec: dict) -> str:
                      f"{c['expected']} | {c['note']} |")
     if rec.get("frames"):
         lines += ["", f"Contact sheet: `{rec['frames'].get('contact_sheet')}`. "
-                  "Thumbnail candidates are real frames: " +
+                  f"Thumbnail candidates ({rec['frames'].get('thumbnail_method')}), "
+                  "real frames, best first: " +
                   ", ".join(f"`{t['file']}` @{t['at_s']}s"
                             for t in rec["frames"].get("thumbnail_candidates", []))]
-    lines += ["", "Nothing here was played aloud. A human still judges taste: "
-              "hook strength, story, and whether each cut keeps meaning."]
+    lines += ["", "The JSON lists the ten longest silences. Nothing here was played "
+              "aloud. A human still judges taste: hook strength, story, and whether "
+              "each cut keeps meaning."]
     return "\n".join(lines) + "\n"
 
 
-def qa(path: str, profile: dict, outdir: Path, frames: bool = True) -> dict:
+def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
+       words: list[dict] | None = None) -> dict:
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise RuntimeError("ffmpeg and ffprobe must be on PATH")
     info = probe(path)
     if info["audio"] is None:
-        raise RuntimeError("no audio stream")
-    aud = measure_audio(path, profile)
-    loud = parse_ebur128_summary(aud["stderr"])
-    silences = parse_silences(aud["stderr"], info["duration_s"])
+        raise RuntimeError("no audio stream: nothing to measure for loudness, hook "
+                           "or pauses")
+    loud = measure_loudness(path)
+    thr = silence_threshold(profile, loud.get("integrated_lufs"))
+    d = min(profile["pauses"]["warn_pause_s"], profile["tail"]["max_trailing_silence_s"])
+    silences = detect_silences(path, thr, d, info["duration_s"])
+    first_audio = first_sound_s(path, thr, 0.0, min(30.0, info["duration_s"]))
     black = measure_video(path, profile) if info["video"] else []
-    checks = evaluate(info, loud, silences, black, profile)
+    bars = letterbox(path, info, profile) if info["video"] else None
+    checks = evaluate(info, loud, silences, black, profile,
+                      first_speech=first_word_s(words), first_audio=first_audio,
+                      threshold_db=thr, bars=bars)
     rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
            "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "tool": "content-agent/scripts/video_qa.py", "probe": info,
-           "loudness": loud, "silences_detected": len(silences),
+           "loudness": loud, "silence_threshold_db": thr,
+           "first_audio_s": first_audio, "first_word_s": first_word_s(words),
+           "silences_detected": len(silences),
            "longest_silences": sorted(silences, key=lambda s: -s["dur"])[:10],
-           "black_runs": black, "checks": checks,
+           "black_runs": black, "letterbox": bars, "checks": checks,
            "verdict": verdict_for([c["status"] for c in checks]), "profile": profile}
     if frames and info["video"]:
         rec["frames"] = grab_frames(path, info["duration_s"], outdir, profile)
@@ -377,17 +535,31 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True) -> dict:
     return rec
 
 
+def _load_words_arg(srt: str | None, words: str | None) -> list[dict] | None:
+    if not srt and not words:
+        return None
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import finish  # local helper; finish imports this module lazily-safe
+    if words:
+        with open(words, encoding="utf-8") as fh:
+            return finish.normalize_words(json.load(fh))
+    return finish.words_from_srt(Path(srt).read_text(encoding="utf-8"))
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("video")
     ap.add_argument("--profile", help="video-style.json (uses its 'qa' block)")
+    ap.add_argument("--srt", help="transcript SRT on this file's timeline (first-word hook)")
+    ap.add_argument("--words", help="word-level JSON on this file's timeline")
     ap.add_argument("--out", help="receipt directory (default <video>.qa/)")
     ap.add_argument("--no-frames", action="store_true",
                     help="skip contact sheet and thumbnail candidates")
     args = ap.parse_args(argv)
     out = Path(args.out or (args.video + ".qa"))
     try:
-        rec = qa(args.video, load_profile(args.profile), out, frames=not args.no_frames)
+        rec = qa(args.video, load_profile(args.profile), out, frames=not args.no_frames,
+                 words=_load_words_arg(args.srt, args.words))
     except Exception as exc:  # report, never pretend
         print(f"QA could not measure {args.video}: {exc}", file=sys.stderr)
         return 2

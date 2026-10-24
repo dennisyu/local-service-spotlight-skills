@@ -13,7 +13,7 @@ with ffmpeg, costs no Descript credits, and reads its look from one style file
 Usage:
     finish.py IN -o OUT [--profile video-style.json]
               [--trim-head] [--loudness]
-              [--words words.json] [--srt captions.srt] [--burn | --sidecar]
+              [--words words.json] [--srt captions.srt] [--burn]
               [--clip START-END] [--reframe 9:16 --focus-x 0.5]
               [--keywords "Dollar a Day,GCT"]
 
@@ -21,7 +21,9 @@ Usage:
     faster-whisper dump). --srt takes a Descript export_transcript srt and spreads
     each cue's words evenly across the cue. Give BOTH and the captions use
     Descript's corrected words on the ASR's word clock (best of each). --clip
-    edges snap to word boundaries so no cut lands inside a word.
+    edges snap to word boundaries so no cut lands inside a word. Captions are
+    written as a sidecar .captions.srt unless --burn is given (burning re-encodes
+    the picture, so it is never the default).
 
 Video is copied untouched when only --loudness is asked for; any trim or burn
 re-encodes once with libx264 (preset veryfast unless the profile says otherwise).
@@ -53,13 +55,16 @@ DEFAULT_STYLE = {
     },
     "finish": {"head_pad_s": 0.08, "fade_s": 0.03, "x264_preset": "veryfast",
                "x264_crf": 18, "audio_bitrate": "192k", "lra_target": 11.0,
-               "true_peak_headroom_db": 0.5},
+               "true_peak_headroom_db": 1.0},
 }
 
 PUNCT_BREAK = re.compile(r"[.,!?;:\-—–]\"?$")
 CROSSTALK = {"right", "yeah", "yes", "yep", "mhm", "mm", "hmm", "uh", "um",
              "uhhuh", "okay", "ok", "wow", "nice", "sure"}
 NUMBERISH = re.compile(r"[\d$%]")
+# "Dennis Yu: ..." or "[Speaker 2]: ..." — every word capitalised, so "Step one:"
+# and "So here's the thing:" are left alone.
+SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[A-Z][\w.'-]*(?: [A-Z][\w.'-]*){0,2}):\s+")
 
 
 def load_style(path: str | None) -> dict:
@@ -113,7 +118,7 @@ def words_from_srt(text: str) -> list[dict]:
         start, end = _ts(a), _ts(b)
         body = " ".join(lines[lines.index(timing) + 1:])
         body = re.sub(r"<[^>]+>|\{[^}]+\}", "", body)
-        body = re.sub(r"^\s*\[?[A-Z][\w .'-]{0,30}\]?:\s+", "", body)  # speaker label
+        body = SPEAKER_LABEL.sub("", body, count=1)
         toks = body.split()
         if not toks or end <= start:
             continue
@@ -201,7 +206,9 @@ def chunk_words(words: list[dict], cap: dict) -> list[dict]:
             cue["end"] = min(cue["start"] + cap["min_cue_s"], max(limit, cue["end"]))
         if (merged and cue["end"] - cue["start"] < cap["min_cue_s"]
                 and not re.search(r"[.!?]\"?$", merged[-1]["words"][-1]["word"])
-                and len(merged[-1]["words"]) + len(cue["words"]) <= cap["max_words"]):
+                and len(merged[-1]["words"]) + len(cue["words"]) <= cap["max_words"]
+                and len(" ".join(x["word"] for x in merged[-1]["words"] + cue["words"]))
+                <= cap["max_chars"]):
             merged[-1]["words"] += cue["words"]
             merged[-1]["end"] = cue["end"]
             continue
@@ -225,15 +232,35 @@ def _clean(word: str) -> str:
     return re.sub(r"[^\w$%'-]", "", word).lower()
 
 
+def mark_keywords(words: list[dict], keywords: list[str]) -> list[dict]:
+    """Flag words that belong to a WHOLE keyword phrase ("Dollar a Day" lights up
+    only as three words in a row, never a lone "a")."""
+    phrases = [[_clean(t) for t in kw.split()] for kw in keywords if kw.strip()]
+    toks = [_clean(w["word"]) for w in words]
+    out = [dict(w) for w in words]
+    for ph in phrases:
+        n = len(ph)
+        for i in range(len(toks) - n + 1):
+            if toks[i:i + n] == ph:
+                for j in range(i, i + n):
+                    out[j]["hot"] = True
+    return out
+
+
+def _ass_safe(text: str) -> str:
+    """libass reads backslash sequences (\\N) and {braces} as commands."""
+    return text.replace("\\", "").replace("{", "(").replace("}", ")")
+
+
 def cue_text(cue: dict, cap: dict, ass: bool) -> str:
-    keys = {_clean(k) for kw in cap.get("keywords", []) for k in kw.split()}
     parts = []
     for w in cue["words"]:
         txt = w["word"].upper() if cap["uppercase"] else w["word"]
-        hot = _clean(w["word"]) in keys or (cap["highlight_numbers"]
-                                           and NUMBERISH.search(w["word"]))
-        if ass and hot:
-            txt = "{\\c&H%s&}%s{\\r}" % (cap["highlight_bgr"], txt)
+        hot = w.get("hot") or (cap["highlight_numbers"] and NUMBERISH.search(w["word"]))
+        if ass:
+            txt = _ass_safe(txt)
+            if hot:
+                txt = "{\\c&H%s&}%s{\\r}" % (cap["highlight_bgr"], txt)
         parts.append(txt)
     return " ".join(parts)
 
@@ -295,17 +322,14 @@ def assert_font(family: str) -> str:
 
 # ---------------------------------------------------------------- media ops
 
-def first_speech_s(path: str, threshold_db: float, offset: float = 0.0) -> float:
-    """Seconds (on the source timeline) where speech first starts after offset."""
-    res = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-ss", f"{offset:.3f}",
-                          "-t", "30", "-i", path,
-                          "-vn", "-af", f"silencedetect=noise={threshold_db}dB:d=0.25",
-                          "-f", "null", "-"], capture_output=True, text=True,
-                         errors="replace")
-    sil = video_qa.parse_silences(res.stderr, 30.0)
-    if sil and sil[0]["start"] <= 0.05:
-        return offset + sil[0]["end"]
-    return offset
+def first_speech_s(path: str, style: dict, offset: float, window: float) -> float | None:
+    """Source-timeline seconds where sound first starts inside [offset, offset+window].
+    The threshold follows the window's own loudness, so a quiet speaker is not
+    mistaken for silence. None = the whole window is silent (never trim then)."""
+    loud = video_qa.measure_loudness(path, offset, window)
+    thr = video_qa.silence_threshold(style["qa"], loud.get("integrated_lufs"))
+    t = video_qa.first_sound_s(path, thr, offset, window)
+    return None if t is None else offset + t
 
 
 def measure_loudnorm(path: str, start: float, style: dict,
@@ -342,18 +366,7 @@ def snap_to_words(words: list[dict], start: float, end: float,
     return s, e
 
 
-def active_area(path: str, start: float, seconds: float = 4.0) -> tuple[int, int, int, int]:
-    """Find the picture inside any letterbox bars (Zoom and webinar exports often
-    carry a few black rows), so a reframe never keeps a black strip."""
-    res = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-ss", f"{start:.3f}",
-                          "-t", f"{seconds:.3f}", "-i", path, "-an", "-vf",
-                          "cropdetect=limit=24:round=2:reset=0", "-f", "null", "-"],
-                         capture_output=True, text=True, errors="replace")
-    found = re.findall(r"crop=(\d+):(\d+):(\d+):(\d+)", res.stderr)
-    if not found:
-        return (0, 0, 0, 0)
-    w, h, x, y = (int(v) for v in max(set(found), key=found.count))
-    return (w, h, x, y)
+active_area = video_qa.active_area  # letterbox finder lives with the QA checks
 
 
 def reframe_filter(width: int, height: int, aspect: str, focus_x: float,
@@ -373,29 +386,62 @@ def reframe_filter(width: int, height: int, aspect: str, focus_x: float,
     return f"crop={cw}:{ch}:{x}:{y},scale={out_w}:{out_h}:flags=lanczos", out_w, out_h
 
 
+def parse_clip(text: str) -> tuple[float, float]:
+    """'3301.2-3342.8' -> (3301.2, 3342.8); rejects reversed or empty windows."""
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*", text or "")
+    if not m:
+        raise ValueError(f"--clip must look like START-END in seconds, got {text!r}")
+    a, b = float(m.group(1)), float(m.group(2))
+    if b <= a:
+        raise ValueError(f"--clip end {b} is not after start {a}")
+    return a, b
+
+
+def _loudnorm_json(stderr: str) -> dict:
+    blob = stderr[stderr.rfind("{"):stderr.rfind("}") + 1]
+    try:
+        return json.loads(blob) if blob else {}
+    except json.JSONDecodeError:
+        return {}
+
+
 def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
            words: list[dict] | None, burn: bool, keywords: list[str],
            reframe: str | None = None, focus_x: float = 0.5,
            clip: tuple[float, float] | None = None) -> dict:
     info = video_qa.probe(src)
+    if info["audio"] is None:
+        raise RuntimeError("source has no audio stream; nothing to normalise or caption")
+    if info["video"] is None and (burn or reframe):
+        raise RuntimeError("source has no video stream; --burn and --reframe need a picture")
     fin, cap = style["finish"], dict(style["captions"])
     cap["keywords"] = list(cap.get("keywords", [])) + keywords
-    clip_start, clip_end = clip if clip else (0.0, info["duration_s"])
-    snapped = None
+    report = {"source": os.path.basename(src), "output": os.path.basename(dst),
+              "steps": [], "warnings": []}
+
+    total = info["duration_s"]
+    clip_start, clip_end = clip if clip else (0.0, total)
+    if clip and (clip_start >= total or clip_end <= clip_start):
+        raise ValueError(f"--clip {clip_start}-{clip_end} is outside the "
+                         f"{total:.2f}s source")
+    clip_end = min(clip_end, total)
     if clip and words:
         clip_start, clip_end = snap_to_words(words, clip_start, clip_end,
                                              fin["head_pad_s"])
-        snapped = [round(clip_start, 3), round(clip_end, 3)]
+        report["clip_snapped_to_words"] = [round(clip_start, 3), round(clip_end, 3)]
     start = clip_start
     if trim_head:
-        fs = first_speech_s(src, style["qa"]["pauses"]["silence_threshold_db"],
-                            offset=clip_start)
-        start = max(clip_start, fs - fin["head_pad_s"])
+        fs = first_speech_s(src, style, clip_start, min(clip_end - clip_start, 120.0))
+        if fs is None:
+            report["warnings"].append("trim-head found no sound in the window; "
+                                      "nothing trimmed")
+        else:
+            start = max(clip_start, fs - fin["head_pad_s"])
     duration = clip_end - start
-    report = {"source": os.path.basename(src), "output": os.path.basename(dst),
-              "trimmed_head_s": round(start, 3), "steps": []}
-    if snapped:
-        report["clip_snapped_to_words"] = snapped
+    if duration <= 0.1:
+        raise ValueError("nothing left to render after trimming; check --clip and "
+                         "--trim-head")
+    report["start_s"] = round(start, 3)
 
     afilters = []
     if start > 0 or clip:
@@ -403,23 +449,37 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
     if clip:
         afilters.append(f"afade=t=out:st={max(0.0, duration - fin['fade_s']):.3f}"
                         f":d={fin['fade_s']}")
+    loud_on = False
     if loudness:
-        m = measure_loudnorm(src, start, style, duration if clip else None)
-        lp = style["qa"]["loudness"]
-        afilters.append(
-            f"loudnorm=I={lp['target_lufs']}:"
-            # AAC encoding adds inter-sample overs; aim under the QA ceiling.
-            f"TP={lp['true_peak_max_dbtp'] - fin.get('true_peak_headroom_db', 0.5)}:"
-            f"LRA={fin['lra_target']}:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
-            f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:"
-            f"offset={m['target_offset']}:linear=true")
-        afilters.append(f"aresample={info['audio']['sample_rate'] or 48000}")
-        report["steps"].append({"loudness_in_lufs": float(m["input_i"]),
-                                "true_peak_in_dbtp": float(m["input_tp"])})
+        m = measure_loudnorm(src, start, style, duration if (clip or start > 0) else None)
+        try:
+            in_i = float(m["input_i"])
+        except (KeyError, ValueError):
+            in_i = float("-inf")
+        if in_i != in_i or in_i <= video_qa.SILENT_LUFS:
+            report["warnings"].append("audio is silent or unmeasurable; loudness "
+                                      "pass skipped")
+        else:
+            loud_on = True
+            lp = style["qa"]["loudness"]
+            afilters.append(
+                f"loudnorm=I={lp['target_lufs']}:"
+                # AAC encoding adds inter-sample overs and ffmpeg falls back to
+                # dynamic mode when linear gain would clip: aim well under the
+                # QA ceiling (1 dB measured enough on a 66-minute replay).
+                f"TP={lp['true_peak_max_dbtp'] - fin.get('true_peak_headroom_db', 1.0)}:"
+                f"LRA={fin['lra_target']}:measured_I={m['input_i']}:"
+                f"measured_TP={m['input_tp']}:measured_LRA={m['input_lra']}:"
+                f"measured_thresh={m['input_thresh']}:offset={m['target_offset']}:"
+                f"linear=true:print_format=json")
+            afilters.append(f"aresample={info['audio']['sample_rate'] or 48000}")
+            report["steps"].append({"loudness_in_lufs": in_i,
+                                    "true_peak_in_dbtp": float(m["input_tp"])})
 
     work = Path(tempfile.mkdtemp(prefix="finish-"))
-    vfilters, sidecar = [], None
-    out_w, out_h = info["video"]["width"], info["video"]["height"]
+    vfilters = []
+    if info["video"]:
+        out_w, out_h = info["video"]["width"], info["video"]["height"]
     if reframe:
         aw, ah, ax, ay = active_area(src, start, min(duration, 4.0))
         if aw >= out_w * 0.5 and ah >= out_h * 0.5:  # ignore a near-black frame
@@ -430,41 +490,62 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         crop, out_w, out_h = reframe_filter(out_w, out_h, reframe, focus_x, *offset)
         vfilters.append(crop)
         report["reframe"] = {"aspect": reframe, "focus_x": focus_x, "size": [out_w, out_h]}
+    out_words = None
     if words:
         inside = [w for w in words if w["start"] >= start - 0.05
                   and w["end"] <= start + duration + 0.05]
+        inside = mark_keywords(inside, cap["keywords"])
         cues = shift_cues(chunk_words(inside, cap), start)
+        out_words = [{**w, "start": max(0.0, w["start"] - start),
+                      "end": w["end"] - start} for w in inside]
         sidecar = Path(dst).with_suffix(".captions.srt")
         sidecar.write_text(build_srt(cues, cap), encoding="utf-8")
-        report["steps"].append({"caption_cues": len(cues), "sidecar_srt": sidecar.name})
+        report["steps"].append({"caption_cues": len(cues), "sidecar_srt": sidecar.name,
+                                "burned": bool(burn)})
         if burn:
             report["caption_font"] = assert_font(cap["font"])
-            (work / "cap.ass").write_text(
-                build_ass(cues, cap, out_w, out_h),
-                encoding="utf-8")
+            (work / "cap.ass").write_text(build_ass(cues, cap, out_w, out_h),
+                                          encoding="utf-8")
             vfilters.append("ass=cap.ass")  # LAST in the chain, after any overlay
-    reencode = bool(vfilters) or start > 0 or bool(clip)
-    cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
+    elif burn:
+        report["warnings"].append("--burn given without --words or --srt; no captions")
+    has_video = info["video"] is not None
+    reencode = has_video and (bool(vfilters) or start > 0 or bool(clip))
+    cmd = ["ffmpeg", "-hide_banner", "-nostats", "-y"]
     if start > 0:
         cmd += ["-ss", f"{start:.3f}"]
-    if clip:
+    if clip or start > 0:
         cmd += ["-t", f"{duration:.3f}"]
-    cmd += ["-i", os.path.abspath(src), "-map", "0:v:0?", "-map", "0:a:0"]
+    cmd += ["-i", os.path.abspath(src)]
+    cmd += (["-map", "0:v:0", "-map", "0:a:0"] if has_video else ["-map", "0:a:0", "-vn"])
     if vfilters:
         cmd += ["-vf", ",".join(vfilters)]
-    cmd += (["-c:v", "libx264", "-preset", fin["x264_preset"], "-crf",
-             str(fin["x264_crf"]), "-pix_fmt", "yuv420p"] if reencode else ["-c:v", "copy"])
+    if has_video:
+        cmd += (["-c:v", "libx264", "-preset", fin["x264_preset"], "-crf",
+                 str(fin["x264_crf"]), "-pix_fmt", "yuv420p"] if reencode
+                else ["-c:v", "copy"])
     if afilters:
         cmd += ["-af", ",".join(afilters), "-c:a", "aac", "-b:a", fin["audio_bitrate"]]
     else:
         cmd += ["-c:a", "copy"]
-    cmd += ["-movflags", "+faststart", os.path.abspath(dst)]
+    if has_video or dst.lower().endswith((".mp4", ".m4a", ".mov")):
+        cmd += ["-movflags", "+faststart"]
+    cmd += [os.path.abspath(dst)]
     res = subprocess.run(cmd, cwd=work, capture_output=True, text=True, errors="replace")
     shutil.rmtree(work, ignore_errors=True)
     if res.returncode != 0:
-        raise RuntimeError(f"render failed: {res.stderr[-600:]}")
+        tail = [l for l in res.stderr.splitlines() if l.strip()][-6:]
+        raise RuntimeError("render failed: " + " | ".join(tail))
+    if loud_on:
+        ln = _loudnorm_json(res.stderr)
+        report["loudnorm_mode"] = ln.get("normalization_type", "unknown")
+        if report["loudnorm_mode"] != "linear":
+            report["warnings"].append(
+                "loudnorm fell back to dynamic mode (linear gain would have clipped); "
+                "loudness range is slightly compressed")
     report["video_reencoded"] = reencode
     report["expected_duration_s"] = round(duration, 3)
+    report["_out_words"] = out_words
     return report
 
 
@@ -491,8 +572,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--srt", help="cue-level SRT, e.g. Descript export (text). "
                     "Give both to keep Descript's words on the ASR's clock.")
     m = ap.add_mutually_exclusive_group()
-    m.add_argument("--burn", action="store_true", help="burn captions into the picture")
-    m.add_argument("--sidecar", action="store_true", help="write captions.srt only")
+    m.add_argument("--burn", action="store_true",
+                   help="burn captions into the picture (re-encodes the video)")
+    m.add_argument("--sidecar", action="store_true",
+                   help="write captions.srt only (the default when --burn is absent)")
     ap.add_argument("--keywords", default="", help="comma list to highlight")
     ap.add_argument("--reframe", help="crop to an aspect such as 9:16 or 1:1")
     ap.add_argument("--focus-x", type=float, default=0.5,
@@ -504,13 +587,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         words = load_words(args)
         rep = finish(args.src, args.out, style, args.trim_head, args.loudness, words,
-                     burn=bool(words) and not args.sidecar,
+                     burn=args.burn,
                      keywords=[k.strip() for k in args.keywords.split(",") if k.strip()],
                      reframe=args.reframe, focus_x=args.focus_x,
-                     clip=tuple(float(x) for x in args.clip.split("-")) if args.clip
-                     else None)
+                     clip=parse_clip(args.clip) if args.clip else None)
+        out_words = rep.pop("_out_words", None)
         if not args.no_qa:
-            qa = video_qa.qa(args.out, style["qa"], Path(args.out + ".qa"))
+            qa = video_qa.qa(args.out, style["qa"], Path(args.out + ".qa"),
+                             words=out_words)
             rep["qa_verdict"] = qa["verdict"]
             rep["qa_receipt"] = args.out + ".qa/qa-receipt.md"
             got = qa["probe"]["duration_s"]
