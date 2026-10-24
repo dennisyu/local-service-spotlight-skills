@@ -11,7 +11,7 @@ whichever editor produced it (Descript, ffmpeg, video-use, a VA in CapCut).
 
 It never plays sound. Everything is measured from the stream with ffmpeg.
 
-What it can and cannot see (eight independent audits, 23-24 Oct 2026):
+What it can and cannot see (nine independent audits, 23-24 Oct 2026):
 - The file must decode. A decoder error, a stream that ends early against what
   the container claims (in time AND, where the container counts them, in
   frames), a WAV whose header promises more audio than it holds, or an
@@ -24,7 +24,10 @@ What it can and cannot see (eight independent audits, 23-24 Oct 2026):
   are not truncation or decoder errors. An MP3 cut short by under half a
   second can pass: nothing in the file says it was longer. A live-recorded
   WebM with no duration is measured by what decodes. A picture that stops
-  before the sound is a WARN (`picture_ends_early`).
+  before the sound is a WARN (`picture_ends_early`). A file that opens or
+  closes as loud as talk (its first or last 60 ms within 12 dB of the talk)
+  was cut inside a word or a sound: a `cut_inside_sound` WARN. A channel 30 dB
+  or more under the loudest (talk on one input only) is a `one_channel` WARN.
 - With a transcript (--srt or --words) the hook check uses the first WORD;
   "[Music]", "(applause)", "*music*" cues are not words. A word cannot start
   before anything as loud as talk is audible (a breath does not count; a bed
@@ -65,7 +68,12 @@ What it can and cannot see (eight independent audits, 23-24 Oct 2026):
   jump-cut edit), pauses cannot be heard by level and that stretch is
   unmeasurable: a quarter of the file or more makes the pause checks WARN,
   less adds a note. With word timing, masked time inside the transcript is
-  measured by the gaps between words instead.
+  measured by the gaps between words instead. Where the threshold had to rise
+  over steady room noise (a fan, AC, a hum), the soft ends of words fall under
+  it and a pause reads long (true 1.95 s pauses read 2.31 s), so a pause over
+  the 2 s line by less than 0.025 s per dB of rise (at most 0.5 s) is a
+  `pauses_near_fail` WARN to listen to, not a FAIL; noise that climbs through
+  the pause (a gain control or a compressor lifting it) gets no slack.
 - With word timing (--words), a sound no word explains does not end a pause: a
   breath, a sniff, a soft "mm", a sigh or a double cough inside a dead gap
   counts toward the 2-second FAIL (up to 1.2 s of such sound, under 40% of the
@@ -82,18 +90,24 @@ What it can and cannot see (eight independent audits, 23-24 Oct 2026):
   and so is one that runs straight on from a word (0.4 s or more of loud sound
   past the word). Word timing speaks only within 2.5 s of a word the ASR
   heard; a words file that covers part of the video leaves the rest to the
-  SRT's rules. An SRT alone spreads its words evenly over each cue, so it
+  SRT's rules, or with no SRT lists what it cannot judge there rather than
+  failing it, and 20 s or more of talk (a quarter of it) beyond the words file
+  is a `word_coverage` WARN. An SRT alone spreads its words evenly over each cue, so it
   cannot tell a cough from a word: the same WARN lists those stretches, and a
   `word_timing` WARN says gaps inside a cue are not checked. With word timing,
   a gap of 1.5 s or more between words (ASR words run early into a gap) that
   no single level silence mostly fills is a `talk_gaps` WARN when talk-loud
   sound (counted window by window) fills under a quarter of it (a quieter bed,
   a long sigh, lifted room noise), or when more than a second of it lies over
-  a second from both words (a crowd whose peaks read as loud as talk). If the
+  a second from both words (a crowd whose peaks read as loud as talk), or when
+  the words stop for 2 s or more around half a second of sound that is neither
+  level silence nor a voice (room hiss a gain control or a compressor pumps up
+  through the stop, which cuts the level silence short). If the
   SRT and the words file mostly disagree, a `transcript_match` WARN says so.
   Known limits: without word timing, a gap inside one cue that a music bed or
   a crowd fills (anywhere between about 10 dB under the talk and the silence
-  threshold) is not flagged beyond that word_timing WARN. A bed or crowd 15 dB
+  threshold) is not flagged beyond that word_timing WARN; with it, a tonal bed
+  within about 12 dB of the talk under a stop shorter than 3 s is not either. A bed or crowd 15 dB
   or more under the talk that barely moves reads as silence, so a talk gap
   over it is a pause. Pause COUNTS move with noise and beds (8 on a clean
   minute of the replay, 14 to 19 with noise under it). Under steady noise
@@ -156,6 +170,13 @@ DEFAULT_PROFILE = {
                # stretch of at least flat_part_s away from talk-level sound.
                "flat_noise_under_db": 15.0, "flat_noise_spread_db": 6.0,
                "flat_part_s": 0.25,
+               # Where the threshold rose over room noise, a pause within this
+               # much per dB of rise (at most noise_slack_max_s) over fail_pause_s
+               # is listed, not failed: soft word ends hide under the noise.
+               "noise_slack_s_per_db": 0.025, "noise_slack_max_s": 0.5,
+               # A 10 ms window reads as a voice at or under this spectral
+               # flatness (vowels ~0.06; room hiss ~0.18).
+               "talk_flatness": 0.12,
                # Pad around each transcribed word when deciding whether a short
                # sound inside a pause is talk.
                "word_pad_s": 0.15,
@@ -540,6 +561,7 @@ def audio_scan(path: str, start: float = 0.0, seconds: float | None = None,
     peaks, flat = [], []
     fl: dict = {}
     pk: dict = {}
+    chan: dict = {}  # loudest 10 ms peak of each channel over the file
 
     def num(text: str) -> float | None:
         try:
@@ -561,6 +583,7 @@ def audio_scan(path: str, start: float = 0.0, seconds: float | None = None,
             fl[ch] = val
         elif ch != "Overall":
             pk[ch] = val if val is not None else -120.0
+            chan[ch] = max(chan.get(ch, -120.0), pk[ch])
         else:
             peaks.append(-120.0 if val is None or val < -120.0 else min(val, 0.0))
             if spectral:
@@ -571,7 +594,8 @@ def audio_scan(path: str, start: float = 0.0, seconds: float | None = None,
     errors = file_errors(res.stderr)
     w = n / float(sr)
     return {"peaks": peaks, "window_s": w, "decoded_s": round(len(peaks) * w, 3),
-            "errors": errors, "flatness": flat if spectral else None}
+            "errors": errors, "flatness": flat if spectral else None,
+            "channel_peaks_db": {k: round(v, 1) for k, v in chan.items()} if spectral else None}
 
 
 def classify_levels(peaks: list[float], w: float, prof: dict,
@@ -1046,7 +1070,8 @@ def analyze_audio(path: str, prof: dict, start: float = 0.0,
     return {"silences": silences, "first_sound": first, "skipped": skipped,
             "noise": noise, "decoded_s": length, "errors": scan["errors"],
             "runs": runs_s, "min_pause_s": min_d, "voice": voice,
-            "peaks": peaks, "window_s": w, "scan": scan}
+            "peaks": peaks, "window_s": w, "scan": scan,
+            "thresholds": cl["thresholds"], "block": cl["block"]}
 
 
 # ---------------------------------------------------------------- transcript vs level
@@ -1188,7 +1213,8 @@ def merge_pauses(runs: list[tuple[int, float, float]], timing: str, spans: list,
                  min_side: float = 0.4, near_s: float = 1.0,
                  far_max_s: float = 1.2, peak_of=None,
                  loud_db: float | None = None, max_sound_frac: float = 0.4,
-                 cover: list[tuple[float, float]] | None = None) -> list[dict]:
+                 cover: list[tuple[float, float]] | None = None,
+                 cues: bool = True) -> list[dict]:
     """Join silences across a short sound whose verdict is in `allow`.
 
     A sound is 'talk' when a heard word overlaps it. With word timing it is
@@ -1209,12 +1235,17 @@ def merge_pauses(runs: list[tuple[int, float, float]], timing: str, spans: list,
     band-limited and reads as tonal as a vowel.) allow=('none',) gives the
     pauses we can stand behind; ('none', 'unknown') the stretches a person
     should listen to. With `cover` (word_cover()), word timing rules apply only
-    there; elsewhere a words file is silent and the cue rules apply."""
+    there; elsewhere a words file is silent and the cue rules apply, or, with no
+    SRT's cues to go by (`cues` false), every sound there is 'unknown' as with no
+    transcript (audit round 9: a words file for the first minute only joined
+    pauses across real words later on)."""
     sp = [(x[0], x[1], x[2] if len(x) > 2 else timing == "word") for x in spans]
     words = [(x, y) for x, y, sure in sp if sure]
 
     def verdict(a: float, b: float) -> str:
         if timing == "word" and not in_cover(cover, a, b):
+            if not cues:
+                return "unknown"
             return "unknown" if any(x < b and y > a for x, y, _ in sp) else "none"
         if timing == "word":
             if any(x < b and y > a for x, y in words):
@@ -1257,7 +1288,8 @@ def merge_pauses(runs: list[tuple[int, float, float]], timing: str, spans: list,
 
 
 def talk_loud_spans(runs: list[tuple[int, float, float]], peaks: list[float], w: float,
-                    offset: float, loud_db: float, reach: float = 0.15) -> list[tuple[float, float]]:
+                    offset: float, loud_db: float, reach: float = 0.15,
+                    ok=None) -> list[tuple[float, float]]:
     """Where sound is as loud as talk, window by window (a sound or unmeasurable
     window at or over loud_db, widened by `reach` within its own run, so the
     syllables of a phrase join up). Audit round 8: counting whole sound runs
@@ -1270,7 +1302,7 @@ def talk_loud_spans(runs: list[tuple[int, float, float]], peaks: list[float], w:
         i0 = max(0, int(round((a - offset) / w)))
         i1 = min(len(peaks), max(i0 + 1, int(round((b - offset) / w))))
         for i in range(i0, i1):
-            if peaks[i] < loud_db:
+            if peaks[i] < loud_db or (ok is not None and not ok(i)):
                 continue
             x, y = max(a, offset + i * w - reach), min(b, offset + (i + 1) * w + reach)
             if out and x <= out[-1][1] + 1e-9:
@@ -1536,7 +1568,8 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
              bars: dict | None = None, noise: dict | None = None,
              decode: dict | None = None, words: list[dict] | None = None,
              possible_pauses: list[dict] | None = None,
-             loud_runs: list[tuple[float, float]] | None = None) -> list[dict]:
+             loud_runs: list[tuple[float, float]] | None = None,
+             voiced_runs: list[tuple[float, float]] | None = None) -> list[dict]:
     """Turn measurements into checks. `first_speech` (first transcribed word) wins
     over `first_audio` (first real sound, None = none found); without either, the
     leading silence is used. `noise` is analyze_audio()'s summary: unmeasurable
@@ -1674,7 +1707,8 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
             + ("; did the microphone stop?" if status == "FAIL" else ""))
 
     body = [s for s in silences if s is not lead and s is not trail]
-    long_pauses = [s for s in body if s["dur"] >= pp["fail_pause_s"]]
+    long_pauses = [s for s in body if s["dur"] >= pp["fail_pause_s"] and "near_fail" not in s]
+    near = [s for s in body if s["dur"] >= pp["fail_pause_s"] and "near_fail" in s]
     warn_pauses = [s for s in body
                    if pp["warn_pause_s"] - 1e-6 <= s["dur"] < pp["fail_pause_s"]]
     minutes = max(dur / 60.0, 1 / 60.0)
@@ -1695,6 +1729,14 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
     else:
         add("pauses_over_fail", "PASS", 0,
             f"0 pauses ≥ {pp['fail_pause_s']}s inside the video", thr_note)
+    if near:
+        add("pauses_near_fail", "WARN", len(near),
+            f"0 pauses ≥ {pp['fail_pause_s']}s inside the video",
+            "these read just over the line where the threshold sits over room noise "
+            "(a fan, AC, hum or auto-gain), which hides the soft ends of words and "
+            "makes pauses read long; listen to each: "
+            + "; ".join(f"{s['start']:.1f}s ({s['dur']:.2f}s, threshold +{s['near_fail']:g} dB)"
+                        for s in sorted(near, key=lambda s: -s["dur"])[:5]))
     # The transcript hears pauses in TALK that the level cannot: the speaker stops
     # while a music bed or a crowd 20-25 dB down keeps sounding (audit round 4).
     if words:
@@ -1723,6 +1765,19 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
             middle = (ge - gs) - 2.0 * float(pp.get("word_near_s", 1.0))
             if quiet < 0.5 * (ge - gs) and (talky < 0.25 * (ge - gs)
                                              or (heard_words and middle >= 1.0)):
+                talk_gaps.append((gs, ge - gs))
+            elif (heard_words and ge - gs >= pp["fail_pause_s"] - 1e-6
+                  and quiet < pp["fail_pause_s"]
+                  and (ge - gs) - sum(max(0.0, min(s_["end"], ge) - max(s_["start"], gs))
+                                      for s_ in silences) >= 0.5
+                  and sum(max(0.0, min(b, ge) - max(a, gs))
+                          for a, b in (loud_runs if voiced_runs is None else voiced_runs))
+                  < 0.25 * (ge - gs)):
+                # The talk stops for the full limit while the level hears half
+                # a second or more of sound that is neither a voice nor a word:
+                # room noise that a gain control or a compressor raises through
+                # the pause cuts the level silence short (audit round 9: a
+                # 2.4 s stop read 1.3 s).
                 talk_gaps.append((gs, ge - gs))
         if talk_gaps:
             add("talk_gaps", "WARN", len(talk_gaps),
@@ -1765,6 +1820,58 @@ def evaluate(info: dict, loud: dict, silences: list[dict], black: list[dict],
              "false to make this a WARN once the 0.6 s rule is enforced in the edit. "
              if advisory else "") + thr_note)
     return checks + _video_checks(info, black, prof, bars)
+
+
+def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: float,
+                             head_gap: float, tail_gap: float, prof: dict,
+                             loud_runs: list[tuple[float, float]] | None,
+                             cover: list[tuple[float, float]] | None,
+                             timing: str) -> list[dict]:
+    """Checks on the audio as a whole: a file that opens or closes in the middle
+    of a word (audit round 9: a short cut on a word clock 0.85 s late opened
+    0.77 s into "Landscaping"), sound in one channel only, and talk the words
+    file does not reach."""
+    out = []
+    edge = max(1, int(round(0.06 / w)))
+    ends = []
+    if len(pk) > 4 * edge:
+        if head_gap < 0.05 and max(pk[:edge]) >= loud_db:
+            ends.append("opens")
+        if tail_gap < 0.05 and max(pk[-edge:]) >= loud_db:
+            ends.append("closes")
+    if ends:
+        out.append({"check": "cut_inside_sound", "status": "WARN",
+                    "measured": " and ".join(ends) + " as loud as talk",
+                    "expected": "the first and last 60 ms quieter than talk",
+                    "note": "the file " + " and ".join(ends) + " inside a word or a sound: a "
+                            "clip or trim edge placed on an ASR word clock that ran late or "
+                            "early; move the cut into the silence beside the word (finish.py "
+                            "does this for --clip and --trim-head), or listen"})
+    chans = (aud.get("scan") or {}).get("channel_peaks_db") or {}
+    if len(chans) >= 2:
+        top = max(chans.values())
+        dead = [k for k, v in chans.items() if v < top - 30.0]
+        if top > -60.0 and dead:
+            out.append({"check": "one_channel", "status": "WARN",
+                        "measured": f"channel {', '.join(dead)} {min(chans.values()):.0f} dB, "
+                                    f"loudest {top:.0f} dB",
+                        "expected": "sound in every channel",
+                        "note": "the talk is in one channel only (a camera or a lav on one "
+                                "input): earbuds and some players play it in one ear, and "
+                                "loudness reads 1.5-3 LU low; finish.py --loudness copies the "
+                                "live channel to both"})
+    if timing == "word" and cover is not None and loud_runs:
+        outside = sum(max(0.0, b - a) - sum(max(0.0, min(b, y) - max(a, x)) for x, y in cover)
+                      for a, b in loud_runs)
+        talk = sum(b - a for a, b in loud_runs)
+        if outside >= 20.0 and outside >= 0.25 * talk:
+            out.append({"check": "word_coverage", "status": "WARN",
+                        "measured": f"{outside:.0f}s of talk-level sound beyond the words",
+                        "expected": "word timing for the whole video",
+                        "note": "the words file covers only part of this video; elsewhere "
+                                "pauses are judged by level alone (a cough cannot be told from "
+                                "a word there); run transcribe_words.py on the whole file"})
+    return out
 
 
 def _video_checks(info: dict, black: list[dict], prof: dict,
@@ -1912,7 +2019,10 @@ def _merge_gap(silences: list[dict], start: float, end: float) -> list[dict]:
 
 
 def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
-       words: list[dict] | None = None) -> dict:
+       words: list[dict] | None = None, loud: dict | None = None) -> dict:
+    """Measure `path` and write the receipt. `loud` is a measure_loudness() result
+    for this exact file when the caller already has one (finish.py measures the
+    true peak of what it wrote)."""
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise RuntimeError("ffmpeg and ffprobe must be on PATH")
     info = probe(path)
@@ -1920,7 +2030,7 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
         raise RuntimeError("no audio or video stream to measure")
     if info["audio"] is None:
         return _qa_video_only(path, info, profile, outdir, frames)
-    loud = measure_loudness(path)
+    loud = loud or measure_loudness(path)
     a, v = info["audio"], info["video"]
     a_start = a["start_s"] or 0.0
     # Put the audio on the file's timeline: audio that starts after the picture is
@@ -2023,6 +2133,7 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
                             if x.get("timing") != "cue" and x.get("heard", True)],
                            pp["fail_pause_s"] + 0.5)
         kw["cover"] = cover
+        kw["cues"] = any("cue_start" in x for x in words)
         # A loud sound that runs on from a word (a cough straight after "200?")
         # is its own sound, so the stretch it opens can be listed (round 8).
         runs = split_word_edges(runs, spans, float(pp.get("join_min_silence_s", 0.4)),
@@ -2032,6 +2143,36 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     min_d = aud["min_pause_s"]
     silences = [{"start": x["start"], "end": x["end"], "dur": x["dur"]}
                 for x in sure if x["dur"] >= min_d - 1e-6]
+    # Where the threshold had to rise over room noise, the soft ends of words
+    # fall under it and a pause reads long: 0.1 to 0.35 s under a fan, AC or
+    # hum 11 to 23 LU under the talk (audit round 9: true 1.95 s pauses read
+    # 2.31 s). A pause within that margin of the line is listed, not failed.
+    thr, blk = aud.get("thresholds") or [], (aud.get("block") or 1) * pw
+    base_thr = aud["noise"]["base_threshold_db"]
+    per_db = float(pp.get("noise_slack_s_per_db", 0.025))
+    max_slack = float(pp.get("noise_slack_max_s", 0.5))
+
+    def raised_at(t: float) -> float:
+        if not thr:
+            return 0.0
+        b = min(len(thr) - 1, max(0, int((t - head_gap) / blk)))
+        return max(0.0, thr[b] - base_thr)
+    def steady(a: float, b: float) -> bool:
+        # A fan or a hum sounds the same through the pause; noise that a gain
+        # control or a compressor lifts in the pause climbs (5 to 10 dB from its
+        # first third to its last), and there the pause reads SHORT, not long.
+        seg = pk[max(0, int((a + 0.1 - head_gap) / pw)):max(0, int((b - 0.1 - head_gap) / pw))]
+        k = len(seg) // 3
+        if k < 5:
+            return False
+        first, last = sorted(seg[:k]), sorted(seg[-k:])
+        return last[len(last) // 2] - first[len(first) // 2] < 3.5
+    for s in silences:
+        if s["dur"] >= pp["fail_pause_s"] - 1e-6 and s["start"] > 0.05:
+            raised = max(raised_at(s["start"] + 0.01), raised_at(s["end"] - 0.01))
+            slack = min(max_slack, per_db * raised)
+            if s["dur"] < pp["fail_pause_s"] + slack - 1e-6 and steady(s["start"], s["end"]):
+                s["near_fail"] = round(raised, 1)
     end_on_file = max(file_len, audio_end_on_file)
     # Without word timing a short phrase between two pauses looks the same as a
     # cough, so only stretches whose SILENCE alone reaches fail_pause_s, broken by
@@ -2075,17 +2216,34 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     bars = letterbox(path, info, profile) if v else None
     loud_runs = talk_loud_spans(runs, pk, pw, head_gap, kw["loud_db"],
                                 float(pp.get("word_pad_s", 0.15)))
+    voiced_runs = None
+    flat = (aud.get("scan") or {}).get("flatness")
+    if flat and aud["noise"].get("voiced_frac") is not None \
+            and aud["noise"]["voiced_frac"] >= float(profile["hook"].get("voiced_min_frac", 0.8)):
+        # The same, counting only windows that read as a voice (spectral flatness
+        # at or under talk_flatness): a loudness pass or a compressor can pump
+        # room hiss in a pause up to the talk's level, and hiss is flatter than
+        # a vowel (audit round 9: hiss ~0.18, talk ~0.06).
+        vmax = float(pp.get("talk_flatness", 0.12))
+        voiced_runs = talk_loud_spans(runs, pk, pw, head_gap, kw["loud_db"],
+                                      float(pp.get("word_pad_s", 0.15)),
+                                      ok=lambda i: i < len(flat) and flat[i] is not None
+                                      and flat[i] <= vmax)
     checks = evaluate(eval_info, loud, silences, vid["runs"], profile,
                       first_speech=first_word_s(words), first_audio=first_audio,
                       threshold_db=aud["noise"]["base_threshold_db"], bars=bars,
                       noise=aud["noise"], decode=decode, words=words,
-                      possible_pauses=possible, loud_runs=loud_runs)
+                      possible_pauses=possible, loud_runs=loud_runs,
+                      voiced_runs=voiced_runs)
     if v and audio_end_on_file - file_len > 0.5:
         checks.append({"check": "picture_ends_early", "status": "WARN",
                        "measured": f"{audio_end_on_file - file_len:.2f}s",
                        "expected": "picture and sound end together",
                        "note": "the picture stops before the sound; players freeze the "
                                "last frame or show black"})
+    checks += _edge_and_channel_checks(pk, pw, aud, kw["loud_db"], head_gap,
+                                       file_len - audio_end_on_file, profile,
+                                       loud_runs, cover, timing)
     rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
            "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "tool": "content-agent/scripts/video_qa.py", "probe": info,

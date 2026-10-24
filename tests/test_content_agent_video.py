@@ -1035,9 +1035,12 @@ class AuditRound8(unittest.TestCase):
     def test_descripts_label_on_the_first_cue_only_is_stripped(self):
         srt = ("1\n00:00:00,000 --> 00:00:02,000\nDennis: So everything we\n\n"
                "2\n00:00:02,000 --> 00:00:04,000\nwere doing here\n\n"
-               "3\n00:00:04,000 --> 00:00:05,000\nBob Smith: Yeah\n")
+               "3\n00:00:04,000 --> 00:00:05,000\nBob Smith: Yeah\n\n"
+               "4\n00:00:05,000 --> 00:00:06,000\nDennis: and so\n\n"
+               "5\n00:00:06,000 --> 00:00:07,000\nBob Smith: Right\n")
         self.assertEqual([x["word"] for x in finish.words_from_srt(srt)],
-                         ["So", "everything", "we", "were", "doing", "here", "Yeah"])
+                         ["So", "everything", "we", "were", "doing", "here", "Yeah",
+                          "and", "so", "Right"])
 
     def test_more_label_shapes(self):
         for lab in ("SPEAKER 1:", "dennis yu:", "Ludwig van Beethoven:"):
@@ -1103,6 +1106,167 @@ class AuditRound8(unittest.TestCase):
                                              CAP["bold"], int(m.group(1))), room)
         short = {"start": 0.0, "end": 1.0, "words": [w("hello", 0.0, 1.0)]}
         self.assertNotIn("\\fs", finish.build_ass([short], CAP, 1080, 1920).split("[Events]")[1])
+
+
+class AuditRound9(unittest.TestCase):
+    """Ninth independent audit, 24 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+
+    def test_a_clip_start_moves_back_into_the_silence_before_the_sound(self):
+        runs = [(1, 0.0, 4.0), (0, 4.0, 4.6), (1, 4.6, 8.0)]          # talk resumes at 4.6
+        cut, ok = finish.settle_start(runs, 5.4, 3.9, 5.32, 0.08)      # word clock 0.8 s late
+        self.assertTrue(ok)
+        self.assertAlmostEqual(cut, 4.52, places=2)
+        # The previous word ends after that silence: no pause to move to.
+        cut, ok = finish.settle_start(runs, 5.4, 4.7, 5.32, 0.08)
+        self.assertFalse(ok)
+        self.assertEqual(cut, 5.32)
+        # A start already in the silence before the word stays in it.
+        quiet = [(1, 0.0, 4.0), (0, 4.0, 5.38), (1, 5.38, 8.0)]
+        cut, ok = finish.settle_start(quiet, 5.4, 3.9, 5.32, 0.08)
+        self.assertTrue(ok and 4.0 <= cut <= 5.32)
+
+    def test_a_clip_end_moves_on_to_the_silence_after_the_sound(self):
+        runs = [(1, 0.0, 10.6), (0, 10.6, 11.4), (1, 11.4, 14.0)]      # "foundation." ends 10.6
+        cut, ok = finish.settle_end(runs, 10.0, 11.5, 10.08, 0.08)     # ASR said 10.0
+        self.assertTrue(ok)
+        self.assertAlmostEqual(cut, 10.68, places=2)
+        cut, ok = finish.settle_end(runs, 10.0, 10.3, 10.08, 0.08)     # next word at 10.3
+        self.assertFalse(ok)
+
+    def test_an_early_word_clock_keeps_or_moves_the_edge_into_the_pause(self):
+        early = [(1, 0.0, 3.0), (0, 3.0, 3.6), (1, 3.6, 5.0)]         # sound at 3.6, clock 3.2
+        self.assertEqual(finish.settle_start(early, 3.2, 2.5, 3.12, 0.08), (3.12, True))
+        tail = [(1, 0.0, 3.15), (0, 3.15, 3.6), (1, 3.6, 5.0)]        # 3.12 is in the last tail
+        cut, ok = finish.settle_start(tail, 3.2, 2.5, 3.12, 0.08)
+        self.assertTrue(ok)
+        self.assertAlmostEqual(cut, 3.52, places=2)
+        late_end = [(1, 0.0, 1.375), (0, 1.375, 2.0)]                 # the clock ends at 1.45
+        self.assertEqual(finish.settle_end(late_end, 1.45, 2.0, 1.53, 0.08), (1.53, True))
+        silent = [(0, 0.0, 3.0)]
+        self.assertTrue(finish.settle_start(silent, 0.5, 0.0, 0.42, 0.08)[1])
+        self.assertTrue(finish.settle_end(silent, 1.45, 3.0, 1.53, 0.08)[1])
+
+    def test_a_clip_at_a_pause_keeps_the_word_the_asr_stretched_back_over_it(self):
+        class Levels:                                                  # the source's level runs
+            total = 20.0
+
+            def near(self, t):
+                return [(1, 0.0, 5.0), (0, 5.0, 6.2), (1, 6.2, 6.6), (0, 6.6, 7.5),
+                        (1, 7.5, 20.0)]
+        words = [dict(w("is", 4.6, 5.0), timing="word", heard=True),
+                 dict(w("We're", 5.05, 6.3), timing="word", heard=True),  # back over the pause
+                 dict(w("not", 6.3, 6.5), timing="word", heard=True),
+                 dict(w("next", 7.5, 7.9), timing="word", heard=True)]
+        rep = {"warnings": []}
+        ws, s, e = finish.place_clip(Levels(), words, 6.15, 6.6, 0.08, 0.4, rep)
+        self.assertEqual(rep["warnings"], [])
+        self.assertTrue(5.0 < s < 6.2)                                 # "We're" is in the clip
+        self.assertEqual(next(x for x in ws if x["word"] == "We're")["start"], 6.2)
+        self.assertAlmostEqual(e, 6.68, places=2)                      # "not" ends at 6.6
+
+    def test_a_word_clocked_in_the_pause_after_it_keeps_its_sound(self):
+        # The replay's "And" (said 1518.73-1519.19) was timed 1519.3, inside the
+        # pause after it; "what's" claims the sound after the pause.
+        runs = [(1, 1515.9, 1518.06), (0, 1518.06, 1518.73), (1, 1518.73, 1519.19),
+                (0, 1519.19, 1520.22), (1, 1520.22, 1522.0)]
+        cut, ok = finish.settle_start(runs, 1519.3, 1517.82, 1519.22, 0.08, nxt=1519.86)
+        self.assertTrue(ok)
+        self.assertAlmostEqual(cut, 1518.65, places=2)
+        # Without a next word claiming that sound, the word is the sound after.
+        self.assertEqual(finish.settle_start(runs, 1519.3, 1517.82, 1519.22, 0.08,
+                                             nxt=1521.0)[0], 1519.22)
+
+    def test_only_a_word_whose_clock_starts_in_silence_is_clamped(self):
+        runs = [(0, 0.0, 3.04), (1, 3.04, 3.4), (0, 3.4, 4.23), (1, 4.23, 4.86)]
+        words = [dict(w("Wow", 2.64, 3.3), timing="word", heard=True),     # early, in silence
+                 dict(w("that's", 3.3, 4.46), timing="word", heard=True)]  # back over 0.83 s
+        got = finish.clamp_stretched(words, runs, 0.4)
+        self.assertEqual(got[0]["start"], 3.04)
+        self.assertEqual(got[1]["start"], 4.23)
+        tail = [dict(w("Wow", 3.04, 4.1), timing="word", heard=True)]   # runs on over a pause
+        self.assertEqual(finish.clamp_stretched(tail, runs, 0.4)[0]["start"], 3.04)
+
+    def test_a_zero_length_edge_word_does_not_pin_the_cut_inside_it(self):
+        words = [w("local.", 2061.48, 2061.88), w("Helping.", 2063.12, 2063.12),
+                 w("We", 2063.46, 2063.46)]
+        s, e = finish.snap_to_words(words, 2050.0, 2063.256, 0.08)
+        self.assertGreater(e, 2063.12)
+
+    def test_tip_and_take_openers_are_not_speaker_labels(self):
+        srt = ("1\n00:00:00,500 --> 00:00:03,000\nPro Tip: reply to every review.\n\n"
+               "2\n00:00:03,100 --> 00:00:06,000\nIt takes two minutes a day.\n\n"
+               "3\n00:00:06,100 --> 00:00:09,000\nGoogle Maps: that is where they find you.\n\n"
+               "4\n00:00:09,100 --> 00:00:12,000\nHot Take: most agencies skip it.\n")
+        got = [x["word"] for x in finish.words_from_srt(srt)]
+        for word in ("Pro", "Tip:", "Google", "Maps:", "Hot", "Take:"):
+            self.assertIn(word, got)
+        labelled = ("1\n00:00:00,000 --> 00:00:02,000\nDennis: So open\n\n"
+                    "2\n00:00:02,000 --> 00:00:04,000\nGoogle Maps: and search\n")
+        self.assertEqual([x["word"] for x in finish.words_from_srt(labelled)],
+                         ["So", "open", "Google", "Maps:", "and", "search"])
+
+    def test_channel_peaks_are_read_from_astats(self):
+        err = ("[Parsed_astats_0 @ 0x1] Channel: 1\n[Parsed_astats_0 @ 0x1] Peak level dB: -8.1\n"
+               "[Parsed_astats_0 @ 0x1] Channel: 2\n[Parsed_astats_0 @ 0x1] Peak level dB: -inf\n"
+               "[Parsed_astats_0 @ 0x1] Overall\n[Parsed_astats_0 @ 0x1] Peak level dB: -8.1\n")
+        self.assertEqual(finish.astats_peaks(err), [-8.1, -120.0])
+        self.assertEqual(finish._kbps("192k"), 192.0)
+
+    def test_a_pause_near_the_line_under_room_noise_is_listed_not_failed(self):
+        c = {x["check"]: x for x in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0},
+            [{"start": 20.0, "end": 22.12, "dur": 2.12, "near_fail": 8.3},
+             {"start": 40.0, "end": 41.0, "dur": 1.0}], [], self.PROF, first_speech=0.3)}
+        self.assertEqual(c["pauses_over_fail"]["status"], "PASS")
+        self.assertEqual(c["pauses_near_fail"]["status"], "WARN")
+        self.assertIn("+8.3 dB", c["pauses_near_fail"]["note"])
+
+    def test_a_stop_filled_with_pumped_hiss_is_a_talk_gap(self):
+        words = [dict(w("end.", 9.0, 10.0), timing="word", heard=True),
+                 dict(w("Next", 12.4, 12.8), timing="word", heard=True)]
+        sil = [{"start": 10.5, "end": 11.8, "dur": 1.3}]               # the gain cut it short
+        kw = dict(first_speech=0.3, words=words, loud_runs=[(10.0, 12.4)])
+        hiss = {x["check"]: x for x in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None}, {"integrated_lufs": -14.0,
+                                                   "true_peak_dbtp": -2.0},
+            sil, [], self.PROF, voiced_runs=[], **kw)}
+        self.assertEqual(hiss["talk_gaps"]["status"], "WARN")
+        talk = {x["check"]: x for x in video_qa.evaluate(
+            {"duration_s": 60.0, "video": None}, {"integrated_lufs": -14.0,
+                                                   "true_peak_dbtp": -2.0},
+            sil, [], self.PROF, voiced_runs=[(10.0, 12.4)], **kw)}
+        self.assertNotIn("talk_gaps", talk)                            # a voice in the gap
+
+    def test_a_partial_words_file_does_not_join_pauses_past_its_reach(self):
+        runs = [(1, 0.0, 30.0), (0, 30.0, 31.0), (1, 31.0, 31.3), (0, 31.3, 32.4),
+                (1, 32.4, 40.0)]
+        spans = [(1.0, 2.0, True)]                                     # words for the start only
+        cover = video_qa.word_cover([(1.0, 2.0)], 2.5)
+        no_srt = video_qa.merge_pauses(runs, "word", spans, 0.6, ("none",), cover=cover,
+                                       cues=False)
+        self.assertLess(max(x["dur"] for x in no_srt), 2.0)            # a word, maybe: not joined
+
+    def test_edges_inside_sound_and_a_dead_channel_are_warned(self):
+        pk = [-8.0] * 10 + [-60.0] * 300 + [-8.0] * 10
+        aud = {"scan": {"channel_peaks_db": {"0": -6.0, "1": -110.0}}}
+        got = {x["check"]: x for x in video_qa._edge_and_channel_checks(
+            pk, 0.01, aud, -20.0, 0.0, 0.0, self.PROF, None, None, "cue")}
+        self.assertIn("opens", got["cut_inside_sound"]["measured"])
+        self.assertIn("closes", got["cut_inside_sound"]["measured"])
+        self.assertEqual(got["one_channel"]["status"], "WARN")
+        calm = [-60.0] * 10 + [-8.0] * 300 + [-60.0] * 10
+        aud = {"scan": {"channel_peaks_db": {"0": -6.0, "1": -9.0}}}
+        self.assertEqual(video_qa._edge_and_channel_checks(
+            calm, 0.01, aud, -20.0, 0.0, 0.0, self.PROF, None, None, "cue"), [])
+
+    def test_talk_far_beyond_the_words_file_is_warned(self):
+        got = {x["check"]: x for x in video_qa._edge_and_channel_checks(
+            [-60.0] * 100, 0.01, {}, -20.0, 0.0, 0.0, self.PROF,
+            [(0.0, 50.0), (60.0, 120.0)], [(0.0, 52.5)], "word")}
+        self.assertEqual(got["word_coverage"]["status"], "WARN")
 
 
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
@@ -1962,6 +2126,97 @@ class MediaRoundTrip(unittest.TestCase):
         self.assertTrue(any(max(r) > 200 for r in band))               # the caption is there
         edge = sum(1 for r in band for x in (0, 1, 2, W - 3, W - 2, W - 1) if r[x] > 200)
         self.assertEqual(edge, 0)                                      # and not cut off
+
+    # ---- ninth audit (24 Oct 2026) ----
+
+    def test_a_clip_starts_in_the_silence_before_a_late_word_clock(self):
+        src = self._make("late_clip.mp4", d=12, tone=f"{self.SYL}*(lt(t,4)+gte(t,4.75))")
+        # The ASR heard the phrase that resumes at 4.75 s 0.8 s late.
+        words = self._words_for([(0.0, 4.0)]) + self._words_for([(5.55, 12.0)])
+        out = self.tmp / "late_clip_out.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=False,
+                            loudness=False, words=words, burn=False, keywords=[],
+                            clip=(5.2, 9.0))
+        self.assertGreater(rep["clip_snapped_to_words"][0], 5.4)       # on the word clock
+        self.assertTrue(4.55 < rep["clip_settled_on_sound"][0] < 4.75)  # before the sound
+        # 9.0 s falls mid-phrase: no pause to end in, and the receipt says so.
+        self.assertTrue(any("ends inside unbroken talk" in x for x in rep["warnings"]))
+        rec = self._quiet_qa(out)
+        c = {x["check"]: x for x in rec["checks"]}
+        self.assertNotIn("opens", c.get("cut_inside_sound", {}).get("measured", ""))
+
+    def test_trim_head_lands_before_a_late_first_word(self):
+        src = self._make("late_head.mp4", d=12, tone=f"{self.SYL}*gte(t,3.0)")
+        rep = finish.finish(str(src), str(self.tmp / "late_head_out.mp4"),
+                            finish.load_style(None), trim_head=True, loudness=False,
+                            words=self._words_for([(3.24, 12.0)]), burn=False, keywords=[])
+        self.assertEqual(rep["trim_head_to"], "first word")
+        self.assertTrue(2.8 < rep["start_s"] < 3.0)                    # not 3.16, after it
+
+    def test_a_file_that_opens_inside_a_word_is_warned(self):
+        out = self.tmp / "opens_loud.wav"
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{self.SYL}':s=48000:d=10", "-c:a",
+                 "pcm_s16le", str(out))
+        c = {x["check"]: x for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["cut_inside_sound"]["status"], "WARN")
+        self.assertIn("opens", c["cut_inside_sound"]["measured"])
+
+    def test_one_channel_stereo_is_warned_and_copied_to_both(self):
+        src = self.tmp / "left_only.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=20", "-f", "lavfi", "-i",
+                 f"aevalsrc='0.1*sin(2*PI*220*t)*gt(sin(2*PI*4*t),0)*gte(t,0.3)|0':s=48000:d=20",
+                 "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac", "-shortest",
+                 str(src))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(src)["checks"]}
+        self.assertEqual(c["one_channel"], "WARN")
+        out = self.tmp / "left_only_loud.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=False,
+                            loudness=True, words=None, burn=False, keywords=[])
+        self.assertTrue(rep.get("one_channel_to_both"))
+        err = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(out), "-vn",
+                              "-af", "astats", "-f", "null", "-"],
+                             capture_output=True, text=True).stderr
+        peaks = finish.astats_peaks(err)
+        self.assertEqual(len(peaks), 2)
+        self.assertLess(abs(peaks[0] - peaks[1]), 1.0)                 # both channels speak
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["integrated_loudness"], "PASS")
+        self.assertNotIn("one_channel", c)
+
+    def test_an_encoded_true_peak_over_the_ceiling_is_rendered_again(self):
+        src = self.tmp / "clicky.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=12", "-f", "lavfi", "-i",
+                 f"aevalsrc='0.05*sin(2*PI*220*t)*gt(sin(2*PI*4*t),0)+0.9*eq(mod(n,48000),24000)'"
+                 ":s=48000:d=12", "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac",
+                 "-b:a", "320k", "-shortest", str(src))
+        style = finish.load_style(None)
+        style["finish"]["true_peak_headroom_db"] = -0.9   # aim over the ceiling on purpose
+        out = self.tmp / "clicky_loud.mp4"
+        rep = finish.finish(str(src), str(out), style, trim_head=False, loudness=True,
+                            words=None, burn=False, keywords=[])
+        retry = rep.get("true_peak_retry")
+        self.assertIsNotNone(retry)
+        self.assertGreater(retry["first_dbtp"], -1.0)
+        self.assertLessEqual(retry["final_dbtp"], -1.0)
+        self.assertEqual(rep["_out_loudness"]["true_peak_dbtp"], retry["final_dbtp"])
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["true_peak"], "PASS")
+
+    def test_a_pause_just_over_the_line_under_steady_noise_is_listed(self):
+        for gap, want in ((2.0, "near"), (2.5, "fail")):               # 2.12 s and 2.62 s
+            out = self.tmp / f"steady_noise_{gap}.wav"
+            self._ff("-f", "lavfi", "-i",
+                     f"aevalsrc='{self.SYL}*(lt(t,8)+gte(t,{8 + gap}))':s=48000:d=20",
+                     "-f", "lavfi", "-i", "anoisesrc=a=0.02:c=pink:r=48000:d=20:seed=3",
+                     "-filter_complex", "[0][1]amix=inputs=2:normalize=0", "-c:a",
+                     "pcm_s16le", str(out))
+            words = self._words_for([(0.0, 8.0), (8 + gap, 20.0)])
+            c = {x["check"]: x["status"] for x in self._quiet_qa(out, words)["checks"]}
+            if want == "near":
+                self.assertEqual(c["pauses_over_fail"], "PASS")
+                self.assertEqual(c["pauses_near_fail"], "WARN")
+            else:
+                self.assertEqual(c["pauses_over_fail"], "FAIL")
 
 
 if __name__ == "__main__":

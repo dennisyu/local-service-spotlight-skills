@@ -41,7 +41,7 @@
     "fade_s": 0.03,
     "x264_preset": "veryfast",
     "x264_crf": 18,
-    "audio_bitrate": "192k",
+    "audio_bitrate": "256k",
     "lra_target": 11.0,
     "true_peak_headroom_db": 1.0
   },
@@ -80,6 +80,9 @@
       "flat_noise_under_db": 15.0,
       "flat_noise_spread_db": 6.0,
       "flat_part_s": 0.25,
+      "noise_slack_s_per_db": 0.025,
+      "noise_slack_max_s": 0.5,
+      "talk_flatness": 0.12,
       "word_pad_s": 0.15,
       "join_min_silence_s": 0.4,
       "word_near_s": 1.0,

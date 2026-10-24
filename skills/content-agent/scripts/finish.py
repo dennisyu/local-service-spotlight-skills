@@ -21,7 +21,15 @@ Usage:
     faster-whisper dump). --srt takes a Descript export_transcript srt and spreads
     each cue's words evenly across the cue. Give BOTH and the captions use
     Descript's corrected words on the ASR's word clock (best of each). --clip
-    edges snap to word boundaries so no cut lands inside a word. Captions are
+    edges snap to word boundaries, then onto the sound itself: an ASR word clock
+    can run most of a second late or early (a word whose clock starts in 0.4 s
+    or more of silence was stretched back over a pause and starts after it; a
+    word clocked inside a pause, whose next word claims the sound after it, is
+    the sound before it), so the start moves into the pause of 0.15 s or more
+    before the first word's sound, and the end into the first pause after the
+    last word's (never past a neighbouring word).
+    Where talk runs on with no such pause, the edge stays on the word clock and
+    the report warns that the clip starts or ends mid-phrase. Captions are
     written as a sidecar .captions.srt unless --burn is given (burning re-encodes
     the picture, so it is never the default). Caption text is cleaned of anything
     a player would read as a command ({\\b1}, \\N, <font>) in both outputs.
@@ -30,15 +38,17 @@ Usage:
     ("[Music]" and "♪" cues are not words), otherwise to the first real sound by
     the QA hook rule: clicks, noise-like typing and static do not count, and a
     short sound followed by 2 s of dead air (a cough) is skipped and reported.
-    It never cuts talk the transcript missed: sound that runs into the first word
+    The cut to the first word lands in the pause before its sound, not on its
+    clock. It never cuts talk the transcript missed: sound that runs into the first word
     without 2 s of silence is kept, and a bed or crowd as loud as talk before the
     first word means nothing is cut; both are reported (an intro running straight
     into the first word is then left for a person to cut). A lone short sound
     with a pause after it (a cough, a breath, a click) is not talk running into
     the word: it is cut, and reported. --srt also reads WebVTT; speaker labels
     are stripped ("Speaker 1:", "Name (Role):", a plain "Name:" that opens two or
-    more cues, and every "Name:" in a file whose first cue opens with one, as
-    Descript's default export does). Exporting the SRT with
+    more cues, and the first cue's own "Name:" wherever it opens a cue, as in
+    Descript's default export). A name that opens one cue only stays text, so
+    "Google Maps:" is never dropped; exporting the SRT with
     include_speaker_labels "off" avoids the question.
 
     The sidecar .captions.srt for long-form reads like sentences (up to 16 words,
@@ -50,7 +60,13 @@ Usage:
 
     --loudness on a mono source writes two identical channels: ffmpeg's loudnorm
     lands 1.5-2 LU short on mono when it has to work in dynamic mode, and every
-    player plays mono on both speakers anyway.
+    player plays mono on both speakers anyway. A stereo source with talk in one
+    channel only (a lav or a camera mic on one input; the other 30 dB or more
+    down) gets the live channel copied to both. The loudness pass measures the
+    true peak of the file it wrote, because the AAC encode adds inter-sample
+    peaks the filter chain never had; over the ceiling, it renders once more
+    with the overshoot plus 0.3 dB off the target, at 320k. AAC is 256k by
+    default: ffmpeg's own encoder overshot by up to 2 dB on transients at 192k.
 
     An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
     the audio codec always matches the container. The render goes to a hidden
@@ -95,7 +111,7 @@ DEFAULT_STYLE = {
                          "uppercase": False, "break_gap_s": 0.7, "min_cue_s": 1.0,
                          "merge_sentences": True},
     "finish": {"head_pad_s": 0.08, "fade_s": 0.03, "x264_preset": "veryfast",
-               "x264_crf": 18, "audio_bitrate": "192k", "lra_target": 11.0,
+               "x264_crf": 18, "audio_bitrate": "256k", "lra_target": 11.0,
                "true_peak_headroom_db": 1.0},
 }
 
@@ -132,7 +148,15 @@ NOT_A_SPEAKER = {"remember", "note", "tip", "step", "warning", "question", "answ
                  "spoiler", "truth", "result", "results", "quote", "title", "chapter",
                  "part", "day", "week", "breaking", "listen", "look", "okay", "ok", "so",
                  "now", "here", "yes", "no", "well", "and", "but", "caution",
-                 "hint", "summary", "recap", "takeaway", "today", "tomorrow", "yesterday"}
+                 "hint", "summary", "recap", "takeaway", "today", "tomorrow", "yesterday",
+                 # Audit round 9: "Pro Tip:", "Hot Take:" and "Disclaimer:" opening
+                 # cue 1 made an unlabelled file read as labelled.
+                 "pro", "hot", "disclaimer", "quick", "fun", "side", "bottom", "key",
+                 "big", "news", "fyi", "heads", "notice", "reality", "secret",
+                 "mistake", "pros", "cons", "case", "action",
+                 "homework", "challenge", "story", "point", "takeaways", "translation",
+                 "definition", "context", "background", "source", "sources", "caveat",
+                 "the", "a", "my", "our", "your", "this", "that", "one", "two", "three"}
 
 
 def load_style(path: str | None) -> dict:
@@ -321,7 +345,10 @@ def words_from_srt(text: str) -> list[dict]:
         name = m.group(1).strip()
         if seen.get(name.lower(), 0) >= 2:
             return m.end()
-        if labelled and SPEAKER_LABEL.match(body) and speaker(name):
+        # A labelled file's first-cue name is a label even where it opens a cue
+        # once (Descript's default export labels cue 1 only). Any other name
+        # must open two or more cues: "Google Maps:" once is text (audit round 9).
+        if labelled and name.lower() == first_label.lower():
             return m.end()
         return 0
 
@@ -779,7 +806,7 @@ UPMIX = "pan=stereo|c0=c0|c1=c0"
 def measure_loudnorm(path: str, start: float, style: dict,
                      duration: float | None = None, pre: str = "") -> dict:
     lp = style["qa"]["loudness"]
-    flt = (f"{pre + ',' if pre else ''}loudnorm=I={lp['target_lufs']}:"
+    flt = (f"{pre + ',' if pre else ''}astats,loudnorm=I={lp['target_lufs']}:"
            f"TP={lp['true_peak_max_dbtp']}:"
            f"LRA={style['finish']['lra_target']}:print_format=json")
     cmd = ["ffmpeg", "-hide_banner", "-nostats"]
@@ -792,7 +819,173 @@ def measure_loudnorm(path: str, start: float, style: dict,
     blob = res.stderr[res.stderr.rfind("{"):res.stderr.rfind("}") + 1]
     if res.returncode != 0 or not blob:
         raise RuntimeError(f"loudnorm measure failed: {res.stderr[-400:]}")
-    return json.loads(blob)
+    out = json.loads(blob)
+    out["channel_peaks_db"] = astats_peaks(res.stderr)
+    return out
+
+
+def astats_peaks(stderr: str) -> list[float]:
+    """Per-channel peak dBFS from ffmpeg astats' summary (-120 for a silent channel)."""
+    peaks, chan = [], None
+    for line in stderr.splitlines():
+        if re.search(r"\bChannel: \d+", line):
+            chan = True
+        elif re.search(r"\bOverall\b", line):
+            chan = None
+        elif chan:
+            m = re.search(r"Peak level dB: (\S+)", line)
+            if m:
+                v = m.group(1)
+                peaks.append(-120.0 if "inf" in v else max(-120.0, float(v)))
+                chan = None
+    return peaks
+
+
+def level_runs(path: str, style: dict, info: dict, a: float, b: float) -> list[tuple]:
+    """Silence (0), sound (1) and unmeasurable (2) runs of [a, b] on the source
+    clock, by the QA checker's level rules."""
+    a = max(0.0, a)
+    loud = video_qa.measure_loudness(path, a, b - a)
+    aud = video_qa.analyze_audio(path, style["qa"], a, b - a, info["audio"]["sample_rate"],
+                                 loud.get("integrated_lufs"))
+    a_rel = 0.0
+    if info["audio"] and info.get("video"):
+        a_rel = max(0.0, info["audio"]["start_s"] - info["video"]["start_s"])
+    base = max(a, a_rel)
+    return [(k, base + x, base + y) for k, x, y in aud["runs"]]
+
+
+def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
+                 pad: float, min_sil: float = 0.15,
+                 floor: float | None = None,
+                 nxt: float | None = None) -> tuple[float, bool]:
+    """Put a cut before the first word in the silence before its SOUND: an ASR
+    word clock can start a word most of a second late (audit round 9: a short
+    opened 0.77 s into "Landscaping") or early. The silence is the last one of
+    min_sil or more that starts by the word's clock time (fw) and ends within a
+    second before it or later, and after `lo` (the previous word's end, or the
+    clip's own start): the word's sound begins where it ends. The cut lands
+    inside it, pad before that sound, and not before `floor` when given; the
+    previous word's end is a clock too, so it does not bound the cut. A cut
+    already in that silence stays. When the clock sits inside a pause and the
+    next word's clock (`nxt`) claims the sound after it, the word is the sound
+    before the pause. Returns (cut, found), found False when the word sits
+    inside a second or more of unbroken sound."""
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
+    cands = [(x, y) for x, y in sil
+             if x <= fw + 0.02 and y >= max(fw - 1.0, lo - 0.05)]
+    if not cands:
+        return start, False
+    x, y = max(cands, key=lambda s: s[0])
+    if x <= fw <= y and nxt is not None and nxt <= y + 0.05:
+        # The word's clock sits in a pause and the NEXT word claims the sound
+        # after it: this word is the sound just before the pause, its clock ran
+        # late (the replay's "And" was timed 0.57 s after it was said). Start
+        # before that sound when no earlier word claims it.
+        before = [(a, b) for a, b in sil if b <= x - 0.05]
+        if before:
+            a0, b0 = max(before, key=lambda s: s[1])
+            if b0 >= max(fw - 1.0, lo - 0.05):
+                x, y = a0, b0
+    cut = max(x, y - pad, floor if floor is not None else x)
+    in_sound = any(k != 0 and a <= start < b for k, a, b in runs)
+    return (cut if cut < start or in_sound else start), True
+
+
+def settle_end(runs: list[tuple], lw: float, hi: float, end: float, pad: float,
+               min_sil: float = 0.15) -> tuple[float, bool]:
+    """Put a cut after the last word in the silence after its SOUND (an ASR ends
+    a word early: "foundation." lost 0.6 s). The silence is the first one of
+    min_sil or more that ends after the word's clock end (lw) and starts within
+    a second after it or earlier, and before `hi` (the next word's start): the
+    word's sound ends where it starts. The cut lands inside it, pad after that
+    sound; a cut already in that silence stays. Returns (cut, found)."""
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
+    cands = [(x, y) for x, y in sil
+             if y >= lw - 0.02 and x <= min(lw + 1.0, hi + 0.05)]
+    if not cands:
+        return end, False
+    x, y = min(cands, key=lambda s: s[0])
+    cut = min(y, x + pad)
+    in_sound = any(k != 0 and a < end <= b for k, a, b in runs)
+    return (cut if cut > end or in_sound else end), True
+
+
+def clamp_stretched(words: list[dict], runs: list[tuple], min_silence: float = 0.4,
+                    lead: float = 0.1) -> list[dict]:
+    """A heard word whose clock STARTS in a level silence of min_silence or more
+    (within `lead` of its start) was stretched back over a pause: it starts
+    where that silence ends (the replay's "We're" ran 1.3 s back). A word whose
+    span starts in sound and runs on over a pause ("Wow" then 0.4 s of quiet)
+    keeps its start: its sound is at the front, and moving it would cut it."""
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_silence]
+    out = []
+    for w in words:
+        if w.get("timing") != "cue" and w.get("heard", True):
+            hit = [y for x, y in sil if x <= w["start"] + lead and w["start"] < y < w["end"]
+                   and y - max(x, w["start"]) >= min_silence - 1e-6]
+            if hit:
+                w = dict(w, start=max(hit), clamped_from=w["start"])
+        out.append(w)
+    return out
+
+
+class LevelRuns:
+    """Level runs of a source around a moment: ten seconds, so the level rules
+    see talk to compare it against, measured once per stretch."""
+
+    def __init__(self, src: str, style: dict, info: dict):
+        self.src, self.style, self.info = src, style, info
+        self.total = info["duration_s"]
+        self.measured: list = []
+
+    def near(self, t: float) -> list[tuple]:
+        for a, b, r in self.measured:   # 1.5 s each side, or the file's own edge
+            if (a + 1.5 <= t or a <= 0.0 <= t) and \
+                    (t <= b - 1.5 or t <= b >= self.total - 0.01):
+                return r
+        a, b = max(0.0, t - 5.0), min(self.total, t + 5.0)
+        r = level_runs(self.src, self.style, self.info, a, b)
+        self.measured.append((a, b, r))
+        return r
+
+
+def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
+               pad: float, in_word: float, report: dict) -> tuple[list[dict], float, float]:
+    """--clip edges: on word boundaries, then on the words' sound. Returns the
+    words (stretched ones clamped) and the clip's start and end."""
+    total = levels.total
+    # A word the ASR stretched back over a pause (its clock starts in in_word s
+    # or more of level silence) starts after that silence; otherwise a clip
+    # asked to start at the pause drops the word (the replay's "We're" ran
+    # 1.3 s back into the pause before it).
+    words = clamp_stretched(words, levels.near(start) + levels.near(end), in_word)
+    start, end = snap_to_words(words, start, end, pad)
+    report["clip_snapped_to_words"] = [round(start, 3), round(end, 3)]
+    # Then onto the sound itself: the word clock can be most of a second off.
+    # The words the snap kept, zero-length ones included (Whisper times some
+    # words as an instant: "Helping." at 2063.12 was spoken from 2062.9).
+    kept = [w for w in words if w["start"] >= start - 0.02
+            and w["end"] <= end + 0.02 and w["start"] <= end]
+    if not kept:
+        return words, start, end
+    fw, lw = min(w["start"] for w in kept), max(w["end"] for w in kept)
+    prev_end = max((w["end"] for w in words if w["end"] <= fw + 0.01
+                    and w["start"] < fw), default=0.0)
+    next_start = min((w["start"] for w in words if w["start"] >= lw - 0.01
+                      and w["end"] > lw), default=total)
+    nxt = min((w["start"] for w in words if w["start"] > fw + 0.01), default=None)
+    new_start, ok_s = settle_start(levels.near(fw), fw, prev_end, start, pad, nxt=nxt)
+    new_end, ok_e = settle_end(levels.near(lw), lw, next_start, end, pad)
+    if (new_start, new_end) != (start, end):
+        report["clip_settled_on_sound"] = [round(new_start, 3), round(new_end, 3)]
+    for ok, where in ((ok_s, "starts"), (ok_e, "ends")):
+        if not ok:
+            report["warnings"].append(
+                f"the clip {where} inside unbroken talk (no pause of 0.15 s or more "
+                "within a second of the word): the cut lands mid-phrase; pick an edge "
+                "at a pause")
+    return words, max(0.0, new_start), min(total, new_end)
 
 
 def snap_to_words(words: list[dict], start: float, end: float,
@@ -803,9 +996,12 @@ def snap_to_words(words: list[dict], start: float, end: float,
         return start, end
     first = next((w for w in inside if w["start"] >= start - 0.02), inside[0])
     last = next((w for w in reversed(inside) if w["end"] <= end + 0.02), inside[-1])
-    prev_end = max((w["end"] for w in words if w["end"] <= first["start"]), default=0.0)
-    next_start = min((w["start"] for w in words if w["start"] >= last["end"]),
-                     default=last["end"] + pad)
+    # (not the edge word itself: a zero-length word would pin the edge to its
+    # own instant, mid-word)
+    prev_end = max((w["end"] for w in words if w["end"] <= first["start"]
+                    and w is not first), default=0.0)
+    next_start = min((w["start"] for w in words if w["start"] >= last["end"]
+                      and w is not last), default=last["end"] + pad)
     s = max(prev_end, first["start"] - pad, 0.0)
     e = min(next_start, last["end"] + pad)
     return s, e
@@ -916,16 +1112,22 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         report["warnings"].append(f"--clip ends at {clip_end:g}s but the source is "
                                   f"{total:.2f}s long; the clip stops at the end")
     clip_end = min(clip_end, total)
+    levels = LevelRuns(src, style, info)
+    in_word = style["qa"]["pauses"].get("silence_in_word_s", 0.4)
     if clip and words:
-        clip_start, clip_end = snap_to_words(words, clip_start, clip_end,
-                                             fin["head_pad_s"])
-        report["clip_snapped_to_words"] = [round(clip_start, 3), round(clip_end, 3)]
+        words, clip_start, clip_end = place_clip(levels, words, clip_start, clip_end,
+                                                 fin["head_pad_s"], in_word, report)
     start = clip_start
     if trim_head:
         # The hook rule is about the first WORD: with a transcript, cut to it.
-        first_word = next((w for w in (words or [])
-                           if w["start"] >= clip_start - 0.02 and w["start"] < clip_end),
-                          None)
+        def first_in(ws):
+            return next((w for w in (ws or [])
+                         if w["start"] >= clip_start - 0.02 and w["start"] < clip_end), None)
+        first_word = first_in(words)
+        if first_word is not None:
+            # A first word stretched back over the dead air starts after it.
+            words = clamp_stretched(words, levels.near(first_word["start"]), in_word)
+            first_word = first_in(words)
         if first_word is not None:
             fw = first_word["start"]
             start = max(clip_start, fw - fin["head_pad_s"])
@@ -968,6 +1170,16 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                         f"trim-head kept {fw - ts:.1f}s of sound before the first "
                         f"transcribed word ({ts:.2f}s to {fw:.2f}s): talk the transcript "
                         "missed, or an intro; listen before publishing")
+            if report["trim_head_to"] == "first word":
+                # Onto the word's sound, not its clock (audit round 9: "Minnesota"
+                # timed 0.24 s after it began; the cut landed inside it).
+                nxt = min((w["start"] for w in words if w["start"] > fw + 0.01),
+                          default=None)
+                settled, _ = settle_start(levels.near(fw), fw, clip_start, start,
+                                          fin["head_pad_s"], floor=clip_start, nxt=nxt)
+                if settled != start:
+                    report["trim_head_settled_on_sound"] = round(settled, 3)
+                start = settled
         else:
             fs, skipped, why = first_speech_s(src, style, clip_start,
                                               min(clip_end - clip_start, 120.0),
@@ -986,6 +1198,13 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                     report["warnings"].append(
                         f"trim-head skipped a {sk['sound_s']}s sound at {sk['at_s']}s "
                         f"{what}; if it was a word, rerun with --words or --srt")
+    if levels.measured:
+        # The captions and the receipt's words get the same clamped clocks as
+        # the edges (else a word clamped onto its sound at the open is left out
+        # of the receipt's words, and the hook reads the next one).
+        heard_runs = [x for _, _, r in levels.measured for x in r]
+        words = clamp_stretched(words, heard_runs, in_word) if words else words
+        all_words = clamp_stretched(all_words, heard_runs, in_word) if all_words else all_words
     duration = clip_end - start
     if duration <= 0.1:
         raise ValueError("nothing left to render after trimming; check --clip and "
@@ -1008,6 +1227,18 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
     if loudness:
         m = measure_loudnorm(src, start, style, duration if (clip or start > 0) else None,
                              pre=upmix)
+        pk = m.get("channel_peaks_db") or []
+        if not mono and len(pk) == 2 and max(pk) > -60.0 and min(pk) < max(pk) - 30.0:
+            # Talk in one channel only (a lav or a camera mic on one input): one
+            # ear on earbuds, and loudness reads low (audit round 9). Copy the live
+            # channel to both and measure again.
+            live = pk.index(max(pk))
+            upmix = f"pan=stereo|c0=c{live}|c1=c{live}"
+            report["steps"].append({"one_channel_source": True,
+                                    "channel_peaks_db": [round(x, 1) for x in pk],
+                                    "copied_channel": live + 1})
+            m = measure_loudnorm(src, start, style,
+                                 duration if (clip or start > 0) else None, pre=upmix)
         try:
             in_i = float(m["input_i"])
         except (KeyError, ValueError):
@@ -1020,7 +1251,7 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
             lp = style["qa"]["loudness"]
             if upmix:
                 afilters.append(upmix)
-                report["mono_to_stereo"] = True
+                report["mono_to_stereo" if mono else "one_channel_to_both"] = True
             afilters.append(
                 f"loudnorm=I={lp['target_lufs']}:"
                 # AAC encoding adds inter-sample overs and ffmpeg falls back to
@@ -1144,11 +1375,34 @@ def _render(src, dst, style, info, report, fin, cap, words, all_words, burn, ref
     partial = os.path.join(os.path.dirname(final),
                            f".{os.path.basename(final)}.partial{ext}")
     cmd += [partial]
-    res = subprocess.run(cmd, cwd=work, capture_output=True, text=True, errors="replace")
-    if res.returncode != 0 or not os.path.exists(partial):
-        if os.path.exists(partial):
-            os.remove(partial)
-        raise RuntimeError("render failed: " + video_qa.first_error(res.stderr))
+    res = _run_render(cmd, work, partial)
+    out_loud = None
+    if loud_on:
+        # The AAC encode adds inter-sample peaks the PCM chain never had (audit
+        # round 9: -0.1 dBTP on a short clip, +1.1 with a click in a pause, for a
+        # -2 dBTP chain). Measure what was written; over the ceiling, render once
+        # more with the overshoot plus 0.3 dB taken off the true-peak target.
+        ceiling = style["qa"]["loudness"]["true_peak_max_dbtp"]
+        out_loud = video_qa.measure_loudness(partial)
+        tp = out_loud.get("true_peak_dbtp")
+        if tp is not None and tp > ceiling:
+            ai = cmd.index("-af") + 1
+            m = re.search(r"loudnorm=I=[^:]+:TP=(-?[\d.]+)", cmd[ai])
+            if m:
+                target = round(float(m.group(1)) - (tp - ceiling) - 0.3, 2)
+                cmd[ai] = cmd[ai][:m.start(1)] + f"{target}" + cmd[ai][m.end(1):]
+                retry = {"first_dbtp": tp, "target_dbtp": target}
+                # ffmpeg's own AAC encoder overshoots on transients at 192k and
+                # under (rh_1872: -2.0 dBTP chain, -0.1 at 192k, -2.0 at 256k).
+                if "-b:a" in cmd and cmd[cmd.index("-c:a") + 1] == "aac":
+                    bi = cmd.index("-b:a") + 1
+                    if _kbps(cmd[bi]) < 320:
+                        retry["bitrate"] = cmd[bi] = "320k"
+                res = _run_render(cmd, work, partial)
+                out_loud = video_qa.measure_loudness(partial)
+                retry.update(final_dbtp=out_loud.get("true_peak_dbtp"),
+                             final_lufs=out_loud.get("integrated_lufs"))
+                report["true_peak_retry"] = retry
     os.replace(partial, final)
     if words:
         sidecar.write_text(srt_text, encoding="utf-8")
@@ -1162,7 +1416,24 @@ def _render(src, dst, style, info, report, fin, cap, words, all_words, burn, ref
     report["video_reencoded"] = reencode
     report["expected_duration_s"] = round(duration, 3)
     report["_out_words"] = out_words
+    report["_out_loudness"] = out_loud
     return report
+
+
+def _kbps(rate: str) -> float:
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)([kKmM]?)", rate.strip())
+    if not m:
+        return 0.0
+    return float(m.group(1)) * {"": 0.001, "k": 1, "K": 1, "m": 1000, "M": 1000}[m.group(2)]
+
+
+def _run_render(cmd: list[str], work: Path, partial: str) -> subprocess.CompletedProcess:
+    res = subprocess.run(cmd, cwd=work, capture_output=True, text=True, errors="replace")
+    if res.returncode != 0 or not os.path.exists(partial):
+        if os.path.exists(partial):
+            os.remove(partial)
+        raise RuntimeError("render failed: " + video_qa.first_error(res.stderr))
+    return res
 
 
 def load_words(args) -> list[dict] | None:
@@ -1220,9 +1491,10 @@ def main(argv: list[str] | None = None) -> int:
                      reframe=args.reframe, focus_x=args.focus_x,
                      clip=parse_clip(args.clip) if args.clip else None)
         out_words = rep.pop("_out_words", None)
+        out_loud = rep.pop("_out_loudness", None)
         if not args.no_qa:
             qa = video_qa.qa(args.out, style["qa"], Path(args.out + ".qa"),
-                             words=out_words)
+                             words=out_words, loud=out_loud)
             rep["qa_verdict"] = qa["verdict"]
             rep["qa_receipt"] = args.out + ".qa/qa-receipt.md"
             got = qa["probe"]["duration_s"]
