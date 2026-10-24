@@ -78,7 +78,8 @@ DEFAULT_STYLE = {
     # as sentences: sentence case, up to two 42-character lines. Burned shorts keep
     # the 2-3 word style above, and their sidecar matches what is on screen.
     "sidecar_captions": {"max_words": 16, "max_chars": 84, "line_chars": 42,
-                         "uppercase": False, "break_gap_s": 0.7, "min_cue_s": 1.0},
+                         "uppercase": False, "break_gap_s": 0.7, "min_cue_s": 1.0,
+                         "merge_sentences": True},
     "finish": {"head_pad_s": 0.08, "fade_s": 0.03, "x264_preset": "veryfast",
                "x264_crf": 18, "audio_bitrate": "192k", "lra_target": 11.0,
                "true_peak_headroom_db": 1.0},
@@ -90,7 +91,10 @@ CROSSTALK = {"right", "yeah", "yes", "yep", "mhm", "mm", "hmm", "uh", "um",
 NUMBERISH = re.compile(r"[\d$%]")
 # "Dennis Yu: ..." or "[Speaker 2]: ..." — every word capitalised, so "Step one:"
 # and "So here's the thing:" are left alone.
-SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[A-Z][\w.'-]*(?: [A-Z][\w.'-]*){0,2}):\s+")
+_NAME = r"[A-Z][\w.'-]*(?: [A-Z][\w.'-]*){0,2}(?: \([^)]{1,24}\))?"
+SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|[Ss]peaker \d{1,2}|" + _NAME + r"):\s+")
+# ">> DENNIS:" or a bare ">>" marks a change of speaker anywhere in a cue.
+SPEAKER_CHANGE = re.compile(r">>\s*(?:(?:[Ss]peaker \d{1,2}|" + _NAME + r"):\s*)?")
 
 
 def load_style(path: str | None) -> dict:
@@ -242,7 +246,7 @@ def words_from_srt(text: str) -> list[dict]:
         body = html.unescape(re.sub(r"<[^>]+>|\{[^}]+\}", "", body))
         # Sound cues first, then the speaker label they may hide ("[Music] Dennis Yu: …").
         body = MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body))
-        body = SPEAKER_LABEL.sub("", body, count=1)
+        body = SPEAKER_LABEL.sub("", SPEAKER_CHANGE.sub(" ", body), count=1)
         toks = [t for t in body.split() if not is_sound_tag(t)]
         if not toks or end <= start:
             continue
@@ -250,7 +254,8 @@ def words_from_srt(text: str) -> list[dict]:
         for i, tok in enumerate(toks):
             words.append({"word": tok, "start": round(start + i * step, 3),
                           "end": round(start + (i + 1) * step, 3),
-                          "timing": "cue", "cue": cue_id})
+                          "timing": "cue", "cue": cue_id,
+                          "cue_start": start, "cue_end": end})
     return words
 
 
@@ -258,11 +263,16 @@ def _norm(tok: str) -> str:
     return re.sub(r"[^\w]", "", tok.lower())
 
 
-def align_text_to_timing(text_words: list[dict], timed: list[dict]) -> list[dict]:
+def align_text_to_timing(text_words: list[dict], timed: list[dict],
+                         keep_unheard: bool = False) -> list[dict]:
     """Keep the better TEXT (Descript's corrected transcript) and the better
     TIMING (word-level ASR). Matched and same-length replaced runs take the
     timed word's clock; other runs are spread across the span they replace.
-    Returns text_words re-timed, limited to the window the timed words cover."""
+    Returns text_words re-timed, limited to the window the timed words cover.
+    Words the ASR never heard are marked heard=False. A lone interjection the ASR
+    never heard is left out of the captions; with keep_unheard it is returned
+    anyway with caption=False and its cue's own timing, because for the QA
+    receipt it is still talk (someone said "Yeah" there)."""
     import difflib
     if not timed:
         return text_words
@@ -276,8 +286,8 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict]) -> list[dict
         if not span:
             continue
         if op in ("equal", "replace") and (a1 - a0) == (b1 - b0):
-            out += [{"word": t["word"], "start": s["start"], "end": s["end"], "timing": "word"}
-                    for t, s in zip(span, timed[b0:b1])]
+            out += [{"word": t["word"], "start": s["start"], "end": s["end"],
+                     "timing": "word", "heard": True} for t, s in zip(span, timed[b0:b1])]
             continue
         if b1 > b0:
             s0, s1 = timed[b0]["start"], timed[b1 - 1]["end"]
@@ -286,6 +296,9 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict]) -> list[dict
             # almost always another person's crosstalk: leave it out of the
             # speaker's captions. Anything else is squeezed, in order, into the
             # gap between its neighbours so word order can never scramble.
+            if keep_unheard:
+                out += [dict(t, timing="cue", heard=False, caption=False)
+                        for t in span if _norm(t["word"]) in CROSSTALK]
             span = [t for t in span if _norm(t["word"]) not in CROSSTALK]
             if not span:
                 continue
@@ -294,8 +307,12 @@ def align_text_to_timing(text_words: list[dict], timed: list[dict]) -> list[dict
             s1 = max(s1, s0)
         step = (s1 - s0) / len(span)
         out += [{"word": t["word"], "start": round(s0 + i * step, 3),
-                 "end": round(s0 + (i + 1) * step, 3), "timing": "word"}
+                 "end": round(s0 + (i + 1) * step, 3), "timing": "word",
+                 "heard": b1 > b0,
+                 **({k: t[k] for k in ("cue_start", "cue_end") if k in t})}
                 for i, t in enumerate(span)]
+    if keep_unheard:
+        out.sort(key=lambda w: w["start"])
     return out
 
 
@@ -315,8 +332,9 @@ def chunk_words(words: list[dict], cap: dict) -> list[dict]:
         if cur:
             gap = w["start"] - cur[-1]["end"]
             chars = sum(len(x["word"]) + 1 for x in cur) + len(w["word"])
+            text = " ".join(x["word"] for x in cur + [w])
             if (len(cur) >= cap["max_words"] or gap >= cap["break_gap_s"]
-                    or chars > cap["max_chars"]):
+                    or chars > cap["max_chars"] or not _fits(text, cap.get("line_chars", 0))):
                 flush()
         cur.append(w)
         if PUNCT_BREAK.search(w["word"]):
@@ -325,19 +343,34 @@ def chunk_words(words: list[dict], cap: dict) -> list[dict]:
     # Never flash a cue shorter than min_cue_s: stretch into the gap after it,
     # else merge into the next cue when there is room.
     merged: list[dict] = []
+    carry = None
     for idx, cue in enumerate(cues):
+        if carry is not None:  # a short cue held back to open this one
+            cue = {"words": carry["words"] + cue["words"], "start": carry["start"],
+                   "end": cue["end"]}
+            carry = None
         nxt = cues[idx + 1] if idx + 1 < len(cues) else None
         if cue["end"] - cue["start"] < cap["min_cue_s"]:
             limit = nxt["start"] if nxt else cue["start"] + cap["min_cue_s"]
             cue["end"] = min(cue["start"] + cap["min_cue_s"], max(limit, cue["end"]))
+        joined = " ".join(x["word"] for x in (merged[-1]["words"] if merged else [])
+                          + cue["words"])
         if (merged and cue["end"] - cue["start"] < cap["min_cue_s"]
-                and not re.search(r"[.!?]\"?$", merged[-1]["words"][-1]["word"])
+                and (cap.get("merge_sentences")
+                     or not re.search(r"[.!?]\"?$", merged[-1]["words"][-1]["word"]))
                 and len(merged[-1]["words"]) + len(cue["words"]) <= cap["max_words"]
-                and len(" ".join(x["word"] for x in merged[-1]["words"] + cue["words"]))
-                <= cap["max_chars"]):
+                and len(joined) <= cap["max_chars"]
+                and _fits(joined, cap.get("line_chars", 0))):
             merged[-1]["words"] += cue["words"]
             merged[-1]["end"] = cue["end"]
             continue
+        if (cap.get("merge_sentences") and nxt and cue["end"] - cue["start"] < cap["min_cue_s"]
+                and nxt["start"] - cue["end"] < cap["break_gap_s"]
+                and len(cue["words"]) + len(nxt["words"]) <= cap["max_words"]):
+            both = " ".join(x["word"] for x in cue["words"] + nxt["words"])
+            if len(both) <= cap["max_chars"] and _fits(both, cap.get("line_chars", 0)):
+                carry = cue  # too short to stand alone: open the next cue with it
+                continue
         merged.append(cue)
     for a, b in zip(merged, merged[1:]):
         a["end"] = min(a["end"], b["start"])  # cues never overlap
@@ -484,15 +517,22 @@ def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
 
 
 def _wrap(text: str, width: int) -> str:
-    """Two balanced lines when a cue is longer than one line."""
+    """Two lines when a cue is longer than one: the cut that keeps the longer
+    line shortest (then the most balanced)."""
     if not width or len(text) <= width:
         return text
-    mid = len(text) // 2
     cuts = [i for i, ch in enumerate(text) if ch == " "]
     if not cuts:
         return text
-    cut = min(cuts, key=lambda i: abs(i - mid))
+    cut = min(cuts, key=lambda i: (max(i, len(text) - i - 1), abs(2 * i - len(text))))
     return text[:cut] + "\n" + text[cut + 1:]
+
+
+def _fits(text: str, width: int) -> bool:
+    """Whether text fits on two lines of `width` characters."""
+    if not width or len(text) <= width:
+        return True
+    return max(len(x) for x in _wrap(text, width).split("\n")) <= width
 
 
 def build_srt(cues: list[dict], cap: dict) -> str:
@@ -668,6 +708,11 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
     cap["keywords"] = list(cap.get("keywords", [])) + keywords
     report = {"source": os.path.basename(src), "output": os.path.basename(dst),
               "steps": [], "warnings": []}
+    all_words = words
+    if words:
+        # Interjections nobody's ASR heard (another speaker's "Yeah") are talk for
+        # the receipt but never caption text or a clip edge.
+        words = [w for w in words if w.get("caption", True)] or None
 
     total = info["duration_s"]
     clip_start, clip_end = clip if clip else (0.0, total)
@@ -750,7 +795,8 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
 
     work = Path(tempfile.mkdtemp(prefix="finish-"))
     try:
-        return _render(src, dst, style, info, report, fin, cap, words, burn, reframe,
+        return _render(src, dst, style, info, report, fin, cap, words, all_words, burn,
+                       reframe,
                        focus_x, clip, start, duration, afilters, loud_on, work, ext)
     finally:
         shutil.rmtree(work, ignore_errors=True)
@@ -769,7 +815,8 @@ def tonemap_filter(transfer: str) -> str | None:
             "zscale=t=bt709:m=bt709:r=tv,format=yuv420p")
 
 
-def _render(src, dst, style, info, report, fin, cap, words, burn, reframe, focus_x,
+def _render(src, dst, style, info, report, fin, cap, words, all_words, burn, reframe,
+            focus_x,
             clip, start, duration, afilters, loud_on, work, ext) -> dict:
     vfilters = []
     if info["video"]:
@@ -790,8 +837,11 @@ def _render(src, dst, style, info, report, fin, cap, words, burn, reframe, focus
                   and w["end"] <= start + duration + 0.05]
         inside = mark_keywords(inside, cap["keywords"])
         cues = shift_cues(chunk_words(inside, cap), start)
-        out_words = [{**w, "start": max(0.0, w["start"] - start),
-                      "end": w["end"] - start} for w in inside]
+        everything = [w for w in (all_words or words) if w["start"] >= start - 0.05
+                      and w["end"] <= start + duration + 0.05]
+        out_words = [{**w, "start": max(0.0, w["start"] - start), "end": w["end"] - start,
+                      **({"cue_start": w["cue_start"] - start, "cue_end": w["cue_end"] - start}
+                         if "cue_start" in w else {})} for w in everything]
         sidecar = Path(dst).with_suffix(".captions.srt")
         if burn:
             srt_text = build_srt(cues, cap)  # the file matches what is on screen
@@ -885,7 +935,7 @@ def load_words(args) -> list[dict] | None:
             raise ValueError(f"--srt {args.srt} holds no words; check the file and "
                              "its encoding")
     if timed and text:
-        return align_text_to_timing(text, timed)
+        return align_text_to_timing(text, timed, keep_unheard=True)
     return timed or text
 
 

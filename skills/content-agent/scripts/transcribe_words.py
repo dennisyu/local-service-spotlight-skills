@@ -24,7 +24,8 @@ Usage:
 
 Output: {"backend": ..., "words": [{"word","start","end"}...]} with times on the
 MEDIA timeline (offset by --start when a window is used). Cached: if -o exists
-and was made from the same media + window, it is reused, never re-transcribed.
+and was made from the same media + window + backend + model, it is reused,
+never re-transcribed.
 """
 from __future__ import annotations
 
@@ -52,7 +53,14 @@ def extract_audio(path: str, start: float, end: float) -> str:
     if end:
         cmd += ["-t", str(end - start)]
     cmd += ["-i", path, "-vn", "-ac", "1", "-ar", "16000", wav]
-    subprocess.run(cmd, check=True)
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+        if res.returncode != 0:
+            last = [l for l in res.stderr.splitlines() if l.strip()][-1:] or ["no output"]
+            raise RuntimeError(last[0].strip())
+    except BaseException:
+        os.unlink(wav)  # never leave an empty temp file behind
+        raise
     return wav
 
 
@@ -109,12 +117,14 @@ def main(argv: list[str] | None = None) -> int:
     if os.path.exists(args.out):
         with open(args.out, encoding="utf-8") as fh:
             cached = json.load(fh)
-        if cached.get("media_key") == key and cached.get("backend") == args.backend:
+        model = args.model if args.backend == "local" else "scribe_v2"
+        if (cached.get("media_key") == key and cached.get("backend") == args.backend
+                and cached.get("model") == model):
             print(f"cached: {args.out} ({len(cached['words'])} words)")
             return 0
     try:
         wav = extract_audio(args.media, args.start, args.end)
-    except subprocess.CalledProcessError as exc:
+    except RuntimeError as exc:
         print(f"could not read audio from {args.media}: {exc}", file=sys.stderr)
         return 2
     try:

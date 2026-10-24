@@ -755,6 +755,132 @@ class AuditRound5(unittest.TestCase):
         self.assertIn("long-form", c["letterbox"]["note"])
 
 
+class AuditRound6(unittest.TestCase):
+    """Sixth independent audit, 24 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+
+    def _kw(self, peak):
+        return {"peak_of": lambda a, b: peak, "loud_db": -12.8 - 12.0}
+
+    def test_a_mistimed_word_next_to_a_pause_does_not_join_it(self):
+        # "panel," | 0.5 s | "but" (heard 0.8 s late by the ASR) | 1.0 s | "There"
+        runs = [(1, 0.0, 1.0), (0, 1.0, 1.5), (1, 1.5, 2.0), (0, 2.0, 3.0), (1, 3.0, 4.0)]
+        words = [dict(w("panel,", 0.4, 0.95), timing="word"),
+                 dict(w("but", 2.3, 2.7), timing="word"),
+                 dict(w("There", 3.0, 3.4), timing="word")]
+        kind, spans = video_qa.talk_spans(words, 0.15, runs)
+        loud = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none",), **self._kw(-13.0))
+        self.assertEqual(max(x["dur"] for x in loud), 1.0)          # a real word: no join
+        quiet = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none",), **self._kw(-31.0))
+        self.assertEqual(max(x["dur"] for x in quiet), 2.0)         # a breath: one pause
+
+    def test_an_interjection_only_descript_heard_is_still_talk(self):
+        srt = ("1\n00:00:00,000 --> 00:00:01,000\nso this\n\n"
+               "2\n00:00:02,000 --> 00:00:02,400\nYeah.\n\n"
+               "3\n00:00:03,500 --> 00:00:04,500\nworks well\n")
+        text = finish.words_from_srt(srt)
+        timed = [w("so", 0.0, 0.4), w("this", 0.5, 0.9), w("works", 3.5, 3.9),
+                 w("well", 4.0, 4.4)]
+        caption = finish.align_text_to_timing(text, timed)
+        self.assertNotIn("Yeah.", [x["word"] for x in caption])      # not caption text
+        qa_words = finish.align_text_to_timing(text, timed, keep_unheard=True)
+        yeah = [x for x in qa_words if x["word"] == "Yeah."]
+        self.assertTrue(yeah and yeah[0]["caption"] is False)
+        runs = [(1, 0.0, 0.9), (0, 0.9, 2.0), (1, 2.0, 2.4), (0, 2.4, 3.5), (1, 3.5, 4.4)]
+        kind, spans = video_qa.talk_spans(qa_words, 0.15, runs)
+        sure = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none",), **self._kw(-30.0))
+        self.assertLess(max(x["dur"] for x in sure), 2.0)
+        self.assertEqual(video_qa.first_word_s(qa_words), 0.0)
+
+    def test_a_word_stretched_back_over_a_pause_is_cut_to_its_sound(self):
+        runs = [(1, 30.0, 31.55), (0, 31.55, 32.95), (1, 32.95, 33.35), (0, 33.35, 34.5),
+                (1, 34.5, 35.0)]
+        have = dict(w("have", 31.52, 34.74), timing="word")         # 3.2 s "word"
+        self.assertEqual(video_qa.clamp_words([have], runs)[0]["start"], 34.5)
+        partly = dict(w("have", 33.76, 35.14), timing="word")       # starts inside a gap
+        self.assertEqual(video_qa.clamp_words([partly], runs)[0]["start"], 34.5)
+        kind, spans = video_qa.talk_spans([dict(w("already", 31.0, 31.52), timing="word"),
+                                           have], 0.15, runs)
+        sure = video_qa.merge_pauses(runs, kind, spans, 0.6, ("none",), **self._kw(-30.0))
+        self.assertGreaterEqual(max(x["dur"] for x in sure), 2.9)   # the soft "mm" is not talk
+
+    def test_the_hook_waits_for_the_first_audible_sound(self):
+        checks = {c["check"]: c for c in video_qa.evaluate(
+            {"duration_s": 10.0, "video": None},
+            {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, [], [], self.PROF,
+            first_speech=1.9, first_audio=2.29, noise={"first_any_sound_s": 2.29})}
+        self.assertEqual(checks["hook_first_speech"]["status"], "FAIL")
+        self.assertEqual(checks["hook_first_speech"]["measured"], "2.29s")
+
+    def test_talk_gaps_allow_for_early_word_clocks(self):
+        words = [dict(w("a", 0.0, 1.0), timing="word"), dict(w("b", 2.7, 3.0), timing="word")]
+
+        def gaps(silences):
+            c = {x["check"]: x for x in video_qa.evaluate(
+                {"duration_s": 10.0, "video": None},
+                {"integrated_lufs": -14.0, "true_peak_dbtp": -2.0}, silences, [],
+                self.PROF, first_speech=0.0, first_audio=0.0, words=words)}
+            return c.get("talk_gaps", {}).get("status")
+        self.assertEqual(gaps([]), "WARN")                           # 1.7 s under a bed
+        self.assertIsNone(gaps([{"start": 1.0, "end": 2.6, "dur": 1.6}]))  # a real pause
+        self.assertEqual(gaps([{"start": 1.0, "end": 1.7, "dur": 0.7},     # a long sigh
+                               {"start": 2.0, "end": 2.6, "dur": 0.6}]), "WARN")
+
+    def test_our_null_muxer_is_not_the_files_fault(self):
+        err = ("[null @ 0x55] Application provided invalid, non monotonically increasing "
+               "dts to muxer in stream 0: 50 >= 50\n[h264 @ 0x56] error while decoding MB\n")
+        self.assertEqual(video_qa.file_errors(err, r"error|invalid"),
+                         ["[h264 @ 0x56] error while decoding MB"])
+
+    def test_noise_like_means_flatter_than_the_room(self):
+        state = bytearray([0] * 100 + [1] * 50)
+        peaks = [-40.0] * 150
+        hiss = [0.85] * 100
+        talk_under_hiss = video_qa._tonal_windows(state, peaks, hiss + [0.6] * 50, 0.01,
+                                                  0.3, 0.15)
+        self.assertTrue(all(talk_under_hiss[100:]))
+        typing = video_qa._tonal_windows(state, peaks, [0.7] * 100 + [0.85] * 50, 0.01,
+                                         0.3, 0.15)
+        self.assertFalse(any(typing[100:]))
+
+    def test_more_speaker_label_forms(self):
+        srt = ("1\n00:00:00,000 --> 00:00:02,000\nSpeaker 1: one\n\n"
+               "2\n00:00:02,000 --> 00:00:04,000\nDennis Yu (Host): two\n\n"
+               "3\n00:00:04,000 --> 00:00:06,000\n>> DENNIS: three >> four\n\n"
+               "4\n00:00:06,000 --> 00:00:08,000\nStep 1: open it\n")
+        self.assertEqual([x["word"] for x in finish.words_from_srt(srt)],
+                         ["one", "two", "three", "four", "Step", "1:", "open", "it"])
+
+    def test_sidecar_lines_fit_and_short_sentences_merge(self):
+        side = dict(CAP, **finish.DEFAULT_STYLE["sidecar_captions"])
+        long = ["extraordinarily", "comprehensive", "understanding", "of", "everything"]
+        words = [w(t, i * 0.4, i * 0.4 + 0.35) for i, t in enumerate(long * 4)]
+        srt = finish.build_srt(finish.chunk_words(words, side), side)
+        body = [l for l in srt.splitlines() if l and "-->" not in l and not l.isdigit()]
+        self.assertTrue(all(len(l) <= 42 for l in body), body)
+        talk = [w("Okay.", 0.0, 0.3), w("So", 0.3, 0.5), w("here", 0.5, 0.8),
+                w("we", 0.8, 1.0), w("go.", 1.0, 1.4)]
+        self.assertEqual(len(finish.chunk_words(talk, side)), 1)
+
+    def test_transcription_cache_knows_the_model_and_leaves_no_temp_file(self):
+        import contextlib
+        import io
+        tw = _load("transcribe_words")
+        with tempfile.TemporaryDirectory() as tmp:
+            media = Path(tmp) / "not_media.mp4"
+            media.write_bytes(b"not media")
+            out = Path(tmp) / "w.json"
+            out.write_text(json.dumps({"backend": "local", "model": "tiny.en", "words": [],
+                                       "media_key": tw.media_key(str(media), 0.0, 0.0)}))
+            before = set(Path(tempfile.gettempdir()).glob("tmp*.wav"))
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                code = tw.main([str(media), "-o", str(out), "--model", "small.en"])
+            self.assertEqual(code, 2)                                # not served from cache
+            self.assertEqual(set(Path(tempfile.gettempdir()).glob("tmp*.wav")), before)
+
+
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
@@ -1459,6 +1585,59 @@ class MediaRoundTrip(unittest.TestCase):
                  str(gray))
         c = {x["check"]: x["status"] for x in self._quiet_qa(gray)["checks"]}
         self.assertEqual(c["black_frames"], "FAIL")
+
+    # ---- sixth audit (24 Oct 2026) ----
+
+    def test_uneven_frame_timing_is_not_a_decode_error(self):
+        out = self.tmp / "jitter.mp4"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=6", "-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}':s=48000:d=6", "-vf",
+                 "setpts='(N/30+0.002*(random(0)-0.5))/TB'", "-fps_mode", "passthrough",
+                 "-enc_time_base", "1/90000", "-c:v", "libx264", "-preset", "ultrafast",
+                 "-c:a", "aac", str(out))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
+        self.assertEqual(c["decodes_cleanly"], "PASS")
+
+    def test_a_held_last_frame_in_matroska_is_not_truncation(self):
+        lst = self.tmp / "vfr2.txt"
+        self._held("vfrbase2", [(0, 3)])
+        lst.write_text("ffconcat version 1.0\nfile slide.png\nduration 3\n"
+                       "file slide.png\nduration 0.04\n")
+        base = self.tmp / "vfr2_base.mp4"
+        self._ff("-f", "concat", "-safe", "0", "-i", str(lst), "-fps_mode", "passthrough",
+                 "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(base))
+        held_v = self.tmp / "vfr2_held_v.mp4"
+        self._hold_last_mp4(base, held_v, 5.0)
+        held = self.tmp / "vfr2_held.mkv"
+        self._ff("-i", str(held_v), "-f", "lavfi", "-i", f"aevalsrc='{self.SYL}':s=48000:d=8",
+                 "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast",
+                 "-c:a", "flac", "-t", "8", str(held))
+        c = {x["check"]: x["status"] for x in self._quiet_qa(held)["checks"]}
+        self.assertEqual(c["decodes_cleanly"], "PASS")
+
+    def test_a_soft_mm_in_dead_air_fails_even_when_the_asr_stretches_a_word(self):
+        out = self.tmp / "mm.wav"
+        expr = (f"{self.SYL}*(lt(t,8)+gte(t,11))"
+                "+0.05*sin(2*PI*120*t)*sin(PI*(t-9.4)/0.4)*between(t,9.4,9.8)")  # soft "mm"
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{expr}':s=48000:d=20", "-c:a",
+                 "pcm_s16le", str(out))
+        words = self._words_for([(0.0, 8.0), (11.0, 20.0)])
+        nxt = next(i for i, x in enumerate(words) if x["start"] >= 11.0)
+        words[nxt] = dict(words[nxt], start=7.95)                     # stretched back 3 s
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out, words)["checks"]}
+        self.assertEqual(c["pauses_over_fail"], "FAIL")
+
+    def test_a_late_word_clock_does_not_invent_dead_air(self):
+        out = self.tmp / "late_word.wav"
+        expr = (f"{self.SYL}*(lt(t,8)+gte(t,10))"                   # talk, 0.6 s, a word,
+                "+0.3*sin(2*PI*220*t)*between(t,8.5,9)")             # 1 s, talk again
+        self._ff("-f", "lavfi", "-i", f"aevalsrc='{expr}':s=48000:d=20", "-c:a",
+                 "pcm_s16le", str(out))
+        words = self._words_for([(0.0, 8.0), (10.0, 20.0)])
+        words.append(dict(w("but", 9.3, 9.7), timing="word"))       # heard 0.8 s late
+        words.sort(key=lambda x: x["start"])
+        c = {x["check"]: x["status"] for x in self._quiet_qa(out, words)["checks"]}
+        self.assertEqual(c["pauses_over_fail"], "PASS")
 
 
 if __name__ == "__main__":
