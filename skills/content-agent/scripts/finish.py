@@ -1264,15 +1264,20 @@ def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
                      side: str, min_sil: float = 0.15):
     """Words the ASR heard inside a level pause are usually soft talk the raised
     threshold missed (place_clip's held words). But a word with no sound of
-    its own there (its loudest 10 ms within 5 dB of the pause's noise) is a
-    clock error: Whisper put "But" 0.6 s late into the silence after it was
-    said (audit round 12's fresh sweep, nz_fan47 at 380.64, the clip opening
-    after it). When an unheard talk-level sound sits right beside the pause,
-    on the far side from the clip (before it at the head, after it at the
-    tail, within 1.2 s of the word, no heard word on it), and the word's
-    neighbour claims the sound on the clip's side, that sound is the word.
-    Returns the pause beyond it (None when talk runs on there: the edge is
-    then mid-phrase), or False when the words are not misclocked."""
+    its own there (no 30 ms more than 5 dB over the pause's noise, away from
+    the pause's first and last 50 ms, where the neighbouring sound's decay
+    and attack still show; one 10 ms peak is the noise's own spread) is a
+    clock error: Whisper put "But" 0.6 s
+    late into the silence after it was said (audit round 12's fresh sweep,
+    nz_fan47 at 380.64, the clip opening after it). When an unheard
+    talk-level sound sits beside the pause (within 50 ms; a 10 ms fragment
+    of its decay between does not part them), on the far side from the clip
+    (before it at the head, after it at the tail, within 1.2 s of the word,
+    no heard word on it), and the word's neighbour claims the sound on the
+    clip's side, that sound is the word (round 15's fix: seg6's "And he's",
+    clocked into the pause after it was said, a decay fragment between). Returns
+    the pause beyond it (None when talk runs on there: the edge is then
+    mid-phrase), or False when the words are not misclocked."""
     if not held or not getattr(runs, "peaks", None) or not hasattr(runs, "loudest"):
         return False
     x, y = pause
@@ -1282,13 +1287,18 @@ def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
     if fl is None:
         return False
     for a, b in spans:
-        pk = runs.loudest(a, b)
-        if pk is None or pk > fl + 5.0:
+        ia, ib = max(a, x + 0.05), min(b, y - 0.05)     # off the pause's edges
+        run = best = 0
+        for k in runs._span(*((ia, ib) if ib - ia >= 0.03 else (a, b))):
+            run = run + 1 if runs.peaks[k] > fl + 5.0 else 0
+            best = max(best, run)
+        if best >= 3:
             return False            # sound of its own: soft talk, not a clock error
     others = [w for w in said if not any(w is h for h in held)]
     lo, hi = min(w["start"] for w in held), max(w["end"] for w in held)
     if side == "start":
-        snd = [(a, b) for k, a, b in runs if k == 1 and abs(b - x) <= 0.02]
+        snd = [(a, b) for k, a, b in runs if k == 1 and x - 0.05 <= b <= x + 0.02
+               and b - a >= 0.08]
         if not snd:
             return False
         a, b = snd[-1]
@@ -1296,7 +1306,8 @@ def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
         if a < lo - 1.2 or nxt is None or nxt > y + 0.3:
             return False
     else:
-        snd = [(a, b) for k, a, b in runs if k == 1 and abs(a - y) <= 0.02]
+        snd = [(a, b) for k, a, b in runs if k == 1 and y - 0.02 <= a <= y + 0.05
+               and b - a >= 0.08]
         if not snd:
             return False
         a, b = snd[0]
@@ -1580,7 +1591,10 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                   and w["start"] < start - 0.02 for w in said):
         ps = None
     if pe and any(w["start"] < pe[0] - 0.02 and w["start"] >= end - 0.02
-                  and w["end"] > end + 0.02 for w in said):
+                  and end + 0.02 < w["end"] <= pe[1] + 0.02 for w in said):
+        # (a next word whose clock spans the whole pause was stretched back
+        # over it, Whisper's way: its start snapped to the word before's end,
+        # its sound after the pause: "This" 248.52-249.22 on the clean mix)
         pe = None
 
     def audible(w, r):

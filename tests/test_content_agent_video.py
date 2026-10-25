@@ -2354,6 +2354,49 @@ class AuditRound15(unittest.TestCase):
         self.assertTrue(any(x.startswith("the clip starts") and "never goes quiet" in x
                             for x in rep["warnings"]))
 
+    def test_an_end_keeps_its_pause_when_the_next_words_clock_spans_it(self):
+        # The developer's sweep after the H3 fix: Whisper snaps a word's start
+        # to the end of the word before, so "This" (said after the pause) is
+        # clocked 248.52-249.22, across it. The fix took it for a word between
+        # the request and the pause and cut "right?" at its clock, WARN.
+        runs = [(0, 244.0, 244.5), (1, 244.5, 248.64), (0, 248.64, 249.1), (1, 249.1, 250.5),
+                (0, 250.5, 251.0)]
+        loud = [(244.5, 248.52, -15.0), (248.52, 248.64, -40.0), (249.1, 250.5, -15.0)]
+        words = _said(("So", 244.5, 244.8), ("stuff,", 248.04, 248.24), ("right?", 248.32, 248.52),
+                      ("This", 248.52, 249.22), ("guy", 249.22, 249.44), ("started", 249.44, 250.4))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(_QuietRoom(runs, loud, 243.0, 252.0, -76.0, -51.8), words,
+                                    244.5, 248.52, 0.08, 0.4, rep)
+        self.assertGreater(e, 248.64)                      # in the pause, "right?" whole
+        self.assertLess(e, 249.1)
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+
+    def test_a_word_clocked_into_a_quiet_pause_after_it_was_said_is_found(self):
+        # The developer's sweep after the L1 fix: seg6's "And he's" said
+        # 40.06-40.54, clocked "And" 40.54-40.90 inside the quiet pause after
+        # it. A 10 ms fragment of the decay sat between the sound and the
+        # pause, and one noise peak 6 dB over the pause's median: the word
+        # read as sound of its own, not as talk, and the clip opened on
+        # "like,", PASS.
+        runs = [(1, 38.4, 39.23), (0, 39.23, 39.63), (1, 39.63, 40.54), (0, 40.54, 40.55),
+                (1, 40.55, 40.56), (0, 40.56, 41.11), (1, 41.11, 41.39), (0, 41.39, 41.47),
+                (1, 41.47, 42.42), (0, 42.42, 43.0), (1, 43.0, 44.0)]
+        loud = [(38.4, 39.2, -16.0), (39.2, 39.23, -35.0), (39.63, 40.03, -12.0),
+                (40.03, 40.4, -15.0), (40.4, 40.49, -25.0), (40.49, 40.51, -31.0),
+                (40.51, 40.52, -41.5), (40.52, 40.54, -35.5), (40.54, 40.55, -51.8),
+                (40.55, 40.56, -40.9), (40.56, 40.57, -49.5), (40.58, 40.6, -49.3),
+                (40.7, 40.71, -67.0), (41.1, 41.11, -55.5), (41.11, 41.39, -20.0),
+                (41.47, 42.42, -15.0), (43.0, 44.0, -15.0)]
+        words = _said(("jump", 38.62, 38.78), ("training.", 38.8, 39.12), ("And", 40.54, 40.9),
+                      ("he's", 40.9, 41.26), ("like,", 41.26, 41.36), ("just", 41.48, 41.62),
+                      ("call", 42.0, 42.16), ("him.", 42.16, 42.4), ("So", 43.0, 43.2))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_QuietRoom(runs, loud, 37.0, 45.0, -73.0, -47.7), words,
+                                    40.54, 42.4, 0.08, 0.4, rep)
+        self.assertLessEqual(s, 39.63)                     # before "And he's"
+        self.assertGreater(s, 39.23)
+        self.assertTrue(any("first word is clocked in silence" in x for x in rep.get("notes", [])))
+
     def test_a_level_stretch_serves_only_moments_well_inside_it(self):
         # The floors the clip rules read span 2.5 s each side of a cut; a
         # stretch measured for another clip that ends 1.5 s past the cut read
