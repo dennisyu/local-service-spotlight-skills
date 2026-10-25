@@ -2304,6 +2304,31 @@ class AuditRound15(unittest.TestCase):
         self.assertLess(s, 588.25)                         # in the dip after "score."
         self.assertEqual([x for x in rep["warnings"] if "short dip" in x], [])
 
+    def test_a_burst_long_after_the_word_before_is_not_a_dropped_syllable(self):
+        # My real-clip renders after round 15 (cocsv, a public podcast promo, at
+        # 12.92): "from" clocked to 11.82, then 1.1 s the ASR heard nothing in
+        # (a music bed: Whisper on it alone writes "Thanks for watching!"),
+        # "Off" clocked at 12.92. The gap cut at 12.90 after a bed burst
+        # (12.69-12.87) and warned that "Off" may have lost its start.
+        runs = [(0, 9.0, 10.09), (1, 10.09, 12.05), (0, 12.05, 12.08), (1, 12.08, 12.19),
+                (0, 12.19, 12.24), (1, 12.24, 12.61), (0, 12.61, 12.64), (1, 12.64, 12.91),
+                (0, 12.91, 12.98), (1, 12.98, 14.64), (0, 14.64, 15.2), (1, 15.2, 16.5)]
+        loud = [(10.09, 10.48, -30.0), (10.57, 10.88, -22.4), (10.88, 11.06, -14.0),
+                (11.06, 11.39, -17.0), (11.39, 11.67, -14.1), (11.67, 11.8, -26.0),
+                (11.8, 11.98, -20.9), (11.98, 12.05, -30.0), (12.05, 12.08, -38.0),
+                (12.08, 12.13, -24.0), (12.13, 12.19, -30.5), (12.19, 12.24, -36.0),
+                (12.24, 12.26, -26.0), (12.26, 12.33, -20.0), (12.33, 12.39, -23.3),
+                (12.39, 12.48, -26.1), (12.48, 12.61, -29.5), (12.61, 12.62, -33.7),
+                (12.62, 12.63, -39.5), (12.63, 12.64, -36.9), (12.64, 12.68, -30.1),
+                (12.68, 12.69, -27.1), (12.69, 12.71, -20.5), (12.71, 12.72, -17.8),
+                (12.72, 12.82, -21.6), (12.82, 12.87, -23.7), (12.87, 12.89, -27.1),
+                (12.89, 12.91, -31.2), (12.91, 12.94, -33.6), (12.94, 12.97, -37.7),
+                (12.97, 12.98, -35.3), (12.98, 13.23, -23.9), (13.23, 13.41, -29.8),
+                (13.41, 13.48, -38.0), (13.48, 13.62, -12.0), (13.62, 14.64, -15.0),
+                (15.2, 16.5, -15.0)]
+        r = _Room(runs, loud, 8.0, 17.0, -37.0, -32.8, -48.5).r
+        self.assertEqual(finish.dropped_talk(r, 12.9, 11.82, -12.1, 11.22), 0.0)
+
     def test_a_start_at_the_previous_words_clock_end_does_not_reach_back_over_it(self):
         # H3, the clean mix at 56.16 ("Look,"'s clock end; said 56.03-56.35):
         # the pause before "Look," ends within the 0.25 s reach, so the clip

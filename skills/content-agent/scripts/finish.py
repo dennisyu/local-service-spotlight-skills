@@ -1499,8 +1499,10 @@ def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
     within `reach` before the cut) and is a burst of its own: back to 30 ms of
     dip within `back` (sound that runs on from further back is the previous
     word's own tail past its clock end). It counts when it starts inside the
-    previous word's clock (after `prev_start`), after talk-level sound of that
-    word's own (otherwise it is that word, clocked early over the pause
+    previous word's clock (after `prev_start`) or within 0.15 s after it (a
+    burst that starts later, in a stretch the ASR heard nothing in, was a
+    music bed in a public promo, not a syllable), after talk-level sound of
+    that word's own (otherwise it is that word, clocked early over the pause
     before it: "right?" before "She" on the fresh mixes), reaches within 6 dB
     of the first word `top` and 18 dB over the floor (not a bed or a breath:
     a music bed between sentences in a public short), and holds talk-level
@@ -1534,7 +1536,8 @@ def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
             first = k + 3                     # the burst starts after this dip
             break
         k -= 1
-    if first is None or base + first * w <= prev_start + 0.03:
+    if first is None or base + first * w <= prev_start + 0.03 \
+            or base + first * w > covered_to + 0.15:
         return 0.0
     own = [i for i in range(max(0, idx(prev_start)), first - 3) if pk[i] >= talk]
     burst = pk[first:last + 1]

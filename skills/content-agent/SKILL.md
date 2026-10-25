@@ -403,9 +403,9 @@ pull request #94 of the skills repo.
   My own sweeps of those fixes caught six holes they opened before this was written: sentence
   ends losing their pause to a next word stretched back over it or clocked into a reverb tail,
   starts cut inside a word between that runs straight into the word asked for (19 to 28 of 66
-  LIGHT cue starts a mix), a word clocked into a quiet pause after it was said, a dropped-syllable check that first fired on
-  17 edges besides the 2 true ones (the word before, its decay, a bed, the word before's own last
-  syllable), and a level stretch reused from another clip that hid a warning.
+  LIGHT cue starts a mix), a word clocked into a quiet pause after it was said, a dropped-syllable check that fired on 19
+  edges besides the 2 true ones before it was narrowed (the word before, its decay, a music bed, the
+  word before's own last syllable), and a level stretch reused from another clip that hid a warning.
 - **Plus the dull ones**: stub files and temp folders after a failed render, cryptic errors on bad
   input, captions a player would read as commands, keywords that missed "Dollar-a-Day's", a
   long-form caption file cut into 1,177 three-word ALL-CAPS cues, an iPhone HDR clip re-encoded to
@@ -465,9 +465,9 @@ distinct edges held a word Whisper hears (5 an extra word, 2 a "right?" Descript
 captions), and the other 5 did not. A guest only 12 dB off-centre (the host mic hears them 12 dB
 down) is neither folded nor flagged. The WARN for a start cut in a short dip after uncovered
 word-loud sound catches a first syllable cut off at a closure only when a dip parts it from the word
-before, it reaches within 6 dB of the word and it runs 0.12 s past the word before's clock end (an
-ASR ends words up to 0.1 s early): on the auditor's sweeps it fires on the 2 such edges and nowhere
-else. Under an AC the level reads a soft tail of the word
+before, it starts inside that word's clock or within 0.15 s after it, it reaches within 6 dB of the
+word and it runs 0.12 s past the word before's clock end (an ASR ends words up to 0.1 s early): on
+the auditor's sweeps it fires on the 2 such edges and nowhere else. Under an AC the level reads a soft tail of the word
 before as part of a pause, so a start asked for in that pause can open on 0.1 s of it (1 of the
 auditor's 830). A first word whose clock spans a pause, with the word before running on into its
 clock (a reverb tail, a tag question), keeps the start on its clock with a WARN rather than finding
