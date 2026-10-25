@@ -402,7 +402,7 @@ pull request #94 of the skills repo.
   clips WARN, as before.
   My own sweeps of those fixes caught six holes they opened before this was written: sentence
   ends losing their pause to a next word stretched back over it or clocked into a reverb tail,
-  starts cut inside a word between that runs straight into the word asked for (20 to 28 of 66
+  starts cut inside a word between that runs straight into the word asked for (19 to 28 of 66
   LIGHT cue starts a mix), a word clocked into a quiet pause after it was said, a dropped-syllable check that first fired on
   17 edges besides the 2 true ones (the word before, its decay, a bed, the word before's own last
   syllable), and a level stretch reused from another clip that hid a warning.
