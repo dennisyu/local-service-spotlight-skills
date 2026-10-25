@@ -44,8 +44,8 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
    - **No tool:** proceed with the raw video unedited and say so — a real upload this week beats a perfect one next month.
    - **Backlogs: route the edit by authority, not by habit.** The recording you picked for this week always gets the full run above. A backlog (dozens or thousands of old recordings) does not: Descript credits and media hours are bought per seat. Transcribe the backlog free on the machine (`scripts/transcribe_words.py`), score each recording against the client's GCT, and give it an **edit tier** using the same four words the repurposing agent uses for article effort: **SKIP** = no edit, log the reason; **LIGHT** = no Descript, just step 2b on the raw file (loudness and captions); **MODERATE / STRONG** = the Descript edit above, then step 2b. A SKIP is logged with its reason and leaves the queue; it is never "pending".
 2b. **Finish and prove it — every video, whichever editor cut it.** Needs ffmpeg on the machine; without it, skip 2b, ship anyway and mark the video **UNMEASURED** in the report — never block on tooling. Load the client's `video-style.json` (start from `references/video-style.example.json`; save it once in the Knowledge Base and never ask for the style again). Then:
-   - Long-form for YouTube: `scripts/transcribe_words.py edited.mp4 -o words.json`, then `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt --words words.json` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a sentence-style caption file to upload beside the video (Descript's words on the word clock; captions are a sidecar unless you ask for `--burn`). The word timing is what lets the receipt tell a breath or a cough inside dead air from a word; it is free and local (66 s for a 3-minute slice on two cores). With `--srt` alone the receipt says so in a `word_timing` WARN. Export the SRT from Descript with speaker labels off (`include_speaker_labels: "off"`); labels left in are stripped. A mono recording comes out as two identical channels, because that is the only way ffmpeg's loudness pass lands on target for it; a stereo file with the talk in one channel only, a quiet backup or camera scratch track in the other, or one channel polarity-inverted gets its louder channel copied to both, and an interview recorded one lav per channel (each speaker in one ear) is folded to the centre. On a raw file (LIGHT tier) add `--trim-head`: it cuts into the pause before the first transcribed word's sound, or without a transcript to the first sustained sound, never to a record-button click. It keeps sound before the first word only when that sound runs into the word the way talk does (an opening the transcript missed); a lone cough, breath or click with a pause after it is cut and reported, and the receipt WARNs when sound as loud as talk sits more than a second before the first word.
-   - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Pick START and END at pauses (Descript's cue starts and ends usually are): an edge at a pause stays in it, just before the first word's sound and just after the last word's, whatever the ASR's word clock says; under steady room noise, which hides a word's soft ending, the end runs on to the last word's own cue or clock end, and words the ASR heard inside what the level calls a pause count as talk (one clocked in plain silence, with unheard talk just beyond the pause, is that talk), so the edge words are kept with or without Descript's SRT. An edge mid-phrase keeps the word it falls inside and moves to the nearest pause within a second of it. When the cut still lands inside a heard word or a gap under 0.25 s, or Descript's timing says the last word runs past the cut, the receipt carries it as a `finish_report` WARN; a cut in a clear gap between words that a music bed hides from the level goes to the quietest part of that gap and the receipt notes it (`finish_note`, a NOTE, with loudnorm's dynamic-mode note). Captions use Descript's corrected words on the word-level clock, and the first one lands on the clip's first sound.
+   - Long-form for YouTube: `scripts/transcribe_words.py edited.mp4 -o words.json`, then `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt --words words.json` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a sentence-style caption file to upload beside the video (Descript's words on the word clock; captions are a sidecar unless you ask for `--burn`). The word timing is what lets the receipt tell a breath or a cough inside dead air from a word; it is free and local (66 s for a 3-minute slice on two cores). With `--srt` alone the receipt says so in a `word_timing` WARN. Export the SRT from Descript with speaker labels off (`include_speaker_labels: "off"`); labels left in are stripped. A mono recording comes out as two identical channels, because that is the only way ffmpeg's loudness pass lands on target for it; a stereo file with the talk in one channel only, a quiet backup or camera scratch track in the other, or one channel polarity-inverted gets its louder channel copied to both, and an interview recorded one lav per channel (each speaker in one ear), or with one guest's lav alone on one input, is folded to the centre. On a raw file (LIGHT tier) add `--trim-head`: it cuts into the pause before the first transcribed word's sound, or without a transcript to the first sustained sound, never to a record-button click. It keeps sound before the first word only when that sound runs into the word the way talk does (an opening the transcript missed); a lone cough, breath or click with a pause after it is cut and reported, and the receipt WARNs when sound as loud as talk sits more than a second before the first word.
+   - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Pick START and END at pauses (Descript's cue starts and ends usually are): an edge at a pause stays in it, just before the first word's sound and just after the last word's, whatever the ASR's word clock says; under steady room noise, which hides a word's soft ending, the end runs on to the last word's own cue or clock end, and words the ASR heard inside what the level calls a pause count as talk (one clocked in plain silence, with unheard talk just beyond the pause, is that talk), so the edge words are kept with or without Descript's SRT. An edge mid-phrase keeps the word it falls inside and moves to the nearest pause within a second of it. When the cut still lands inside a heard word or a gap under 0.25 s, or Descript's timing says the last word runs past the cut, the receipt carries it as a `finish_report` WARN; a cut in a clear gap between words goes to 30 ms there that are quiet in absolute terms (under the checker's silence threshold, or far under the words) and the receipt notes it (`finish_note`, a NOTE, with the fade's level); a gap that never goes quiet (a loud bed, a reverb tail, talk the transcript missed) WARNs that the cut cannot be checked. Captions use Descript's corrected words on the word-level clock, and the first one lands on the clip's first sound.
    - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: whether the whole file decodes (a half-downloaded mp4, a cut-off WAV or Ogg, or a decoder error is a FAIL, never a clean receipt); loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, "[Music]" cues ignored; otherwise the first real sound: clicks, noise-like typing and a cough before dead air are skipped, and audio that starts after the picture counts as dead air); the longest pauses and the pause rate (a NOTE, not a WARN, while the edit removes only pauses over 2 s), with silence measured against the file's own loudness and its local noise floor (WARN "unmeasurable" where noise or a music bed never lets the sound drop; with word timing a breath, a soft "mm", a sigh or a thump inside dead air does not end the pause, a loud sound right next to a word is listed rather than failed, and a `talk_gaps` WARN marks where the talk stops under a bed; with an SRT alone, a `possible_pauses` WARN lists the stretches to listen to); trailing dead air (a FAIL when the microphone died); a picture that stops before the sound; black runs of two frames or a held black frame (FAIL) and mostly dark frames with something on screen, such as a dead screen with a camera tile or a dark slide (WARN, with the frame saved to look at), at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt --words words.json` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
    - Titles and descriptions come from step 6, thumbnails from the receipt's real-frame candidates. If you ask Underlord for anything beyond the edit, add: **"thumbnail: choose a real frame, never generate one."**
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
@@ -239,9 +239,9 @@ sidecar or burned captions from one `video-style.json`) and `scripts/video_qa.py
 reputation", came out at −14.4 LUFS / −2.0 dBTP, first word at 0.08 s, QA PASS, in 51 s on two CPU
 cores with zero Descript credits.
 
-### The checker was broken twelve times before it shipped
+### The checker was broken thirteen times before it shipped
 
-Twelve fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
+Thirteen fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
 break below is now a regression test that fails on the code before its fix; the full reports are on
 pull request #94 of the skills repo.
 
@@ -319,11 +319,12 @@ pull request #94 of the skills repo.
   input (each voice in one ear) slipped past those rules and landed 1.3 and 1.5 LU short. Now a
   quieter channel with no talk of its own is copied over whatever its correlation, two channels that
   take turns, each with talk of its own, are folded to the centre, and the receipt WARNs
-  `speakers_hard_panned` (talk alone in one channel only is what wide stereo music looks like, so
-  that alone changes nothing) (the camera build now lands at −14.3 LUFS and the split-mode interview
-  at −14.5; none of 41 real stereo files, public videos, meetings, our publishes and the replay, is
-  copied or folded); a loudness raise that does not bring the result 0.3 LU nearer the target stops
-  the ladder instead of wasting renders.
+  `speakers_hard_panned` (a little talk alone in one channel is what wide stereo music looks like,
+  so that changes nothing; since round thirteen 5 s and a fifth of a channel's talk is a voice) (the
+  camera build now lands at −14.3 LUFS and the split-mode interview at −14.5; none of 41 real stereo
+  files, public videos, meetings, our publishes and the replay, is copied or folded); a loudness
+  raise that does not bring the result 0.3 LU nearer the target stops the ladder instead of wasting
+  renders.
 - **Cuts inside words.** `--clip` and `--trim-head` cut on the ASR's word clock, which ran 0.85 s
   late on a real short: it opened 0.77 s into "Landscaping" and the receipt passed. Round nine moved
   the cut onto the word's sound; round ten found the mirror image: the ASR also clocks words up to
@@ -356,14 +357,19 @@ pull request #94 of the skills repo.
   music beds and room noise. Now words the ASR heard inside a level "pause" count as talk, the level
   is read with the words as the receipt reads it, a clip's last word is never the next sentence's
   word stretched back, a word the ASR clocked in silence is matched to the unheard talk beside it,
-  and a cut in a clear gap between words that a bed hides goes to its quietest part and is
-  noted, not WARNed. On the auditor's fresh set (7 mixes by 66 clips in both tiers) talk the request
-  covers is now lost unflagged at one edge, the last 0.03 s of a word's decay above −40 dBFS under
-  the music bed, no louder than the bed, against three edges before, the short's among them, and
-  finish warnings fall from 157 to 60 of 924 clips; the loudest fan's lost start is kept; on the 652
-  replay clips 580 are cut as in round eleven and the other 72 move at most 0.3 s, from 32 cuts at
-  −35 dBFS or louder to 3, and the independent envelope finds no lost talk; 1 of the auditor's 12
-  real shorts WARNs, for a 5 s talk gap, against 12 of 12.
+  and a cut in a clear gap between words is noted rather than WARNed (talk the request covers, lost
+  unflagged at three edges of the auditor's fresh set, the short's among them, is now lost at none
+  at sentence pauses, and the loudest fan's lost start is kept). Round thirteen: that gap rule took
+  the gap's quietest moment for quiet, so of 522 clips cut at word gaps 56 cuts landed in talk above
+  −35 dBFS with a clean receipt (inside an unheard filler on one of our own publishes, in a word's
+  decay on the replay, in talk under a music bed), and a guest whose lav sat alone on one input was
+  neither folded nor flagged. Now a gap cut needs 30 ms that are quiet in absolute terms, moves
+  either way to find them, and the receipt WARNs when a gap never goes quiet; one voice in one
+  channel is folded like two. On the auditor's 522 word-gap clips the unwarned cuts in talk above
+  −35 dBFS fall from 60 (by my count) to 10, none above −25; on the 652 replay clips no noted cut's
+  fade reaches −35 dBFS (5 did) and 28 clips WARN, against 38 before and 99 in round eleven; on
+  the 924 fresh clips cut at sentence pauses nothing the request covers is lost unflagged; both
+  interview builds now fold and WARN, and none of 39 real stereo files does.
 - **Plus the dull ones**: stub files and temp folders after a failed render, cryptic errors on bad
   input, captions a player would read as commands, keywords that missed "Dollar-a-Day's", a
   long-form caption file cut into 1,177 three-word ALL-CAPS cues, an iPhone HDR clip re-encoded to
@@ -407,11 +413,13 @@ capitalised word and a colon ("Bloomington:") reads as Descript's labelled expor
 labels off. Talk in one channel of a 5.1 mix can land 1.4 LU short of −14, and the report says so.
 Under noise within about 12 dB of the talk the level loses pauses altogether: clip edges fall back
 to the word clocks: in the round-eleven fan build no start loses talk and one end in 30 cuts the
-last 0.06 s of a fading word (0.01 s of it above −40 dBFS, as on the quiet mix). Under a music bed
-a clip edge in a word gap is placed by the word clocks and the level's quiet moments, and the
-receipt notes it (`finish_note`): the cut can drop or pick up a word's last decay (on the fresh set
-two ends lose 0.01 to 0.03 s above −40 dBFS and three starts carry 0.03 to 0.07 s above −50 dBFS,
-at or under the bed). `cut_inside_sound` does not see a cut inside a soft consonant that
+last 0.06 s of a fading word (0.01 s of it above −40 dBFS, as on the quiet mix). A clip edge in
+a word gap is placed on the level's quiet moments and the receipt notes it (`finish_note`); under a
+loud bed or heavy reverb many gaps never go quiet and WARN instead (83 of the auditor's 522
+word-gap clips, 33 of them under a bed 14 dB down, and 32 of 191 such clips on 30 real public
+videos and our publishes), and a quiet cut under a bed can still drop or pick up a word's last
+decay (on the fresh set 10 word-gap cuts sit at −25 to −35 dBFS in the clean speech, 8 of them
+under that loud bed). `cut_inside_sound` does not see a cut inside a soft consonant that
 rises into its vowel (it looks like a word's own attack), nor most cuts faded over 30 ms or more;
 `finish.py`'s own clips report theirs. With an SRT alone a gap inside one cue is not checked, and
 the receipt says so (`word_timing` WARN). A loud cough, a notification or a door right next to a
@@ -447,7 +455,7 @@ half a second can pass, because nothing in the file says it was longer.
 7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt. The first
    independent audit broke it six ways; after each round of fixes the next audit found
    more (six, then sixteen, then twenty-one, then fourteen, then twelve, then twelve, then
-   thirteen, then eight, then eleven, then nine, then six), mostly in
+   thirteen, then eight, then eleven, then nine, then six, then four), mostly in
    cases the fixes themselves opened or the documented command never exercised. Commission
    the refuting audit before telling anyone the number, run it again after every fix, and ship only
    when an audit finds nothing high or medium.
