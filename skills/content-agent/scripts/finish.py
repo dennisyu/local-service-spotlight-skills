@@ -75,12 +75,15 @@ Usage:
     is the level's run that ends at it, up to 0.4 s and not before the word
     before it; under a bed a window near the stretch's floor and 15 dB under
     the word ends the run), and by a Descript cue none of whose words the ASR
-    heard. However an edge was placed, a cut that keeps talk-level sound
-    beyond the clip's edge word, past a dip from it, that no caption word
-    covers (a filler, a word the ASR missed or clocked late: round
-    14 found an unheard filler, a misclocked "no," and an unheard "right?"
-    kept with a PASS) is a warning; the cut stays, since the level cannot
-    tell such talk from the word's own late syllable. The first
+    heard. A cut that keeps word-loud sound beyond the clip's edge word,
+    past a dip from it, that no caption word covers (a filler, a word the
+    ASR missed or clocked late: round 14 found an unheard filler, a
+    misclocked "no," and an unheard "right?" kept with a PASS) is a warning,
+    at an end however it was placed and at a start the word-gap rule placed
+    (a start at a pause, or moved onto the first word's sound, opens on that
+    sound by design: the ASR clocks the first word after a pause late). The
+    cut stays, since the level cannot tell such talk from the word's own
+    late syllable. The first
     and last caption land on the clip's sound, not a late or early clock.
     Every warning the report carries (all but the dynamic-mode note) also
     reaches the QA receipt (`finish_report`), so every edge finish could not
@@ -1502,6 +1505,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     talk_s: list = []
     talk_e: list = []
     misclocked = set()
+    in_gap = set()          # edges the word-gap rule placed
     if pe:
         held = [w for w in said if w["start"] >= pe[0] - 0.02
                 and (w["start"] < end - 0.02 or instant_at(w, end))
@@ -1680,6 +1684,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     new_end = q[0]
                 else:
                     new_start = q[0]
+                in_gap.add(where)
                 report.setdefault("notes", []).append(
                     f"the level shows no pause of 0.15 s or more where the clip {where} (a "
                     f"shorter pause, or a bed or room noise over it); the cut sits in a quiet "
@@ -1699,8 +1704,14 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
         # the transcript missed or clocked late (audit round 14: seg3 opened on
         # an unheard filler, ac44 ended on "no," clocked 0.3 s late, hum46 on
         # an unheard "right?", all PASS). The cut stays; the edge is flagged.
-        # (A word found clocked in silence is that talk, and already noted.)
-        if where in misclocked or any(f"the clip {where}" in x for x in report["warnings"]):
+        # (A word found clocked in silence is that talk, and already noted.) A
+        # start at a pause, or moved onto the first word's sound, opens on that
+        # sound by design: the ASR clocks the first word after a pause late
+        # (the replay's "Landscaping" by 0.77 s), and its first syllable,
+        # past a closure, looks like stray talk. So a start is checked where the
+        # word-gap rule placed it; an end, however it was placed.
+        if where in misclocked or any(f"the clip {where}" in x for x in report["warnings"]) \
+                or (where == "starts" and where not in in_gap):
             continue
         r = levels.near(cut)
         if not hasattr(r, "loudest"):
