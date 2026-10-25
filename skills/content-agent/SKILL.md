@@ -384,28 +384,27 @@ pull request #94 of the skills repo.
   40 to 21 (none above −25 before or after) and clips with a WARN rise from 386 to 435; on my
   522 the unwarned cuts above −35 fall from 10 to 6; on the 652 replay clips no cut moves and 29
   WARN (28 before); on the 924 fresh clips cut at sentence pauses every cut is where it was.
-  Round fifteen: a start asked for just before such a "pause" still halved "It's" (the fix ran
-  only when the request fell inside it, and my round-14 report listed one of those builds as
-  fixed when only the other had been rendered); the 0.25 s reach took the pause before a whole
-  word, so a start at the previous word's clock end opened on that word and an end at the next
-  word's clock start kept it; a word-gap cut landed in the closure inside a "professional"
-  Whisper clocked 0.4 s late and dropped "pro" with a NOTE; a click in a quiet pause made its
-  word talk; and this guide said Descript's cue edges are usually pauses. Now the reach stops at
-  a heard word with sound of its own, a first word whose sound runs on from the one before keeps
-  the start on its clock and WARNs, a start cut in a short dip right after a burst of word-loud
-  sound no clock covers WARNs, a word in a quiet pause needs 30 ms over the threshold, and the
-  guide says which cues to cut at. On the auditor's 830 starts at the previous word's clock end,
-  unwarned starts keeping 0.05 s or more of the word before fall from 52 to 1 (a soft tail at
-  −35 dBFS under an AC) and unwarned starts inside a word from 32 to 26; on its 796 ends at the
-  next word's clock start, unwarned ends keeping the next word fall from 14 to 2; the dropped
-  syllable WARNs on both mixes where it happens; no replay cut leaves its pause and 29 of the 652
-  clips WARN, as before.
-  My own sweeps of those fixes caught six holes they opened before this was written: sentence
-  ends losing their pause to a next word stretched back over it or clocked into a reverb tail,
-  starts cut inside a word between that runs straight into the word asked for (19 to 28 of 66
-  LIGHT cue starts a mix), a word clocked into a quiet pause after it was said, a dropped-syllable check that fired on 19
-  edges besides the 2 true ones before it was narrowed (the word before, its decay, a music bed, the
-  word before's own last syllable), and a level stretch reused from another clip that hid a warning.
+  Round fifteen: a start asked for just before such a "pause" still halved "It's" (the fix ran only
+  when the request fell inside it, and my round-14 report listed one of those builds as fixed when
+  only the other had been rendered); the 0.25 s reach took the pause before a whole word, so a start
+  at the previous word's clock end opened on that word and an end at the next word's clock start
+  kept it; a word-gap cut landed in the closure inside a "professional" Whisper clocked 0.4 s late
+  and dropped "pro" with a NOTE; a click in a quiet pause made its word talk; and this guide said
+  Descript's cue edges are usually pauses. Now the reach stops at a heard word with sound of its
+  own, a first word whose sound runs on from the one before keeps the start on its clock and WARNs,
+  a start cut in a short dip right after a burst of word-loud sound no clock covers WARNs, a word in
+  a quiet pause needs 30 ms over the threshold, and the guide says which cues to cut at. On the
+  auditor's 830 starts at the previous word's clock end, unwarned starts keeping 0.05 s or more of
+  the word before fall from 52 to 1 (a soft tail at −35 dBFS under an AC) and unwarned starts inside
+  a word from 32 to 26; on its 796 ends at the next word's clock start, unwarned ends keeping the
+  next word fall from 14 to 2; the dropped syllable WARNs on both mixes where it happens; no replay
+  cut leaves its pause and 29 of the 652 clips WARN, as before. My own sweeps and renders of those
+  fixes caught the holes they opened before this was written: sentence ends losing their pause to a
+  next word stretched back over it or clocked into a reverb tail, starts cut inside a word between
+  that runs straight into the word asked for (19 to 28 of 66 LIGHT cue starts a mix), a word clocked
+  into a quiet pause after it was said, a dropped-syllable check that fired on 19 edges besides the
+  2 true ones before it was narrowed (the word before, its decay, a music bed, the word before's own
+  last syllable), and a level stretch reused from another clip that hid a warning.
 - **Plus the dull ones**: stub files and temp folders after a failed render, cryptic errors on bad
   input, captions a player would read as commands, keywords that missed "Dollar-a-Day's", a
   long-form caption file cut into 1,177 three-word ALL-CAPS cues, an iPhone HDR clip re-encoded to
@@ -471,7 +470,10 @@ the auditor's sweeps it fires on the 2 such edges and nowhere else. Under an AC 
 before as part of a pause, so a start asked for in that pause can open on 0.1 s of it (1 of the
 auditor's 830). A first word whose clock spans a pause, with the word before running on into its
 clock (a reverb tail, a tag question), keeps the start on its clock with a WARN rather than finding
-the pause inside its clock. `cut_inside_sound` does not see a cut inside a soft consonant that
+the pause inside its clock. A start asked for at a word's clock just after a pause, where Whisper
+stretched the word before back into that pause and nothing parts the two, keeps that word whole and
+WARNs: 141 of my 462 LIGHT clips cut at the Whisper word nearest each Descript cue start do (none of
+the 462 cut with the SRT, where the cue times decide). `cut_inside_sound` does not see a cut inside a soft consonant that
 rises into its vowel (it looks like a word's own attack), nor most cuts faded over 30 ms or more;
 `finish.py`'s own clips report theirs. With an SRT alone a gap inside one cue is not checked, and
 the receipt says so (`word_timing` WARN). A loud cough, a notification or a door right next to a
