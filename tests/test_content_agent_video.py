@@ -1424,7 +1424,7 @@ class AuditRound10(unittest.TestCase):
                 _, _, loud = finish._settle_loudness(cmd, Path(d), part, None,
                                                      finish.load_style(None), rep)
             self.assertEqual(loud["integrated_lufs"], -15.4)
-            self.assertTrue(any("lands at -15.4 LUFS" in x and "moved it by only" in x
+            self.assertTrue(any("lands at -15.4 LUFS" in x and "moved it +0.1 LU" in x
                                 for x in rep["warnings"]))
 
     def test_channel_correlation_from_the_fold_down(self):
@@ -1599,8 +1599,18 @@ class AuditRound11(unittest.TestCase):
             self.assertEqual(len(calls), 1)                     # no third render
             self.assertEqual(loud["integrated_lufs"], -15.1)    # the better one kept
             msg = " ".join(rep["warnings"])
-            self.assertIn("moved it by only -0.1 LU", msg)
+            self.assertIn("moved it -0.1 LU", msg)
             self.assertNotIn("multichannel", msg)               # stereo: not the reason
+            # A raise that makes it worse stops the ladder too (-15.3, -15.7).
+            seq = iter([{"integrated_lufs": -15.3, "true_peak_dbtp": -2.0},
+                        {"integrated_lufs": -15.7, "true_peak_dbtp": -2.0}])
+            calls.clear()
+            rep = {"warnings": []}
+            with mock.patch.object(finish.video_qa, "measure_loudness", lambda p: next(seq)), \
+                    mock.patch.object(finish, "_run_render", render):
+                _, _, loud = finish._settle_loudness(cmd, Path(d), part, None,
+                                                     finish.load_style(None), rep, 2)
+            self.assertEqual((len(calls), loud["integrated_lufs"]), (1, -15.3))
 
 
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))

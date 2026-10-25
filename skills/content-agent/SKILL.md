@@ -318,9 +318,10 @@ pull request #94 of the skills repo.
   voice 20 dB down, but delay and room decorrelate it to 0.09) and an interview recorded one lav per
   input (each voice in one ear) slipped past those rules and landed 1.3 and 1.5 LU short. Now a
   quieter channel with no talk of its own is copied over whatever its correlation, two channels that
-  take turns are folded to the centre, and the receipt WARNs `speakers_hard_panned` (none of 41 real
-  stereo files, public videos, meetings, our publishes and the replay, is copied or folded); a
-  loudness raise that moves the result by under 0.3 LU stops the ladder instead of wasting a render.
+  take turns are folded to the centre, and the receipt WARNs `speakers_hard_panned` (the camera
+  build now lands at −14.3 LUFS and the split-mode interview at −14.5; none of 41 real stereo files,
+  public videos, meetings, our publishes and the replay, is copied or folded); a loudness raise that
+  does not bring the result 0.3 LU nearer the target stops the ladder instead of wasting renders.
 - **Cuts inside words.** `--clip` and `--trim-head` cut on the ASR's word clock, which ran 0.85 s
   late on a real short: it opened 0.77 s into "Landscaping" and the receipt passed. Round nine moved
   the cut onto the word's sound; round ten found the mirror image: the ASR also clocks words up to

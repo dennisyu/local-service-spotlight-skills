@@ -2086,10 +2086,9 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
                                 "channel to both when the quieter one carries no talk of its "
                                 "own, and folds both to the centre when it does"})
         elif top > -60.0 and max(own) >= 1.0:
-            side = [str(i + 1) for i in (0, 1) if own[i] >= 1.0]
             out.append({"check": "speakers_hard_panned", "status": "WARN",
-                        "measured": f"{max(own):.1f}s of talk in channel {' and '.join(side)} "
-                                    "alone",
+                        "measured": "talk alone in one channel: " + ", ".join(
+                            f"channel {i + 1} {own[i]:.1f}s" for i in (0, 1) if own[i] >= 1.0),
                         "expected": "every voice in both channels",
                         "note": "a voice sits in one channel while the other is 20 dB or more "
                                 "under its own talk (one lav per input, a recorder's split "

@@ -93,8 +93,8 @@ Usage:
     encoder overshot transients by up to 2 dB at 192k), first at 320k, then
     with the overshoot plus 0.3 dB off the target; more than 0.5 LU from the
     target (loudnorm's dynamic mode lands short on peaky or one-sided audio),
-    with the target raised by the shortfall, unless a raise moved it by under
-    0.3 LU. It keeps the render nearest the target under the ceiling, and says
+    with the target raised by the shortfall, unless a raise did not bring it
+    0.3 LU nearer. It keeps the render nearest the target under the ceiling, and says
     so when it still misses. AAC is 256k by default.
 
     An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
@@ -1694,9 +1694,10 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
     (audit round 10: lowering it at once cost 1.3-1.7 LU). loudnorm's dynamic
     mode lands up to 2 LU short on peaky or one-sided audio (audit round 10: a
     vlog at -15.9 LUFS): raise its target by the shortfall. The render closest
-    to the target that is under the ceiling is kept. A raise that moves the
-    result by under 0.3 LU stops the ladder (audit round 11: on a short clip
-    under room noise two raises moved -15.1 LUFS to -15.2)."""
+    to the target that is under the ceiling is kept. A raise that does not
+    bring the result 0.3 LU nearer the target stops the ladder (audit round
+    11: on a short clip under room noise two raises moved -15.1 LUFS to
+    -15.2; on another, -15.3 to -15.7 and back to -15.1)."""
     lp = style["qa"]["loudness"]
     ceiling, target = lp["true_peak_max_dbtp"], lp["target_lufs"]
     ext = os.path.splitext(partial)[1]
@@ -1736,7 +1737,9 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
         tries.append(step)
         cands.append((out, nxt, r, mn))
         if "i_target" in step and mn.get("integrated_lufs") is not None \
-                and abs(mn["integrated_lufs"] - li) < 0.3:
+                and round((mn["integrated_lufs"] - li) * (1 if target > li else -1), 2) < 0.3:
+            # Not 0.3 LU nearer the target (or further off): loudnorm's dynamic
+            # mode is not steered by its target here; more renders are guesses.
             stalled = round(mn["integrated_lufs"] - li, 1)
             break
 
@@ -1757,8 +1760,8 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
         os.replace(best[0], partial)
     li = best[3].get("integrated_lufs")
     if li is not None and abs(li - target) > lp.get("pass_tolerance_lu", 1.0):
-        why = (f"raising loudnorm's target moved it by only {stalled:+.1f} LU (its dynamic "
-               "mode holds this audio down)" if stalled is not None else
+        why = (f"raising loudnorm's target moved it {stalled:+.1f} LU (its dynamic mode "
+               "does not follow the target on this audio)" if stalled is not None else
                "ffmpeg's loudness pass cannot lift this audio further without clipping")
         if channels and channels > 2:
             why += "; talk in one channel of a multichannel mix lands short this way"
