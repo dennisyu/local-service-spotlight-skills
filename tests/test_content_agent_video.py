@@ -1486,6 +1486,22 @@ class _NoisyLevels:
         return self.r
 
 
+class _PeakLevels:
+    """Level runs with a 10 ms peak per window: `loud` [(a, b, dB)] over a
+    steady floor, the threshold raised 13 dB over it (room noise)."""
+    def __init__(self, runs, loud, floor_db=-41.0, base=370.0, total=420.0):
+        n = int((total - base) / 0.01)
+        peaks = [floor_db] * n
+        for a, b, db in loud:
+            for k in range(int(round((a - base) / 0.01)), int(round((b - base) / 0.01))):
+                peaks[k] = db
+        self.r = finish.Runs(runs, base, [-41.0] * (n // 50 + 1), 0.5, -54.0, peaks, 0.01)
+        self.total, self.style = total, finish.load_style(None)
+
+    def near(self, t):
+        return self.r
+
+
 class AuditRound11(unittest.TestCase):
     """Eleventh independent audit, 24 Oct 2026: each test pins one finding."""
 
@@ -1710,6 +1726,58 @@ class AuditRound12(unittest.TestCase):
                 roles={"own_talk_s": own})}
         self.assertNotIn("speakers_hard_panned", checks([0.0, 2.2]))   # wide stereo music
         self.assertIn("speakers_hard_panned", checks([1.5, 2.2]))      # two lavs taking turns
+
+    # ---- found by the fresh sweep after round 12 (nz_fan47, --words) ----
+
+    FAN47_RUNS = [(1, 370.0, 378.51), (0, 378.51, 380.05), (1, 380.05, 380.29),
+                  (0, 380.29, 381.26), (1, 381.26, 390.0)]
+
+    def _fan47_words(self):
+        return [dict(w("tools.", 378.0, 378.5), timing="word", heard=True),
+                dict(w("But", 380.64, 381.0), timing="word", heard=True),
+                dict(w("this", 381.0, 381.36), timing="word", heard=True),
+                dict(w("is", 381.36, 381.46), timing="word", heard=True),
+                dict(w("done.", 389.0, 389.5), timing="word", heard=True)]
+
+    def test_a_first_word_clocked_in_silence_keeps_the_talk_before_it(self):
+        # Whisper put "But" (said 380.04-380.45) at 380.64-381.0, in the silence
+        # after it: no sound of its own there, so it is not soft talk.
+        levels = _PeakLevels(self.FAN47_RUNS, [(370.0, 378.51, -20.0), (380.05, 380.29, -19.0),
+                                               (381.26, 390.0, -15.0)])
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(levels, self._fan47_words(), 380.64, 389.5, 0.08, 0.4, rep)
+        self.assertLess(s, 380.05)                         # "But" kept (cut 380.465 before)
+        self.assertGreater(s, 378.51)                      # "tools." not
+        self.assertEqual(rep["clip_word_span"][0][0], "But")
+        self.assertTrue(any("clocked in silence" in n for n in rep["notes"]))
+        self.assertFalse(any("starts" in x for x in rep["warnings"]))
+
+    def test_a_soft_first_word_in_the_pause_is_still_talk(self):
+        # The same clocks, but "But" has sound of its own 8 dB over the noise:
+        # soft talk the raised threshold missed, so the cut stays before it.
+        levels = _PeakLevels(self.FAN47_RUNS, [(370.0, 378.51, -20.0), (380.05, 380.29, -19.0),
+                                               (380.64, 381.0, -33.0), (381.26, 390.0, -15.0)])
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(levels, self._fan47_words(), 380.64, 389.5, 0.08, 0.4, rep)
+        self.assertGreater(s, 380.29)
+        self.assertLess(s, 380.64)
+        self.assertFalse(any("clocked in silence" in n for n in rep.get("notes", [])))
+
+    def test_a_last_word_clocked_early_in_silence_keeps_its_talk(self):
+        # The mirror: "answer." clocked inside the pause, said just after it.
+        runs = [(1, 370.0, 385.0), (0, 385.0, 385.9), (1, 385.9, 386.3), (0, 386.3, 387.0),
+                (1, 387.0, 395.0)]
+        levels = _PeakLevels(runs, [(370.0, 385.0, -18.0), (385.9, 386.3, -17.0),
+                                    (387.0, 395.0, -15.0)])
+        words = [dict(w("So", 375.0, 375.3), timing="word", heard=True),
+                 dict(w("the", 384.6, 384.95), timing="word", heard=True),
+                 dict(w("answer.", 385.3, 385.6), timing="word", heard=True),
+                 dict(w("Next", 387.05, 387.4), timing="word", heard=True)]
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(levels, words, 375.0, 385.6, 0.08, 0.4, rep)
+        self.assertGreater(e, 386.3)                       # its sound kept
+        self.assertLess(e, 387.0)                          # "Next" not
+        self.assertEqual(rep["clip_word_span"][1][0], "answer.")
 
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
@@ -2806,6 +2874,21 @@ class MediaRoundTrip(unittest.TestCase):
         with_w = finish.level_runs(str(out), style, info, 1.0, 11.0, words)
         sound_at = [k for k, a, b in with_w if a <= 5.53 < b]
         self.assertEqual(sound_at, [1])
+
+    def test_finish_notes_reach_the_receipt_as_a_note(self):
+        src = self._make("noted.mp4", d=4, tone=f"{self.SYL}*gte(t,0.3)")
+        rec = video_qa.qa(str(src), video_qa.load_profile(None), Path(str(src) + ".qa"),
+                          frames=False,
+                          finish_warnings=["loudnorm fell back to dynamic mode (linear gain "
+                                           "would have clipped)"],
+                          finish_notes=["the cut sits in the middle of a 0.52s gap"])
+        c = {x["check"]: x for x in rec["checks"]}
+        self.assertNotIn("finish_report", c)
+        self.assertEqual(c["finish_note"]["status"], "NOTE")
+        self.assertEqual(c["finish_note"]["measured"], 2)
+        self.assertIn("0.52s gap", c["finish_note"]["note"])
+        self.assertEqual(rec["verdict"], video_qa.verdict_for(
+            [x["status"] for x in rec["checks"] if x["check"] != "finish_note"]))
 
 
 if __name__ == "__main__":

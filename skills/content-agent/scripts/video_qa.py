@@ -11,7 +11,7 @@ whichever editor produced it (Descript, ffmpeg, video-use, a VA in CapCut).
 
 It never plays sound. Everything is measured from the stream with ffmpeg.
 
-What it can and cannot see (eleven independent audits, 23-24 Oct 2026):
+What it can and cannot see (twelve independent audits, 23-25 Oct 2026):
 - The file must decode. A decoder error, a stream that ends early against what
   the container claims (in time AND, where the container counts them, in
   frames), a WAV whose header promises more audio than it holds, or an
@@ -49,7 +49,8 @@ What it can and cannot see (eleven independent audits, 23-24 Oct 2026):
   WARN (talk alone in one channel only is what wide stereo music looks like,
   and is not); 5.1 with silent surrounds is normal. finish.py's warnings are
   joined with "; " and any "|" in a cell is escaped, so a rendered receipt
-  shows every one.
+  shows every one; its notes (an edge placed in a word gap a bed hides, a
+  word timed in silence, loudnorm's dynamic mode) are a `finish_note` NOTE.
 - With a transcript (--srt or --words) the hook check uses the first WORD;
   "[Music]", "(applause)", "*music*" cues are not words. A word cannot start
   before anything as loud as talk is audible (a breath does not count; a bed
@@ -2261,13 +2262,17 @@ def _merge_gap(silences: list[dict], start: float, end: float) -> list[dict]:
 
 def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
        words: list[dict] | None = None, loud: dict | None = None,
-       finish_warnings: list[str] | None = None) -> dict:
+       finish_warnings: list[str] | None = None,
+       finish_notes: list[str] | None = None) -> dict:
     """Measure `path` and write the receipt. `loud` is a measure_loudness() result
     for this exact file when the caller already has one (finish.py measures the
     true peak of what it wrote). `finish_warnings` are what finish.py reported
     while making the file (a clip cut mid-phrase, a sound kept before the first
     word): each is a `finish_report` WARN, so the receipt that decides whether
-    the file ships carries them (audit round 11: 13 of 14 such clips passed)."""
+    the file ships carries them (audit round 11: 13 of 14 such clips passed).
+    `finish_notes` (a clip edge placed in a word gap a bed hides, a word timed
+    in silence) and the dynamic-mode loudness note are a `finish_note` NOTE:
+    informational, but on the receipt, so nothing finish.py said is hidden."""
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise RuntimeError("ffmpeg and ffprobe must be on PATH")
     info = probe(path)
@@ -2498,6 +2503,12 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
         checks.append({"check": "finish_report", "status": "WARN", "measured": len(told),
                        "expected": "nothing finish.py asks a person to check",
                        "note": "finish.py reported: " + "; ".join(told)})
+    noted = [x for x in (finish_warnings or []) if x.startswith("loudnorm fell back")] \
+        + list(finish_notes or [])
+    if noted:
+        checks.append({"check": "finish_note", "status": "NOTE", "measured": len(noted),
+                       "expected": "informational",
+                       "note": "finish.py noted: " + "; ".join(noted)})
     rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
            "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "tool": "content-agent/scripts/video_qa.py", "probe": info,

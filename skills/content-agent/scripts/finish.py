@@ -34,7 +34,13 @@ Usage:
     ASR heard inside the level's "pause", on the clip's side of the edge, are
     talk the level missed (soft words under an AC read as silence; round 12):
     the pause starts after them (ends before them at the head), and with too
-    little left the edge is treated as mid-phrase. The level itself is read
+    little left the edge is treated as mid-phrase. A heard word there with no
+    sound of its own (its loudest 10 ms within 5 dB of the pause's noise) is a
+    clock error instead: when unheard talk sits just beyond the pause and the
+    word's neighbour claims the sound on the clip's side, that talk is the
+    word, the edge goes into the pause beyond it, and the report notes it
+    (Whisper put "But" 0.6 s late into the silence after it was said, in the
+    fresh sweep after round 12). The level itself is read
     with the words, as the receipt reads it, so a short word is not a click.
     When Descript's cue end (or, under noise, the ASR's word end) of the last
     word still lies more than 0.15 s past the cut, the report says so; without
@@ -55,7 +61,8 @@ Usage:
     and last caption land on the clip's sound, not a late or early clock.
     Every warning the report carries (all but the dynamic-mode note) also
     reaches the QA receipt (`finish_report`), so a PASS never hides a
-    mid-phrase cut. Captions are
+    mid-phrase cut; the notes and the dynamic-mode note reach it as a
+    `finish_note` NOTE. Captions are
     written as a sidecar .captions.srt unless --burn is given (burning re-encodes
     the picture, so it is never the default). Caption text is cleaned of anything
     a player would read as a command ({\\b1}, \\N, <font>) in both outputs.
@@ -962,6 +969,22 @@ class Runs(list):
         seg = sorted(self.peaks[i:j])
         return seg[len(seg) // 2] if seg else None
 
+    def _span(self, a: float, b: float) -> range:
+        i = max(0, int(round((a - self.base) / self.window_s)))
+        j = min(len(self.peaks), max(i + 1, int(round((b - self.base) / self.window_s))))
+        return range(i, j)
+
+    def loudest(self, a: float, b: float) -> float | None:
+        """The loudest 10 ms peak inside [a, b]."""
+        seg = [self.peaks[k] for k in self._span(a, b)]
+        return max(seg) if seg else None
+
+    def floor_besides(self, a: float, b: float, spans: list[tuple]) -> float | None:
+        """The pause [a, b]'s own noise (median 10 ms peak) outside `spans`."""
+        skip = {k for x, y in spans for k in self._span(x, y)}
+        seg = sorted(self.peaks[k] for k in self._span(a, b) if k not in skip)
+        return seg[len(seg) // 2] if seg else None
+
     def raised(self, t: float) -> float:
         if not self.thresholds or self.base_db is None or self.block_s <= 0:
             return 0.0
@@ -1154,6 +1177,61 @@ def edge_pause(runs: list[tuple], t: float, side: str, reach: float = 0.25,
     return min(c, key=lambda s: s[0]) if c else None
 
 
+def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
+                     side: str, min_sil: float = 0.15):
+    """Words the ASR heard inside a level pause are usually soft talk the raised
+    threshold missed (place_clip's held words). But a word with no sound of
+    its own there (its loudest 10 ms within 5 dB of the pause's noise) is a
+    clock error: Whisper put "But" 0.6 s late into the silence after it was
+    said (audit round 12's fresh sweep, nz_fan47 at 380.64, the clip opening
+    after it). When an unheard talk-level sound sits right beside the pause,
+    on the far side from the clip (before it at the head, after it at the
+    tail, within 1.2 s of the word, no heard word on it), and the word's
+    neighbour claims the sound on the clip's side, that sound is the word.
+    Returns the pause beyond it (None when talk runs on there: the edge is
+    then mid-phrase), or False when the words are not misclocked."""
+    if not held or not getattr(runs, "peaks", None) or not hasattr(runs, "loudest"):
+        return False
+    x, y = pause
+    spans = [(w["start"] - 0.05, w["end"] + 0.05) if w["end"] - w["start"] < 0.05
+             else (w["start"], w["end"]) for w in held]
+    fl = runs.floor_besides(x, y, spans)
+    if fl is None:
+        return False
+    for a, b in spans:
+        pk = runs.loudest(a, b)
+        if pk is None or pk > fl + 5.0:
+            return False            # sound of its own: soft talk, not a clock error
+    others = [w for w in said if not any(w is h for h in held)]
+    lo, hi = min(w["start"] for w in held), max(w["end"] for w in held)
+    if side == "start":
+        snd = [(a, b) for k, a, b in runs if k == 1 and abs(b - x) <= 0.02]
+        if not snd:
+            return False
+        a, b = snd[-1]
+        nxt = min((w["start"] for w in others if w["start"] >= hi - 0.02), default=None)
+        if a < lo - 1.2 or nxt is None or nxt > y + 0.3:
+            return False
+    else:
+        snd = [(a, b) for k, a, b in runs if k == 1 and abs(a - y) <= 0.02]
+        if not snd:
+            return False
+        a, b = snd[0]
+        prv = max((w["end"] for w in others if w["end"] <= lo + 0.02), default=None)
+        if b > hi + 1.2 or prv is None or prv < x - 0.3:
+            return False
+    if b - a < 0.08 or (runs.loudest(a, b) or -120.0) < fl + 15.0:
+        return False                # a click or a breath, not a word
+    if any(w["start"] < b - 0.02 and w["end"] > a + 0.02 for w in others):
+        return False                # a heard word already claims that sound
+    sil = [(p, q) for k, p, q in runs if k == 0 and q - p >= min_sil]
+    if side == "start":
+        c = [(p, q) for p, q in sil if abs(q - a) <= 0.02]
+        return max(c, key=lambda s: s[1]) if c else None
+    c = [(p, q) for p, q in sil if abs(p - b) <= 0.02]
+    return min(c, key=lambda s: s[0]) if c else None
+
+
 def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
     """Where the cut's sound starts (the cut itself when it lands in sound) and
     where it stops (the same at the end)."""
@@ -1196,7 +1274,14 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                 and (w["start"] < end - 0.02 or instant_at(w, end))
                 and w["end"] <= end + 0.15 and w["end"] > pe[0] + 0.05
                 and not ("cue_start" in w and w["cue_start"] >= end - 0.05)]
-        if held:
+        moved = misclocked_pause(re_, pe, held, said, "end") if held else False
+        if moved is not False:
+            # The word's clock ran early into the pause; its sound comes after.
+            report.setdefault("notes", []).append(
+                "the clip's last word is clocked in silence; its sound is the talk "
+                "just after that pause, kept")
+            pe = moved
+        elif held:
             x2 = max(w["end"] for w in held)
             pe = (x2, pe[1]) if pe[1] - x2 >= 0.15 else None
     if ps:
@@ -1204,7 +1289,14 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                 and (w["end"] > start + 0.02 or instant_at(w, start))
                 and w["start"] >= start - 0.15 and w["start"] < ps[1] - 0.05
                 and not ("cue_end" in w and w["cue_end"] <= start + 0.05)]
-        if held:
+        moved = misclocked_pause(rs, ps, held, said, "start") if held else False
+        if moved is not False:
+            # The word's clock ran late into the pause; its sound came before.
+            report.setdefault("notes", []).append(
+                "the clip's first word is clocked in silence; its sound is the talk "
+                "just before that pause, kept")
+            ps = moved
+        elif held:
             y2 = min(w["start"] for w in held)
             ps = (ps[0], y2) if y2 - ps[0] >= 0.15 else None
     if ps and ps[1] >= end - 0.1:
@@ -2043,7 +2135,8 @@ def main(argv: list[str] | None = None) -> int:
         if not args.no_qa:
             qa = video_qa.qa(args.out, style["qa"], Path(args.out + ".qa"),
                              words=out_words, loud=out_loud,
-                             finish_warnings=rep.get("warnings"))
+                             finish_warnings=rep.get("warnings"),
+                             finish_notes=rep.get("notes"))
             rep["qa_verdict"] = qa["verdict"]
             rep["qa_receipt"] = args.out + ".qa/qa-receipt.md"
             got = qa["probe"]["duration_s"]
