@@ -29,8 +29,9 @@ Usage:
     the end keeps the checker's noise slack (0.025 s per dB of rise, at most
     0.5 s) or runs to the last word's own cue or clock end when that is
     nearer, and the start keeps up to 0.15 s: under fans, AC and hum 11 to 23
-    dB under the talk, 0 of 30 clip ends lose talk (1, flagged, under the
-    loudest fan), against 11 to 25 of 30 before (audit round 11). Words the
+    dB under the talk, 0 of 30 clip ends lose talk (under the loudest fan one
+    cuts the last 0.06 s of a fading word, as on the quiet mix), against 11
+    to 25 of 30 before (audit rounds 11 and 12). Words the
     ASR heard inside the level's "pause", on the clip's side of the edge, are
     talk the level missed (soft words under an AC read as silence; round 12):
     the pause starts after them (ends before them at the head), and with too
@@ -55,9 +56,11 @@ Usage:
     word). Where talk runs on with no such pause, the edge stays on the word
     clock: a cut inside a heard word's clock, or in a gap between heard words
     under 0.25 s, is a warning; a cut in a clearer gap that a bed or room
-    noise hides from the level goes to the middle of that gap (at most 0.5 s
-    from the word: ASR clocks end words early) and is a note (`notes` in the
-    report). The first
+    noise hides from the level goes to the quietest 50 ms of that gap (at
+    most 0.5 s from the word: ASR clocks end words early) and is a note
+    (`notes` in the report). Words only Descript's SRT has bound the gap
+    too (somewhere in their cue), and a gap as loud as talk all through is
+    still a warning. The first
     and last caption land on the clip's sound, not a late or early clock.
     Every warning the report carries (all but the dynamic-mode note) also
     reaches the QA receipt (`finish_report`), so a PASS never hides a
@@ -1079,7 +1082,7 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
     checker's noise slack before the sound (cut_in_pause). Returns (cut,
     found), found False when the word sits inside a second or more of
     unbroken sound."""
-    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil - 1e-6]
     cands = [(x, y) for x, y in sil
              if x <= fw + 0.02 and y >= max(fw - 1.0, lo - 0.05)]
     if not cands:
@@ -1112,7 +1115,7 @@ def settle_end(runs: list[tuple], lw: float, hi: float, end: float, pad: float,
     given) the word's sound runs on by the checker's noise slack, or to its
     clock end when that lies within reach (cut_in_pause). Returns (cut,
     found)."""
-    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil - 1e-6]
     cands = [(x, y) for x, y in sil
              if y >= lw - 0.02 and x <= min(lw + 1.0, hi + 0.05)]
     if not cands:
@@ -1131,7 +1134,7 @@ def clamp_stretched(words: list[dict], runs: list[tuple], min_silence: float = 0
     where that silence ends (the replay's "We're" ran 1.3 s back). A word whose
     span starts in sound and runs on over a pause ("Wow" then 0.4 s of quiet)
     keeps its start: its sound is at the front, and moving it would cut it."""
-    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_silence]
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_silence - 1e-6]
     out = []
     for w in words:
         if w.get("timing") != "cue" and w.get("heard", True):
@@ -1169,7 +1172,7 @@ def edge_pause(runs: list[tuple], t: float, side: str, reach: float = 0.25,
     """The level silence (min_sil or more) a requested clip edge sits in, or
     that ends within `reach` before a start (begins within `reach` after an
     end): the editor picked that pause. None when the edge is mid-phrase."""
-    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil - 1e-6]
     if side == "start":
         c = [(x, y) for x, y in sil if x <= t + 0.02 and y >= t - reach]
         return max(c, key=lambda s: s[1]) if c else None
@@ -1224,12 +1227,35 @@ def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
         return False                # a click or a breath, not a word
     if any(w["start"] < b - 0.02 and w["end"] > a + 0.02 for w in others):
         return False                # a heard word already claims that sound
-    sil = [(p, q) for k, p, q in runs if k == 0 and q - p >= min_sil]
+    sil = [(p, q) for k, p, q in runs if k == 0 and q - p >= min_sil - 1e-6]
     if side == "start":
         c = [(p, q) for p, q in sil if abs(q - a) <= 0.02]
         return max(c, key=lambda s: s[1]) if c else None
     c = [(p, q) for p, q in sil if abs(p - b) <= 0.02]
     return min(c, key=lambda s: s[0]) if c else None
+
+
+def quiet_point(runs, lo: float, hi: float, mid: float):
+    """The quietest moment in [lo, hi] by the level's 10 ms peaks, each moment
+    judged by the loudest peak within 25 ms of it (a cut needs a quiet 50 ms,
+    not one quiet window between syllables), ties to the one nearest `mid`.
+    Returns (t, level, talk) with `talk` the stretch's 90th-percentile peak,
+    or None when the runs carry no peaks."""
+    peaks = getattr(runs, "peaks", None)
+    if not peaks or not hasattr(runs, "loudest") or hi < lo:
+        return None
+    step = runs.window_s
+    best = None
+    t = lo
+    while t <= hi + 1e-9:
+        lv = runs.loudest(t - 0.025, t + 0.025)
+        if lv is not None and (best is None or (lv, abs(t - mid)) < (best[1], abs(best[0] - mid))):
+            best = (t, lv)
+        t += step
+    if best is None:
+        return None
+    srt = sorted(peaks)
+    return best[0], best[1], srt[int(0.9 * (len(srt) - 1))]
 
 
 def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
@@ -1283,7 +1309,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             pe = moved
         elif held:
             x2 = max(w["end"] for w in held)
-            pe = (x2, pe[1]) if pe[1] - x2 >= 0.15 else None
+            pe = (x2, pe[1]) if pe[1] - x2 >= 0.15 - 1e-6 else None
     if ps:
         held = [w for w in said if w["end"] <= ps[1] + 0.02
                 and (w["end"] > start + 0.02 or instant_at(w, start))
@@ -1298,7 +1324,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             ps = moved
         elif held:
             y2 = min(w["start"] for w in held)
-            ps = (ps[0], y2) if y2 - ps[0] >= 0.15 else None
+            ps = (ps[0], y2) if y2 - ps[0] >= 0.15 - 1e-6 else None
     if ps and ps[1] >= end - 0.1:
         ps = None                       # nothing but the pause would be left
     if pe and pe[0] <= start + 0.1:
@@ -1346,25 +1372,45 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             # (audit round 12: 16 of 17 such edges on real public videos kept
             # their words). That is a note; a cut inside a heard word's clock,
             # or in a gap under 0.25 s, is a warning.
-            inside = any(w["start"] + 0.01 < cut < w["end"] - 0.01 for w in heard)
-            before = max((w["end"] for w in heard if w["end"] <= cut + 0.01), default=None)
-            after = min((w["start"] for w in heard if w["start"] >= cut - 0.01), default=None)
+            # A cue of Descript's that the ASR missed entirely is talk too, over
+            # the cue's own times: the replay's "I don't know." (3038.656-3038.896)
+            # sat in a 0.96 s gap between heard words. (A cue with heard words
+            # is already bounded by them, and "…" alone is not talk.)
+            spoken = {w.get("cue_start") for w in said if w["end"] >= w["start"]}
+            occ = heard + [w for w in words if w.get("timing") == "cue" and w["end"] > w["start"]] \
+                + [{"start": w["cue_start"], "end": w["cue_end"]} for w in words
+                   if not w.get("heard", True) and w.get("cue_start") is not None
+                   and w["cue_start"] not in spoken and any(ch.isalnum() for ch in w["word"])
+                   and w.get("cue_end") is not None and w["cue_end"] > w["cue_start"]]
+            inside = any(w["start"] + 0.01 < cut < w["end"] - 0.01 for w in occ)
+            before = max((w["end"] for w in occ if w["end"] <= cut + 0.01), default=None)
+            after = min((w["start"] for w in occ if w["start"] >= cut - 0.01), default=None)
             gap = (after - before) if before is not None and after is not None else 0.0
             if not inside and gap >= 0.25:
                 # The ASR's word ends run early and its starts late into such a
                 # gap (round 12: under a music bed the cut on the clock end plus
                 # pad left 0.06 to 0.27 s of the last word's tail out), so the
-                # cut goes to the middle of the gap, at most 0.5 s from the word
-                # and pad clear of the other.
+                # cut goes to the gap's quietest 50 ms, at most 0.5 s from the
+                # word and pad clear of the other (its middle when the level
+                # carries no peaks). Sound as loud as talk all through it is
+                # talk the transcripts missed: that stays a warning.
                 if where == "ends":
-                    new_end = max(new_end, min(before + gap / 2.0, before + 0.5, after - pad))
+                    lo, hi = before + pad, min(after - pad, before + 0.5)
                 else:
-                    new_start = min(new_start, max(after - gap / 2.0, after - 0.5, before + pad))
-                report.setdefault("notes", []).append(
-                    f"the level shows no pause where the clip {where} (a bed or room noise "
-                    f"hides it); the cut sits in the middle of a {gap:.2f}s gap between "
-                    "heard words")
-                continue
+                    lo, hi = max(before + pad, after - 0.5), after - pad
+                q = quiet_point(levels.near(cut), lo, hi, (before + after) / 2.0)
+                if q is None or q[1] < q[2] - 6.0:
+                    t = q[0] if q is not None else (
+                        min(before + gap / 2.0, hi) if where == "ends" else max(after - gap / 2.0, lo))
+                    if where == "ends":
+                        new_end = max(new_end, t)
+                    else:
+                        new_start = min(new_start, t)
+                    report.setdefault("notes", []).append(
+                        f"the level shows no pause of 0.15 s or more where the clip {where} "
+                        "(a shorter pause, or a bed or room noise over it); the cut sits in "
+                        f"the quietest part of a {gap:.2f}s gap between words")
+                    continue
             far = (f" (the cut sits {abs(moved):.2f}s {'after' if moved > 0 else 'before'} "
                    "the requested edge, on a word boundary)" if abs(moved) > 0.5 else "")
             report["warnings"].append(

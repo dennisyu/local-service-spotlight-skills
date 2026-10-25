@@ -1685,7 +1685,7 @@ class AuditRound12(unittest.TestCase):
         _, s, e = finish.place_clip(_Levels(runs), words, 5.0, 9.5, 0.08, 0.4, rep)
         self.assertEqual(rep["warnings"], [])
         self.assertEqual(len(rep["notes"]), 2)
-        self.assertIn("gap between heard words", rep["notes"][0])
+        self.assertIn("gap between words", rep["notes"][0])
         # ...in the middle of each gap: ASR clocks end words early and start
         # them late (a bed left up to 0.27 s of the last word's tail out).
         self.assertAlmostEqual(s, 4.7)
@@ -1726,6 +1726,79 @@ class AuditRound12(unittest.TestCase):
                 roles={"own_talk_s": own})}
         self.assertNotIn("speakers_hard_panned", checks([0.0, 2.2]))   # wide stereo music
         self.assertIn("speakers_hard_panned", checks([1.5, 2.2]))      # two lavs taking turns
+
+    # ---- found by the replay sweep after round 12 ----
+
+    @staticmethod
+    def _bed_runs(base, total, loud, bed_db=-30.0):
+        """A stretch with no level pause (a bed under it all): 10 ms peaks at
+        the bed's level, `loud` [(a, b, dB)] on top."""
+        n = int((total - base) / 0.01)
+        peaks = [bed_db] * n
+        for a, b, db in loud:
+            for k in range(int(round((a - base) / 0.01)), int(round((b - base) / 0.01))):
+                peaks[k] = db
+        return finish.Runs([(1, base, total)], base, [-41.0] * (n // 50 + 1), 0.5, -54.0,
+                           peaks, 0.01)
+
+    def test_a_cut_in_a_word_gap_goes_to_its_quietest_part(self):
+        # The ASR ends "end." at 9.5; its sound decays to 9.7, then a quiet
+        # dip, then the bed. The cut goes into the dip, not 0.35 s into the gap.
+        r = self._bed_runs(0.0, 30.0, [(4.0, 4.4, -12.0), (5.0, 5.8, -12.0), (9.0, 9.6, -12.0),
+                                       (9.6, 9.7, -22.0), (9.72, 9.8, -45.0),
+                                       (10.2, 10.5, -12.0)])
+
+        class L:
+            total, style = 30.0, finish.load_style(None)
+
+            def near(self, t):
+                return r
+        words = [dict(w("first", 4.0, 4.4), timing="word", heard=True),
+                 dict(w("Next", 5.0, 5.3), timing="word", heard=True),
+                 dict(w("words", 5.3, 5.8), timing="word", heard=True),
+                 dict(w("end.", 9.0, 9.5), timing="word", heard=True),
+                 dict(w("More", 10.2, 10.5), timing="word", heard=True)]
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(L(), words, 5.0, 9.5, 0.08, 0.4, rep)
+        self.assertGreater(e, 9.72)
+        self.assertLess(e, 9.8)
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+
+    def test_words_only_descript_has_bound_the_gap(self):
+        # The replay at 3039.589: the ASR heard "22?" and "Okay." but not
+        # Descript's "I don't know." between them; the middle of the heard
+        # gap was inside "know" at talk level. The cut stays in the real pause.
+        r = self._bed_runs(3030.0, 3045.0, [(3038.1, 3039.2, -12.0), (3039.3, 3039.46, -15.0),
+                                            (3039.47, 3039.62, -50.0), (3039.62, 3040.2, -12.0)])
+
+        class L:
+            total, style = 3100.0, finish.load_style(None)
+
+            def near(self, t):
+                return r
+        # As align_text_to_timing returns them: the unheard words carry their
+        # cue's times, their clocks are a placeholder instant.
+        lost = dict(timing="word", heard=False, cue_start=3038.656, cue_end=3038.896)
+        words = [dict(w("22?", 3038.16, 3038.64), timing="word", heard=True,
+                      cue_start=3037.012, cue_end=3038.656),
+                 dict(w("okay.", 3039.6, 3039.96), timing="word", heard=True,
+                      cue_start=3039.589, cue_end=3040.141),
+                 dict(w("I", 3039.865, 3039.865), **lost),
+                 dict(w("don't", 3039.865, 3039.865), **lost),
+                 dict(w("know.", 3039.865, 3039.865), **lost),
+                 dict(w("done.", 3044.0, 3044.5), timing="word", heard=True,
+                      cue_start=3043.9, cue_end=3044.5)]
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(L(), words, 3039.589, 3044.5, 0.08, 0.4, rep)
+        self.assertGreater(s, 3039.46)                     # not inside "know" (3039.12)
+        self.assertLess(s, 3039.589)
+
+    def test_a_pause_of_exactly_0_15_s_is_a_pause(self):
+        # The replay at 710.604: with the words, the level's pause before "Wow,"
+        # measured 710.454 to 710.604, 0.15 s less a float's last bit.
+        runs = [(1, 709.374, 710.4540000000001), (0, 710.4540000000001, 710.604),
+                (1, 710.604, 710.614), (0, 710.614, 710.624), (1, 710.624, 711.944)]
+        self.assertEqual(finish.edge_pause(runs, 710.604, "start"), (710.4540000000001, 710.604))
 
     # ---- found by the fresh sweep after round 12 (nz_fan47, --words) ----
 
