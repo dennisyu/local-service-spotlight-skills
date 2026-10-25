@@ -1489,15 +1489,21 @@ def stray_talk(runs, side: str, edge: float, cut: float, top: float | None,
 
 
 def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
-                 reach: float = 0.06) -> float:
-    """Seconds of talk-level sound a START cut in a short dip leaves out: the
-    sound that runs right up to the cut's dip (it ends within `reach` before
-    the cut), back to 30 ms of dip or to `covered_to` (the previous word's
-    clock end), that no word's clock covers (audit round 15: a start cut in
-    the closure inside "professional", its first syllable dropped with a
-    NOTE, Whisper clocking the word 0.4 s late). Windows within 12 dB of the
-    first word `top` count when they reach 18 dB over the floor (as in
-    stray_talk); a dip is as there."""
+                 prev_start: float, reach: float = 0.06, back: float = 0.6) -> float:
+    """Seconds of word-loud sound no word's clock covers that a START cut in a
+    short dip leaves out (audit round 15: a start cut in the closure inside
+    "professional", its first syllable dropped with a NOTE, Whisper clocking
+    the word 0.4 s late). The sound runs right up to the cut's dip (it ends
+    within `reach` before the cut) and is a burst of its own: back to 30 ms of
+    dip within `back` (sound that runs on from further back is the previous
+    word's own tail past its clock end). It counts when it starts inside the
+    previous word's clock (after `prev_start`), after talk-level sound of that
+    word's own (otherwise it is that word, clocked early over the pause
+    before it: "right?" before "She" on the fresh mixes), reaches within 6 dB
+    of the first word `top` and 18 dB over the floor (not a bed or a breath:
+    a music bed between sentences in a public short), and holds talk-level
+    windows past `covered_to` (the previous word's clock end); those windows
+    are what is returned. A dip and talk are as in stray_talk."""
     pk = getattr(runs, "peaks", None)
     if not pk or top is None or not hasattr(runs, "_span"):
         return 0.0
@@ -1508,23 +1514,30 @@ def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
         return 0.0
     dip = max(top - 15.0, fl + 6.0)
     talk = max(top - 12.0, dip + 3.0)
-    k = min(n, int(round((cut - base) / w))) - 1
+
+    def idx(x):
+        return int(round((x - base) / w))
+    k = min(n, idx(cut)) - 1
     j = 0
     while k >= 0 and pk[k] <= dip and j < round(reach / w):
         k -= 1                                # the dip the cut sits in
         j += 1
     if k < 0 or pk[k] <= dip:
         return 0.0                            # a longer quiet: nothing abuts the cut
-    run, got = 0, []
-    while k >= 0 and base + (k + 1) * w > covered_to + 1e-9:
+    last, run, first = k, 0, None
+    while k >= max(0, idx(cut - back)):
         run = run + 1 if pk[k] <= dip else 0
         if run >= 3:
+            first = k + 3                     # the burst starts after this dip
             break
-        if pk[k] >= talk:
-            got.append(pk[k])
         k -= 1
-    if not got or max(got) < min(fl, fl_wide) + 18.0:
+    if first is None or base + first * w <= prev_start + 0.03:
         return 0.0
+    own = [i for i in range(max(0, idx(prev_start)), first - 3) if pk[i] >= talk]
+    burst = pk[first:last + 1]
+    if len(own) < 5 or not burst or max(burst) < max(top - 6.0, min(fl, fl_wide) + 18.0):
+        return 0.0
+    got = [p for i, p in enumerate(burst, first) if base + i * w >= covered_to - 1e-9 and p >= talk]
     return round(len(got) * w, 2)
 
 
@@ -1732,7 +1745,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                    if not w.get("heard", True) and w.get("cue_start") is not None
                    and w["cue_start"] not in spoken and any(ch.isalnum() for ch in w["word"])
                    and w.get("cue_end") is not None and w["cue_end"] > w["cue_start"]]
-            before = after = None
+            before = after = prev_s = None
             mine = other = None
             if where == "starts":
                 edge_w = min((w for w in said if w["start"] >= s_w - 0.02), default=None,
@@ -1743,7 +1756,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     prev = max((o for o in occ if o[1] <= after + 0.01 and o[2] is not edge_w),
                                key=lambda o: o[1], default=None)
                     if prev is not None:
-                        before = prev[1]
+                        before, prev_s = prev[1], prev[0]
                         other = sound(prev[2]) if prev[2] is not None else prev[:2]
                 lo_s, hi_s = before, (mine[0] if mine else None)
             else:
@@ -1807,10 +1820,12 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     f"shorter pause, or a bed or room noise over it); the cut sits in a quiet "
                     f"moment of a {gap:.2f}s gap between words (its 30 ms fade peaks at "
                     f"{q[1]:.0f} dBFS; silence threshold {q[2]:.0f} dB)")
-                if where == "starts" and not q[3] and hasattr(r, "loudest"):
+                if where == "starts" and not q[3] and hasattr(r, "loudest") and prev_s is not None:
                     # A short dip right after word-loud sound no clock covers may be
                     # a closure inside the first word, clocked late (round 15).
-                    d = dropped_talk(r, q[0], before, r.loudest(*mine))
+                    top = max(v for v in (r.loudest(*mine), r.loudest(q[0], mine[1]), -120.0)
+                              if v is not None)
+                    d = dropped_talk(r, q[0], before, top, prev_s)
                     if d >= 0.08:
                         report["warnings"].append(
                             f"the clip starts in a short dip right after {d:.2f}s of word-loud "

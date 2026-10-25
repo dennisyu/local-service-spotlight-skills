@@ -2256,6 +2256,39 @@ class AuditRound15(unittest.TestCase):
         self.assertEqual([x for x in rep["warnings"] if x.startswith("the clip starts")], [])
         self.assertTrue(any("clip starts" in x and "quiet moment" in x for x in rep["notes"]))
 
+    def test_the_word_before_or_a_bed_is_not_dropped_talk(self):
+        # The developer's sweeps after the H2 fix: of 19 distinct edges it
+        # warned on, 2 were H2. The rest dropped the word before (its clock
+        # ran early over the pause before it, "right?" before "She", or ended
+        # early, "business." before "I") or a music bed between sentences.
+        runs = [(1, 465.0, 467.95), (0, 467.95, 468.67), (1, 468.67, 468.9), (0, 468.9, 468.94),
+                (1, 468.94, 471.0), (0, 471.0, 471.6), (1, 471.6, 474.0)]
+        loud = [(465.0, 467.95, -18.0), (468.67, 468.9, -20.0), (468.94, 471.0, -15.0),
+                (471.6, 474.0, -18.0)]
+        words = _said(("now.", 467.5, 467.9), ("right?", 468.2, 468.8), ("She", 468.98, 469.2),
+                      ("ran", 469.2, 469.5), ("home.", 469.5, 470.9), ("Then", 471.6, 471.9))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Room(runs, loud, 465.0, 475.0, -44.5, -40.6, -52.2), words,
+                                    468.98, 470.9, 0.08, 0.4, rep)
+        self.assertGreater(s, 468.89)                      # in the dip after "right?"
+        self.assertEqual([x for x in rep["warnings"] if "short dip" in x], [])
+        self.assertTrue(any("clip starts" in x and "quiet moment" in x for x in rep["notes"]))
+        # A bed 14 dB under the next word, between "beautiful." and "And" (a
+        # public short); "And" said from 19.88, clocked 19.96 on its decay.
+        runs = [(1, 15.0, 19.84), (0, 19.84, 19.87), (1, 19.87, 23.0), (0, 23.0, 24.0),
+                (1, 24.0, 25.0)]
+        loud = [(15.0, 19.48, -15.0), (19.48, 19.52, -42.0), (19.52, 19.84, -30.0),
+                (19.84, 19.87, -50.0), (19.87, 19.96, -16.0), (19.96, 20.02, -24.0),
+                (20.02, 23.0, -16.0), (24.0, 25.0, -16.0)]
+        words = _said(("really", 18.86, 19.02), ("beautiful.", 19.02, 19.34), ("And", 19.96, 20.02),
+                      ("then", 20.02, 20.3), ("also.", 20.3, 22.9), ("Next", 24.0, 24.3))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_QuietRoom(runs, loud, 14.0, 26.0, -70.0, -46.0), words,
+                                    19.96, 22.9, 0.08, 0.4, rep)
+        self.assertGreater(s, 19.8)
+        self.assertLess(s, 19.88)                          # before "And"
+        self.assertEqual([x for x in rep["warnings"] if "short dip" in x], [])
+
     def test_a_start_at_the_previous_words_clock_end_does_not_reach_back_over_it(self):
         # H3, the clean mix at 56.16 ("Look,"'s clock end; said 56.03-56.35):
         # the pause before "Look," ends within the 0.25 s reach, so the clip
