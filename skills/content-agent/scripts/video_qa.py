@@ -178,6 +178,7 @@ import bisect
 import datetime as _dt
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -581,7 +582,6 @@ def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
     20 dB or more under its own (runs of 0.25 s or more). A backup or scratch
     track has none; each lav of a split-mode interview has plenty (audit
     round 11). None when the stream is not two channels or will not decode."""
-    import numpy as np
     span = seconds if seconds is not None else (max(0.0, (total or 0.0) - start) or None)
     if span is None:
         pieces = [(start, max_s)]
@@ -591,18 +591,6 @@ def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
         k = max(1, int(max_s // seg_s))
         step = (span - seg_s) / max(1, k - 1)
         pieces = [(start + i * step, seg_s) for i in range(k)]
-    chunks = []
-    for s, d in pieces:
-        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin"]
-        if s > 0:
-            cmd += ["-ss", f"{s:.3f}"]
-        cmd += ["-t", f"{d:.3f}", "-i", path, "-vn", "-map", "0:a:0", "-ar", "16000",
-                "-f", "s16le", "-acodec", "pcm_s16le", "-"]
-        res = subprocess.run(cmd, capture_output=True)
-        if res.returncode != 0 or not res.stdout:
-            continue
-        chunks.append(res.stdout)
-    probe_ch = None
     try:
         out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
                               "stream=channels", "-of", "csv=p=0", path],
@@ -610,39 +598,60 @@ def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
         probe_ch = int(out.split(",")[0]) if out else None
     except (ValueError, OSError):
         probe_ch = None
-    if probe_ch != 2 or not chunks:
+    if probe_ch != 2:
         return None
-    win = 160
-    lv, rv, el, er = [], [], [], []
-    for raw in chunks:
-        x = np.frombuffer(raw[: len(raw) // 4 * 4], dtype="<i2").reshape(-1, 2)
-        x = x.astype(np.float64) / 32768.0
-        n = len(x) // win
-        if n == 0:
+    # ffmpeg measures every 10 ms of L, R and their average (no numpy needed):
+    # the average's power gives the correlation, power sums being additive.
+    chain = ("aresample=16000,pan=3.0|c0=c0|c1=c1|c2=0.5*c0+0.5*c1,asetnsamples=n=160:p=0,"
+             "astats=metadata=1:reset=1:measure_perchannel=RMS_level:measure_overall=none,"
+             "ametadata=mode=print:file=-")
+    e: list = [[], []]
+    pw = [0.0, 0.0, 0.0]
+    for s, d in pieces:
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin"]
+        if s > 0:
+            cmd += ["-ss", f"{s:.3f}"]
+        cmd += ["-t", f"{d:.3f}", "-i", path, "-vn", "-map", "0:a:0", "-af", chain,
+                "-f", "null", "-"]
+        res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+        if res.returncode != 0:
             continue
-        x = x[: n * win]
-        lv.append(x[:, 0])
-        rv.append(x[:, 1])
-        sq = (x * x).reshape(n, win, 2).mean(axis=1)
-        el.append(10.0 * np.log10(sq[:, 0] + 1e-12))
-        er.append(10.0 * np.log10(sq[:, 1] + 1e-12))
-    if not el:
+        cur: dict = {}
+        for line in res.stdout.splitlines() + ["frame:end"]:
+            if line.startswith("frame:"):
+                if len(cur) == 3:
+                    for c in (0, 1):
+                        e[c].append(cur[c])
+                    for c in (0, 1, 2):
+                        pw[c] += 10.0 ** (cur[c] / 10.0)
+                cur = {}
+                continue
+            m = re.match(r"lavfi\.astats\.(\d)\.RMS_level=(\S+)", line)
+            if m:
+                try:
+                    v = float(m.group(2))
+                except ValueError:
+                    v = -120.0
+                cur[int(m.group(1)) - 1] = max(-120.0, v) if v == v else -120.0
+    if not e[0]:
         return None
-    L, Rr = np.concatenate(lv), np.concatenate(rv)
-    e = [np.concatenate(el), np.concatenate(er)]
-    pl, pr = float((L * L).sum()), float((Rr * Rr).sum())
-    rho = float((L * Rr).sum() / (pl * pr) ** 0.5) if pl > 0 and pr > 0 else None
-    rms = [10.0 * np.log10(float((v * v).mean()) + 1e-12) for v in (L, Rr)]
-    talk_db, talk_s, own_s = [], [], []
-    for c in (0, 1):
-        live = e[c][e[c] > -80.0]
-        talk_db.append(float(np.percentile(live, 99)) if len(live) else -120.0)
+    n = len(e[0])
+    pl, pr, pm = pw
+    rho = ((4 * pm - pl - pr) / 2.0 / (pl * pr) ** 0.5) if pl > 1e-9 and pr > 1e-9 else None
+    if rho is not None:
+        rho = max(-1.0, min(1.0, rho))
+    rms = [10.0 * math.log10(pl / n + 1e-12), 10.0 * math.log10(pr / n + 1e-12)]
+
+    def pct99(v):
+        live = sorted(x for x in v if x > -80.0)
+        return live[min(len(live) - 1, int(0.99 * len(live)))] if live else -120.0
+    talk_db, talk_s, own_s = [pct99(e[0]), pct99(e[1])], [], []
     for c in (0, 1):
         o = 1 - c
-        talk = e[c] >= talk_db[c] - 15.0
-        quiet_o = e[o] <= talk_db[o] - 20.0
-        own = talk & quiet_o
-        talk_s.append(float(talk.sum()) * 0.01)
+        talk = [x >= talk_db[c] - 15.0 for x in e[c]]
+        quiet_o = [x <= talk_db[o] - 20.0 for x in e[o]]
+        own = [a and b for a, b in zip(talk, quiet_o)]
+        talk_s.append(sum(talk) * 0.01)
         # Phrases of 0.25 s or more: the gaps between syllables (up to 0.2 s,
         # the other channel still quiet) belong to the phrase; an echo tail
         # after each word of the other channel's voice stays shorter.
@@ -661,7 +670,7 @@ def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
     return {"rms_db": [round(float(x), 1) for x in rms], "corr": None if rho is None else round(rho, 3),
             "talk_db": [round(x, 1) for x in talk_db], "talk_s": [round(x, 1) for x in talk_s],
             "own_talk_s": [round(x, 1) for x in own_s],
-            "analysed_s": round(len(L) / 16000.0, 1),
+            "analysed_s": round(n * 0.01, 1),
             "hard_panned": own_s[0] >= 1.0 and own_s[1] >= 1.0}
 
 
