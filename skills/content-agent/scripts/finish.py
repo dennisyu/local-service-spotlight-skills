@@ -56,11 +56,12 @@ Usage:
     word). Where talk runs on with no such pause, the edge stays on the word
     clock: a cut inside a heard word's clock, or in a gap between heard words
     under 0.25 s, is a warning; a cut in a clearer gap that a bed or room
-    noise hides from the level goes to the quietest 50 ms of that gap (at
-    most 0.5 s from the word: ASR clocks end words early) and is a note
-    (`notes` in the report). Words only Descript's SRT has bound the gap
-    too (somewhere in their cue), and a gap as loud as talk all through is
-    still a warning. The first
+    noise hides from the level goes to the quiet moment nearest the gap's
+    middle (any 50 ms within 3 dB of its quietest; at most 0.5 s from the
+    word: ASR clocks end words early) and is a note (`notes` in the report,
+    a `finish_note` NOTE on the receipt). A Descript cue none of whose words
+    the ASR heard bounds the gap too, over the cue's own times, and a gap as
+    loud as talk all through is still a warning. The first
     and last caption land on the clip's sound, not a late or early clock.
     Every warning the report carries (all but the dynamic-mode note) also
     reaches the QA receipt (`finish_report`), so a PASS never hides a
