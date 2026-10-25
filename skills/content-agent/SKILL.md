@@ -323,8 +323,8 @@ pull request #94 of the skills repo.
   so that changes nothing; since round fourteen 1.5 s and a fifth of a channel's talk is a voice,
   so a 15 s short opening on a guest's 4 s line is folded too) (the camera build now lands at
   −14.3 LUFS and the split-mode interview at −14.5; none of 41 real stereo files, public videos,
-  meetings, our publishes and the replay, is copied or folded, and none of those or two stereo
-  music tracks reads as hard-panned in any 15 s window of its first ten minutes); a loudness
+  meetings, our publishes and the replay, is copied or folded, and none of 39 of them or two
+  stereo music tracks reads as hard-panned in any 15 s window of its first ten minutes); a loudness
   raise that does not bring the result 0.3 LU nearer the target stops the ladder instead of wasting
   renders.
 - **Cuts inside words.** `--clip` and `--trim-head` cut on the ASR's word clock, which ran 0.85 s
