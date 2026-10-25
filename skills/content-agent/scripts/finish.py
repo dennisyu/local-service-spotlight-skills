@@ -38,7 +38,13 @@ Usage:
     its sound rises after a dip, or sits within 6 dB of the last word's, or,
     under a bed that keeps dips shallow, within 10 dB (round 16: How_to's
     "embroidery.", seg2's "Like," and copefl's "or bags." were kept with a
-    PASS). Under steady room noise the silence threshold
+    PASS). A word read as that decay stays out of the captions, and the
+    receipt warns when its clock lies in the clip: the level cannot tell a
+    reverb tail from a soft word run on with no dip (round 16: seg4's "I
+    would", 12 dB under "little,"). Which side of an edge a word is on goes by
+    its clock's middle, so a 20 ms clock ending at the edge is the clip's and
+    one starting there is not (fan47's "right?" was out of the captions).
+    Under steady room noise the silence threshold
     rises and swallows a word's soft ending (and, less, its onset), so there
     the end keeps the checker's noise slack (0.025 s per dB of rise, at most
     0.5 s) or runs to the last word's own cue or clock end when that is
@@ -1745,27 +1751,42 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     # on it (audit round 15: "Look," on the clean mix, "-scapers" under a bed,
     # 51 of 830 such starts).
     reach_word = {}         # the word between, where the reach was refused
-    between_s = [w for w in said if w["end"] > ps[1] + 0.02 and w["end"] <= start + 0.02
-                 and w["start"] < start - 0.02] if ps and "starts" not in keep_reach else []
+    # Which side of the request a word is on goes by its clock's middle, so a
+    # 20 ms clock is a word too (round 16: seg4's "kill" and seg1's "Yeah.",
+    # clocked from an end asked for at their start, kept with a PASS); a word
+    # Whisper timed as an instant on the edge itself is the clip's (its sound
+    # comes before its clock, as in snap_to_words), one further in is between.
+    def mid(w):
+        return (w["start"] + w["end"]) / 2.0
+
+    def on_edge(w, t):
+        return w["end"] - w["start"] < 0.01 and abs(w["start"] - t) <= 0.02
+    between_s = sorted((w for w in said if ps[1] + 0.02 < w["end"] <= start + 0.02
+                        and mid(w) < start and not on_edge(w, start)),
+                       key=lambda w: w["start"]) if ps and "starts" not in keep_reach else []
     if between_s:
-        reach_word["starts"] = (ps, sorted(between_s, key=lambda w: w["start"]))
+        reach_word["starts"] = (ps, between_s)
         ps = None
     # At an end: heard words clocked from the request on and starting before
-    # the pause, whatever their clock's length (round 16: seg1's "Yeah." was
-    # clocked 56.88-56.90). Not a word Whisper timed as an instant: on the edge
-    # it is the clip's last word (snap_to_words). Not a next word whose clock
-    # spans the whole pause: it was stretched back over it, Whisper's way, its
-    # start snapped to the word before's end, its sound after the pause ("This"
-    # 248.52-249.22 on the clean mix).
-    between_e = sorted((w for w in said if w["end"] - w["start"] >= 0.01
-                        and end - 0.02 <= w["start"] < pe[0] - 0.02
-                        and w["end"] <= pe[1] + 0.02), key=lambda w: w["start"]) if pe else []
-    # The clip's last word: the last one clocked to start before the request
-    # (not a next word whose 20 ms clock ends by it: round 16, seg4's "kill").
-    lw0 = max((w for w in said if w["start"] < end - 0.02), key=lambda w: w["end"], default=None)
-    if between_e and "ends" not in keep_reach and sound_between(re_, lw0, between_e[0], pe[0]):
-        reach_word["ends"] = (pe, between_e)
-        pe = None
+    # the pause. Not a next word whose clock spans the whole pause: it was
+    # stretched back over it, Whisper's way, its start snapped to the word
+    # before's end, its sound after the pause ("This" 248.52-249.22 on the
+    # clean mix).
+    between_e = sorted((w for w in said if end - 0.02 <= w["start"] < pe[0] - 0.02
+                        and w["end"] <= pe[1] + 0.02 and mid(w) > end
+                        and not on_edge(w, end)), key=lambda w: w["start"]) if pe else []
+    # The clip's last word: the last one with a clock clocked mostly before the
+    # request (not a next word whose 20 ms clock ends by it, nor the last word
+    # itself when its 20 ms clock ends at the request: fan47's "right?").
+    lw0 = max((w for w in said if w["end"] - w["start"] >= 0.01 and mid(w) <= end),
+              key=lambda w: w["end"], default=None)
+    decayed = []            # words between the level reads as the last word's tail
+    if between_e and "ends" not in keep_reach:
+        if sound_between(re_, lw0, between_e[0], pe[0]):
+            reach_word["ends"] = (pe, between_e)
+            pe = None
+        else:
+            decayed = between_e
 
     def audible(w, r):
         """Whether a word clocked inside a level pause has sound of its own
@@ -1843,8 +1864,13 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     new_end = (cut_in_pause(*pe, "end", pad, noise_slack(re_, pe[0] + 0.01, pe[1] - 0.01, style),
                             lw_) if pe else e_w)
     ok_s = ok_e = True
+    # (a word with a clock that ends at the snapped start is before it, and one
+    # that starts at the snapped end after it, however short: a 20 ms clock
+    # fell inside the 0.02 s slack, and the start moved back over its word)
     kept = [w for w in words if w["start"] >= s_w - 0.02
-            and w["end"] <= e_w + 0.02 and w["start"] <= e_w]
+            and w["end"] <= e_w + 0.02 and w["start"] <= e_w
+            and not (w["end"] - w["start"] >= 0.01
+                     and (w["end"] <= s_w + 0.005 or w["start"] >= e_w - 0.005))]
     if kept and (not ps or not pe):
         # Mid-phrase edges: onto the sound itself, the word clock can be most
         # of a second off. The words the snap kept, zero-length ones included
@@ -1921,8 +1947,9 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             before = after = prev_s = None
             mine = other = None
             if where == "starts":
-                edge_w = min((w for w in said if w["start"] >= s_w - 0.02), default=None,
-                             key=lambda w: w["start"])
+                edge_w = min((w for w in said if w["start"] >= s_w - 0.02
+                              and not (w["end"] - w["start"] >= 0.01 and w["end"] <= s_w + 0.005)),
+                             default=None, key=lambda w: w["start"])
                 if edge_w is not None:
                     mine = sound(edge_w)
                     after = edge_w["start"]
@@ -1933,8 +1960,9 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                         other = sound(prev[2]) if prev[2] is not None else prev[:2]
                 lo_s, hi_s = before, (mine[0] if mine else None)
             else:
-                edge_w = max((w for w in said if w["start"] <= e_w + 0.02
-                              and w["end"] <= e_w + 0.02), default=None, key=lambda w: w["end"])
+                edge_w = max((w for w in said if w["start"] <= e_w + 0.02 and w["end"] <= e_w + 0.02
+                              and not (w["end"] - w["start"] >= 0.01 and w["start"] >= e_w - 0.005)),
+                             default=None, key=lambda w: w["end"])
                 if edge_w is not None:
                     mine = sound(edge_w)
                     before = edge_w["end"]
@@ -2093,6 +2121,21 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
         report["clip_settled_on_sound"] = [round(new_start, 3), round(new_end, 3)]
     if fw_ is not None and lw_ is not None and lw_["end"] >= fw_["start"]:
         report["clip_word_span"] = [[fw_["word"], fw_["end"]], [lw_["word"], lw_["end"]]]
+    # A word between the level read as the last word's tail, its clock run
+    # early into it, stays out of the captions; but the level cannot tell a
+    # tail from a soft word run on from the last one with no dip (round 16:
+    # seg4's "I would" at -25 dBFS, 12 dB under "little,", kept in the sound
+    # and out of the captions with a PASS, just as rev7's reverb under
+    # "things." with "Just" clocked into it), so the receipt says so.
+    left = [w for w in decayed if w["end"] > w["start"]
+            and min(w["end"], new_end) - max(w["start"], new_start) >= 0.5 * (w["end"] - w["start"])
+            and (lw_ is None or w["start"] >= lw_["end"] - 0.01)]
+    if left and not any(x.startswith("the clip ends") for x in report["warnings"]):
+        ww = " ".join(w["word"] for w in left)
+        report["warnings"].append(
+            f"the clip ends at the pause after sound the level reads as its last word's fading "
+            f"tail, with \"{ww}\" clocked inside it: if that is said there, it is in the sound "
+            "but not in the captions; listen to the end")
     if ps or pe:
         report["clip_edges_at_pause"] = [w for w, p in (("start", ps), ("end", pe)) if p]
     def opens_cue(w):   # a cue's own first word carries the cue's start
@@ -2218,10 +2261,13 @@ def word_before_pause(words: list[dict], x: float, y: float,
     if cue:
         return max(cue, key=lambda w: (w["cue_end"], w["end"]))
     if end is not None:
-        # (a word Whisper timed as an instant on the edge itself is the clip's,
-        # its sound before its clock, as in snap_to_words: round 16, seg4's
-        # "like" at 136.98 was kept in the sound and left out of the captions)
-        ws = [w for w in ws if w["start"] < end - 0.02
+        # (a word whose clock ends by the requested end is before it, however
+        # short: fan47's "right?", clocked 286.68-286.70 with the END asked for
+        # at 286.70, was in the sound and out of the captions; and a word
+        # Whisper timed as an instant on the edge itself is the clip's, its
+        # sound before its clock, as in snap_to_words: round 16, seg4's "like"
+        # at 136.98)
+        ws = [w for w in ws if w["start"] < end - 0.02 or w["end"] <= end + 0.005
               or (w["end"] - w["start"] < 0.01 and abs(w["start"] - end) <= 0.02)]
     return next((w for w in reversed(ws) if w["start"] < x + 0.1), None)
 

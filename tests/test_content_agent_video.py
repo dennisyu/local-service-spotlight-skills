@@ -2479,7 +2479,11 @@ class AuditRound15(unittest.TestCase):
                                     269.4, 273.78, 0.08, 0.4, rep)
         self.assertGreater(e, 274.02)                      # in the pause, the tail kept
         self.assertLess(e, 274.27)
-        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+        # (since round 16 the receipt says the tail may hold a word: seg4's
+        # soft "I would" looked the same and was a word)
+        ends = [x for x in rep["warnings"] if "ends" in x]
+        self.assertEqual(len(ends), 1)
+        self.assertTrue(ends[0].startswith("the clip ends at the pause after sound the level reads"))
 
     def test_a_word_clocked_into_a_quiet_pause_after_it_was_said_is_found(self):
         # The developer's sweep after the L1 fix: seg6's "And he's" said
@@ -2830,9 +2834,78 @@ class AuditRound16(unittest.TestCase):
         _, e, rep = self._place(lv, words, 269.4, 273.78)
         self.assertGreater(e, 274.02)                      # in the pause, the tail kept
         self.assertLess(e, 274.27)
-        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
         self.assertEqual(rep["clip_word_span"][1][0], "things.")
+        # The receipt says "Just" may be said in that tail (it is not, here).
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x and '"Just"' not in x], [])
+        self.assertTrue(any("fading tail" in x and '"Just"' in x for x in rep["warnings"]))
 
+    # seg4 at 221.02: "little," then "I would" said softly with no dip
+    # (-22 to -28 dBFS, 12 dB under it), "I" an instant at 221.02 and "would"
+    # clocked 221.02-221.16, then the pause. The level reads the soft words as
+    # "little,"'s tail, as it read rev7's reverb: the clip kept "I would" in
+    # the sound and "would" out of the captions, PASS.
+    SOFT = [-27, -26, -24, -20, -17, -15, -14, -13, -13, -15, -15, -15, -15, -15, -15, -17, -22, -16, -14,
+            -14, -14, -14, -14, -14, -14, -13, -14, -14, -14, -14, -14, -14, -15, -16, -14, -14, -15, -16,
+            -16, -16, -17, -20, -21, -22, -27, -27, -27, -28, -28, -24, -22, -26, -25, -27, -26, -25, -26,
+            -26, -25, -34, -34, -35, -36, -39, -38, -43, -46, -46, -47, -40, -54, -60, -66, -68, -71, -67,
+            -72, -69, -72, -70, -71, -76, -70, -75, -71, -70, -72, -73, -74, -71, -74, -72, -49, -38, -29,
+            -30, -30, -14, -10, -10]
+
+    def test_a_soft_word_read_as_a_tail_is_flagged_when_left_out_of_the_captions(self):
+        lv = _Exact([(0, 218.6, 219.06), (1, 219.06, 220.16), (0, 220.16, 220.18), (1, 220.18, 221.2),
+                     (0, 221.2, 221.43), (1, 221.43, 222.69)], [(220.5, self.SOFT)],
+                    216.0, 225.0, -73.0, -48.1, -48.1, loud=[(219.06, 220.5, -14.0), (221.5, 222.69, -12.0)])
+        words = _said(("like", 219.48, 219.6), ("VHS", 219.6, 220.04), ("when", 220.04, 220.24),
+                      ("I", 220.24, 220.38), ("was", 220.38, 220.48), ("little,", 220.48, 220.78),
+                      ("I", 221.02, 221.02), ("would", 221.02, 221.16), ("copy", 221.16, 221.62),
+                      ("the", 221.62, 221.74))
+        _, e, rep = self._place(lv, words, 219.06, 221.02)
+        if e > 221.1 and rep["clip_word_span"][1][0] != "would":
+            self.assertTrue(any(x.startswith("the clip ends at the pause after sound the level reads")
+                                and '"would"' in x for x in rep["warnings"]))
+
+
+    # The fix's own sweep, fan47 at 286.70: "right?" clocked 286.68-286.70 and
+    # the END asked for at its clock end. Its 20 ms clock made it a word
+    # between, and the clip ended inside its decay with a WARN; and since
+    # round 12 the captions had left it out, the clip ending in the pause
+    # after it ("...a game, right?").
+    RIGHT = [-22, -21, -21, -23, -25, -26, -30, -28, -27, -27, -27, -26, -26, -27, -27, -28, -28, -28, -31,
+             -31, -33, -36, -38, -39, -39, -42, -41, -41, -40, -40, -42, -41, -39, -44, -43, -41, -41, -40,
+             -43, -40, -41, -41, -43, -41, -42, -41, -42, -40, -42, -43, -39, -43, -43, -42, -40, -40, -41,
+             -39, -41, -41, -40, -42, -41, -40, -42, -41, -35, -35, -28, -24, -25, -25, -28, -26, -27, -26,
+             -28, -30, -31, -32, -32, -36, -36, -37, -39, -43, -41, -42, -41, -43, -42, -40, -41, -40, -41,
+             -42, -41, -40, -39, -40, -39, -42, -41, -40, -42, -40, -41, -40, -43, -43, -41, -43, -41, -41,
+             -42, -44, -42, -41, -42, -44, -41, -38, -40, -41, -42, -42, -39, -39, -46, -44, -41, -44, -41,
+             -43, -42, -41, -41, -41, -40, -42, -42, -40, -44, -42, -43, -44, -42, -41, -41, -43, -42, -40,
+             -40, -41, -41, -42, -42, -33, -28, -24]
+
+    def test_an_end_at_a_short_last_words_clock_end_keeps_it_in_sound_and_captions(self):
+        lv = _Exact([(0, 284.0, 284.6), (1, 284.6, 285.5), (0, 285.5, 285.69), (1, 285.69, 286.1),
+                     (0, 286.1, 286.58), (1, 286.58, 286.71), (0, 286.71, 287.48), (1, 287.48, 288.2)],
+                    [(285.9, self.RIGHT)], 282.0, 291.0, -42.0, -33.1, -52.6,
+                    loud=[(284.6, 285.9, -20.0)])
+        words = _said(("side", 284.7, 285.08), ("at", 285.08, 285.28), ("a", 285.28, 285.48),
+                      ("game,", 285.48, 285.96), ("right?", 286.68, 286.7), ("All", 287.38, 287.6),
+                      ("this", 287.6, 287.74))
+        _, e, rep = self._place(lv, words, 284.7, 286.7)
+        self.assertGreater(e, 286.71)                      # in the pause after "right?"
+        self.assertLess(e, 287.38)
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+        self.assertEqual(rep["clip_word_span"][1][0], "right?")
+
+    def test_a_start_at_a_short_previous_words_clock_end_does_not_open_on_it(self):
+        # The mirror at a start: a word between the reach pause and the
+        # request, clocked 20 ms (said 1.80-1.98, clocked 1.98-2.00), with the
+        # START asked for at its clock end. "start < request - 0.02" let it
+        # out of the words between, and the clip opened on it unwarned.
+        runs = [(0, 0.5, 1.0), (1, 1.0, 1.55), (0, 1.55, 1.8), (1, 1.8, 3.0), (0, 3.0, 3.6)]
+        loud = [(1.0, 1.55, -15.0), (1.8, 1.98, -16.0), (1.98, 2.06, -45.0), (2.06, 3.0, -14.0)]
+        lv = _QuietRoom(runs, loud, 0.0, 5.0, -76.0, -46.0)
+        words = _said(("so", 1.0, 1.5), ("yeah.", 1.98, 2.0), ("Next", 2.06, 2.4), ("one.", 2.4, 3.0))
+        s, _, rep = self._place(lv, words, 2.0, 3.0)
+        self.assertTrue(s >= 1.95 or any(x.startswith('the clip starts at the pause before "yeah."')
+                                         for x in rep["warnings"]))
 
 HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
