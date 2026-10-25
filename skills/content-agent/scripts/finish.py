@@ -1503,7 +1503,8 @@ def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
     of the first word `top` and 18 dB over the floor (not a bed or a breath:
     a music bed between sentences in a public short), and holds talk-level
     windows past `covered_to` (the previous word's clock end); those windows
-    are what is returned. A dip and talk are as in stray_talk."""
+    are what is returned (place_clip warns at 0.12 s). A dip and talk are as
+    in stray_talk."""
     pk = getattr(runs, "peaks", None)
     if not pk or top is None or not hasattr(runs, "_span"):
         return 0.0
@@ -1851,7 +1852,10 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     top = max(v for v in (r.loudest(*mine), r.loudest(q[0], mine[1]), -120.0)
                               if v is not None)
                     d = dropped_talk(r, q[0], before, top, prev_s)
-                    if d >= 0.08:
+                    # (0.12 s: an ASR often ends a word up to 0.1 s early, so a
+                    # shorter run past its clock is likely that word's own last
+                    # syllable after a closure: the replay's "score." at 588.1)
+                    if d >= 0.12:
                         report["warnings"].append(
                             f"the clip starts in a short dip right after {d:.2f}s of word-loud "
                             "sound that no word's clock covers: the first word may begin before "

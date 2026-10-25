@@ -2288,6 +2288,21 @@ class AuditRound15(unittest.TestCase):
         self.assertGreater(s, 19.8)
         self.assertLess(s, 19.88)                          # before "And"
         self.assertEqual([x for x in rep["warnings"] if "short dip" in x], [])
+        # The word before's own last syllable, past a closure, ending 0.08 s
+        # after its clock (the replay's "score." at 588.10, then "So").
+        runs = [(0, 586.0, 586.5), (1, 586.5, 588.19), (0, 588.19, 588.24), (1, 588.24, 588.95),
+                (0, 588.95, 589.4), (1, 589.4, 591.0)]
+        loud = [(586.5, 587.84, -18.0), (587.84, 587.94, -21.0), (587.94, 587.97, -37.0),
+                (587.97, 588.15, -13.0), (588.15, 588.19, -22.0), (588.19, 588.24, -52.0),
+                (588.24, 588.31, -35.0), (588.31, 588.95, -13.0), (589.4, 591.0, -15.0)]
+        words = _said(("confidence", 587.56, 587.84), ("score.", 587.84, 588.1), ("So", 588.34, 588.4),
+                      ("you", 588.4, 588.88), ("see.", 589.4, 590.9))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_QuietRoom(runs, loud, 585.0, 592.0, -70.0, -50.0), words,
+                                    588.34, 590.9, 0.08, 0.4, rep)
+        self.assertGreater(s, 588.18)
+        self.assertLess(s, 588.25)                         # in the dip after "score."
+        self.assertEqual([x for x in rep["warnings"] if "short dip" in x], [])
 
     def test_a_start_at_the_previous_words_clock_end_does_not_reach_back_over_it(self):
         # H3, the clean mix at 56.16 ("Look,"'s clock end; said 56.03-56.35):
