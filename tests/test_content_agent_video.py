@@ -1613,6 +1613,104 @@ class AuditRound11(unittest.TestCase):
             self.assertEqual((len(calls), loud["integrated_lufs"]), (1, -15.3))
 
 
+class AuditRound12(unittest.TestCase):
+    """Twelfth independent audit, 24-25 Oct 2026: each test pins one finding."""
+
+    PROF = video_qa.load_profile(None)
+
+    def _light(self):
+        # nz_ac44, --words only: "...that's what you need to do" and the level,
+        # under a threshold raised 20 dB, reads "what you need to do" as silence.
+        return [dict(w("level.", 308.6, 309.2), timing="word", heard=True),
+                dict(w("That's", 309.3, 309.7), timing="word", heard=True),
+                dict(w("what", 309.8, 309.95), timing="word", heard=True),
+                dict(w("you", 309.95, 310.1), timing="word", heard=True),
+                dict(w("need", 310.1, 310.35), timing="word", heard=True),
+                dict(w("to", 310.35, 310.5), timing="word", heard=True),
+                dict(w("do", 310.56, 310.8), timing="word", heard=True),
+                dict(w("And", 311.4, 311.6), timing="word", heard=True)]
+
+    def test_a_light_clip_end_keeps_words_the_level_reads_as_silence(self):
+        runs = [(1, 296.0, 309.75), (0, 309.75, 311.28), (1, 311.28, 320.0)]
+        words = [dict(w("Love's", 296.4, 296.76), timing="word", heard=True)] + self._light()
+        rep = {"warnings": []}
+        _, s, e = finish.place_clip(_NoisyLevels(runs, raised_db=19.8, base=290.0, total=330.0),
+                                    words, 296.4, 310.8, 0.08, 0.4, rep)
+        self.assertGreaterEqual(e, 310.8)                  # "do" kept (round 12 cut at 310.325)
+        self.assertLess(e, 311.28)                         # "And" not
+        self.assertEqual(rep["clip_word_span"][1][0], "do")
+
+    def test_the_last_word_is_never_the_next_sentence_stretched_back(self):
+        words = [dict(w("scam", 187.4, 187.88), timing="word", heard=True),
+                 dict(w("and", 187.88, 188.78), timing="word", heard=True)]
+        self.assertEqual(finish.word_before_pause(words, 187.9, 188.6, end=187.88)["word"],
+                         "scam")
+
+    def test_a_start_pause_holding_a_heard_word_starts_before_it(self):
+        # A soft "Okay," the ASR heard wholly inside the level's "pause", just
+        # after the requested START: talk, not the editor's pause.
+        runs = [(1, 110.0, 121.75), (0, 121.75, 124.4), (1, 124.4, 130.0)]
+        words = [dict(w("Okay,", 123.71, 123.95), timing="word", heard=True, cue_start=123.773,
+                      cue_end=130.0),
+                 dict(w("so", 124.45, 124.65), timing="word", heard=True, cue_start=123.773,
+                      cue_end=130.0)]
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Levels(runs, 200.0), words, 123.773, 129.0, 0.08, 0.4, rep)
+        self.assertLess(s, 123.71)
+
+    def test_a_cut_in_a_clear_word_gap_under_a_bed_is_a_note_not_a_warning(self):
+        runs = [(2, 0.0, 30.0)]                            # a bed: no level pause at all
+        words = [dict(w("first", 4.0, 4.4), timing="word", heard=True),
+                 dict(w("Next", 5.0, 5.3), timing="word", heard=True),
+                 dict(w("words", 5.3, 5.8), timing="word", heard=True),
+                 dict(w("end.", 9.0, 9.5), timing="word", heard=True),
+                 dict(w("More", 10.2, 10.5), timing="word", heard=True)]
+        rep = {"warnings": []}
+        _, s, e = finish.place_clip(_Levels(runs), words, 5.0, 9.5, 0.08, 0.4, rep)
+        self.assertEqual(rep["warnings"], [])
+        self.assertEqual(len(rep["notes"]), 2)
+        self.assertIn("gap between heard words", rep["notes"][0])
+        # ...in the middle of each gap: ASR clocks end words early and start
+        # them late (a bed left up to 0.27 s of the last word's tail out).
+        self.assertAlmostEqual(s, 4.7)
+        self.assertAlmostEqual(e, 9.85)
+
+    def test_a_first_word_timed_as_an_instant_keeps_its_sound(self):
+        # nz fan47, --words: "And" timed 472.46-472.46, said 472.34-472.47.
+        runs = [(1, 460.0, 471.68), (0, 471.68, 472.34), (1, 472.34, 472.47),
+                (0, 472.47, 472.77), (1, 472.77, 480.0)]
+        words = [dict(w("Right?", 471.6, 471.6), timing="word", heard=True),
+                 dict(w("And", 472.46, 472.46), timing="word", heard=True),
+                 dict(w("so", 472.46, 472.88), timing="word", heard=True),
+                 dict(w("anyway,", 472.88, 473.16), timing="word", heard=True),
+                 dict(w("done.", 478.0, 478.5), timing="word", heard=True)]
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Levels(runs, 500.0), words, 472.46, 478.5, 0.08, 0.4, rep)
+        self.assertLess(s, 472.34)
+        self.assertEqual(rep["clip_word_span"][0][0], "And")
+
+    def test_every_finish_warning_shows_in_the_rendered_receipt(self):
+        rec = {"verdict": "WARN", "file": "x.mp4", "sha256_head": "0" * 64,
+               "probe": {"size_bytes": 1, "duration_s": 1.0}, "measured_at": "now",
+               "tool": "t", "checks": [{"check": "finish_report", "status": "WARN",
+                                        "measured": 2, "expected": "-",
+                                        "note": "finish.py reported: one | two"}]}
+        row = [l for l in video_qa.render_markdown(rec).splitlines()
+               if l.startswith("| finish_report")][0]
+        self.assertEqual(row.replace("\\|", "").count("|"), 6)   # five cells
+        self.assertIn("one \\| two", row)
+
+    def test_talk_alone_in_one_channel_is_not_two_speakers(self):
+        aud = {"noise": {"base_threshold_db": -45.0},
+               "scan": {"channel_peaks_db": {"1": -3.0, "2": -4.0}}}
+
+        def checks(own):
+            return {x["check"] for x in video_qa._edge_and_channel_checks(
+                [-30.0] * 100, 0.01, aud, -20.0, 0.0, 0.0, self.PROF, None, None, "none",
+                roles={"own_talk_s": own})}
+        self.assertNotIn("speakers_hard_panned", checks([0.0, 2.2]))   # wide stereo music
+        self.assertIn("speakers_hard_panned", checks([1.5, 2.2]))      # two lavs taking turns
+
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
@@ -2688,6 +2786,26 @@ class MediaRoundTrip(unittest.TestCase):
         self.assertGreaterEqual(roles["rms_db"][1] - roles["rms_db"][0], 15.0)
         tw = _load("transcribe_words")
         self.assertEqual(tw.mono_filter(str(src), 0, 0), ["-ac", "1"])   # both voices heard
+
+    # ---- twelfth audit (24-25 Oct 2026) ----
+
+    def test_a_short_word_the_asr_heard_is_not_a_click_to_the_clip_placer(self):
+        # A 70 ms "do" under room noise: with the words, finish reads it as sound
+        # (as the receipt does); without them it was bridged into the pause.
+        out = self.tmp / "blip_word.wav"
+        self._ff("-f", "lavfi", "-i",
+                 f"aevalsrc='{self.SYL}*lt(t,5)+0.3*sin(2*PI*220*t)*between(t,5.5,5.57)"
+                 f"+{self.SYL}*gte(t,7.5)':s=48000:d=12",
+                 "-f", "lavfi", "-i", "anoisesrc=a=0.01:c=pink:r=48000:d=12:seed=5",
+                 "-filter_complex", "[0][1]amix=inputs=2:normalize=0", "-c:a", "pcm_s16le",
+                 str(out))
+        info = video_qa.probe(str(out))
+        style = finish.load_style(None)
+        words = self._words_for([(0.0, 5.0)]) + [dict(w("do", 5.5, 5.57), timing="word")] + \
+            self._words_for([(7.5, 12.0)])
+        with_w = finish.level_runs(str(out), style, info, 1.0, 11.0, words)
+        sound_at = [k for k, a, b in with_w if a <= 5.53 < b]
+        self.assertEqual(sound_at, [1])
 
 
 if __name__ == "__main__":

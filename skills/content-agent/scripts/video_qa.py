@@ -43,10 +43,13 @@ What it can and cannot see (eleven independent audits, 23-24 Oct 2026):
   receipt as a `finish_report` WARN with everything else finish.py asked a
   person to check. In a stereo file, a channel 15 dB or more under the other
   (talk on one input, a wireless mic's -20 dB safety track, a camera's scratch
-  mic) is a `one_channel` WARN, and a voice in one channel only while the
-  other sits 20 dB or more under its own talk, for a second or more (one lav
-  per input, a recorder's split mode) is a `speakers_hard_panned` WARN; 5.1
-  with silent surrounds is normal.
+  mic) is a `one_channel` WARN, and two channels that each carry a second or
+  more of talk of their own while the other sits 20 dB or more under its own
+  (one lav per input, a recorder's split mode) are a `speakers_hard_panned`
+  WARN (talk alone in one channel only is what wide stereo music looks like,
+  and is not); 5.1 with silent surrounds is normal. finish.py's warnings are
+  joined with "; " and any "|" in a cell is escaped, so a rendered receipt
+  shows every one.
 - With a transcript (--srt or --words) the hook check uses the first WORD;
   "[Music]", "(applause)", "*music*" cues are not words. A word cannot start
   before anything as loud as talk is audible (a breath does not count; a bed
@@ -2085,7 +2088,7 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
                                 "and loudness reads low. finish.py --loudness copies the louder "
                                 "channel to both when the quieter one carries no talk of its "
                                 "own, and folds both to the centre when it does"})
-        elif top > -60.0 and max(own) >= 1.0:
+        elif top > -60.0 and min(own) >= 1.0:
             out.append({"check": "speakers_hard_panned", "status": "WARN",
                         "measured": "talk alone in one channel: " + ", ".join(
                             f"channel {i + 1} {own[i]:.1f}s" for i in (0, 1) if own[i] >= 1.0),
@@ -2202,8 +2205,11 @@ def render_markdown(rec: dict) -> str:
              "| Check | Status | Measured | Expected | Note |",
              "|---|---|---|---|---|"]
     for c in rec["checks"]:
-        lines.append(f"| {c['check']} | {c['status']} | {c['measured']} | "
-                     f"{c['expected']} | {c['note']} |")
+        # A "|" inside a cell would split it: Markdown renderers drop the
+        # extra cells (audit round 12 lost a second finish.py warning that way).
+        cell = [str(c[k]).replace("|", "\\|").replace("\n", " ")
+                for k in ("check", "status", "measured", "expected", "note")]
+        lines.append("| " + " | ".join(cell) + " |")
     fr = rec.get("frames")
     if fr:
         lines += ["", f"Contact sheet: `{fr.get('contact_sheet')}`. "
@@ -2491,7 +2497,7 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     if told:
         checks.append({"check": "finish_report", "status": "WARN", "measured": len(told),
                        "expected": "nothing finish.py asks a person to check",
-                       "note": "finish.py reported: " + " | ".join(told)})
+                       "note": "finish.py reported: " + "; ".join(told)})
     rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
            "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "tool": "content-agent/scripts/video_qa.py", "probe": info,
