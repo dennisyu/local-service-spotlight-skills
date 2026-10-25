@@ -1236,26 +1236,30 @@ def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
 
 
 def quiet_point(runs, lo: float, hi: float, mid: float):
-    """The quietest moment in [lo, hi] by the level's 10 ms peaks, each moment
-    judged by the loudest peak within 25 ms of it (a cut needs a quiet 50 ms,
-    not one quiet window between syllables), ties to the one nearest `mid`.
-    Returns (t, level, talk) with `talk` the stretch's 90th-percentile peak,
-    or None when the runs carry no peaks."""
+    """The quiet moment in [lo, hi] nearest `mid`, by the level's 10 ms peaks:
+    each moment is judged by the loudest peak within 25 ms of it (a cut needs
+    a quiet 50 ms, not one quiet window between syllables), and any moment
+    within 3 dB of the quietest counts as quiet (under a bed the level wanders
+    by a few dB; a dip near a word's clock can still hold its tail). Returns
+    (t, level, talk) with `talk` the stretch's 90th-percentile peak, or None
+    when the runs carry no peaks."""
     peaks = getattr(runs, "peaks", None)
     if not peaks or not hasattr(runs, "loudest") or hi < lo:
         return None
     step = runs.window_s
-    best = None
+    seen = []
     t = lo
     while t <= hi + 1e-9:
         lv = runs.loudest(t - 0.025, t + 0.025)
-        if lv is not None and (best is None or (lv, abs(t - mid)) < (best[1], abs(best[0] - mid))):
-            best = (t, lv)
+        if lv is not None:
+            seen.append((t, lv))
         t += step
-    if best is None:
+    if not seen:
         return None
+    floor = min(lv for _, lv in seen)
+    t, lv = min((x for x in seen if x[1] <= floor + 3.0), key=lambda x: abs(x[0] - mid))
     srt = sorted(peaks)
-    return best[0], best[1], srt[int(0.9 * (len(srt) - 1))]
+    return t, lv, srt[int(0.9 * (len(srt) - 1))]
 
 
 def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
