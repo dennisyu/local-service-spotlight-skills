@@ -45,12 +45,15 @@ What it can and cannot see (twelve independent audits, 23-25 Oct 2026):
   (talk on one input, a wireless mic's -20 dB safety track, a camera's scratch
   mic) is a `one_channel` WARN, and two channels that each carry a second or
   more of talk of their own while the other sits 20 dB or more under its own
-  (one lav per input, a recorder's split mode) are a `speakers_hard_panned`
-  WARN (talk alone in one channel only is what wide stereo music looks like,
-  and is not); 5.1 with silent surrounds is normal. finish.py's warnings are
-  joined with "; " and any "|" in a cell is escaped, so a rendered receipt
-  shows every one; its notes (an edge placed in a word gap a bed hides, a
-  word timed in silence, loudnorm's dynamic mode) are a `finish_note` NOTE.
+  (one lav per input, a recorder's split mode), or one channel with 5 s or
+  more of its own talk that is a fifth of all its talk (a guest's lav on one
+  input beside a centred host mic), are a `speakers_hard_panned` WARN (a
+  little own talk in one channel is what wide stereo music looks like, and
+  is not); 5.1 with silent surrounds is normal. finish.py's warnings are
+  joined with "; " and any pipe or backslash in a cell is escaped, so a
+  rendered receipt shows every one; its notes (an edge placed in a quiet
+  moment of a word gap, a word timed in silence, loudnorm's dynamic mode)
+  are a `finish_note` NOTE.
 - With a transcript (--srt or --words) the hook check uses the first WORD;
   "[Music]", "(applause)", "*music*" cues are not words. A word cannot start
   before anything as loud as talk is audible (a breath does not count; a bed
@@ -675,7 +678,22 @@ def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
             "talk_db": [round(x, 1) for x in talk_db], "talk_s": [round(x, 1) for x in talk_s],
             "own_talk_s": [round(x, 1) for x in own_s],
             "analysed_s": round(n * 0.01, 1),
-            "hard_panned": own_s[0] >= 1.0 and own_s[1] >= 1.0}
+            "hard_panned": hard_panned({"own_talk_s": own_s, "talk_s": talk_s})}
+
+
+def hard_panned(roles: dict | None) -> bool:
+    """A voice sits in one channel: both channels carry a second or more of talk
+    of their own (one lav per input, split mode), or one channel carries at
+    least 5 s of its own talk and a fifth of all its talk (a guest's lav on
+    one input beside a centred host mic; audit round 13: 64.7 s of 99.1 s,
+    26 dB hard right, passed clean). Wide stereo music shows own "talk" in
+    one channel only, and little of it (2.2 s of 104 s in round 12's
+    build), so it is neither."""
+    own = (roles or {}).get("own_talk_s") or [0.0, 0.0]
+    talk = (roles or {}).get("talk_s")
+    if own[0] >= 1.0 and own[1] >= 1.0:
+        return True
+    return bool(talk) and any(own[c] >= max(5.0, 0.2 * talk[c]) for c in (0, 1))
 
 
 def audio_scan(path: str, start: float = 0.0, seconds: float | None = None,
@@ -2089,7 +2107,7 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
                                 "and loudness reads low. finish.py --loudness copies the louder "
                                 "channel to both when the quieter one carries no talk of its "
                                 "own, and folds both to the centre when it does"})
-        elif top > -60.0 and min(own) >= 1.0:
+        elif top > -60.0 and hard_panned(roles):
             out.append({"check": "speakers_hard_panned", "status": "WARN",
                         "measured": "talk alone in one channel: " + ", ".join(
                             f"channel {i + 1} {own[i]:.1f}s" for i in (0, 1) if own[i] >= 1.0),
@@ -2207,8 +2225,9 @@ def render_markdown(rec: dict) -> str:
              "|---|---|---|---|---|"]
     for c in rec["checks"]:
         # A "|" inside a cell would split it: Markdown renderers drop the
-        # extra cells (audit round 12 lost a second finish.py warning that way).
-        cell = [str(c[k]).replace("|", "\\|").replace("\n", " ")
+        # extra cells (audit round 12 lost a second finish.py warning that way);
+        # a backslash before it would undo the escape (round 13).
+        cell = [str(c[k]).replace("\\", "\\\\").replace("|", "\\|").replace("\n", " ")
                 for k in ("check", "status", "measured", "expected", "note")]
         lines.append("| " + " | ".join(cell) + " |")
     fr = rec.get("frames")

@@ -1761,7 +1761,7 @@ class AuditRound12(unittest.TestCase):
         rep = {"warnings": []}
         _, _, e = finish.place_clip(L(), words, 5.0, 9.5, 0.08, 0.4, rep)
         self.assertGreater(e, 9.72)
-        self.assertLess(e, 9.8)
+        self.assertLess(e, 9.81)                           # in the dip, not on the bed
         self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
 
     def test_words_only_descript_has_bound_the_gap(self):
@@ -1851,6 +1851,124 @@ class AuditRound12(unittest.TestCase):
         self.assertGreater(e, 386.3)                       # its sound kept
         self.assertLess(e, 387.0)                          # "Next" not
         self.assertEqual(rep["clip_word_span"][1][0], "answer.")
+
+class _QuietRoom:
+    """Level runs of a quiet room for place_clip: 10 ms peaks at `floor_db`
+    with `loud` [(a, b, dB)] on top, the silence threshold at `thr_db` (not
+    raised), and the runs given."""
+    def __init__(self, runs, loud, base, total, floor_db=-70.0, thr_db=-46.0):
+        n = int((total - base) / 0.01)
+        peaks = [floor_db] * n
+        for a, b, db in loud:
+            for k in range(int(round((a - base) / 0.01)), int(round((b - base) / 0.01))):
+                peaks[k] = db
+        self.r = finish.Runs(runs, base, [thr_db] * (n // 50 + 1), 0.5, thr_db, peaks, 0.01)
+        self.total, self.style = total + 100.0, finish.load_style(None)
+
+    def near(self, t):
+        return self.r
+
+
+class AuditRound13(unittest.TestCase):
+    """Thirteenth independent audit, 25 Oct 2026: each test pins one finding."""
+
+    # seg3 (one of our own Descript publishes, no bed): Whisper heard
+    # "realistically," (to 131.78) and "I" (from 132.26); between them an
+    # unheard filler at talk level, with real dips only at 131.82-131.84 and
+    # 132.15-132.17. Round 12 cut both clips at 132.07, mid-filler, PASS.
+    SEG3_RUNS = [(1, 127.0, 131.83), (0, 131.83, 131.85), (1, 131.85, 133.0)]
+    SEG3_LOUD = [(130.32, 131.78, -9.0), (131.78, 131.82, -29.0), (131.82, 131.85, -48.0),
+                 (131.85, 132.15, -18.0), (132.15, 132.18, -38.0), (132.18, 132.58, -10.0)]
+
+    def _seg3_words(self):
+        return [dict(w("but", 122.2, 122.5), timing="word", heard=True),
+                dict(w("realistically,", 130.32, 131.78), timing="word", heard=True),
+                dict(w("I", 132.26, 132.3), timing="word", heard=True),
+                dict(w("think,", 132.3, 132.58), timing="word", heard=True),
+                dict(w("so.", 139.2, 139.7), timing="word", heard=True)]
+
+    def test_a_gap_cut_never_lands_inside_an_unheard_filler(self):
+        lv = _QuietRoom(self.SEG3_RUNS + [(0, 139.7, 140.2), (1, 140.2, 141.0)],
+                        self.SEG3_LOUD + [(139.2, 139.7, -10.0)], 120.0, 141.0)
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(lv, self._seg3_words(), 122.2, 131.78, 0.08, 0.4, rep)
+        self.assertGreaterEqual(e, 131.82)                 # "realistically," whole
+        self.assertFalse(131.86 < e < 132.15)              # in a dip, never mid-filler
+        self.assertLess(e, 132.26)                         # "I" not begun
+        self.assertFalse(any("ends" in x for x in rep["warnings"]))
+        self.assertTrue(any("quiet moment" in n for n in rep.get("notes", [])))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(lv, self._seg3_words(), 132.26, 139.7, 0.08, 0.4, rep)
+        self.assertFalse(131.86 < s < 132.15)              # never mid-filler (round 12: 132.07)
+        self.assertLess(s, 132.18)                         # "I" whole
+
+    def test_a_gap_with_nothing_quiet_in_it_still_warns(self):
+        # bed20 98.42-106.82: talk the ASR half heard, 13-18 dB over the bed, all
+        # through the "gap" after "lane,". Round 12 called its quietest 50 ms
+        # (-22 dBFS, 12 dB under the talk) quiet and PASSed with a NOTE.
+        loud = [(90.0, 105.0, -10.0), (105.0, 105.4, -10.0), (105.4, 106.4, -21.0),
+                (106.4, 106.82, -10.0), (106.82, 107.1, -22.0), (107.1, 107.4, -10.0)]
+        lv = _QuietRoom([(1, 90.0, 107.4), (0, 107.4, 115.0)], loud, 90.0, 115.0,
+                        floor_db=-38.0, thr_db=-50.0)
+        words = [dict(w("change", 98.42, 98.8), timing="word", heard=True),
+                 dict(w("every", 105.0, 105.4), timing="word", heard=True),
+                 dict(w("lane,", 106.4, 106.82), timing="word", heard=True),
+                 dict(w("three", 107.1, 107.4), timing="word", heard=True)]
+        rep = {"warnings": []}
+        finish.place_clip(lv, words, 98.42, 106.82, 0.08, 0.4, rep)
+        self.assertTrue(any("ends in a" in x and "never goes quiet" in x for x in rep["warnings"]))
+        self.assertFalse(any("quiet" in n for n in rep.get("notes", [])))
+
+    def test_a_gap_cut_waits_for_the_last_words_decay(self):
+        # The replay at 1340.239: "company." decays at -27 to -35 dBFS to 1340.44
+        # and under -50 by 1340.50; round 12 cut at 1340.35 with a NOTE.
+        runs = [(1, 1330.0, 1340.47), (0, 1340.47, 1340.53), (1, 1340.53, 1350.0)]
+        lv = _QuietRoom(runs, [(1330.0, 1340.2, -10.0), (1340.2, 1340.44, -30.0),
+                               (1340.44, 1340.48, -42.0), (1340.48, 1340.53, -55.0),
+                               (1340.53, 1341.5, -12.0)], 1330.0, 1350.0, thr_db=-45.0)
+        words = [dict(w("So", 1317.4, 1317.6), timing="word", heard=True),
+                 dict(w("company.", 1339.7, 1340.1), timing="word", heard=True),
+                 dict(w("he's", 1340.5, 1340.58), timing="word", heard=True)]
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(lv, words, 1330.5, 1340.1, 0.08, 0.4, rep)
+        self.assertGreaterEqual(e, 1340.47)                # the fade clear of the decay
+        self.assertLessEqual(e, 1340.53)                   # "he's" not begun
+
+    def test_an_instant_first_word_bounds_the_gap(self):
+        # bedsn14 and hum46 at 396.62: "okay," timed as an instant, said
+        # 396.36-396.61, run straight on from "want," with no quiet between.
+        # Round 12 left out instants when it measured the gap, so it claimed a
+        # 1.08 s gap and cut inside "okay," with only a NOTE.
+        lv = _QuietRoom([(1, 390.0, 400.0)], [(390.0, 396.34, -10.0), (396.34, 396.61, -20.0),
+                                              (396.62, 398.0, -10.0)], 390.0, 400.0)
+        words = [dict(w("want,", 396.0, 396.34), timing="word", heard=True),
+                 dict(w("okay,", 396.62, 396.62), timing="word", heard=True),
+                 dict(w("here's", 396.62, 397.7), timing="word", heard=True),
+                 dict(w("done.", 399.0, 399.5), timing="word", heard=True)]
+        rep = {"warnings": []}
+        finish.place_clip(lv, words, 396.62, 399.5, 0.08, 0.4, rep)
+        self.assertTrue(any("starts inside unbroken talk" in x for x in rep["warnings"]))
+        self.assertFalse(any("quiet" in n or "gap" in n for n in rep.get("notes", [])))
+
+    def test_one_voice_hard_panned_is_a_voice_not_music(self):
+        # A guest's lav on the right input beside a centred host mic: 64.7 s of
+        # its own talk in 99.1 s. Wide stereo music: 2.2 s in 104 s.
+        self.assertTrue(video_qa.hard_panned({"own_talk_s": [0.0, 64.7], "talk_s": [60.0, 99.1]}))
+        self.assertFalse(video_qa.hard_panned({"own_talk_s": [0.0, 2.2], "talk_s": [100.0, 104.0]}))
+        self.assertTrue(video_qa.hard_panned({"own_talk_s": [1.5, 2.2]}))     # split mode
+
+    def test_a_backslash_cannot_undo_the_pipe_escape(self):
+        rec = {"verdict": "WARN", "file": "x.mp4", "sha256_head": "0" * 64,
+               "probe": {"size_bytes": 1, "duration_s": 1.0}, "measured_at": "now",
+               "tool": "t", "checks": [{"check": "finish_report", "status": "WARN",
+                                        "measured": "a|b", "expected": "x \\| y",
+                                        "note": "n"}]}
+        row = [l for l in video_qa.render_markdown(rec).splitlines()
+               if l.startswith("| finish_report")][0]
+        # a pipe after an even run of backslashes (none included) splits a cell
+        unescaped = len(re.findall(r"(?<!\\)(?:\\\\)*\|", row))
+        self.assertEqual(unescaped, 6)                     # five cells
+
 
 HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
@@ -2915,6 +3033,26 @@ class MediaRoundTrip(unittest.TestCase):
         c = {x["check"]: x["status"] for x in self._quiet_qa(out)["checks"]}
         self.assertNotIn("speakers_hard_panned", c)
         self.assertEqual(c["integrated_loudness"], "PASS")
+
+    def test_one_guest_panned_to_one_side_is_folded_to_the_centre(self):
+        # Round 13: the host on a centred mic in both channels, the guest's lav on
+        # the right input only. Round 12 needed BOTH channels to carry their own
+        # talk, so this passed clean with the guest 26 dB hard right.
+        src = self.tmp / "guest_right.mp4"
+        left = f"0.3*{self.A_}*lt(t,10)+0.0095*{self.B_}*gte(t,10)"
+        right = f"0.3*{self.A_}*lt(t,10)+0.3*{self.B_}*gte(t,10)"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=20", "-f", "lavfi", "-i",
+                 f"aevalsrc='{left}|{right}':s=48000:d=20", "-c:v", "libx264", "-preset",
+                 "ultrafast", "-c:a", "aac", "-shortest", str(src))
+        roles = video_qa.channel_roles(str(src))
+        self.assertLess(roles["own_talk_s"][0], 1.0)              # the host is in both
+        self.assertGreaterEqual(roles["own_talk_s"][1], 5.0)      # the guest only right
+        c = {x["check"]: x["status"] for x in self._quiet_qa(src)["checks"]}
+        self.assertEqual(c["speakers_hard_panned"], "WARN")
+        rep = finish.finish(str(src), str(self.tmp / "guest_right_out.mp4"),
+                            finish.load_style(None), trim_head=False, loudness=True,
+                            words=None, burn=False, keywords=[])
+        self.assertTrue(any(s.get("speakers_hard_panned") for s in rep["steps"]))
 
     def test_the_transcriber_keeps_a_quiet_second_speaker(self):
         src = self.tmp / "host_briefly.wav"                       # host 1.5 s of 60, own lav

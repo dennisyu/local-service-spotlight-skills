@@ -54,14 +54,21 @@ Usage:
     into the pause of 0.15 s or more before the first word's sound, the end
     into the first pause after the last word's (never past a neighbouring
     word). Where talk runs on with no such pause, the edge stays on the word
-    clock: a cut inside a heard word's clock, or in a gap between heard words
-    under 0.25 s, is a warning; a cut in a clearer gap that a bed or room
-    noise hides from the level goes to the quiet moment nearest the gap's
-    middle (any 50 ms within 3 dB of its quietest; at most 0.5 s from the
-    word: ASR clocks end words early) and is a note (`notes` in the report,
-    a `finish_note` NOTE on the receipt). A Descript cue none of whose words
-    the ASR heard bounds the gap too, over the cue's own times, and a gap as
-    loud as talk all through is still a warning. The first
+    clock: a cut inside a heard word's clock, or in a gap between words under
+    0.15 s, is a warning. In a clearer gap the cut moves, either way, to 30 ms
+    that are quiet in absolute terms: under the checker's silence threshold,
+    30 dB under the softer neighbouring word, 25 dB under the louder and 12
+    under the softer (a breath or a bed), or within 8 dB of the stretch's
+    floor and 20 dB under the softer word. A quiet stretch of 0.15 s or more
+    nearest the clip's word wins, else the last short one before the gap's
+    far word with the fade where it is quietest; that is a note (`notes`, a
+    `finish_note` NOTE on the receipt, with the fade's level). With nothing
+    quiet in the gap (a loud bed, a reverb tail, talk the ASR missed) it is a
+    warning that the cut cannot be checked (audit round 13: a "quietest
+    part" sat inside an unheard filler and inside a word's decay). The gap is
+    bounded by heard words, by a word Whisper timed as an instant (its sound
+    is the level's run that ends at it, up to 0.4 s),
+    and by a Descript cue none of whose words the ASR heard. The first
     and last caption land on the clip's sound, not a late or early clock.
     Every warning the report carries (all but the dynamic-mode note) also
     reaches the QA receipt (`finish_report`), so a PASS never hides a
@@ -108,11 +115,13 @@ Usage:
     input), 15 dB or more down with no talk of its own (a wireless mic's -20 dB
     safety track, a camera's scratch mic), or the same voice polarity-inverted
     (it cancels when a phone plays mono); two channels that EACH carry a
-    second or more of talk of their own (one lav per input, split mode) are
-    folded to the centre. "Talk of its own" is phrases where that channel is at
-    its talk level and the other sits 20 dB or more under its own
-    (video_qa.channel_roles); in one channel only it is also what wide stereo
-    music looks like, so that alone changes nothing. The loudness pass then measures the file it wrote and
+    second or more of talk of their own (one lav per input, split mode), or
+    one channel with 5 s or more of its own talk that is a fifth of all its
+    talk (a guest's lav on one input beside a centred host mic), are folded to
+    the centre. "Talk of its own" is phrases where that channel is at its talk
+    level and the other sits 20 dB or more under its own
+    (video_qa.channel_roles); a little of it in one channel only is what wide
+    stereo music looks like, so that changes nothing. The loudness pass then measures the file it wrote and
     renders again, twice at most: over the true-peak ceiling (ffmpeg's own AAC
     encoder overshot transients by up to 2 dB at 192k), first at 320k, then
     with the overshoot plus 0.3 dB off the target; more than 0.5 LU from the
@@ -137,6 +146,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import math
 import os
 import re
 import shutil
@@ -989,6 +999,12 @@ class Runs(list):
         seg = sorted(self.peaks[k] for k in self._span(a, b) if k not in skip)
         return seg[len(seg) // 2] if seg else None
 
+    def threshold(self, t: float) -> float:
+        """The silence threshold at t (dB), raised over room noise where it rose."""
+        if self.base_db is None:
+            return -120.0
+        return self.base_db + self.raised(t)
+
     def raised(self, t: float) -> float:
         if not self.thresholds or self.base_db is None or self.block_s <= 0:
             return 0.0
@@ -1236,31 +1252,74 @@ def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
     return min(c, key=lambda s: s[0]) if c else None
 
 
-def quiet_point(runs, lo: float, hi: float, mid: float):
-    """The quiet moment in [lo, hi] nearest `mid`, by the level's 10 ms peaks:
-    each moment is judged by the loudest peak within 25 ms of it (a cut needs
-    a quiet 50 ms, not one quiet window between syllables), and any moment
-    within 3 dB of the quietest counts as quiet (under a bed the level wanders
-    by a few dB; a dip near a word's clock can still hold its tail). Returns
-    (t, level, talk) with `talk` the stretch's 90th-percentile peak, or None
-    when the runs carry no peaks."""
+def gap_cut(runs, side: str, before: float, after: float, nb: float, pad: float,
+            reach: float = 0.8, nb_loud: float | None = None):
+    """Where a clip edge with no level pause goes in the word gap [before,
+    after] (the clip's own word is `after` at a start, `before` at an end): a
+    moment that is quiet in absolute terms, not merely the gap's quietest
+    (audit round 13: a "quietest part" sat inside an unheard filler at -19
+    dBFS on a quiet recording, and inside a word's decay on the replay). A
+    moment is a 10 ms window that, with its neighbour on each side (30 ms,
+    room for the fade), peaks under the checker's own silence threshold; or
+    30 dB or more under the softer neighbouring word `nb` (a pause too short
+    for the level's 0.15 s); or 25 dB under the louder one `nb_loud` and
+    12 dB under the softer (a breath or a bed between words; talk the ASR
+    missed runs nearer the words); or within 8 dB of the stretch's floor (its
+    5th-percentile peak) and 20 dB under the softer word. Within `reach` of
+    the clip's word, a quiet stretch of 0.15 s or more nearest that word wins
+    (a real pause), its cut `pad` from the word; failing one, the last short
+    stretch before the gap's far word (at an end, a stop's closure inside the
+    last word can be a short quiet stretch, its burst after it), its 30 ms
+    fade where it is quietest. Returns (cut, fade level, threshold), None
+    when nothing in the gap is quiet, or False when the runs carry no peaks."""
     peaks = getattr(runs, "peaks", None)
-    if not peaks or not hasattr(runs, "loudest") or hi < lo:
-        return None
-    step = runs.window_s
-    seen = []
-    t = lo
-    while t <= hi + 1e-9:
-        lv = runs.loudest(t - 0.025, t + 0.025)
-        if lv is not None:
-            seen.append((t, lv))
-        t += step
-    if not seen:
-        return None
-    floor = min(lv for _, lv in seen)
-    t, lv = min((x for x in seen if x[1] <= floor + 3.0), key=lambda x: abs(x[0] - mid))
+    if not peaks or not hasattr(runs, "loudest"):
+        return False
+    lo, hi = (before, min(after, before + reach)) if side == "end" else \
+        (max(before, after - reach), after)
+    w, base, n = runs.window_s, runs.base, len(peaks)
     srt = sorted(peaks)
-    return t, lv, srt[int(0.9 * (len(srt) - 1))]
+    bed = max(min(nb - 20.0, srt[int(0.05 * (len(srt) - 1))] + 8.0),
+              min(nb - 12.0, (nb if nb_loud is None else nb_loud) - 25.0))
+    # A quiet moment is a 10 ms window whose neighbours on both sides are
+    # quiet too: 30 ms, room for the fade.
+    k_lo = max(1, int(math.ceil((lo - base) / w - 1e-6)))
+    k_hi = min(n - 2, int(math.floor((hi - base) / w + 1e-6)) - 1)
+    groups, cur = [], []
+    for k in range(k_lo, k_hi + 1):
+        t = base + (k + 0.5) * w
+        if max(peaks[k - 1:k + 2]) <= max(runs.threshold(t), nb - 30.0, bed):
+            cur.append(k)
+        elif cur:
+            groups.append(cur)
+            cur = []
+    if cur:
+        groups.append(cur)
+    if not groups:
+        return None
+
+    def span(g):                     # the quiet stretch: the centres and a window each side
+        return base + (g[0] - 1) * w, base + (g[-1] + 2) * w
+    long_ = [g for g in groups if span(g)[1] - span(g)[0] >= 0.15 - 1e-9]
+    g = (long_[0] if side == "end" else long_[-1]) if long_ else groups[-1]
+    qs, qe = span(g)
+    if long_:
+        # A real pause: pad from the clip's own word, the fade well inside it.
+        cut = min(qe, qs + max(0.03, pad)) if side == "end" else max(qs, qe - max(0.03, pad))
+        fk = int(round((cut - base) / w))
+        fade = max(peaks[max(0, fk - 3):fk] or [-120.0]) if side == "end" \
+            else max(peaks[fk:fk + 3] or [-120.0])
+    else:
+        # A short quiet run: the 30 ms fade where it is quietest, nearest the
+        # clip's word on a tie (a pad would push it back into a decay).
+        if side == "end":
+            cands = [(max(peaks[j - 3:j]), j) for j in range(g[0] + 2, g[-1] + 3)]
+            fade, j = min(cands, key=lambda c: (c[0], c[1]))
+        else:
+            cands = [(max(peaks[j:j + 3]), j) for j in range(g[0] - 1, g[-1])]
+            fade, j = min(cands, key=lambda c: (c[0], -c[1]))
+        cut = base + j * w
+    return round(cut, 3), fade, runs.threshold(cut)
 
 
 def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
@@ -1372,50 +1431,107 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     for ok, where, moved, cut in ((ok_s, "starts", new_start - start, new_start),
                                   (ok_e, "ends", new_end - end, new_end)):
         if not ok:
-            # No level pause, but the cut may still sit in a clear gap between the
-            # words the ASR heard: a music bed or room noise hides the pause
-            # (audit round 12: 16 of 17 such edges on real public videos kept
-            # their words). That is a note; a cut inside a heard word's clock,
-            # or in a gap under 0.25 s, is a warning.
-            # A cue of Descript's that the ASR missed entirely is talk too, over
-            # the cue's own times: the replay's "I don't know." (3038.656-3038.896)
-            # sat in a 0.96 s gap between heard words. (A cue with heard words
-            # is already bounded by them, and "…" alone is not talk.)
+            # No level pause, but the cut may still sit in a clear gap between
+            # words: a music bed or room noise hides the pause, or the pause is
+            # under 0.15 s (audit round 12: 16 of 17 such edges on real public
+            # videos kept their words). When the gap holds a moment that is
+            # quiet in absolute terms, the cut goes there, either way, and that
+            # is a note; otherwise, or in a gap under 0.15 s, a warning.
+            # Talk in the gap: heard words; a word Whisper timed as an instant
+            # marks where its sound ENDS (round 13: "okay," at 396.62 was said
+            # from 396.36); and a cue of Descript's the ASR missed entirely,
+            # over the cue's own times (the replay's "I don't know.",
+            # 3038.656-3038.896). "…" alone is not talk.
             spoken = {w.get("cue_start") for w in said if w["end"] >= w["start"]}
-            occ = heard + [w for w in words if w.get("timing") == "cue" and w["end"] > w["start"]] \
-                + [{"start": w["cue_start"], "end": w["cue_end"]} for w in words
+            r = levels.near(cut)
+
+            def span(w):
+                if w["end"] - w["start"] >= 0.01:
+                    return (w["start"], w["end"])
+                # An instant: its sound is the run of level that ends at (or up
+                # to 0.1 s before) it, back to the first 10 ms window 30 dB under
+                # its loudest, at most 0.4 s before the instant.
+                a = w["start"] - 0.3
+                pk = getattr(r, "peaks", None)
+                if pk and hasattr(r, "loudest"):
+                    lo_ = w["start"] - 0.4
+                    top = r.loudest(lo_, w["start"])
+                    k = min(len(pk), int(round((w["start"] - r.base) / r.window_s))) - 1
+                    k0 = max(0, int(round((lo_ - r.base) / r.window_s)))
+                    kq = max(k0, int(round((w["start"] - 0.1 - r.base) / r.window_s)))
+                    while top is not None and k >= kq and pk[k] <= top - 30.0:
+                        k -= 1                       # the quiet just before the instant
+                    while top is not None and k >= k0 and pk[k] > top - 30.0:
+                        k -= 1                       # the word's sound
+                    if top is not None:
+                        a = r.base + (k + 1) * r.window_s
+                return (a, w["start"])
+            occ = [span(w) for w in said] \
+                + [(w["start"], w["end"]) for w in words
+                   if w.get("timing") == "cue" and w["end"] > w["start"]] \
+                + [(w["cue_start"], w["cue_end"]) for w in words
                    if not w.get("heard", True) and w.get("cue_start") is not None
                    and w["cue_start"] not in spoken and any(ch.isalnum() for ch in w["word"])
                    and w.get("cue_end") is not None and w["cue_end"] > w["cue_start"]]
-            inside = any(w["start"] + 0.01 < cut < w["end"] - 0.01 for w in occ)
-            before = max((w["end"] for w in occ if w["end"] <= cut + 0.01), default=None)
-            after = min((w["start"] for w in occ if w["start"] >= cut - 0.01), default=None)
+            if where == "starts":
+                edge_w = min((w for w in said if w["start"] >= s_w - 0.02), default=None,
+                          key=lambda w: w["start"])
+                mine = span(edge_w) if edge_w else None
+                after = mine[0] if mine else None
+                before = max((y for x, y in occ if y <= (after or 0.0) + 0.01
+                              and (x, y) != mine), default=None) if mine else None
+            else:
+                edge_w = max((w for w in said if w["start"] <= e_w + 0.02
+                           and w["end"] <= e_w + 0.02), default=None, key=lambda w: w["end"])
+                mine = span(edge_w) if edge_w else None
+                before = mine[1] if mine else None
+                after = min((x for x, y in occ if x >= (before or 0.0) - 0.01
+                             and (x, y) != mine), default=None) if mine else None
             gap = (after - before) if before is not None and after is not None else 0.0
-            if not inside and gap >= 0.25:
-                # The ASR's word ends run early and its starts late into such a
-                # gap (round 12: under a music bed the cut on the clock end plus
-                # pad left 0.06 to 0.27 s of the last word's tail out), so the
-                # cut goes to the gap's quietest 50 ms, at most 0.5 s from the
-                # word and pad clear of the other (its middle when the level
-                # carries no peaks). Sound as loud as talk all through it is
-                # talk the transcripts missed: that stays a warning.
-                if where == "ends":
-                    lo, hi = before + pad, min(after - pad, before + 0.5)
-                else:
-                    lo, hi = max(before + pad, after - 0.5), after - pad
-                q = quiet_point(levels.near(cut), lo, hi, (before + after) / 2.0)
-                if q is None or q[1] < q[2] - 6.0:
-                    t = q[0] if q is not None else (
-                        min(before + gap / 2.0, hi) if where == "ends" else max(after - gap / 2.0, lo))
+            if gap >= 0.15:
+                nb = 0.0
+                if hasattr(r, "loudest"):
+                    # The softer of the clip's own word and its neighbour across the gap.
+                    other = (max((o for o in occ if o[1] <= before + 0.01 and o != mine),
+                                 key=lambda o: o[1], default=None) if where == "starts" else
+                             min((o for o in occ if o[0] >= after - 0.01 and o != mine),
+                                 key=lambda o: o[0], default=None))
+                    lv = [r.loudest(*o) for o in (mine, other) if o is not None]
+                    lv = [v for v in lv if v is not None]
+                    nb = min(lv) if lv else 0.0
+                    nb_loud = max(lv) if lv else 0.0
+                q = gap_cut(r, "end" if where == "ends" else "start", before, after, nb, pad,
+                            nb_loud=nb_loud if hasattr(r, "loudest") else None)
+                if q is False:
+                    # No 10 ms peaks to judge by: the gap's middle, at most 0.5 s
+                    # from the word (ASR clocks end words early).
                     if where == "ends":
-                        new_end = max(new_end, t)
+                        new_end = max(new_end, min(before + gap / 2.0, before + 0.5, after - pad))
                     else:
-                        new_start = min(new_start, t)
+                        new_start = min(new_start, max(after - gap / 2.0, after - 0.5, before + pad))
                     report.setdefault("notes", []).append(
-                        f"the level shows no pause of 0.15 s or more where the clip {where} "
-                        "(a shorter pause, or a bed or room noise over it); the cut sits in "
-                        f"the quietest part of a {gap:.2f}s gap between words")
+                        f"the level shows no pause of 0.15 s or more where the clip {where}; the "
+                        f"cut sits in the middle of a {gap:.2f}s gap between words")
                     continue
+                if q is None:
+                    # Nothing in the gap is quiet: a loud bed, a reverb tail, or
+                    # talk the transcript missed. The cut cannot be checked.
+                    report["warnings"].append(
+                        f"the clip {where} in a {gap:.2f}s gap between words that never goes "
+                        "quiet (a loud bed, a reverb tail or talk the transcript missed), so the "
+                        "cut cannot be checked by level; listen to the edge, or pick one at a "
+                        "pause")
+                    continue
+                if where == "ends":
+                    new_end = q[0]
+                else:
+                    new_start = q[0]
+                report.setdefault("notes", []).append(
+                    f"the level shows no pause of 0.15 s or more where the clip {where} (a "
+                    f"shorter pause, or a bed or room noise over it); the cut sits in a quiet "
+                    f"moment of a {gap:.2f}s gap between words (its 30 ms fade peaks at "
+                    f"{q[1]:.0f} dBFS; silence threshold {q[2]:.0f} dB)")
+                continue
             far = (f" (the cut sits {abs(moved):.2f}s {'after' if moved > 0 else 'before'} "
                    "the requested edge, on a word boundary)" if abs(moved) > 0.5 else "")
             report["warnings"].append(
@@ -1792,12 +1908,13 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                 # mic's -20 dB safety channel, round 10; a camera mic beside a
                 # lav, round 11), not a second speaker.
                 why = "quiet_backup_channel"
-            elif roles and min(own) >= 1.0:
+            elif roles and video_qa.hard_panned(roles):
                 # Each channel carries talk of its own while the other sits 20 dB
                 # or more under its own talk (one lav per input, split mode): each
                 # voice in one ear, and loudnorm lands short. Both to the centre.
                 # Own "talk" in one channel only is also what wide stereo music
-                # looks like (audit round 12), so that alone folds nothing.
+                # looks like (audit round 12), so a little of it folds nothing;
+                # 5 s and a fifth of that channel's talk is a voice (round 13).
                 why = "speakers_hard_panned"
             if why:
                 upmix = (f"pan=stereo|c0=c{live}|c1=c{live}" if why != "speakers_hard_panned"
