@@ -239,9 +239,9 @@ sidecar or burned captions from one `video-style.json`) and `scripts/video_qa.py
 reputation", came out at −14.4 LUFS / −2.0 dBTP, first word at 0.08 s, QA PASS, in 51 s on two CPU
 cores with zero Descript credits.
 
-### The checker was broken thirteen times before it shipped
+### The checker was broken fourteen times before it shipped
 
-Thirteen fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
+Fourteen fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
 break below is now a regression test that fails on the code before its fix; the full reports are on
 pull request #94 of the skills repo.
 
@@ -371,7 +371,19 @@ pull request #94 of the skills repo.
   −35 dBFS fall from 60 (by my count) to 10, none above −25; on the 652 replay clips no noted cut's
   fade reaches −35 dBFS (5 did) and 28 clips WARN, against 38 before and 99 in round eleven; on
   the 924 fresh clips cut at sentence pauses nothing the request covers is lost unflagged; both
-  interview builds now fold and WARN, and none of 41 real stereo files does.
+  interview builds now fold and WARN, and none of 41 real stereo files does. Round fourteen: under
+  an AC a soft "It's" the level heard as part of a pause was held as talk, then cut in half by the
+  fallback that moves a mid-phrase edge onto the sound (three mixes, both tiers, PASS); an end ran
+  past a next word Whisper timed as an instant; a threshold raised over a loud bed counted as
+  quiet; an unheard filler, a word clocked 0.3 s late and an unheard "right?" were kept with a
+  clean receipt; and a 15 s short opening on a guest's 4 s line was neither folded nor flagged.
+  Now words heard in a level "pause" stay talk whatever moves the edge, an end stops where the
+  next word's sound begins, only the base threshold counts, a cut that keeps word-loud talk past
+  a dip beyond the clip's edge word WARNs, and 1.5 s of one-sided talk is a voice. On the
+  auditor's 1,056 word-gap clips the unwarned cuts above −35 dBFS in the clean speech fall from
+  40 to 21 (none above −25 before or after) and clips with a WARN rise from 386 to 435; on my
+  522 the unwarned cuts above −35 fall from 10 to 6; on the 652 replay clips no cut moves and 29
+  WARN (28 before); on the 924 fresh clips cut at sentence pauses every cut is where it was.
 - **Plus the dull ones**: stub files and temp folders after a failed render, cryptic errors on bad
   input, captions a player would read as commands, keywords that missed "Dollar-a-Day's", a
   long-form caption file cut into 1,177 three-word ALL-CAPS cues, an iPhone HDR clip re-encoded to
@@ -417,11 +429,19 @@ Under noise within about 12 dB of the talk the level loses pauses altogether: cl
 to the word clocks: in the round-eleven fan build no start loses talk and one end in 30 cuts the
 last 0.06 s of a fading word (0.01 s of it above −40 dBFS, as on the quiet mix). A clip edge in
 a word gap is placed on the level's quiet moments and the receipt notes it (`finish_note`); under a
-loud bed or heavy reverb many gaps never go quiet and WARN instead (83 of the auditor's 522
-word-gap clips, 33 of them under a bed 14 dB down, and 32 of 191 such clips on 30 real public
-videos and our publishes), and a quiet cut under a bed can still drop or pick up a word's last
-decay (on the fresh set 10 word-gap cuts sit at −25 to −35 dBFS in the clean speech, 8 of them
-under that loud bed). `cut_inside_sound` does not see a cut inside a soft consonant that
+loud bed, heavy reverb or room noise within about 15 dB of the talk many gaps never go quiet and
+WARN instead (105 of my 522 word-gap clips, 44 of them under a bed 14 dB down; 49 of 222 such
+clips on 30 real public videos and our publishes, the government PSAs with music under every word
+most of all; 5 of my 12 real shorts, against 2 before), because there the level cannot tell the bed from
+talk; under that 14 dB bed the WARN also fires on some gaps that are quiet in the clean speech (11
+of the 65 the round-14 rule added on the auditor's set), and it fires where the ASR puts a short
+gap inside connected speech. A quiet cut under a bed can still drop or pick up a word's last decay
+(on my fresh set 6 word-gap cuts sit at −25 to −35 dBFS in the clean speech). The WARN for
+word-loud sound kept past a dip beyond the clip's edge word cannot tell a word the ASR missed from
+a laugh, a breath or a word's own late syllable past a closure: on the sweeps 7 of its 12
+distinct edges held a word Whisper hears (5 an extra word, 2 a "right?" Descript keeps out of the
+captions), and the other 5 did not. A guest only 12 dB off-centre (the host mic hears them 12 dB
+down) is neither folded nor flagged. `cut_inside_sound` does not see a cut inside a soft consonant that
 rises into its vowel (it looks like a word's own attack), nor most cuts faded over 30 ms or more;
 `finish.py`'s own clips report theirs. With an SRT alone a gap inside one cue is not checked, and
 the receipt says so (`word_timing` WARN). A loud cough, a notification or a door right next to a
@@ -457,7 +477,7 @@ half a second can pass, because nothing in the file says it was longer.
 7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt. The first
    independent audit broke it six ways; after each round of fixes the next audit found
    more (six, then sixteen, then twenty-one, then fourteen, then twelve, then twelve, then
-   thirteen, then eight, then eleven, then nine, then six, then four), mostly in
+   thirteen, then eight, then eleven, then nine, then six, then four, then eight), mostly in
    cases the fixes themselves opened or the documented command never exercised. Commission
    the refuting audit before telling anyone the number, run it again after every fix, and ship only
    when an audit finds nothing high or medium.
