@@ -24,7 +24,15 @@ Usage:
     edge asked for at a pause (inside a level silence of 0.15 s or more, or
     within 0.25 s of one) stays in that pause, head_pad_s from the sound beside
     it, whatever the word clocks say: an ASR clocks words up to 1.4 s early
-    into the pause before them. An edge asked for mid-phrase snaps to word
+    into the pause before them. Under steady room noise the silence threshold
+    rises and swallows a word's soft ending (and, less, its onset), so there
+    the end keeps the checker's noise slack (0.025 s per dB of rise, at most
+    0.5 s) or runs to the last word's own cue or clock end when that is
+    nearer, and the start keeps up to 0.15 s: under fans, AC and hum 11 to 23
+    dB under the talk, 0 of 30 clip ends lose talk (1, flagged, under the
+    loudest fan), against 11 to 25 of 30 before (audit round 11). When Descript's cue end (or, under
+    noise, the ASR's word end) still lies more than 0.15 s past the cut, the
+    report says so. An edge asked for mid-phrase snaps to word
     boundaries, keeping whole a word it falls inside, then moves onto the sound
     itself (a word whose clock starts in 0.4 s or more of silence was stretched
     back over a pause and starts after it; a word clocked inside a pause, whose
@@ -33,7 +41,9 @@ Usage:
     into the first pause after the last word's (never past a neighbouring
     word). Where talk runs on with no such pause, the edge stays on the word
     clock and the report says so. The first and last caption land on the
-    clip's sound, not a late or early clock. Captions are
+    clip's sound, not a late or early clock. Every warning the report carries
+    also reaches the QA receipt (`finish_report`), so a PASS never hides a
+    mid-phrase cut. Captions are
     written as a sidecar .captions.srt unless --burn is given (burning re-encodes
     the picture, so it is never the default). Caption text is cleaned of anything
     a player would read as a command ({\\b1}, \\N, <font>) in both outputs.
@@ -52,8 +62,10 @@ Usage:
     are stripped ("Speaker 1:", "Name (Role):", a plain "Name:" that opens two or
     more cues, and the first cue's own "Name:" wherever it opens a cue, as in
     Descript's default export). A name that opens one cue only stays text, so
-    "Google Maps:" is never dropped, and so do sentence openers such as
-    "Update:" or "Pro Tip:" however often they recur. A file whose first cue
+    "Google Maps:" is not dropped, unless in a labelled file the next named
+    cue opens with an established speaker (a second voice's single "Amy:
+    Yeah."); sentence openers such as "Update:", "Pro Tip:", "Monday:" or
+    "Price:" stay text however often they recur. A file whose first cue
     opens with any other capitalised word and a colon ("Bloomington:") reads as
     labelled, and that word is dropped where it opens a cue: the text alone
     cannot tell it from a speaker's name. Exporting the SRT with
@@ -70,17 +82,20 @@ Usage:
     lands 1.5-2 LU short on mono when it has to work in dynamic mode, and every
     player plays mono on both speakers anyway. A stereo source gets its louder
     channel copied to both when the other is 30 dB or more down (talk on one
-    input), 15 dB or more down carrying the same voice (a wireless mic's -20 dB
-    safety track), or the same voice polarity-inverted (it cancels when a phone
-    plays mono); the measure pass reads the channels' correlation from their
-    mono fold-down. The loudness pass then measures the file it wrote and
+    input), 15 dB or more down with no talk of its own (a wireless mic's -20 dB
+    safety track, a camera's scratch mic), or the same voice polarity-inverted
+    (it cancels when a phone plays mono); a voice in one channel only while the
+    other sits 20 dB or more under its own talk (one lav per input, split mode)
+    gets both channels folded to the centre. "Talk of its own" is a second or
+    more where that channel is at its talk level and the other is not
+    (video_qa.channel_roles). The loudness pass then measures the file it wrote and
     renders again, twice at most: over the true-peak ceiling (ffmpeg's own AAC
     encoder overshot transients by up to 2 dB at 192k), first at 320k, then
     with the overshoot plus 0.3 dB off the target; more than 0.5 LU from the
     target (loudnorm's dynamic mode lands short on peaky or one-sided audio),
-    with the target raised by the shortfall. It keeps the render nearest the
-    target under the ceiling, and says so when it still misses. AAC is 256k by
-    default.
+    with the target raised by the shortfall, unless a raise moved it by under
+    0.3 LU. It keeps the render nearest the target under the ceiling, and says
+    so when it still misses. AAC is 256k by default.
 
     An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
     the audio codec always matches the container. The render goes to a hidden
@@ -170,7 +185,18 @@ NOT_A_SPEAKER = {"remember", "note", "tip", "step", "warning", "question", "answ
                  "mistake", "pros", "cons", "case", "action",
                  "homework", "challenge", "story", "point", "takeaways", "translation",
                  "definition", "context", "background", "source", "sources", "caveat",
-                 "the", "a", "my", "our", "your", "this", "that", "one", "two", "three"}
+                 "the", "a", "my", "our", "your", "this", "that", "one", "two", "three",
+                 # Audit round 11: "Monday:" and "Price:" opening two cues each were
+                 # read as speakers. (April, May, June and August are names too.)
+                 "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+                 "sunday", "january", "february", "march", "july", "september",
+                 "october", "november", "december", "morning", "afternoon", "evening",
+                 "tonight", "weekend", "price", "prices", "pricing", "cost", "costs",
+                 "date", "time", "when", "where", "who", "location", "address", "phone",
+                 "email", "website", "hours", "deadline", "budget", "total", "status",
+                 "agenda", "topic", "q", "faq", "option", "options", "offer", "deal",
+                 "sale", "discount", "free", "new", "also", "then", "later", "info",
+                 "details", "contact", "warning", "tldr", "spoilers", "sponsor"}
 
 
 def load_style(path: str | None) -> dict:
@@ -310,10 +336,15 @@ def words_from_srt(text: str) -> list[dict]:
     ("[Music]", "♪") are dropped, and so are speaker labels: "[Speaker 2]:",
     "Speaker 1:", "SPEAKER 1:", "Name (Role):" and ">> NAME:" always; a plain
     "Name:", "Dennis Yu:", "Ludwig van Beethoven:" or "dennis yu:" when it opens
-    two or more cues; and in a file whose first cue opens with a name label
+    two or more cues (not a sentence opener such as "Update:", "Monday:" or
+    "Price:"); and in a file whose first cue opens with a name label
     (Descript's default export labels the first cue and every change of
-    speaker), any capitalised "Name:" opening a cue. "Remember:" or "Google:" at
-    the start of one line of an unlabelled file stays text."""
+    speaker), that first name wherever it opens a cue, and a one- or two-word
+    name opening a cue once when the next named cue opens with an established
+    speaker (a second voice's "Amy: Yeah." between two "Dennis:" cues).
+    "Remember:" or "Google:" at the start of one line of an unlabelled file
+    stays text, and so does "Google Maps:" once where no established speaker
+    follows."""
     words = []
     text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
     blocks = re.split(r"\n\s*\n", text.strip())
@@ -328,8 +359,9 @@ def words_from_srt(text: str) -> list[dict]:
         return SPEAKER_CHANGE.sub(" ", MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body)))
 
     seen: dict = {}
+    openers: list = []  # (block index, name) for every cue that opens "Name:"
     first_label = None  # the name opening the file's first cue, "" when none
-    for block in blocks:
+    for bi, block in enumerate(blocks):
         b = body_of(block)
         if b is None:
             continue
@@ -337,6 +369,7 @@ def words_from_srt(text: str) -> list[dict]:
         if m:
             key = m.group(1).strip().lower()
             seen[key] = seen.get(key, 0) + 1
+            openers.append((bi, m.group(1).strip()))
         if first_label is None and b.strip():
             first_label = (m.group(1).strip() if m and SPEAKER_LABEL.match(b)
                            and not SURE_LABEL.match(b) else
@@ -349,7 +382,11 @@ def words_from_srt(text: str) -> list[dict]:
     # "Dennis: So" on cue 1 only became the caption "So Dennis:").
     labelled = bool(first_label) and (first_label == "sure" or speaker(first_label))
 
-    def label_end(body: str) -> int:
+    def established(name: str) -> bool:
+        return (speaker(name) and seen.get(name.lower(), 0) >= 2) or \
+            (labelled and name.lower() == first_label.lower())
+
+    def label_end(body: str, bi: int) -> int:
         sure = SURE_LABEL.match(body)
         if sure:
             return sure.end()
@@ -361,9 +398,17 @@ def words_from_srt(text: str) -> list[dict]:
             return m.end()
         # A labelled file's first-cue name is a label even where it opens a cue
         # once (Descript's default export labels cue 1 only). Any other name
-        # must open two or more cues: "Google Maps:" once is text (audit round 9).
+        # must open two or more cues: "Google Maps:" once is text (audit round 9)
+        # unless, in a labelled file, the next cue that opens with a name opens
+        # with an established speaker: Descript labels every change of speaker,
+        # so a second voice's one "Amy: Yeah." is followed by the first voice's
+        # label coming back (audit round 11).
         if labelled and name.lower() == first_label.lower():
             return m.end()
+        if labelled and speaker(name) and len(name.split()) <= 2:
+            nxt = next((n for i, n in openers if i > bi), None)
+            if nxt is not None and nxt.lower() != name.lower() and established(nxt):
+                return m.end()
         return 0
 
     for cue_id, block in enumerate(blocks):
@@ -376,7 +421,7 @@ def words_from_srt(text: str) -> list[dict]:
         start, end = _ts(a), _ts(b)
         # Sound cues first, then the speaker label they may hide ("[Music] Dennis Yu: …").
         body = body_of(block) or ""
-        body = body[label_end(body):]
+        body = body[label_end(body, cue_id):]
         toks = [t for t in body.split() if not is_sound_tag(t)]
         if not toks or end <= start:
             continue
@@ -887,7 +932,31 @@ def channel_corr(l_db: float, r_db: float, m_db: float) -> float | None:
     return max(-1.0, min(1.0, (4 * pm - pl - pr) / 2.0 / (pl * pr) ** 0.5))
 
 
-def level_runs(path: str, style: dict, info: dict, a: float, b: float) -> list[tuple]:
+class Runs(list):
+    """Level runs [(kind, start, end)] plus where the silence threshold had to
+    rise over room noise (`raised(t)`, dB over the stretch's base threshold)."""
+
+    def __init__(self, runs=(), base: float = 0.0, thresholds=None, block_s: float = 0.0,
+                 base_db: float | None = None, peaks=None, window_s: float = 0.01):
+        super().__init__(runs)
+        self.base, self.thresholds, self.block_s = base, list(thresholds or []), block_s
+        self.base_db, self.peaks, self.window_s = base_db, list(peaks or []), window_s
+
+    def floor(self, a: float, b: float) -> float | None:
+        """The median 10 ms peak level inside [a, b]: the pause's own noise."""
+        i = max(0, int(round((a - self.base) / self.window_s)))
+        j = min(len(self.peaks), int(round((b - self.base) / self.window_s)))
+        seg = sorted(self.peaks[i:j])
+        return seg[len(seg) // 2] if seg else None
+
+    def raised(self, t: float) -> float:
+        if not self.thresholds or self.base_db is None or self.block_s <= 0:
+            return 0.0
+        i = min(len(self.thresholds) - 1, max(0, int((t - self.base) / self.block_s)))
+        return max(0.0, self.thresholds[i] - self.base_db)
+
+
+def level_runs(path: str, style: dict, info: dict, a: float, b: float) -> "Runs":
     """Silence (0), sound (1) and unmeasurable (2) runs of [a, b] on the source
     clock, by the QA checker's level rules."""
     a = max(0.0, a)
@@ -898,13 +967,62 @@ def level_runs(path: str, style: dict, info: dict, a: float, b: float) -> list[t
     if info["audio"] and info.get("video"):
         a_rel = max(0.0, info["audio"]["start_s"] - info["video"]["start_s"])
     base = max(a, a_rel)
-    return [(k, base + x, base + y) for k, x, y in aud["runs"]]
+    return Runs([(k, base + x, base + y) for k, x, y in aud["runs"]], base,
+                aud.get("thresholds"), (aud.get("block") or 1) * aud.get("window_s", 0.01),
+                aud.get("noise", {}).get("base_threshold_db"), aud.get("peaks"),
+                aud.get("window_s", 0.01))
+
+
+def noise_slack(runs, t0: float, t1: float, style: dict) -> float:
+    """How far a soft word end or start can hide under a threshold raised over
+    room noise in the pause [t0, t1]: the checker's own slack (0.025 s per dB
+    of rise, at most 0.5 s). Zero where the threshold did not rise, or where
+    the pause itself is quiet (the rise came from music or talk next to it, and
+    a soft word end shows plainly over a quiet pause)."""
+    raised = getattr(runs, "raised", None)
+    if raised is None or not style:
+        return 0.0
+    pp = style["qa"]["pauses"]
+    r = max(raised(t0), raised(t1))
+    fl = runs.floor(t0 + 0.02, t1 - 0.02) if hasattr(runs, "floor") else None
+    if r <= 0.0 or fl is None or runs.base_db is None or fl < runs.base_db - 3.0:
+        return 0.0
+    return min(float(pp.get("noise_slack_max_s", 0.5)),
+               float(pp.get("noise_slack_s_per_db", 0.025)) * r)
+
+
+def cut_in_pause(x: float, y: float, side: str, pad: float, slack: float,
+                 word: dict | None = None) -> float:
+    """Where a cut goes in the pause [x, y] (the level's silence): pad after
+    the sound before it (side "end") or before the sound after it ("start").
+    Under room noise the threshold rises and swallows a word's soft ending
+    (audit round 11: "this." lost under a fan 22 dB down, the receipt clean),
+    so there the sound is taken to run `slack` into the pause, and to the
+    edge word's own clock or cue end when that lies within reach; the cut
+    still keeps clear of the sound on the far side, by the same margin."""
+    if slack <= 0.0:
+        return min(y, x + pad) if side == "end" else max(x, y - pad)
+    mid = (x + y) / 2.0
+    if side == "end":
+        tail = x + slack
+        for t in ((word or {}).get("cue_end"), (word or {}).get("end")):
+            if t is not None and tail < t <= x + 2 * slack + 0.3:
+                tail = t
+        hi = max(mid, y - slack - pad)
+        return min(y, max(x + pad, min(hi, tail + pad)))
+    # A word's onset is sharper than its ending: a soft start hides under the
+    # raised threshold for far less time (round 11: 0 to 3 of 30 starts lost
+    # under fans, AC and hum, against 11 to 25 of 30 ends), and the slack before
+    # it is dead air (or an intro's music) at the head of the clip.
+    sl = min(slack, 0.15)
+    lo = min(x + slack + pad, mid)
+    return max(x, min(y - pad, max(lo, y - sl - pad)))
 
 
 def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
                  pad: float, min_sil: float = 0.15,
                  floor: float | None = None,
-                 nxt: float | None = None) -> tuple[float, bool]:
+                 nxt: float | None = None, style: dict | None = None) -> tuple[float, bool]:
     """Put a cut before the first word in the silence before its SOUND: an ASR
     word clock can start a word most of a second late (audit round 9: a short
     opened 0.77 s into "Landscaping") or early. The silence is the last one of
@@ -915,8 +1033,10 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
     previous word's end is a clock too, so it does not bound the cut. A cut
     already in that silence stays. When the clock sits inside a pause and the
     next word's clock (`nxt`) claims the sound after it, the word is the sound
-    before the pause. Returns (cut, found), found False when the word sits
-    inside a second or more of unbroken sound."""
+    before the pause. Under room noise (`style` given) the cut keeps the
+    checker's noise slack before the sound (cut_in_pause). Returns (cut,
+    found), found False when the word sits inside a second or more of
+    unbroken sound."""
     sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
     cands = [(x, y) for x, y in sil
              if x <= fw + 0.02 and y >= max(fw - 1.0, lo - 0.05)]
@@ -933,26 +1053,31 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
             a0, b0 = max(before, key=lambda s: s[1])
             if b0 >= max(fw - 1.0, lo - 0.05):
                 x, y = a0, b0
-    cut = max(x, y - pad, floor if floor is not None else x)
+    sl = noise_slack(runs, x + 0.01, y - 0.01, style) if style else 0.0
+    cut = max(cut_in_pause(x, y, "start", pad, sl), floor if floor is not None else x)
     in_sound = any(k != 0 and a <= start < b for k, a, b in runs)
     return (cut if cut < start or in_sound else start), True
 
 
 def settle_end(runs: list[tuple], lw: float, hi: float, end: float, pad: float,
-               min_sil: float = 0.15) -> tuple[float, bool]:
+               min_sil: float = 0.15, style: dict | None = None) -> tuple[float, bool]:
     """Put a cut after the last word in the silence after its SOUND (an ASR ends
     a word early: "foundation." lost 0.6 s). The silence is the first one of
     min_sil or more that ends after the word's clock end (lw) and starts within
     a second after it or earlier, and before `hi` (the next word's start): the
     word's sound ends where it starts. The cut lands inside it, pad after that
-    sound; a cut already in that silence stays. Returns (cut, found)."""
+    sound; a cut already in that silence stays. Under room noise (`style`
+    given) the word's sound runs on by the checker's noise slack, or to its
+    clock end when that lies within reach (cut_in_pause). Returns (cut,
+    found)."""
     sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil]
     cands = [(x, y) for x, y in sil
              if y >= lw - 0.02 and x <= min(lw + 1.0, hi + 0.05)]
     if not cands:
         return end, False
     x, y = min(cands, key=lambda s: s[0])
-    cut = min(y, x + pad)
+    sl = noise_slack(runs, x + 0.01, y - 0.01, style) if style else 0.0
+    cut = cut_in_pause(x, y, "end", pad, sl, {"end": lw})
     in_sound = any(k != 0 and a < end <= b for k, a, b in runs)
     return (cut if cut > end or in_sound else end), True
 
@@ -1040,8 +1165,17 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
         ps = None                       # nothing but the pause would be left
     if pe and pe[0] <= start + 0.1:
         pe = None
-    new_start = max(ps[0], ps[1] - pad) if ps else s_w
-    new_end = min(pe[1], pe[0] + pad) if pe else e_w
+    # Which words the clip holds, for its captions and its receipt.
+    fw_, lw_ = edge_words(words, start, end)
+    if ps:
+        fw_ = word_after_pause(words, *ps) or fw_
+    if pe:
+        lw_ = word_before_pause(words, *pe) or lw_
+    style = getattr(levels, "style", None)
+    new_start = (cut_in_pause(*ps, "start", pad, noise_slack(rs, ps[0] + 0.01, ps[1] - 0.01, style),
+                              fw_) if ps else s_w)
+    new_end = (cut_in_pause(*pe, "end", pad, noise_slack(re_, pe[0] + 0.01, pe[1] - 0.01, style),
+                            lw_) if pe else e_w)
     ok_s = ok_e = True
     kept = [w for w in words if w["start"] >= s_w - 0.02
             and w["end"] <= e_w + 0.02 and w["start"] <= e_w]
@@ -1055,34 +1189,62 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             prev_end = max((w["end"] for w in words if w["end"] <= fw + 0.01
                             and w["start"] < fw), default=0.0)
             nxt = min((w["start"] for w in words if w["start"] > fw + 0.01), default=None)
-            new_start, ok_s = settle_start(levels.near(fw), fw, prev_end, s_w, pad, nxt=nxt)
+            new_start, ok_s = settle_start(levels.near(fw), fw, prev_end, s_w, pad, nxt=nxt,
+                                           style=style)
         if not pe:
             next_start = min((w["start"] for w in words if w["start"] >= lw - 0.01
                               and w["end"] > lw), default=total)
-            new_end, ok_e = settle_end(levels.near(lw), lw, next_start, e_w, pad)
+            new_end, ok_e = settle_end(levels.near(lw), lw, next_start, e_w, pad, style=style)
     new_start, new_end = max(0.0, new_start), min(total, new_end)
     if (new_start, new_end) != (s_w, e_w):
         report["clip_settled_on_sound"] = [round(new_start, 3), round(new_end, 3)]
-    # Which words the clip holds, for its captions and its receipt.
-    fw_, lw_ = edge_words(words, start, end)
-    if ps:
-        fw_ = word_after_pause(words, *ps) or fw_
-    if pe:
-        lw_ = word_before_pause(words, *pe) or lw_
     if fw_ is not None and lw_ is not None and lw_["end"] >= fw_["start"]:
         report["clip_word_span"] = [[fw_["word"], fw_["end"]], [lw_["word"], lw_["end"]]]
     if ps or pe:
         report["clip_edges_at_pause"] = [w for w, p in (("start", ps), ("end", pe)) if p]
+    def opens_cue(w):   # a cue's own first word carries the cue's start
+        return not any(o is not w and o.get("cue_start") == w.get("cue_start")
+                       and o["start"] < w["start"] for o in words)
+
+    def closes_cue(w):
+        return not any(o is not w and o.get("cue_end") == w.get("cue_end")
+                       and o["end"] > w["end"] for o in words)
+    if fw_ is not None and fw_.get("cue_start") is not None and opens_cue(fw_) \
+            and fw_["cue_start"] < new_start - 0.15 and fw_["end"] > new_start:
+        # The mirror at the head: Descript's cue start well before the cut.
+        early = new_start - fw_["cue_start"]
+        report["clip_first_word_before_cut_s"] = round(early, 2)
+        report["warnings"].append(
+            f"the clip starts {early:.2f}s after its first word (\"{fw_['word']}\") begins by "
+            "Descript's timing; the level shows a pause there, but the word may be cut "
+            "short; listen to the start")
+    if lw_ is not None:
+        # Descript's cue end (and, under room noise, the ASR's word end) past the
+        # cut: the last word may be cut short; the level alone cannot tell.
+        ref = levels.near(new_end)
+        x0 = pe[0] if pe else new_end
+        noisy = noise_slack(ref, x0 + 0.01, (pe[1] if pe else new_end + 0.3) - 0.01, style) > 0
+        marks = ([lw_.get("cue_end")] if closes_cue(lw_) else []) + \
+            ([lw_["end"]] if noisy else [])
+        over = max((m - new_end for m in marks if m is not None), default=0.0)
+        if over > 0.15:
+            report["clip_last_word_past_cut_s"] = round(over, 2)
+            report["warnings"].append(
+                f"the clip ends {over:.2f}s before its last word (\"{lw_['word']}\") ends by "
+                "the transcript's timing; the level shows a pause there, but the word may be "
+                "cut short; listen to the end")
     on, _ = sound_edges(levels.near(new_start), new_start, new_end)
     _, off = sound_edges(levels.near(new_end), new_start, new_end)
     report["clip_sound"] = [None if on is None else round(on, 3),
                             None if off is None else round(off, 3)]
-    for ok, where in ((ok_s, "starts"), (ok_e, "ends")):
+    for ok, where, moved in ((ok_s, "starts", new_start - start), (ok_e, "ends", new_end - end)):
         if not ok:
+            far = (f" (the cut sits {abs(moved):.2f}s {'after' if moved > 0 else 'before'} "
+                   "the requested edge, on a word boundary)" if abs(moved) > 0.5 else "")
             report["warnings"].append(
                 f"the clip {where} inside unbroken talk: the requested edge is not at a "
                 "pause, and there is no pause of 0.15 s or more within a second of the "
-                "nearest word; the cut lands mid-phrase. Pick an edge at a pause")
+                f"nearest word; the cut lands mid-phrase{far}. Pick an edge at a pause")
     return words, new_start, new_end
 
 
@@ -1100,10 +1262,15 @@ def edge_words(words: list[dict], start: float, end: float) -> tuple:
     # An edge on one of the SRT's cue boundaries (Descript's, the documented
     # way to pick a clip) means that cue's first or last word, wherever the
     # ASR's clock put it (the replay's "If" was clocked 0.25 s before its cue).
-    cue_first = [w for w in words if "cue_start" in w and abs(w["cue_start"] - start) <= 0.05]
+    # (not when the aligner put that word's clock more than a second away: it
+    # squeezed "Jeff Bezos. Yeah" into the ASR's "2,357.", and the edge moved
+    # 1.93 s; audit round 11)
+    cue_first = [w for w in words if "cue_start" in w and abs(w["cue_start"] - start) <= 0.05
+                 and abs(w["start"] - start) <= 1.0]
     if cue_first:
         first = min(cue_first, key=lambda w: w["start"])
-    cue_last = [w for w in words if "cue_end" in w and abs(w["cue_end"] - end) <= 0.05]
+    cue_last = [w for w in words if "cue_end" in w and abs(w["cue_end"] - end) <= 0.05
+                and abs(w["end"] - end) <= 1.0]
     if cue_last:
         last = max(cue_last, key=lambda w: w["end"])
     return first, last
@@ -1316,7 +1483,8 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
                 nxt = min((w["start"] for w in words if w["start"] > fw + 0.01),
                           default=None)
                 settled, _ = settle_start(levels.near(fw), fw, clip_start, start,
-                                          fin["head_pad_s"], floor=clip_start, nxt=nxt)
+                                          fin["head_pad_s"], floor=clip_start, nxt=nxt,
+                                          style=style)
                 if settled != start:
                     report["trim_head_settled_on_sound"] = round(settled, 3)
                 start = settled
@@ -1376,26 +1544,44 @@ def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
         if stereo and len(pk) == 2 and len(rms) == 2 and max(pk) > -60.0:
             live = rms.index(max(rms))
             why = None
+            # What each channel carries on its own (audit round 11: a camera's
+            # scratch mic decorrelates to 0.09 by delay and room, so correlation
+            # alone cannot call it a backup; a split-mode interview puts each
+            # speaker in one ear).
+            roles = video_qa.channel_roles(src, start, span, total=info["duration_s"])
+            own = (roles or {}).get("own_talk_s") or [0.0, 0.0]
             if min(pk) < max(pk) - 30.0:
                 # Talk in one channel only (a lav or a camera mic on one input):
                 # one ear on earbuds, and loudness reads low (audit round 9).
                 why = "one_channel_source"
-            elif rms[live] - rms[1 - live] >= 15.0 and rho is not None and rho >= 0.8:
-                # The same voice 15 dB or more down in the other channel: a
-                # backup track (a wireless mic's -20 dB safety channel; audit
-                # round 10), not a stereo mix.
-                why = "quiet_backup_channel"
             elif rho is not None and rho <= -0.8 and abs(rms[0] - rms[1]) < 6.0:
                 # One channel polarity-inverted: the two cancel when a phone or a
                 # speaker plays mono, and the transcriber hears nothing.
                 why = "inverted_channel"
+            elif rms[live] - rms[1 - live] >= 15.0 and roles and own[1 - live] < 1.0:
+                # The quieter channel 15 dB or more down carries no talk of its
+                # own: a backup or scratch track of the same voice (a wireless
+                # mic's -20 dB safety channel, round 10; a camera mic beside a
+                # lav, round 11), not a second speaker.
+                why = "quiet_backup_channel"
+            elif roles and max(own) >= 1.0:
+                # A speaker in one channel only while the other channel sits 20 dB
+                # or more under its own talk (one lav per input, split mode): each
+                # voice in one ear, and loudnorm lands short. Both to the centre.
+                why = "speakers_hard_panned"
             if why:
-                upmix = f"pan=stereo|c0=c{live}|c1=c{live}"
-                report["steps"].append({why: True,
-                                        "channel_peaks_db": [round(x, 1) for x in pk],
-                                        "channel_rms_db": [round(x, 1) for x in rms],
-                                        "channel_corr": None if rho is None else round(rho, 2),
-                                        "copied_channel": live + 1})
+                upmix = (f"pan=stereo|c0=c{live}|c1=c{live}" if why != "speakers_hard_panned"
+                         else "pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1")
+                step = {why: True, "channel_peaks_db": [round(x, 1) for x in pk],
+                        "channel_rms_db": [round(x, 1) for x in rms],
+                        "channel_corr": None if rho is None else round(rho, 2)}
+                if roles:
+                    step["own_talk_s"] = own
+                if why == "speakers_hard_panned":
+                    step["folded_to_centre"] = True
+                else:
+                    step["copied_channel"] = live + 1
+                report["steps"].append(step)
                 m = measure_loudnorm(src, start, style, span, pre=upmix)
         try:
             in_i = float(m["input_i"])
@@ -1499,7 +1685,7 @@ def words_in(words: list[dict], a: float, b: float, sound: list | None = None,
 
 
 def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
-                     report: dict) -> tuple:
+                     report: dict, channels: int | None = None) -> tuple:
     """Measure the file the render wrote and render again (twice at most) until
     it sits within 0.5 LU of the target and under the true-peak ceiling.
     ffmpeg's own AAC encoder adds inter-sample peaks the filter chain never had
@@ -1508,12 +1694,15 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
     (audit round 10: lowering it at once cost 1.3-1.7 LU). loudnorm's dynamic
     mode lands up to 2 LU short on peaky or one-sided audio (audit round 10: a
     vlog at -15.9 LUFS): raise its target by the shortfall. The render closest
-    to the target that is under the ceiling is kept."""
+    to the target that is under the ceiling is kept. A raise that moves the
+    result by under 0.3 LU stops the ladder (audit round 11: on a short clip
+    under room noise two raises moved -15.1 LUFS to -15.2)."""
     lp = style["qa"]["loudness"]
     ceiling, target = lp["true_peak_max_dbtp"], lp["target_lufs"]
     ext = os.path.splitext(partial)[1]
     cands = [(partial, list(cmd), res, video_qa.measure_loudness(partial))]
     tries = []
+    stalled = None
     for k in range(2):
         _, cur, _, mk = cands[-1]
         tp, li = mk.get("true_peak_dbtp"), mk.get("integrated_lufs")
@@ -1546,6 +1735,10 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
         step.update(lufs=mn.get("integrated_lufs"), dbtp=mn.get("true_peak_dbtp"))
         tries.append(step)
         cands.append((out, nxt, r, mn))
+        if "i_target" in step and mn.get("integrated_lufs") is not None \
+                and abs(mn["integrated_lufs"] - li) < 0.3:
+            stalled = round(mn["integrated_lufs"] - li, 1)
+            break
 
     def score(c):
         mm = c[3]
@@ -1564,11 +1757,15 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
         os.replace(best[0], partial)
     li = best[3].get("integrated_lufs")
     if li is not None and abs(li - target) > lp.get("pass_tolerance_lu", 1.0):
+        why = (f"raising loudnorm's target moved it by only {stalled:+.1f} LU (its dynamic "
+               "mode holds this audio down)" if stalled is not None else
+               "ffmpeg's loudness pass cannot lift this audio further without clipping")
+        if channels and channels > 2:
+            why += "; talk in one channel of a multichannel mix lands short this way"
         report["warnings"].append(
             f"loudness lands at {li:g} LUFS, {li - target:+.1f} LU from {target:g}, after "
-            f"{len(cands)} renders: ffmpeg's loudness pass cannot lift this audio further "
-            "without clipping (peaky sound, or talk in one channel of a multichannel mix). "
-            "A compressor or limiter in the editor, or a stereo mix, lets it reach the target")
+            f"{len(cands)} renders: {why}. A compressor or limiter in the editor lets it "
+            "reach the target")
     return partial, best[2], best[3]
 
 
@@ -1662,7 +1859,8 @@ def _render(src, dst, style, info, report, fin, cap, words, all_words, burn, ref
     res = _run_render(cmd, work, partial)
     out_loud = None
     if loud_on:
-        partial, res, out_loud = _settle_loudness(cmd, work, partial, res, style, report)
+        partial, res, out_loud = _settle_loudness(cmd, work, partial, res, style, report,
+                                                  (info.get("audio") or {}).get("channels"))
     os.replace(partial, final)
     if words:
         sidecar.write_text(srt_text, encoding="utf-8")
@@ -1754,7 +1952,8 @@ def main(argv: list[str] | None = None) -> int:
         out_loud = rep.pop("_out_loudness", None)
         if not args.no_qa:
             qa = video_qa.qa(args.out, style["qa"], Path(args.out + ".qa"),
-                             words=out_words, loud=out_loud)
+                             words=out_words, loud=out_loud,
+                             finish_warnings=rep.get("warnings"))
             rep["qa_verdict"] = qa["verdict"]
             rep["qa_receipt"] = args.out + ".qa/qa-receipt.md"
             got = qa["probe"]["duration_s"]

@@ -47,27 +47,27 @@ def media_key(path: str, start: float, end: float) -> str:
 def mono_filter(path: str, start: float, end: float) -> list[str]:
     """How to fold a stereo file to mono for the transcriber. Averaging the two
     channels silences a file whose second channel is polarity-inverted (the
-    transcriber then hears no words; audit round 10) and halves talk that sits in
-    one channel only: take the louder channel alone in those cases."""
+    transcriber then hears no words; audit round 10) and halves talk that sits
+    in one channel only: take the louder channel alone in those cases. A
+    quieter channel with talk of its own (a second speaker's lav, 16 dB down
+    because they speak for five seconds in three minutes) is kept in the
+    average: taking the louder channel alone lost that speaker's line (audit
+    round 11). The channels are sampled across the whole span."""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     try:
-        import finish
+        import video_qa
+        roles = video_qa.channel_roles(path, start or 0.0,
+                                       (end - start) if end else None,
+                                       total=video_qa.probe(path)["duration_s"])
     except Exception:
         return ["-ac", "1"]
-    cmd = ["ffmpeg", "-hide_banner", "-nostats"]
-    if start:
-        cmd += ["-ss", str(start)]
-    span = (end - start) if end else 0
-    cmd += ["-t", str(min(span, 600.0) if span else 600.0)]
-    cmd += ["-i", path, "-vn", "-map", "0:a:0", "-af",
-            f"{finish.FOLD3},astats", "-f", "null", "-"]
-    res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
-    ch = finish.astats_channels(res.stderr) if res.returncode == 0 else []
-    if len(ch) != 3:
+    if not roles:
         return ["-ac", "1"]           # mono, or not two channels
-    rho = finish.channel_corr(ch[0]["rms"], ch[1]["rms"], ch[2]["rms"])
-    louder = 0 if ch[0]["rms"] >= ch[1]["rms"] else 1
-    if (rho is not None and rho <= -0.5) or abs(ch[0]["rms"] - ch[1]["rms"]) >= 15.0:
+    rms, own, rho = roles["rms_db"], roles["own_talk_s"], roles["corr"]
+    louder = 0 if rms[0] >= rms[1] else 1
+    quiet = 1 - louder
+    if (rho is not None and rho <= -0.5) or rms[louder] - rms[quiet] >= 30.0 or \
+            (rms[louder] - rms[quiet] >= 15.0 and own[quiet] < 1.0):
         return ["-af", f"pan=mono|c0=c{louder}"]
     return ["-ac", "1"]
 

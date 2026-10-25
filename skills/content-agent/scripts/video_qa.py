@@ -11,7 +11,7 @@ whichever editor produced it (Descript, ffmpeg, video-use, a VA in CapCut).
 
 It never plays sound. Everything is measured from the stream with ffmpeg.
 
-What it can and cannot see (ten independent audits, 23-24 Oct 2026):
+What it can and cannot see (eleven independent audits, 23-24 Oct 2026):
 - The file must decode. A decoder error, a stream that ends early against what
   the container claims (in time AND, where the container counts them, in
   frames), a WAV whose header promises more audio than it holds, or an
@@ -27,13 +27,26 @@ What it can and cannot see (ten independent audits, 23-24 Oct 2026):
   before the sound is a WARN (`picture_ends_early`). With a transcript, a
   file whose very first (last) 10 ms already carry sound within 12 dB of the
   next 60 ms' loudest, which is talk-level, with a word within a second of
-  that edge, was likely cut inside a word: a `cut_inside_sound` WARN. A clean
-  tight start rises out of near-silence or 15 dB or more in its first 60 ms
-  (a word's own attack) and is not flagged; music at an edge with no word near it is
-  not either, and without a transcript the check does not run. In a stereo
-  file, a channel 15 dB or more under the other (talk on one input, or a
-  wireless mic's -20 dB safety track) is a `one_channel` WARN; 5.1 with
-  silent surrounds is normal.
+  that edge, was likely cut inside a word: a `cut_inside_sound` WARN. The
+  close is judged as a player plays it: AAC's padding past the stream's
+  stated length and its last frame's roll-off (10-30 ms dropping 30 dB or
+  more at once) are set aside, and a picture up to two and a half frames
+  longer than the sound still counts (audit round 11: 0 of 30 mid-word
+  closes were caught in MP4 or M4A; now 27, as in WAV). A clean tight start
+  rises out of near-silence or 15 dB or more in its first 60 ms (a word's own
+  attack) and is not flagged; music at an edge with no word near it is not
+  either, and without a transcript the check does not run. Known limits: a
+  cut inside a soft consonant that rises into its vowel looks the same as a
+  word's own attack and is not flagged, and neither are most cuts faded over
+  30 ms or more (10 of 30 caught at 30 ms, 3 at 50 ms); finish.py's own
+  clips are faded, so it reports its own mid-phrase cuts, and they reach the
+  receipt as a `finish_report` WARN with everything else finish.py asked a
+  person to check. In a stereo file, a channel 15 dB or more under the other
+  (talk on one input, a wireless mic's -20 dB safety track, a camera's scratch
+  mic) is a `one_channel` WARN, and a voice in one channel only while the
+  other sits 20 dB or more under its own talk, for a second or more (one lav
+  per input, a recorder's split mode) is a `speakers_hard_panned` WARN; 5.1
+  with silent surrounds is normal.
 - With a transcript (--srt or --words) the hook check uses the first WORD;
   "[Music]", "(applause)", "*music*" cues are not words. A word cannot start
   before anything as loud as talk is audible (a breath does not count; a bed
@@ -554,6 +567,102 @@ def has_filter(name: str) -> bool:
         res = run(["ffmpeg", "-hide_banner", "-filters"])
         _FILTERS[name] = bool(re.search(rf"^\s*\S+\s+{re.escape(name)}\s", res.stdout, re.M))
     return _FILTERS[name]
+
+
+def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
+                  total: float | None = None, max_s: float = 600.0,
+                  seg_s: float = 60.0) -> dict | None:
+    """What each channel of a two-channel file carries. Decodes at most max_s
+    (spread over the span in seg_s pieces) at 16 kHz and returns per-channel
+    RMS dB, the channels' sample correlation (1 = the same signal at any gain,
+    -1 = one polarity-inverted, ~0 = unrelated or a second mic of the same
+    voice once delay and room decorrelate it), and each channel's OWN talk:
+    seconds where it sits within 15 dB of its talk level while the other sits
+    20 dB or more under its own (runs of 0.25 s or more). A backup or scratch
+    track has none; each lav of a split-mode interview has plenty (audit
+    round 11). None when the stream is not two channels or will not decode."""
+    import numpy as np
+    span = seconds if seconds is not None else (max(0.0, (total or 0.0) - start) or None)
+    if span is None:
+        pieces = [(start, max_s)]
+    elif span <= max_s:
+        pieces = [(start, span)]
+    else:
+        k = max(1, int(max_s // seg_s))
+        step = (span - seg_s) / max(1, k - 1)
+        pieces = [(start + i * step, seg_s) for i in range(k)]
+    chunks = []
+    for s, d in pieces:
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin"]
+        if s > 0:
+            cmd += ["-ss", f"{s:.3f}"]
+        cmd += ["-t", f"{d:.3f}", "-i", path, "-vn", "-map", "0:a:0", "-ar", "16000",
+                "-f", "s16le", "-acodec", "pcm_s16le", "-"]
+        res = subprocess.run(cmd, capture_output=True)
+        if res.returncode != 0 or not res.stdout:
+            continue
+        chunks.append(res.stdout)
+    probe_ch = None
+    try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
+                              "stream=channels", "-of", "csv=p=0", path],
+                             capture_output=True, text=True).stdout.strip()
+        probe_ch = int(out.split(",")[0]) if out else None
+    except (ValueError, OSError):
+        probe_ch = None
+    if probe_ch != 2 or not chunks:
+        return None
+    win = 160
+    lv, rv, el, er = [], [], [], []
+    for raw in chunks:
+        x = np.frombuffer(raw[: len(raw) // 4 * 4], dtype="<i2").reshape(-1, 2)
+        x = x.astype(np.float64) / 32768.0
+        n = len(x) // win
+        if n == 0:
+            continue
+        x = x[: n * win]
+        lv.append(x[:, 0])
+        rv.append(x[:, 1])
+        sq = (x * x).reshape(n, win, 2).mean(axis=1)
+        el.append(10.0 * np.log10(sq[:, 0] + 1e-12))
+        er.append(10.0 * np.log10(sq[:, 1] + 1e-12))
+    if not el:
+        return None
+    L, Rr = np.concatenate(lv), np.concatenate(rv)
+    e = [np.concatenate(el), np.concatenate(er)]
+    pl, pr = float((L * L).sum()), float((Rr * Rr).sum())
+    rho = float((L * Rr).sum() / (pl * pr) ** 0.5) if pl > 0 and pr > 0 else None
+    rms = [10.0 * np.log10(float((v * v).mean()) + 1e-12) for v in (L, Rr)]
+    talk_db, talk_s, own_s = [], [], []
+    for c in (0, 1):
+        live = e[c][e[c] > -80.0]
+        talk_db.append(float(np.percentile(live, 99)) if len(live) else -120.0)
+    for c in (0, 1):
+        o = 1 - c
+        talk = e[c] >= talk_db[c] - 15.0
+        quiet_o = e[o] <= talk_db[o] - 20.0
+        own = talk & quiet_o
+        talk_s.append(float(talk.sum()) * 0.01)
+        # Phrases of 0.25 s or more: the gaps between syllables (up to 0.2 s,
+        # the other channel still quiet) belong to the phrase; an echo tail
+        # after each word of the other channel's voice stays shorter.
+        total_own, run, gap = 0, 0, 0
+        for i in range(len(own) + 1):
+            if i < len(own) and own[i]:
+                run += 1 + gap
+                gap = 0
+            elif run and i < len(own) and quiet_o[i] and gap < 20:
+                gap += 1
+            else:
+                if run >= 25:
+                    total_own += run
+                run, gap = 0, 0
+        own_s.append(total_own * 0.01)
+    return {"rms_db": [round(float(x), 1) for x in rms], "corr": None if rho is None else round(rho, 3),
+            "talk_db": [round(x, 1) for x in talk_db], "talk_s": [round(x, 1) for x in talk_s],
+            "own_talk_s": [round(x, 1) for x in own_s],
+            "analysed_s": round(len(L) / 16000.0, 1),
+            "hard_panned": own_s[0] >= 1.0 and own_s[1] >= 1.0}
 
 
 def audio_scan(path: str, start: float = 0.0, seconds: float | None = None,
@@ -1886,7 +1995,10 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
                              loud_runs: list[tuple[float, float]] | None,
                              cover: list[tuple[float, float]] | None,
                              timing: str, words: list[dict] | None = None,
-                             file_len: float | None = None) -> list[dict]:
+                             file_len: float | None = None,
+                             audio_len: float | None = None,
+                             fps: float | None = None,
+                             roles: dict | None = None) -> list[dict]:
     """Checks on the audio as a whole: a file that opens or closes in the middle
     of a word (audit round 9: a short cut on a word clock 0.85 s late opened
     0.77 s into "Landscaping"), sound in one channel only, and talk the words
@@ -1902,17 +2014,41 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
     # music at an edge with no word near it is not a cut word (audit round 10:
     # 10 of 14 hits on real publishes were those).
     ws = [x for x in (words or []) if x.get("caption", True)]
+    # The close, as a player plays it: an AAC stream decodes past its stated
+    # length into encoder padding, and its last frame rolls off, so a cut
+    # inside a word ends on 10-30 ms that drop 30 dB or more at once (audit
+    # round 11: 0 of 30 mid-word closes caught in MP4 or M4A, 27 in WAV). A
+    # word that ends by itself fades over tens of milliseconds.
+    tail = list(pk)
+    if audio_len:
+        n_eff = int(round(audio_len / w))
+        if 0 < len(tail) - n_eff <= 10:
+            tail = tail[:n_eff]
+    for _ in range(3):
+        if len(tail) > 4 * edge and tail[-1] <= thr and tail[-2] > thr \
+                and tail[-2] - tail[-1] >= 30.0:
+            tail.pop()
+        elif len(tail) > 4 * edge and tail[-1] <= thr and tail[-2] <= thr \
+                and len(tail) > 2 and tail[-3] > thr and tail[-3] - tail[-1] >= 30.0:
+            tail.pop()
+        else:
+            break
+    # A picture a frame or two longer than the sound is the same cut (audit
+    # round 11: 26.10 s of audio under 26.12 s of picture).
+    gap_ok = max(0.05, min(0.12, 2.5 / fps)) if fps else 0.05
     if ws and len(pk) > 4 * edge and loud_db > -60.0:
         first = min(x["start"] for x in ws)
         last = max(x["end"] for x in ws)
         end_s = file_len if file_len is not None else len(pk) * w + head_gap
         # (the first window within 12 dB of the next 60 ms' loudest: a word's own
-        # attack rises 15 dB or more in that time, and a 30 ms fade-in about 10)
-        if head_gap < 0.05 and first <= 1.0 and pk[0] > thr and max(pk[:edge]) >= loud_db \
+        # attack rises 15 dB or more in that time; a cut faded in over 30 ms, as
+        # finish.py fades its clips, reads 12 dB or more down and is missed,
+        # which is why finish.py reports its own mid-phrase cuts in the receipt)
+        if head_gap < gap_ok and first <= 1.0 and pk[0] > thr and max(pk[:edge]) >= loud_db \
                 and pk[0] >= max(pk[:edge]) - 12.0:
             ends.append("opens")
-        if tail_gap < 0.05 and last >= end_s - 1.0 and pk[-1] > thr \
-                and max(pk[-edge:]) >= loud_db and pk[-1] >= max(pk[-edge:]) - 12.0:
+        if tail_gap < gap_ok and last >= end_s - 1.0 and len(tail) > edge and tail[-1] > thr \
+                and max(tail[-edge:]) >= loud_db and tail[-1] >= max(tail[-edge:]) - 12.0:
             ends.append("closes")
     if ends:
         out.append({"check": "cut_inside_sound", "status": "WARN",
@@ -1924,6 +2060,7 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
                             "the word (finish.py places --clip and --trim-head edges there); "
                             "listen to the edge"})
     chans = (aud.get("scan") or {}).get("channel_peaks_db") or {}
+    own = (roles or {}).get("own_talk_s") or [0.0, 0.0]
     if len(chans) == 2:   # 5.1 with silent surrounds is normal
         top = max(chans.values())
         low = min(chans.values())
@@ -1934,10 +2071,22 @@ def _edge_and_channel_checks(pk: list[float], w: float, aud: dict, loud_db: floa
                                     "the other",
                         "expected": "both channels within 15 dB",
                         "note": "one channel is much quieter than the other (talk on one "
-                                "input, or a -20 dB backup track such as a wireless mic's "
-                                "safety channel): earbuds play it lopsided and loudness reads "
-                                "low; finish.py --loudness copies the louder channel to both "
-                                "when it carries all the talk"})
+                                "input, a -20 dB backup track such as a wireless mic's safety "
+                                "channel, or a camera's scratch mic): earbuds play it lopsided "
+                                "and loudness reads low. finish.py --loudness copies the louder "
+                                "channel to both when the quieter one carries no talk of its "
+                                "own, and folds both to the centre when it does"})
+        elif top > -60.0 and max(own) >= 1.0:
+            side = [str(i + 1) for i in (0, 1) if own[i] >= 1.0]
+            out.append({"check": "speakers_hard_panned", "status": "WARN",
+                        "measured": f"{max(own):.1f}s of talk in channel {' and '.join(side)} "
+                                    "alone",
+                        "expected": "every voice in both channels",
+                        "note": "a voice sits in one channel while the other is 20 dB or more "
+                                "under its own talk (one lav per input, a recorder's split "
+                                "mode): on earbuds that speaker is in one ear, and loudness "
+                                "lands short. finish.py --loudness folds both channels to the "
+                                "centre"})
     if timing == "word" and cover is not None and loud_runs:
         outside = sum(max(0.0, b - a) - sum(max(0.0, min(b, y) - max(a, x)) for x, y in cover)
                       for a, b in loud_runs)
@@ -2097,10 +2246,14 @@ def _merge_gap(silences: list[dict], start: float, end: float) -> list[dict]:
 
 
 def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
-       words: list[dict] | None = None, loud: dict | None = None) -> dict:
+       words: list[dict] | None = None, loud: dict | None = None,
+       finish_warnings: list[str] | None = None) -> dict:
     """Measure `path` and write the receipt. `loud` is a measure_loudness() result
     for this exact file when the caller already has one (finish.py measures the
-    true peak of what it wrote)."""
+    true peak of what it wrote). `finish_warnings` are what finish.py reported
+    while making the file (a clip cut mid-phrase, a sound kept before the first
+    word): each is a `finish_report` WARN, so the receipt that decides whether
+    the file ships carries them (audit round 11: 13 of 14 such clips passed)."""
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise RuntimeError("ffmpeg and ffprobe must be on PATH")
     info = probe(path)
@@ -2322,7 +2475,15 @@ def qa(path: str, profile: dict, outdir: Path, frames: bool = True,
     checks += _edge_and_channel_checks(pk, pw, aud, kw["loud_db"], head_gap,
                                        file_len - audio_end_on_file, profile,
                                        loud_runs, cover, timing, words=words,
-                                       file_len=file_len)
+                                       file_len=file_len, audio_len=claimed_a,
+                                       fps=(v or {}).get("fps"),
+                                       roles=(channel_roles(path, total=aud["decoded_s"])
+                                              if (a.get("channels") or 0) == 2 else None))
+    told = [x for x in (finish_warnings or []) if not x.startswith("loudnorm fell back")]
+    if told:
+        checks.append({"check": "finish_report", "status": "WARN", "measured": len(told),
+                       "expected": "nothing finish.py asks a person to check",
+                       "note": "finish.py reported: " + " | ".join(told)})
     rec = {"file": os.path.basename(path), "sha256_head": sha256_head(path),
            "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "tool": "content-agent/scripts/video_qa.py", "probe": info,
