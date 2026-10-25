@@ -11,7 +11,7 @@ whichever editor produced it (Descript, ffmpeg, video-use, a VA in CapCut).
 
 It never plays sound. Everything is measured from the stream with ffmpeg.
 
-What it can and cannot see (fifteen independent audits, 23-25 Oct 2026):
+What it can and cannot see (sixteen independent audits, 23-25 Oct 2026):
 - The file must decode. A decoder error, a stream that ends early against what
   the container claims (in time AND, where the container counts them, in
   frames), a WAV whose header promises more audio than it holds, or an

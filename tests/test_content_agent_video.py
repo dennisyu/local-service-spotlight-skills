@@ -2527,6 +2527,313 @@ class AuditRound15(unittest.TestCase):
         self.assertEqual(calls[:2], [(95.0, 105.0), (98.0, 108.0)])
 
 
+class _Exact:
+    """Level runs for place_clip from a real file's own 10 ms peaks: `segs`
+    [(t0, [dB, ...])] at their times, `loud` [(a, b, dB)] elsewhere, and
+    `floor_db` around them; the silence threshold at `thr_db` over a base of
+    `base_db`."""
+    def __init__(self, runs, segs, base, total, floor_db, thr_db, base_db, loud=()):
+        n = int(round((total - base) / 0.01))
+        peaks = [floor_db] * n
+        for a, b, db in loud:
+            for k in range(int(round((a - base) / 0.01)), int(round((b - base) / 0.01))):
+                peaks[k] = db
+        for t0, ps in segs:
+            k0 = int(round((t0 - base) / 0.01))
+            peaks[k0:k0 + len(ps)] = ps
+        self.r = finish.Runs(runs, base, [thr_db] * (n // 50 + 1), 0.5, base_db, peaks, 0.01)
+        self.total, self.style = total + 100.0, finish.load_style(None)
+
+    def near(self, t):
+        return self.r
+
+
+class AuditRound16(unittest.TestCase):
+    """Sixteenth independent audit, 25 Oct 2026: each test pins one finding,
+    on the real files' own 10 ms peaks around the edge."""
+
+    def _place(self, lv, words, a, b):
+        rep = {"warnings": []}
+        _, s, e = finish.place_clip(lv, words, a, b, 0.08, 0.4, rep)
+        return s, e, rep
+
+    # H1, How_to (room noise): "painting," clocked 129.94-130.56 but said to
+    # 130.33; a dip to -48 dBFS; "embroidery." said from 130.41, clocked
+    # 130.70-130.96; the pause after it from 130.76. Asked to end at
+    # "painting,"'s clock end, the clip kept "embroidery." with no warning
+    # (the dip lay before the window the reach rule looked in), and the
+    # captions left it out.
+    HOWTO = [-26, -28, -25, -26, -26, -26, -23, -21, -24, -25, -25, -27, -25, -28, -28, -29, -31, -26,
+             -23, -28, -31, -30, -31, -33, -38, -39, -40, -45, -47, -43, -46, -46, -45, -48, -49, -48, -52,
+             -51, -51, -49, -48, -47, -47, -44, -43, -44, -42, -41, -39, -38, -34, -32, -33, -34, -35, -34,
+             -34, -34, -35, -36, -35, -37, -40, -45, -46, -48, -49, -49, -50, -47, -46, -42, -42, -39, -33,
+             -32, -33, -29, -32, -30, -29, -29, -29, -29, -30, -30, -31, -30, -29, -30, -30, -32, -33, -36,
+             -36, -37, -40, -37, -38, -39, -39, -39, -38, -40, -43, -41, -44, -43, -43, -44, -43, -42, -38,
+             -38, -37, -37, -37, -38, -37, -37, -33, -34, -35, -37, -36, -36, -36, -38, -41, -38, -39, -40,
+             -38, -37, -37, -37, -37, -38, -36, -35, -37, -35, -35, -35, -35, -34, -34, -34, -35, -35, -36,
+             -35, -35, -34, -35, -36, -36, -36, -38, -40, -39, -39, -37, -36, -36, -37, -36, -38, -38, -35,
+             -34, -35, -34, -34, -34, -35, -36, -37, -36, -39, -38, -39, -44, -46, -47, -47, -48, -47, -48,
+             -46, -47, -47, -45, -46, -35, -31, -35, -30, -31, -29]
+
+    def test_an_end_keeps_no_word_after_a_dip_the_clock_hides(self):
+        runs = [(0, 127.0, 127.5), (1, 127.5, 129.97), (0, 129.97, 130.13), (1, 130.13, 130.33),
+                (0, 130.33, 130.41), (1, 130.41, 130.76), (0, 130.76, 131.64), (1, 131.64, 133.0)]
+        lv = _Exact(runs, [(129.7, self.HOWTO)], 125.0, 135.0, -48.0, -44.6, -54.5,
+                    loud=[(127.5, 129.7, -20.0), (131.7, 133.0, -20.0)])
+        words = _said(("So", 127.5, 127.8), ("doing?", 129.76, 129.9), ("I'm", 129.94, 129.94),
+                      ("art", 129.94, 129.94), ("painting,", 129.94, 130.56),
+                      ("embroidery.", 130.7, 130.96), ("Art", 131.64, 131.81))
+        for end in (130.56, 130.7):
+            _, e, rep = self._place(lv, [dict(w) for w in words], 127.5, end)
+            kept = e > 130.45
+            # Kept, the receipt says so and the captions carry it; else cut before it.
+            self.assertEqual(kept, any(x.startswith('the clip ends at the pause after "embroidery."')
+                                       for x in rep["warnings"]))
+            if kept:
+                self.assertEqual(rep["clip_word_span"][1][0], "embroidery.")
+
+    # H1, seg4: "like," then a 50 ms dip, then "kill him." said from 179.60,
+    # "kill" clocked 179.72-179.74. Asked to end at "kill"'s clock start, the
+    # 20 ms clock made "kill" the clip's last word: no warning, "kill him."
+    # in the sound, out of the captions.
+    KILL = [-75, -76, -76, -74, -68, -44, -23, -17, -12, -10, -9, -11, -12, -13, -15, -13, -18, -29, -33,
+            -40, -47, -56, -60, -62, -47, -26, -35, -27, -27, -30, -21, -12, -11, -10, -10, -10, -9, -10,
+            -10, -11, -11, -11, -11, -12, -12, -12, -13, -13, -15, -17, -19, -21, -20, -21, -24, -26, -28,
+            -28, -32, -36, -43, -47, -51, -59, -62, -60, -71, -68, -67, -76, -68, -72, -71, -74, -73, -73,
+            -73, -75, -73, -72, -68, -47, -41, -25, -19, -18, -16, -14, -12, -10, -10, -10, -10, -10, -10]
+
+    def test_an_end_at_a_short_clocked_next_word_does_not_keep_it_unwarned(self):
+        runs = [(0, 176.5, 177.0), (1, 177.0, 178.94), (0, 178.94, 179.41), (1, 179.41, 179.55),
+                (0, 179.55, 179.6), (1, 179.6, 179.96), (0, 179.96, 180.17), (1, 180.17, 181.05)]
+        lv = _Exact(runs, [(179.35, self.KILL)], 175.0, 183.0, -76.0, -46.8, -46.8,
+                    loud=[(177.0, 178.94, -12.0), (180.3, 181.05, -10.0)])
+        words = _said(("and", 177.0, 177.2), ("he's", 179.32, 179.46), ("like,", 179.46, 179.58),
+                      ("kill", 179.72, 179.74), ("him.", 179.74, 180.08), ("He's", 180.22, 180.34),
+                      ("like,", 180.34, 180.46))
+        _, e, rep = self._place(lv, words, 177.0, 179.72)
+        if e > 179.62:
+            self.assertTrue(any(x.startswith('the clip ends at the pause after "kill him."')
+                                for x in rep["warnings"]))
+            self.assertEqual(rep["clip_word_span"][1][0], "him.")
+
+    # H1, seg1: "year." then 0.13 s of quiet, then "Yeah." said 56.70-56.96,
+    # clocked 56.88-56.90. Its 20 ms clock kept it out of the reach rule's
+    # words between: asked to end at its clock start, the clip ended
+    # "...last year. Yeah.", PASS.
+    YEAH = [-9, -10, -6, -14, -9, -11, -10, -11, -12, -13, -13, -16, -15, -11, -13, -11, -10, -11, -11,
+            -11, -11, -11, -12, -14, -16, -19, -22, -26, -28, -31, -32, -33, -34, -33, -40, -42, -23, -22,
+            -20, -19, -17, -16, -15, -15, -15, -15, -15, -14, -15, -16, -16, -18, -24, -27, -35, -40, -44,
+            -53, -63, -62, -64, -65, -64, -66, -65, -71, -64, -41, -34, -53, -41, -34, -29, -24, -20, -16,
+            -14, -13, -11, -12, -10, -13, -14, -12, -19, -22, -22, -23, -23, -26, -24, -27, -26, -27, -35,
+            -40, -49, -56, -64, -66, -67, -68, -71, -73, -71, -71, -72, -71, -75, -71, -71, -72, -74, -73]
+
+    def test_an_end_at_a_next_words_20ms_clock_stops_before_its_sound(self):
+        runs = [(0, 54.5, 55.0), (1, 55.0, 56.57), (0, 56.57, 56.7), (1, 56.7, 56.96), (0, 56.96, 57.59),
+                (1, 57.59, 58.62)]
+        lv = _Exact(runs, [(56.0, self.YEAH)], 53.0, 60.0, -74.0, -46.8, -46.8,
+                    loud=[(55.0, 56.0, -10.0), (57.59, 58.62, -11.0)])
+        words = _said(("So", 55.0, 55.3), ("last", 55.72, 56.12), ("year.", 56.12, 56.52),
+                      ("Yeah.", 56.88, 56.9), ("Yeah,", 57.6, 57.7), ("I", 57.72, 57.82))
+        _, e, rep = self._place(lv, words, 55.0, 56.88)
+        self.assertGreater(e, 56.52)                       # "year." whole
+        self.assertLessEqual(e, 56.7)                      # "Yeah." not begun
+
+    # H1 (d), youtube-7Hb under a loud bed: "concept," then "or" said
+    # 32.43-32.65 and clocked 32.62-32.66, at the end of its own sound; the
+    # pause after it (32.65) started inside settle_end's 0.05 s slack past
+    # "or"'s clock start, so the clip ended "...concept, or", PASS.
+    OR = [-3, -5, -4, -6, -5, -8, -6, -10, -7, -10, -10, -12, -13, -16, -20, -21, -20, -22, -21, -21, -20,
+          -24, -23, -16, -20, -20, -19, -17, -13, -4, -5, -5, -4, -5, -5, -8, -10, -15, -15, -15, -15, -15,
+          -15, -14, -15, -15, -16, -12, -14, -13, -16, -15, -15, -17, -18, -21, -13, -10, -11, -11, -9, -10,
+          -14, -13, -17, -15, -16, -17, -18, -16, -20, -22, -18, -24, -20, -22, -24, -21, -26, -20, -21,
+          -24, -19, -16, -14, -14, -15, -11, -12, -11, -11, -11, -9, -10, -9, -10, -9, -9, -8, -9, -8, -7,
+          -11, -14, -15, -18, -19, -19, -19, -18, -20, -20, -19, -21, -21, -20, -21, -20, -20, -20, -20,
+          -20, -19, -20, -21, -19, -20, -20, -20, -20, -22, -20, -19, -20, -19, -21, -21, -21, -21, -21,
+          -22, -15, -9, -5, -2, -2, -4, -9, -9, -10]
+
+    def test_an_end_never_adopts_the_pause_after_a_next_word_said_before_it(self):
+        runs = [(0, 29.5, 30.0), (1, 30.0, 31.74), (0, 31.74, 31.83), (1, 31.83, 31.84), (0, 31.84, 31.87),
+                (1, 31.87, 32.14), (0, 32.14, 32.16), (1, 32.16, 32.3), (0, 32.3, 32.43), (1, 32.43, 32.65),
+                (0, 32.65, 33.01), (1, 33.01, 33.36), (0, 33.36, 33.47), (1, 33.47, 34.5)]
+        lv = _Exact(runs, [(31.6, self.OR)], 27.5, 37.5, -22.0, -18.0, -40.8,
+                    loud=[(30.0, 31.6, -6.0), (33.1, 34.5, -8.0)])
+        words = _said(("First", 30.0, 30.3), ("innate", 31.44, 31.7), ("concept,", 31.7, 32.3),
+                      ("or", 32.62, 32.66), ("being", 32.66, 33.3), ("tough", 33.3, 33.74))
+        for end in (32.3, 32.62):
+            _, e, rep = self._place(lv, [dict(w) for w in words], 30.0, end)
+            self.assertTrue(e <= 32.45 or any("clip ends" in x for x in rep["warnings"]))
+
+    # H1 (c), copefl under a loud bed (-18 dBFS): "pocketbooks," then "or"
+    # (-10 dBFS) and "bags." before the bed alone; the bed never lets the
+    # level dip and rise 9 dB, so "or bags." read as a decay and the clip
+    # ended on them, PASS. (The dip to the rise fell 0.01 dB short of 9 dB: these
+    # peaks keep two decimals.)
+    BAGS = [-19.91, -17.28, -16.73, -18.32, -19.08, -21.08, -13.19, -20.84, -17.8, -19.75, -8.22,
+            -0.77, -0.08, -0.89, -1.64, -2.19, -3.2, -0.29, -6.92, -14.13, -19.02, -17.96, -17.3,
+            -18.55, -19.21, -20.32, -16.63, -20.36, -10.9, -10.36, -9.93, -11.75, -14.66, -16.8,
+            -15.43, -15.08, -16.48, -15.93, -19.19, -17.48, -17.23, -15.65, -18.25, -11.26, -7.64,
+            -6.68, -6.97, -6.96, -6.53, -8.13, -9.49, -12.22, -14.41, -16.7, -14.84, -17.73, -22.88,
+            -18.58, -18.36, -14.96, -14.62, -14.18, -14.25, -10.74, -13.32, -16.2, -16.63, -16.68,
+            -16.0, -17.37, -16.87, -17.57, -19.47, -14.76, -13.42, -13.43, -8.93, -11.45, -10.1,
+            -12.02, -12.2, -13.5, -14.5, -20.6, -16.77, -22.3, -17.37, -21.13, -18.34, -18.16,
+            -18.19, -9.72, -8.25, -9.37, -9.37, -9.35, -9.71, -10.34, -12.84, -11.38, -14.41,
+            -16.24, -14.84, -15.55, -17.36, -16.03, -18.36, -18.44, -17.59, -20.13, -18.21, -18.79,
+            -15.49, -17.82, -18.08, -17.59, -19.39, -19.37, -17.89, -18.78, -18.28, -17.42, -18.29,
+            -20.93, -19.24, -19.15, -19.09, -18.96, -16.68, -18.89, -17.15, -18.27, -19.59, -14.91,
+            -16.08, -16.16, -16.23, -16.49, -16.75, -16.67]
+
+    def test_an_end_under_a_bed_does_not_take_words_for_a_decay(self):
+        runs = [(0, 41.5, 42.0), (1, 42.0, 43.06), (0, 43.06, 43.3), (1, 43.3, 43.39), (0, 43.39, 43.48),
+                (1, 43.48, 43.52), (0, 43.52, 43.63), (1, 43.63, 43.72), (0, 43.72, 43.83),
+                (1, 43.83, 43.84), (0, 43.84, 43.96), (1, 43.96, 44.01), (0, 44.01, 44.11),
+                (1, 44.11, 44.2), (0, 44.2, 48.9)]
+        lv = _Exact(runs, [(43.2, self.BAGS)], 39.1, 49.1, -18.0, -12.9, -42.4,
+                    loud=[(42.0, 43.06, -5.0)])
+        words = _said(("The", 42.0, 42.3), ("pocketbooks,", 43.36, 43.76), ("or", 43.98, 44.04),
+                      ("bags.", 44.04, 44.36))
+        _, e, rep = self._place(lv, words, 42.0, 43.98)
+        self.assertTrue(e <= 43.96 or any("clip ends" in x for x in rep["warnings"]))
+
+    # H1, seg2 (FULL, touching cues): "find it." runs straight into "Like,"
+    # with no dip; the pause comes after "Like,". With no dip to rise from,
+    # "Like," read as a decay and the clip ended "...and find it like", PASS.
+    LIKE = [-17, -15, -14, -15, -15, -15, -15, -16, -16, -17, -17, -18, -19, -22, -25, -30, -26, -26, -32,
+            -33, -46, -49, -53, -59, -61, -63, -61, -61, -62, -63, -21, -21, -14, -19, -17, -19, -15, -14,
+            -12, -12, -14, -13, -13, -14, -14, -15, -16, -17, -17, -17, -16, -17, -16, -16, -12, -11, -11,
+            -10, -10, -11, -12, -11, -11, -12, -12, -12, -13, -16, -16, -18, -21, -21, -19, -17, -15, -13,
+            -12, -12, -13, -14, -15, -16, -17, -19, -15, -18, -19, -18, -23, -28, -35, -38, -50, -52, -44,
+            -51, -60, -64, -63, -70, -64, -67, -67, -67, -64, -64]
+
+    def test_an_end_keeps_no_word_that_runs_on_at_full_level_unwarned(self):
+        runs = [(0, 144.0, 144.5), (1, 144.5, 145.14), (0, 145.14, 145.25), (1, 145.25, 145.86),
+                (0, 145.86, 146.69), (1, 146.69, 147.5)]
+        lv = _Exact(runs, [(144.94, self.LIKE)], 142.0, 150.0, -70.0, -45.7, -45.7,
+                    loud=[(144.5, 144.94, -14.0), (146.69, 147.5, -12.0)])
+        words = _said(("now", 144.5, 145.04), ("and", 145.04, 145.18), ("find", 145.18, 145.4),
+                      ("it", 145.4, 145.62), ("like", 145.62, 145.88), ("it's", 145.88, 146.9),
+                      ("still", 146.9, 147.08))
+        _, e, rep = self._place(lv, words, 144.5, 145.62)
+        if e > 145.7:
+            self.assertTrue(any(x.startswith('the clip ends at the pause after "like"')
+                                for x in rep["warnings"]))
+            self.assertEqual(rep["clip_word_span"][1][0], "like")
+
+    # H2, seg3: the word-gap rule cut in the 30 ms dip at 131.83 inside
+    # "realistically," (clocked to 131.78): its "-ly", 0.26 s at -15 dBFS no
+    # clock covers, was dropped with a NOTE ("...10 or 11, realistic.").
+    SEG3 = [-13, -13, -12, -12, -11, -9, -10, -10, -10, -11, -11, -12, -14, -21, -23, -24, -23, -28, -30,
+            -34, -42, -36, -43, -33, -16, -12, -12, -12, -15, -27, -29, -34, -45, -51, -48, -33, -37, -33,
+            -22, -16, -16, -17, -17, -15, -15, -15, -16, -17, -17, -17, -18, -18, -18, -18, -19, -19, -19,
+            -20, -21, -20, -21, -21, -18, -20, -18, -28, -39, -37, -21, -15, -13, -11, -10, -9, -9, -10,
+            -10, -12, -26, -31, -38, -41, -26, -30, -28, -40, -38, -11, -11, -11]
+
+    def test_an_end_in_a_dip_before_an_uncovered_syllable_warns(self):
+        runs = [(0, 129.8, 130.3), (1, 130.3, 131.83), (0, 131.83, 131.85), (1, 131.85, 132.57),
+                (0, 132.57, 133.2)]
+        lv = _Exact(runs, [(131.5, self.SEG3)], 127.0, 135.0, -76.0, -46.1, -46.1,
+                    loud=[(130.3, 131.5, -11.0), (132.4, 132.57, -12.0)])
+        words = _said(("So", 130.3, 130.32), ("realistically,", 130.32, 131.78), ("I", 132.26, 132.3),
+                      ("think,", 132.3, 132.58))
+        for end in (131.78, 132.26):
+            _, e, rep = self._place(lv, [dict(w) for w in words], 130.3, end)
+            self.assertTrue(e >= 132.15 or any(x.startswith("the clip ends in a short dip right before")
+                                               for x in rep["warnings"]))
+
+    # H2, seg5: the cut at 84.72 left out "cycle?"'s last 0.15 s
+    # ("...mid training psych"), NOTE only.
+    SEG5 = [-29, -32, -30, -28, -32, -17, -15, -13, -13, -12, -11, -11, -11, -11, -13, -15, -15, -15, -16,
+            -17, -18, -18, -17, -18, -19, -26, -29, -25, -24, -26, -27, -34, -12, -12, -12, -11, -11, -10,
+            -11, -11, -14, -14, -15, -14, -16, -26, -32, -41, -51, -59, -63, -50, -42, -17, -15, -15, -14,
+            -14, -15, -16, -15, -14, -15, -16, -18, -18, -21, -23, -26, -30, -31, -32, -32, -32, -32, -32,
+            -32, -33, -33, -33, -35, -34, -38, -43, -62, -57, -51, -40, -18, -13]
+
+    def test_an_end_cut_before_a_words_last_syllable_warns(self):
+        runs = [(0, 83.3, 83.76), (1, 83.76, 84.68), (0, 84.68, 84.72), (1, 84.72, 85.04),
+                (0, 85.04, 85.07), (1, 85.07, 85.59), (0, 85.59, 86.2)]
+        lv = _Exact(runs, [(84.2, self.SEG5)], 79.75, 89.75, -76.0, -46.0, -46.0,
+                    loud=[(83.76, 84.2, -14.0), (85.1, 85.59, -13.0)])
+        words = _said(("you", 83.86, 84.0), ("mid", 84.0, 84.14), ("training", 84.14, 84.38),
+                      ("cycle?", 84.38, 84.7), ("You", 84.88, 84.9), ("should", 84.9, 85.0),
+                      ("still", 85.0, 85.16), ("be", 85.16, 85.26), ("able", 85.26, 85.38))
+        _, e, rep = self._place(lv, words, 83.86, 84.7)
+        self.assertTrue(e >= 84.86 or any(x.startswith("the clip ends in a short dip right before")
+                                          for x in rep["warnings"]))
+
+    # L1: the start-side dropped-syllable warning fired on correct cuts: the
+    # previous word's own last syllable ran 0.12-0.14 s past its clock
+    # ("seventeen" on seg3, "still," on seg4), and Whisper heard the wanted
+    # word whole from each cut.
+    SEV = [-25, -26, -26, -27, -26, -27, -32, -20, -11, -11, -11, -11, -11, -13, -14, -16, -17, -18, -18,
+           -17, -17, -16, -18, -25, -29, -31, -31, -29, -30, -31, -28, -17, -13, -13, -13, -16, -16, -15,
+           -15, -16, -15, -15, -15, -15, -15, -15, -16, -16, -16, -17, -18, -22, -24, -24, -28, -29, -34,
+           -36, -39, -45, -49, -46, -34, -22, -18, -19, -21, -26, -18, -16, -14, -14, -14, -14, -15, -18,
+           -25, -27, -35, -45, -46, -37, -39, -35, -36, -39, -40, -23, -16, -16]
+    STILL = [-12, -12, -10, -8, -8, -8, -10, -9, -11, -13, -17, -21, -22, -25, -25, -26, -22, -28, -26, -23,
+             -24, -27, -31, -44, -53, -56, -42, -22, -13, -12, -12, -12, -11, -11, -11, -12, -11, -11, -10,
+             -11, -13, -15, -15, -14, -13, -13, -13, -15, -18, -22, -22, -24, -27, -33, -28, -46, -55, -41,
+             -27, -19, -17, -16, -19, -26, -39, -47, -50, -51, -56, -61, -53, -52, -30, -9, -8, -8, -10,
+             -10, -10, -9]
+
+    def test_a_previous_words_short_run_past_its_clock_is_no_dropped_syllable(self):
+        lv = _Exact([(0, 56.0, 56.5), (1, 56.5, 58.1), (0, 58.1, 58.11), (1, 58.11, 58.58),
+                     (0, 58.58, 58.99), (1, 58.99, 60.5), (0, 60.5, 61.0)], [(57.5, self.SEV)],
+                    53.05, 63.05, -75.0, -48.0, -48.0, loud=[(56.5, 57.5, -12.0), (58.99, 60.5, -12.0)])
+        words = _said(("Like", 56.5, 56.8), ("17,", 57.58, 57.92), ("18?", 58.14, 58.38),
+                      ("As", 58.99, 59.2), ("long", 59.2, 59.5), ("done.", 60.0, 60.5))
+        s, _, rep = self._place(lv, words, 57.92, 60.5)
+        self.assertFalse(any("short dip right after" in x for x in rep["warnings"]))
+        self.assertTrue(58.04 <= s <= 58.13)              # in the dip before "18?"
+        lv = _Exact([(0, 146.2, 146.72), (1, 146.72, 147.54), (0, 147.54, 147.56), (1, 147.56, 147.85),
+                     (0, 147.85, 147.87), (1, 147.87, 147.95), (0, 147.95, 148.02), (1, 148.02, 148.88),
+                     (0, 148.88, 149.4)], [(147.3, self.STILL)], 142.75, 152.75, -75.0, -44.9, -44.9,
+                    loud=[(146.72, 147.3, -10.0), (148.1, 148.88, -12.0)])
+        words = _said(("I", 147.12, 147.42), ("still,", 147.42, 147.7), ("the", 147.88, 147.98),
+                      ("thoughts", 147.98, 148.16), ("go", 148.16, 148.3), ("in.", 148.3, 148.85))
+        s, _, rep = self._place(lv, words, 147.7, 148.85)
+        self.assertFalse(any("short dip right after" in x for x in rep["warnings"]))
+        self.assertTrue(147.84 <= s <= 147.88)            # in the dip before "the"
+
+    # L3, seg4: an end asked for at "like", timed as an instant at 136.98
+    # (its sound before its clock), keeps it, as snap_to_words does; the
+    # captions left it out.
+    DAY = [-24, -20, -22, -22, -23, -20, -19, -15, -15, -14, -13, -15, -16, -17, -16, -15, -14, -15, -15,
+           -16, -16, -16, -16, -18, -18, -18, -17, -16, -14, -15, -15, -14, -14, -14, -15, -16, -17, -22,
+           -25, -25, -27, -24, -28, -26, -27, -29, -37, -46, -48, -60, -67, -66, -68, -65, -71, -69, -72,
+           -72, -74, -74]
+
+    def test_an_instant_kept_on_the_end_edge_is_in_the_captions(self):
+        lv = _Exact([(0, 135.6, 136.11), (1, 136.11, 136.97), (0, 136.97, 137.72), (1, 137.72, 138.5),
+                     (0, 138.5, 139.0)], [(136.5, self.DAY)], 131.95, 141.95, -74.0, -46.4, -46.4,
+                    loud=[(136.11, 136.5, -15.0), (137.72, 138.5, -12.0)])
+        words = _said(("this", 136.11, 136.38), ("day,", 136.38, 136.68), ("like", 136.98, 136.98),
+                      ("I", 136.98, 137.8), ("did.", 137.8, 138.4))
+        _, e, rep = self._place(lv, words, 136.11, 136.98)
+        self.assertGreater(e, 136.97)                      # "like" kept, by design
+        self.assertEqual(rep["clip_word_span"][1][0], "like")
+
+    # The real rev7 decay the round-15 fix was built on, on its own peaks:
+    # "Just" clocked into the reverb tail of "things." 9.3 dB under it, said
+    # after the pause. The end stays in the editor's pause, unwarned.
+    REV7 = [-21, -21, -20, -25, -26, -24, -25, -31, -29, -27, -28, -29, -31, -25, -22, -23, -23, -28, -30,
+            -30, -27, -29, -30, -29, -28, -32, -30, -25, -25, -21, -24, -22, -26, -29, -26, -24, -27, -31,
+            -28, -29, -30, -32, -34, -31, -35, -34, -34, -32, -32, -29, -30, -31, -30, -29, -31, -31, -33,
+            -33, -31, -32, -33, -35, -35, -34, -38, -39, -40, -38, -38, -41, -41, -42, -42, -43, -44, -42,
+            -44, -44, -45, -47, -48, -45, -46, -48, -46, -46, -42, -48, -48, -46, -44, -48, -48, -49, -45,
+            -44, -43, -39, -41, -42, -34, -31, -28, -24, -20, -21, -15, -14, -16, -20]
+
+    def test_the_real_reverb_decay_keeps_the_editors_pause(self):
+        lv = _Exact([(0, 268.85, 269.38), (1, 269.38, 274.02), (0, 274.02, 274.27), (1, 274.27, 275.09)],
+                    [(273.3, self.REV7)], 268.85, 278.85, -46.0, -42.2, -46.4,
+                    loud=[(269.38, 273.3, -20.0), (274.4, 275.09, -18.0)])
+        words = _said(("So", 269.4, 269.6), ("people", 273.04, 273.4), ("things.", 273.4, 273.78),
+                      ("Just", 273.78, 273.9), ("fly", 273.9, 274.46), ("around,", 274.46, 274.84))
+        _, e, rep = self._place(lv, words, 269.4, 273.78)
+        self.assertGreater(e, 274.02)                      # in the pause, the tail kept
+        self.assertLess(e, 274.27)
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+        self.assertEqual(rep["clip_word_span"][1][0], "things.")
+
+
 HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
