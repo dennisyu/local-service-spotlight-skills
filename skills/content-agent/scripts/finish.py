@@ -22,9 +22,12 @@ Usage:
     each cue's words evenly across the cue. Give BOTH and the captions use
     Descript's corrected words on the ASR's word clock (best of each). A --clip
     edge asked for at a pause (inside a level silence of 0.15 s or more, or
-    within 0.25 s of one) stays in that pause, head_pad_s from the sound beside
-    it, whatever the word clocks say: an ASR clocks words up to 1.4 s early
-    into the pause before them. Under steady room noise the silence threshold
+    within 0.25 s of one with no heard word between) stays in that pause,
+    head_pad_s from the sound beside it, whatever the word clocks say: an ASR
+    clocks words up to 1.4 s early into the pause before them. A start asked
+    for at the previous word's clock end does not reach back over that word
+    (audit round 15: 51 of 830 such starts opened on it, "Look," on the clean
+    mix), nor an end at the next word's clock start over that one. Under steady room noise the silence threshold
     rises and swallows a word's soft ending (and, less, its onset), so there
     the end keeps the checker's noise slack (0.025 s per dB of rise, at most
     0.5 s) or runs to the last word's own cue or clock end when that is
@@ -33,7 +36,10 @@ Usage:
     cuts the last 0.06 s of a fading word, as on the quiet mix), against 11
     to 25 of 30 before (audit rounds 11 and 12). Words the
     ASR heard inside the level's "pause", on the clip's side of the edge, are
-    talk the level missed (soft words under an AC read as silence; round 12):
+    talk the level missed (soft words under an AC read as silence; round 12)
+    where the threshold rose over room noise; in a quiet room the level is
+    right, and such a word needs 30 ms over the threshold (round 15: a 20 ms
+    click inside seg5's "It" cost the editor's pause):
     the pause starts after them (ends before them at the head), and with too
     little left the edge is treated as mid-phrase, those words still talk when
     the edge moves onto the sound (round 14: a cut in the middle of that same
@@ -52,7 +58,10 @@ Usage:
     boundaries, keeping whole a word it falls inside, then moves onto the sound
     itself (a word whose clock starts in 0.4 s or more of silence was stretched
     back over a pause and starts after it; a word clocked inside a pause, whose
-    next word claims the sound after it, is the sound before it): the start
+    next word claims the sound after it, is the sound before it, and when no
+    pause comes before that sound it runs on from the word before, so the
+    start stays on the word clock with a warning, round 15: "It's" halved
+    again with a start asked for just before its "pause"): the start
     into the pause of 0.15 s or more before the first word's sound, the end
     into the first pause after the last word's (never past where the next
     word's sound begins: a next word Whisper timed as an instant was said
@@ -67,10 +76,15 @@ Usage:
     where the level is unmeasurable. A quiet stretch of 0.15 s or more
     nearest the clip's word wins, else the last short one before the gap's
     far word with the fade where it is quietest; that is a note (`notes`, a
-    `finish_note` NOTE on the receipt, with the fade's level). With nothing
+    `finish_note` NOTE on the receipt, with the fade's level). A short quiet
+    run is also what a closure inside a word looks like: a start cut in one
+    right after word-loud sound no word's clock covers is a warning too
+    (round 15: the cut dropped "pro" of a "professional" clocked 0.4 s late,
+    with a note). With nothing
     quiet in the gap (a loud bed, a reverb tail, talk the ASR missed) it is a
     warning that the cut cannot be checked (audit round 13: a "quietest
-    part" sat inside an unheard filler and inside a word's decay). The gap is
+    part" sat inside an unheard filler and inside a word's decay), and a
+    start stays before the sound of a first word timed as an instant. The gap is
     bounded by heard words, by a word Whisper timed as an instant (its sound
     is the level's run that ends at it, up to 0.4 s and not before the word
     before it; under a bed a window near the stretch's floor and 15 dB under
@@ -1135,7 +1149,11 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
     a raised threshold, not silence (audit round 14: "It's" at 230.34 under an
     AC, cut in half by a cut in the middle of the "pause" it sat in). Returns
     (cut, found), found False when the word sits inside a second or more of
-    unbroken sound."""
+    unbroken sound, and None when its clock sits in a pause whose sound after
+    it the next word claims but no pause precedes the sound before it: then
+    the word (or soft talk the level calls part of that pause) runs on from
+    the one before, and a cut anywhere in that pause can drop it (round 15:
+    "It's" halved again with a start asked for just before its "pause")."""
     sil = _silences(runs, min_sil, talk)
     cands = [(x, y) for x, y in sil
              if x <= fw + 0.02 and y >= max(fw - 1.0, lo - 0.05)]
@@ -1147,11 +1165,11 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
         # after it: this word is the sound just before the pause, its clock ran
         # late (the replay's "And" was timed 0.57 s after it was said). Start
         # before that sound when no earlier word claims it.
-        before = [(a, b) for a, b in sil if b <= x - 0.05]
-        if before:
-            a0, b0 = max(before, key=lambda s: s[1])
-            if b0 >= max(fw - 1.0, lo - 0.05):
-                x, y = a0, b0
+        before = [(a, b) for a, b in sil if b <= x - 0.05
+                  and b >= max(fw - 1.0, lo - 0.05)]
+        if not before:
+            return start, None
+        x, y = max(before, key=lambda s: s[1])
     sl = noise_slack(runs, x + 0.01, y - 0.01, style) if style else 0.0
     cut = max(cut_in_pause(x, y, "start", pad, sl), floor if floor is not None else x)
     in_sound = any(k != 0 and a <= start < b for k, a, b in runs)
@@ -1205,7 +1223,12 @@ def clamp_stretched(words: list[dict], runs: list[tuple], min_silence: float = 0
 
 class LevelRuns:
     """Level runs of a source around a moment: ten seconds, so the level rules
-    see talk to compare it against, measured once per stretch."""
+    see talk to compare it against, measured once per stretch. A stretch
+    serves a moment 2.5 s or more inside it (or at the file's own edge): the
+    floors the clip rules read span 2.5 s each side of a cut, and a stretch
+    measured for another clip in the same run cut them short: it read a fan's
+    floor 4 dB high and lost round 15's warning at fan47's 402.71 in the
+    developer's own sweep."""
 
     def __init__(self, src: str, style: dict, info: dict, words: list[dict] | None = None):
         self.src, self.style, self.info = src, style, info
@@ -1214,9 +1237,9 @@ class LevelRuns:
         self.measured: list = []
 
     def near(self, t: float) -> list[tuple]:
-        for a, b, r in self.measured:   # 1.5 s each side, or the file's own edge
-            if (a + 1.5 <= t or a <= 0.0 <= t) and \
-                    (t <= b - 1.5 or t <= b >= self.total - 0.01):
+        for a, b, r in self.measured:   # 2.5 s each side, or the file's own edge
+            if (a + 2.5 <= t or a <= 0.0 <= t) and \
+                    (t <= b - 2.5 or t <= b >= self.total - 0.01):
                 return r
         a, b = max(0.0, t - 5.0), min(self.total, t + 5.0)
         r = level_runs(self.src, self.style, self.info, a, b, self.words)
@@ -1313,7 +1336,8 @@ def gap_cut(runs, side: str, before: float, after: float, nb: float, pad: float,
     (a real pause), its cut `pad` from the word; failing one, the last short
     stretch before the gap's far word (at an end, a stop's closure inside the
     last word can be a short quiet stretch, its burst after it), its 30 ms
-    fade where it is quietest. Returns (cut, fade level, threshold), None
+    fade where it is quietest. Returns (cut, fade level, threshold, long),
+    long True when the cut sits in a quiet stretch of 0.15 s or more; None
     when nothing in the gap is quiet, or False when the runs carry no peaks."""
     peaks = getattr(runs, "peaks", None)
     if not peaks or not hasattr(runs, "loudest"):
@@ -1365,7 +1389,7 @@ def gap_cut(runs, side: str, before: float, after: float, nb: float, pad: float,
             cands = [(max(peaks[j:j + 3]), j) for j in range(g[0] - 1, g[-1])]
             fade, j = min(cands, key=lambda c: (c[0], -c[1]))
         cut = base + j * w
-    return round(cut, 3), fade, thr
+    return round(cut, 3), fade, thr, bool(long_)
 
 
 def _p5(runs, a: float, b: float) -> float | None:
@@ -1453,6 +1477,46 @@ def stray_talk(runs, side: str, edge: float, cut: float, top: float | None,
     return round(len(stray) * w, 2)
 
 
+def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
+                 reach: float = 0.06) -> float:
+    """Seconds of talk-level sound a START cut in a short dip leaves out: the
+    sound that runs right up to the cut's dip (it ends within `reach` before
+    the cut), back to 30 ms of dip or to `covered_to` (the previous word's
+    clock end), that no word's clock covers (audit round 15: a start cut in
+    the closure inside "professional", its first syllable dropped with a
+    NOTE, Whisper clocking the word 0.4 s late). Windows within 12 dB of the
+    first word `top` count when they reach 18 dB over the floor (as in
+    stray_talk); a dip is as there."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or top is None or not hasattr(runs, "_span"):
+        return 0.0
+    w, base, n = runs.window_s, runs.base, len(pk)
+    fl = _p5(runs, cut - 1.0, cut + 1.0)
+    fl_wide = _p5(runs, cut - 2.5, cut + 2.5)
+    if fl is None or fl_wide is None:
+        return 0.0
+    dip = max(top - 15.0, fl + 6.0)
+    talk = max(top - 12.0, dip + 3.0)
+    k = min(n, int(round((cut - base) / w))) - 1
+    j = 0
+    while k >= 0 and pk[k] <= dip and j < round(reach / w):
+        k -= 1                                # the dip the cut sits in
+        j += 1
+    if k < 0 or pk[k] <= dip:
+        return 0.0                            # a longer quiet: nothing abuts the cut
+    run, got = 0, []
+    while k >= 0 and base + (k + 1) * w > covered_to + 1e-9:
+        run = run + 1 if pk[k] <= dip else 0
+        if run >= 3:
+            break
+        if pk[k] >= talk:
+            got.append(pk[k])
+        k -= 1
+    if not got or max(got) < min(fl, fl_wide) + 18.0:
+        return 0.0
+    return round(len(got) * w, 2)
+
+
 def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
     """Where the cut's sound starts (the cut itself when it lands in sound) and
     where it stops (the same at the end)."""
@@ -1506,6 +1570,37 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     talk_e: list = []
     misclocked = set()
     in_gap = set()          # edges the word-gap rule placed
+    # A pause the request only reaches (it ends within 0.25 s before a start,
+    # begins within 0.25 s after an end) is the editor's only when no heard
+    # word lies between it and the request: a start asked for at the previous
+    # word's clock end adopted the pause BEFORE that word, and the clip opened
+    # on it (audit round 15: "Look," on the clean mix, "-scapers" under a bed,
+    # 51 of 830 such starts).
+    if ps and any(w["end"] > ps[1] + 0.02 and w["end"] <= start + 0.02
+                  and w["start"] < start - 0.02 for w in said):
+        ps = None
+    if pe and any(w["start"] < pe[0] - 0.02 and w["start"] >= end - 0.02
+                  and w["end"] > end + 0.02 for w in said):
+        pe = None
+
+    def audible(w, r):
+        """Whether a word clocked inside a level pause has sound of its own
+        there. Where the silence threshold rose over room noise, soft talk
+        reads as silence, so any heard word counts; in a quiet room the level
+        is right, and a word there needs 30 ms over the threshold (a click is
+        shorter): otherwise its clock ran into the pause (round 15: seg5's
+        "It" at 77.70, a 20 ms click inside it, lost the editor's pause)."""
+        pk = getattr(r, "peaks", None)
+        if not pk or not hasattr(r, "raised") or getattr(r, "base_db", None) is None:
+            return True
+        if max(r.raised(w["start"]), r.raised(w["end"])) > 0.0:
+            return True
+        thr = r.threshold(w["start"])
+        run = best = 0
+        for k in r._span(w["start"], max(w["end"], w["start"] + 0.01)):
+            run = run + 1 if pk[k] > thr else 0
+            best = max(best, run)
+        return best >= 3
     if pe:
         held = [w for w in said if w["start"] >= pe[0] - 0.02
                 and (w["start"] < end - 0.02 or instant_at(w, end))
@@ -1519,7 +1614,8 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                 "just after that pause, kept")
             misclocked.add("ends")
             pe = moved
-        elif held:
+        elif [w for w in held if audible(w, re_)]:
+            held = [w for w in held if audible(w, re_)]
             x2 = max(w["end"] for w in held)
             if pe[1] - x2 < 0.15 - 1e-6:
                 talk_e = [(w["start"], w["end"]) for w in held]
@@ -1537,7 +1633,8 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                 "just before that pause, kept")
             misclocked.add("starts")
             ps = moved
-        elif held:
+        elif [w for w in held if audible(w, rs)]:
+            held = [w for w in held if audible(w, rs)]
             y2 = min(w["start"] for w in held)
             if y2 - ps[0] < 0.15 - 1e-6:
                 talk_s = [(w["start"], w["end"]) for w in held]
@@ -1648,8 +1745,10 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                         other = sound(nxt[2]) if nxt[2] is not None else nxt[:2]
                 lo_s, hi_s = before, (other[0] if other else None)
             gap = (after - before) if before is not None and after is not None else 0.0
-            # (a far word whose sound runs back to the clip's word leaves no gap)
-            if gap >= 0.15 and hi_s is not None and lo_s is not None and hi_s - lo_s >= 0.03:
+            # (a far word whose sound runs back to the clip's word leaves no gap;
+            # a word whose sound runs on from the one before has none either)
+            if ok is False and gap >= 0.15 and hi_s is not None and lo_s is not None \
+                    and hi_s - lo_s >= 0.03:
                 # The gap on the clocks decides whether to look; the search stops
                 # at the far side's SOUND (an instant's sound runs before its clock).
                 nb = nb_loud = 0.0
@@ -1679,6 +1778,10 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                         "quiet (a loud bed, a reverb tail or talk the transcript missed), so the "
                         "cut cannot be checked by level; listen to the edge, or pick one at a "
                         "pause")
+                    if where == "starts" and instant(edge_w):
+                        # The cut stays on the word clock; an instant's clock is
+                        # where its sound ENDS, so keep the start before its sound.
+                        new_start = min(new_start, mine[0] - pad)
                     continue
                 if where == "ends":
                     new_end = q[0]
@@ -1690,6 +1793,25 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     f"shorter pause, or a bed or room noise over it); the cut sits in a quiet "
                     f"moment of a {gap:.2f}s gap between words (its 30 ms fade peaks at "
                     f"{q[1]:.0f} dBFS; silence threshold {q[2]:.0f} dB)")
+                if where == "starts" and not q[3] and hasattr(r, "loudest"):
+                    # A short dip right after word-loud sound no clock covers may be
+                    # a closure inside the first word, clocked late (round 15).
+                    d = dropped_talk(r, q[0], before, r.loudest(*mine))
+                    if d >= 0.08:
+                        report["warnings"].append(
+                            f"the clip starts in a short dip right after {d:.2f}s of word-loud "
+                            "sound that no word's clock covers: the first word may begin before "
+                            "its clock, so its start may be cut; listen to the start")
+                continue
+            if where == "starts" and instant(edge_w):
+                new_start = min(new_start, mine[0] - pad)   # before an instant's sound
+                cut = new_start
+            if ok is None:
+                report["warnings"].append(
+                    "the clip starts where its first word is clocked inside a pause but the "
+                    "word (or soft talk the level reads as part of that pause) runs on from "
+                    "the word before it, so no cut there keeps it whole; listen to the "
+                    "start, or pick an edge at a pause")
                 continue
             far = (f" (the cut sits {abs(moved):.2f}s {'after' if moved > 0 else 'before'} "
                    "the requested edge, on a word boundary)" if abs(moved) > 0.5 else "")

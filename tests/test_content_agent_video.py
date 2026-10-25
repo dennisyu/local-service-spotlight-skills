@@ -2188,6 +2188,192 @@ class AuditRound14(unittest.TestCase):
         self.assertLessEqual(finish.instant_onset(r, 337.46, 337.16), 337.43)
 
 
+class AuditRound15(unittest.TestCase):
+    """Fifteenth independent audit, 25 Oct 2026: each test pins one finding.
+    The levels are the measured ones at each edge, condensed."""
+
+    def test_a_start_asked_just_before_a_soft_words_pause_keeps_the_word(self):
+        # H1, ac44 at 230.18 ("right?"'s clock end) and 230.25: the level pause
+        # (230.30-230.57) starts after the request, so the round-14 held-word
+        # rule never ran; settle_start took the pause "It's" is clocked in and
+        # cut in its middle (230.435): Whisper "Costing Uncle Dennis", PASS.
+        lv = _Room(AuditRound14.AC_RUNS, AuditRound14.AC_LOUD, 225.0, 235.0, -40.0, -36.2, -51.4)
+        for req in (230.18, 230.25):
+            rep = {"warnings": []}
+            _, s, _ = finish.place_clip(lv, _said(*AuditRound14.AC_WORDS), req, 231.08, 0.08,
+                                        0.4, rep)
+            self.assertLessEqual(s, 230.30, req)           # never inside "It's"
+            self.assertTrue(any(x.startswith("the clip starts") for x in rep["warnings"]), req)
+        # bedsn14 FULL (Descript's cue start 230.309), the pause from 230.36:
+        # 230.464 with only a cue warning, Whisper "costing uncle dennis".
+        runs = [(1, 225.0, 230.36), (0, 230.36, 230.57), (1, 230.57, 231.14),
+                (0, 231.14, 231.6), (1, 231.6, 235.0)]
+        loud = [(229.48, 229.8, -18.0), (229.97, 230.2, -17.0), (230.2, 230.36, -28.0),
+                (230.36, 230.4, -36.7), (230.4, 230.43, -41.3), (230.43, 230.5, -32.0),
+                (230.5, 230.57, -40.0), (230.57, 231.14, -18.0), (231.6, 235.0, -18.0)]
+        ws = _said(("great,", 229.48, 229.8), ("right?", 230.06, 230.18), ("It's", 230.4, 230.52),
+                   ("costing", 230.52, 230.86), ("Uncle", 230.86, 231.08), ("Dennis", 231.6, 231.9))
+        for o in ws:
+            o.update(cue_start=228.0, cue_end=230.309) if o["start"] < 230.3 else \
+                o.update(cue_start=230.309, cue_end=233.0)
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Room(runs, loud, 225.0, 235.0, -40.0, -35.2, -48.3), ws,
+                                    230.309, 231.08, 0.08, 0.4, rep)
+        self.assertLessEqual(s, 230.33)
+        self.assertTrue(any(x.startswith("the clip starts where its first word is clocked")
+                            for x in rep["warnings"]))
+
+    # hum46 at 402.46 ("-spoken," clock end): "professional" clocked at 402.82
+    # but said from 402.30 (a /p/ burst, voicing to 402.69), then a 30 ms
+    # closure (402.70-402.73) and its /f/. No 0.15 s quiet in the gap: the
+    # word-gap rule cut in the closure, dropping "pro", with only a NOTE.
+    H2_RUNS = [(0, 397.4, 400.6), (1, 400.6, 401.74), (0, 401.74, 401.76), (1, 401.76, 402.1),
+               (0, 402.1, 402.11), (1, 402.11, 402.7), (0, 402.7, 402.73), (1, 402.73, 404.2),
+               (0, 404.2, 404.8), (1, 404.8, 410.0)]
+    H2_LOUD = [(400.6, 401.7, -22.0), (401.7, 401.76, -41.0), (401.76, 402.05, -21.0),
+               (402.05, 402.1, -36.0), (402.1, 402.11, -41.0), (402.11, 402.25, -18.0),
+               (402.25, 402.3, -35.0), (402.3, 402.48, -20.0), (402.48, 402.69, -26.0),
+               (402.69, 402.7, -34.0), (402.7, 402.73, -41.5), (402.73, 402.76, -37.5),
+               (402.76, 402.8, -27.0), (402.8, 402.94, -36.5), (402.94, 404.2, -18.0),
+               (404.8, 410.0, -20.0)]
+    H2_WORDS = [("He's", 400.62, 401.0), ("so", 401.0, 401.6), ("well", 401.6, 401.92),
+                ("-spoken,", 401.92, 402.46), ("professional", 402.82, 403.22),
+                ("salesperson.", 403.22, 404.15), ("And", 404.85, 405.1), ("so", 405.1, 405.4)]
+
+    def test_a_gap_cut_in_a_late_clocked_first_words_closure_warns(self):
+        lv = _Room(self.H2_RUNS, self.H2_LOUD, 397.4, 410.0, -44.5, -40.6, -52.2)
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(lv, _said(*self.H2_WORDS), 402.46, 404.15, 0.08, 0.4, rep)
+        self.assertGreater(s, 402.6)                       # the cut stays; the edge is flagged
+        self.assertTrue(any(x.startswith("the clip starts in a short dip right after")
+                            for x in rep["warnings"]))
+        # A guard: the same closure after a breath (-34.5 dBFS, 15 dB under the
+        # word) leaves nothing word-loud out: a note, no warning.
+        loud = [x for x in self.H2_LOUD if not 402.3 <= x[0] < 402.69] + [(402.3, 402.69, -34.5)]
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Room(self.H2_RUNS, loud, 397.4, 410.0, -44.5, -40.6, -52.2),
+                                    _said(*self.H2_WORDS), 402.46, 404.15, 0.08, 0.4, rep)
+        self.assertEqual([x for x in rep["warnings"] if x.startswith("the clip starts")], [])
+        self.assertTrue(any("clip starts" in x and "quiet moment" in x for x in rep["notes"]))
+
+    def test_a_start_at_the_previous_words_clock_end_does_not_reach_back_over_it(self):
+        # H3, the clean mix at 56.16 ("Look,"'s clock end; said 56.03-56.35):
+        # the pause before "Look," ends within the 0.25 s reach, so the clip
+        # opened on "Look,", PASS (51 of 830 such starts kept the word before).
+        runs = [(1, 54.0, 55.01), (0, 55.01, 56.03), (1, 56.03, 56.38), (0, 56.38, 56.47),
+                (1, 56.47, 57.8), (0, 57.8, 58.3), (1, 58.3, 60.0)]
+        loud = [(54.0, 55.01, -19.0), (56.03, 56.05, -30.0), (56.05, 56.21, -18.0),
+                (56.21, 56.28, -31.0), (56.28, 56.35, -43.0), (56.35, 56.38, -50.0),
+                (56.38, 56.47, -65.0), (56.47, 56.49, -40.0), (56.49, 57.8, -19.0),
+                (58.3, 60.0, -19.0)]
+        words = _said(("it.", 54.5, 54.95), ("Look,", 55.8, 56.16), ("digital", 56.64, 56.64),
+                      ("marketing,", 56.64, 56.84), ("is", 56.9, 57.1), ("hard.", 57.1, 57.78),
+                      ("So", 58.3, 58.5))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_QuietRoom(runs, loud, 50.0, 60.0, -83.0, -53.4), words,
+                                    56.16, 57.78, 0.08, 0.4, rep)
+        self.assertGreater(s, 56.35)                       # after "Look,"
+        self.assertLess(s, 56.47)                          # before "digital"
+        self.assertEqual([x for x in rep["warnings"] if "starts" in x], [])
+        # ac44 at 265.16 ("guy,"'s clock end, 0.04 s past the AC "pause" that
+        # holds its soft start): the clip opened "guy, but you can see".
+        runs = [(1, 260.2, 264.7), (0, 264.7, 265.12), (1, 265.12, 265.23), (0, 265.23, 265.75),
+                (1, 265.75, 268.3), (0, 268.3, 268.9), (1, 268.9, 270.0)]
+        loud = [(260.2, 264.7, -24.0), (264.7, 264.98, -37.0), (264.98, 265.07, -31.0),
+                (265.07, 265.12, -36.0), (265.12, 265.23, -28.0), (265.23, 265.75, -41.0),
+                (265.75, 268.3, -21.0), (268.3, 268.9, -43.0), (268.9, 270.0, -21.0)]
+        words = _said(("like", 264.54, 264.72), ("this", 264.72, 264.9), ("guy,", 264.9, 265.16),
+                      ("but", 265.62, 265.84), ("you", 265.84, 266.06), ("see.", 267.8, 268.24),
+                      ("And", 268.95, 269.2))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Room(runs, loud, 260.2, 270.0, -43.0, -34.6, -52.1), words,
+                                    265.16, 268.24, 0.08, 0.4, rep)
+        self.assertGreater(s, 265.23)                      # after "guy,"
+        self.assertLess(s, 265.75)
+
+    def test_an_end_at_the_next_words_clock_start_does_not_reach_over_it(self):
+        # H3's mirror, fan47 ending at 213.4 ("Proof"'s clock start): the pause
+        # after "Proof" (213.57) begins within the reach; the clip ended
+        # "...stuff, right? Proof", PASS.
+        runs = [(0, 208.3, 209.0), (1, 209.0, 212.87), (0, 212.87, 212.9), (1, 212.9, 213.0),
+                (0, 213.0, 213.08), (1, 213.08, 213.24), (0, 213.24, 213.33), (1, 213.33, 213.57),
+                (0, 213.57, 213.73), (1, 213.73, 215.0), (0, 215.0, 215.6), (1, 215.6, 217.0)]
+        loud = [(209.0, 212.81, -18.0), (212.81, 212.87, -30.0), (212.87, 212.9, -38.3),
+                (212.9, 212.98, -28.0), (212.98, 213.0, -33.0), (213.0, 213.04, -38.2),
+                (213.04, 213.08, -41.5), (213.08, 213.09, -31.3), (213.09, 213.19, -19.0),
+                (213.19, 213.22, -29.0), (213.22, 213.25, -36.2), (213.25, 213.3, -39.5),
+                (213.3, 213.38, -34.0), (213.38, 213.5, -22.0), (213.5, 213.57, -32.0),
+                (213.57, 213.73, -38.0), (213.73, 215.0, -20.0), (215.6, 217.0, -20.0)]
+        words = _said(("So", 209.1, 209.4), ("kind", 212.64, 212.74), ("of", 212.74, 212.86),
+                      ("stuff,", 212.86, 213.02), ("right?", 213.16, 213.2), ("Proof", 213.4, 213.48),
+                      ("of", 213.48, 213.7), ("that", 213.7, 213.96), ("works.", 213.96, 214.9),
+                      ("Next", 215.6, 215.9))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(_Room(runs, loud, 208.3, 217.0, -42.0, -36.9, -53.2), words,
+                                    209.1, 213.4, 0.08, 0.4, rep)
+        self.assertLess(e, 213.38)                         # before "Proof"
+        self.assertTrue(any(x.startswith("the clip ends") for x in rep["warnings"]))
+
+    def test_a_click_in_a_quiet_pause_does_not_make_its_word_talk(self):
+        # L1, seg5 at 77.7: "It" clocked 77.70-77.92 inside a quiet 0.23 s pause
+        # with a 20 ms click at 77.82; the held-word rule called the pause talk
+        # and cut at 77.62 in "choose."'s decay, warning "unbroken talk".
+        runs = [(0, 75.0, 76.67), (1, 76.67, 77.7), (0, 77.7, 77.93), (1, 77.93, 79.5),
+                (0, 79.5, 80.0), (1, 80.0, 81.0)]
+        loud = [(76.67, 77.62, -20.0), (77.62, 77.7, -38.0), (77.81, 77.82, -54.2),
+                (77.82, 77.83, -37.4), (77.83, 77.84, -30.2), (77.84, 77.85, -49.3),
+                (77.87, 77.88, -39.4), (77.93, 77.94, -41.7), (77.94, 79.5, -15.0),
+                (80.0, 81.0, -15.0)]
+        words = _said(("you", 77.2, 77.32), ("choose.", 77.32, 77.62), ("It", 77.7, 77.92),
+                      ("can", 77.92, 77.98), ("be", 77.98, 78.1), ("anything.", 78.1, 79.45),
+                      ("Then", 80.0, 80.3))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_QuietRoom(runs, loud, 72.7, 82.0, -70.0, -46.6), words,
+                                    77.7, 79.45, 0.08, 0.4, rep)
+        self.assertGreaterEqual(s, 77.7)                   # in the editor's pause
+        self.assertLess(s, 77.93)
+        self.assertEqual([x for x in rep["warnings"] if "starts" in x], [])
+
+    def test_a_start_at_an_instant_in_a_gap_that_never_goes_quiet_is_before_its_sound(self):
+        # L3, bedsn14 at 56.64: "digital" timed as an instant (said from 56.43)
+        # under a bed; the gap never goes quiet, the start stayed at the clock
+        # less the pad (56.56), 0.13 s into the word.
+        runs = [(0, 50.0, 54.8), (1, 54.8, 55.58), (0, 55.58, 56.04), (1, 56.04, 56.37),
+                (0, 56.37, 56.41), (1, 56.41, 57.8), (0, 57.8, 58.3), (1, 58.3, 60.0)]
+        loud = [(54.8, 55.58, -15.0), (55.58, 56.04, -38.5), (56.04, 56.22, -15.0),
+                (56.22, 56.31, -26.0), (56.31, 56.36, -31.6), (56.36, 56.39, -36.7),
+                (56.39, 56.41, -38.0), (56.41, 56.43, -31.9), (56.43, 56.49, -27.0),
+                (56.49, 57.8, -15.0), (58.3, 60.0, -15.0)]
+        words = _said(("it.", 55.0, 55.5), ("Look,", 55.8, 56.16), ("digital", 56.64, 56.64),
+                      ("marketing,", 56.64, 56.82), ("is", 56.9, 57.1), ("hard.", 57.1, 57.78),
+                      ("So", 58.3, 58.5))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_Room(runs, loud, 50.0, 60.0, -45.0, -36.4, -50.9), words,
+                                    56.64, 57.78, 0.08, 0.4, rep)
+        self.assertLessEqual(s, 56.36)                     # before "digital"'s sound
+        self.assertTrue(any(x.startswith("the clip starts") and "never goes quiet" in x
+                            for x in rep["warnings"]))
+
+    def test_a_level_stretch_serves_only_moments_well_inside_it(self):
+        # The floors the clip rules read span 2.5 s each side of a cut; a
+        # stretch measured for another clip that ends 1.5 s past the cut read
+        # fan47's floor 4 dB high and lost the warning above (the developer's
+        # sweep after round 15).
+        calls = []
+        orig = finish.level_runs
+        finish.level_runs = lambda src, style, info, a, b, words=None: calls.append((a, b)) or \
+            finish.Runs([(1, a, b)], a)
+        try:
+            lv = finish.LevelRuns("x.wav", {}, {"duration_s": 600.0})
+            first = lv.near(100.0)
+            self.assertIs(lv.near(102.4), first)
+            self.assertIsNot(lv.near(103.0), first)       # within 2.5 s of its end
+            self.assertIs(lv.near(1.0), lv.near(0.2))      # the file's own edge
+        finally:
+            finish.level_runs = orig
+        self.assertEqual(calls[:2], [(95.0, 105.0), (98.0, 108.0)])
+
+
 HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
