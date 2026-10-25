@@ -1763,8 +1763,8 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
         return w["end"] - w["start"] < 0.01 and abs(w["start"] - t) <= 0.02
     between_s = sorted((w for w in said if ps[1] + 0.02 < w["end"] <= start + 0.02
                         and mid(w) < start and not on_edge(w, start)),
-                       key=lambda w: w["start"]) if ps and "starts" not in keep_reach else []
-    if between_s:
+                       key=lambda w: w["start"]) if ps else []
+    if between_s and "starts" not in keep_reach:
         reach_word["starts"] = (ps, between_s)
         ps = None
     # At an end: heard words clocked from the request on and starting before
@@ -1852,6 +1852,11 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     fw_, lw_ = edge_words(words, start, end)
     if ps:
         fw_ = word_after_pause(words, *ps) or fw_
+        if "starts" in keep_reach and between_s:
+            # The words between, kept whole, open the captions too (round 16:
+            # with an SRT the cue's own first word did, and seg1's "put",
+            # "or" and "rim" were in the sound and out of the captions).
+            fw_ = min(between_s, key=lambda w: w["start"])
     if pe:
         lw_ = word_before_pause(words, *pe, end=end) or lw_
         if "ends" in keep_reach and between_e:
@@ -2133,9 +2138,9 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     if left and not any(x.startswith("the clip ends") for x in report["warnings"]):
         ww = " ".join(w["word"] for w in left)
         report["warnings"].append(
-            f"the clip ends at the pause after sound the level reads as its last word's fading "
-            f"tail, with \"{ww}\" clocked inside it: if that is said there, it is in the sound "
-            "but not in the captions; listen to the end")
+            f"the clip ends in a pause after \"{ww}\", clocked inside the clip, which the "
+            "level does not show as a word of its own (a last word's reverb tail and a soft "
+            "word run on from it look alike), so the captions leave it out; listen to the end")
     if ps or pe:
         report["clip_edges_at_pause"] = [w for w, p in (("start", ps), ("end", pe)) if p]
     def opens_cue(w):   # a cue's own first word carries the cue's start

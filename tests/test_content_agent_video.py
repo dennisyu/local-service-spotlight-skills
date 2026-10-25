@@ -2483,7 +2483,7 @@ class AuditRound15(unittest.TestCase):
         # soft "I would" looked the same and was a word)
         ends = [x for x in rep["warnings"] if "ends" in x]
         self.assertEqual(len(ends), 1)
-        self.assertTrue(ends[0].startswith("the clip ends at the pause after sound the level reads"))
+        self.assertTrue(ends[0].startswith('the clip ends in a pause after "Just", clocked inside'))
 
     def test_a_word_clocked_into_a_quiet_pause_after_it_was_said_is_found(self):
         # The developer's sweep after the L1 fix: seg6's "And he's" said
@@ -2837,7 +2837,8 @@ class AuditRound16(unittest.TestCase):
         self.assertEqual(rep["clip_word_span"][1][0], "things.")
         # The receipt says "Just" may be said in that tail (it is not, here).
         self.assertEqual([x for x in rep["warnings"] if "ends" in x and '"Just"' not in x], [])
-        self.assertTrue(any("fading tail" in x and '"Just"' in x for x in rep["warnings"]))
+        self.assertTrue(any(x.startswith('the clip ends in a pause after "Just", clocked inside')
+                            for x in rep["warnings"]))
 
     # seg4 at 221.02: "little," then "I would" said softly with no dip
     # (-22 to -28 dBFS, 12 dB under it), "I" an instant at 221.02 and "would"
@@ -2861,8 +2862,8 @@ class AuditRound16(unittest.TestCase):
                       ("the", 221.62, 221.74))
         _, e, rep = self._place(lv, words, 219.06, 221.02)
         if e > 221.1 and rep["clip_word_span"][1][0] != "would":
-            self.assertTrue(any(x.startswith("the clip ends at the pause after sound the level reads")
-                                and '"would"' in x for x in rep["warnings"]))
+            self.assertTrue(any(x.startswith('the clip ends in a pause after "would", clocked inside')
+                                for x in rep["warnings"]))
 
 
     # The fix's own sweep, fan47 at 286.70: "right?" clocked 286.68-286.70 and
@@ -2906,6 +2907,21 @@ class AuditRound16(unittest.TestCase):
         s, _, rep = self._place(lv, words, 2.0, 3.0)
         self.assertTrue(s >= 1.95 or any(x.startswith('the clip starts at the pause before "yeah."')
                                          for x in rep["warnings"]))
+
+    def test_a_kept_whole_start_opens_the_captions_with_an_srt_too(self):
+        # The caption scan of this round's sweeps: with Descript's cues, the
+        # captions opened on the requested cue's first word, so a word kept
+        # whole before it (seg1's "put", "or", "rim" on the every-cue FULL
+        # clips) was in the sound and out of the captions.
+        runs = [(0, 0.16, 1.29), (1, 1.29, 5.33), (0, 5.33, 5.8), (1, 5.8, 7.0)]
+        loud = [(1.29, 5.33, -15.0), (5.8, 7.0, -15.0)]
+        words = _said(("And", 1.0, 1.36), ("then,", 1.36, 1.6), ("once", 1.88, 1.94),
+                      ("that", 1.94, 2.84), ("done.", 4.9, 5.3), ("Next", 5.8, 6.0))
+        for x, (cs, ce) in zip(words, [(0.1, 1.36)] + [(1.36, 5.3)] * 4 + [(5.8, 7.0)]):
+            x["cue_start"], x["cue_end"] = cs, ce
+        s, _, rep = self._place(_QuietRoom(runs, loud, 0.0, 8.0, -80.0, -53.4), words, 1.36, 5.3)
+        self.assertLess(s, 1.29)                           # "And" whole
+        self.assertEqual(rep["clip_word_span"][0][0], "And")
 
 HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
