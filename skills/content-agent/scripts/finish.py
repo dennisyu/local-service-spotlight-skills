@@ -1541,6 +1541,25 @@ def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
     return round(len(got) * w, 2)
 
 
+def rises_after_dip(runs, t0: float, t1: float) -> bool:
+    """Whether the level in [t0, t1] dips (30 ms) and then rises 9 dB or more
+    over that dip for 30 ms: a sound of its own after the one before, not
+    the decay of the one before. True when the runs carry no peaks."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or not hasattr(runs, "_span"):
+        return True
+    ks = list(runs._span(t0, t1))
+    best, run = None, 0
+    for i, k in enumerate(ks):
+        run = run + 1 if best is not None and pk[k] >= best + 9.0 else 0
+        if run >= 3:
+            return True
+        if 1 <= i < len(ks) - 1:
+            d = max(pk[ks[i - 1]], pk[k], pk[ks[i + 1]])
+            best = d if best is None else min(best, d)
+    return False
+
+
 def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
     """Where the cut's sound starts (the cut itself when it lands in sound) and
     where it stops (the same at the end)."""
@@ -1607,8 +1626,14 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                   and end + 0.02 < w["end"] <= pe[1] + 0.02 for w in said):
         # (a next word whose clock spans the whole pause was stretched back
         # over it, Whisper's way: its start snapped to the word before's end,
-        # its sound after the pause: "This" 248.52-249.22 on the clean mix)
-        pe = None
+        # its sound after the pause: "This" 248.52-249.22 on the clean mix.)
+        # The word between has sound of its own there: the level dips after
+        # the clip's last word and rises again before the pause. A last
+        # word's decay that runs on into the pause is that word's (rev7's
+        # reverb under "things.", with "Just" clocked into it 0.5 s early).
+        lw_end = max((w["end"] for w in said if w["end"] <= end + 0.02), default=end)
+        if rises_after_dip(re_, lw_end - 0.05, pe[0]):
+            pe = None
 
     def audible(w, r):
         """Whether a word clocked inside a level pause has sound of its own

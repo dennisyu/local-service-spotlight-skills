@@ -2404,6 +2404,24 @@ class AuditRound15(unittest.TestCase):
         self.assertLess(e, 249.1)
         self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
 
+    def test_an_end_keeps_its_pause_when_the_word_between_is_only_a_decay(self):
+        # The developer's sweep after the reach fix: under reverb (rev7),
+        # "Just" is clocked 273.78-273.90, into the reverb tail of "things.",
+        # 0.5 s before it is said after the pause. The fix took it for a word
+        # between the request and the pause and cut "things." at its clock,
+        # WARN. The level there only decays: no sound of its own.
+        runs = [(0, 268.8, 269.4), (1, 269.4, 274.02), (0, 274.02, 274.27), (1, 274.27, 276.0)]
+        loud = [(269.4, 273.7, -18.0), (273.7, 273.8, -30.0), (273.8, 273.9, -36.0),
+                (273.9, 274.02, -40.0), (274.27, 276.0, -18.0)]
+        words = _said(("So", 269.4, 269.6), ("people", 273.04, 273.4), ("things.", 273.4, 273.78),
+                      ("Just", 273.78, 273.9), ("fly", 273.9, 274.46), ("around,", 274.46, 274.84))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(_Room(runs, loud, 268.0, 277.0, -46.0, -42.2, -46.4), words,
+                                    269.4, 273.78, 0.08, 0.4, rep)
+        self.assertGreater(e, 274.02)                      # in the pause, the tail kept
+        self.assertLess(e, 274.27)
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+
     def test_a_word_clocked_into_a_quiet_pause_after_it_was_said_is_found(self):
         # The developer's sweep after the L1 fix: seg6's "And he's" said
         # 40.06-40.54, clocked "And" 40.54-40.90 inside the quiet pause after
