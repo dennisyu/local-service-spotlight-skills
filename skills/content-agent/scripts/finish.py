@@ -1698,6 +1698,11 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     whose reach pause stays the editor's despite a word between (the retry
     below)."""
     words_in = words
+    # What the report held before this placement, for the retry below: the
+    # report is finish.py's own (its "steps" and earlier warnings), so the
+    # retry undoes only this placement's entries (round 16: clearing it all
+    # crashed every finish.py run that kept a word between whole).
+    report_before = {k: (list(v) if isinstance(v, list) else v) for k, v in report.items()}
     total = levels.total
     rs, re_ = levels.near(start), levels.near(end)
     # A word the ASR stretched back over a pause (its clock starts in in_word s
@@ -2134,7 +2139,9 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                      if any(x.startswith(f"the clip {where} inside unbroken talk")
                             for x in report["warnings"]))
     if redo:
-        rep = {"warnings": []}
+        report.clear()
+        report.update(report_before)
+        rep = report
         words, new_start, new_end = place_clip(levels, words_in, start, end, pad, in_word, rep,
                                                 keep_reach | redo)
         for where in sorted(redo):
@@ -2155,8 +2162,6 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     f"the clip ends at the pause after \"{w}\", {what}: no pause parts "
                     f"{it} from the word before, so the clip keeps {it} whole rather than cut "
                     f"into {it}; to end before {it}, pick an edge at a pause")
-        report.clear()
-        report.update(rep)
     return words, new_start, new_end
 
 

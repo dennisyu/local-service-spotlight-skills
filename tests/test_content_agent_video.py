@@ -3970,6 +3970,27 @@ class MediaRoundTrip(unittest.TestCase):
         sound_at = [k for k, a, b in with_w if a <= 5.53 < b]
         self.assertEqual(sound_at, [1])
 
+    # ---- sixteenth audit (25 Oct 2026) ----
+
+    def test_a_clip_that_keeps_a_word_between_whole_finishes(self):
+        # The keep-whole retry (round 15) cleared the whole report it was given.
+        # finish.py passes its own report, so every real run that kept a word
+        # between whole died with "finish failed: 'steps'" (caught rendering
+        # the round-16 cases; the sweeps call place_clip with a fresh report).
+        src = self._make("keep_whole.mp4", d=9, tone=f"{self.SYL}*(lt(t,3)+gte(t,4)*lt(t,7))")
+        words = self._words_for([(0.0, 3.0)]) + [dict(w("And", 4.0, 4.1), timing="word"),
+                                                  dict(w("then", 4.1, 4.375), timing="word")] + \
+            self._words_for([(4.5, 7.0)])
+        rep = finish.finish(str(src), str(self.tmp / "keep_whole_out.mp4"),
+                            finish.load_style(None), trim_head=False, loudness=False,
+                            words=words, burn=False, keywords=[], clip=(4.1, 6.875))
+        self.assertTrue(2.875 < rep["start_s"] < 4.0)         # in the pause, "And" whole
+        self.assertTrue(any(x.startswith('the clip starts at the pause before "And"')
+                            for x in rep["warnings"]))
+        self.assertFalse(any("unbroken" in x for x in rep["warnings"]))
+        self.assertTrue(rep["steps"])
+        self.assertEqual(rep["source"], "keep_whole.mp4")
+
     def test_finish_notes_reach_the_receipt_as_a_note(self):
         src = self._make("noted.mp4", d=4, tone=f"{self.SYL}*gte(t,0.3)")
         rec = video_qa.qa(str(src), video_qa.load_profile(None), Path(str(src) + ".qa"),
