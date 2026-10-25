@@ -27,7 +27,9 @@ Usage:
     clocks words up to 1.4 s early into the pause before them. A start asked
     for at the previous word's clock end does not reach back over that word
     (audit round 15: 51 of 830 such starts opened on it, "Look," on the clean
-    mix), nor an end at the next word's clock start over that one. Under steady room noise the silence threshold
+    mix), nor an end at the next word's clock start over that one, unless no
+    pause parts that word from the one asked for: then the clip keeps it whole
+    and warns, rather than cut inside either. Under steady room noise the silence threshold
     rises and swallows a word's soft ending (and, less, its onset), so there
     the end keeps the checker's noise slack (0.025 s per dB of rise, at most
     0.5 s) or runs to the last word's own cue or clock end when that is
@@ -1571,14 +1573,18 @@ def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
 
 
 def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
-               pad: float, in_word: float, report: dict) -> tuple[list[dict], float, float]:
+               pad: float, in_word: float, report: dict,
+               keep_reach: frozenset = frozenset()) -> tuple[list[dict], float, float]:
     """--clip edges. An edge asked for at a pause stays in that pause, pad from
     the sound beside it (audit round 10: the ASR clocks words up to 1.4 s early
     into the pause before them, so snapping to words dropped the first word of
     292 of 598 replay clips cut at a pause). An edge asked for mid-phrase snaps
     to word boundaries (a word the edge falls inside is kept whole), then moves
     onto the words' sound. Returns the words (stretched ones clamped) and the
-    clip's start and end."""
+    clip's start and end. `keep_reach` names the edges ("starts", "ends")
+    whose reach pause stays the editor's despite a word between (the retry
+    below)."""
+    words_in = words
     total = levels.total
     rs, re_ = levels.near(start), levels.near(end)
     # A word the ASR stretched back over a pause (its clock starts in in_word s
@@ -1620,11 +1626,15 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     # word's clock end adopted the pause BEFORE that word, and the clip opened
     # on it (audit round 15: "Look," on the clean mix, "-scapers" under a bed,
     # 51 of 830 such starts).
-    if ps and any(w["end"] > ps[1] + 0.02 and w["end"] <= start + 0.02
-                  and w["start"] < start - 0.02 for w in said):
+    reach_word = {}         # the word between, where the reach was refused
+    between_s = [w for w in said if w["end"] > ps[1] + 0.02 and w["end"] <= start + 0.02
+                 and w["start"] < start - 0.02] if ps and "starts" not in keep_reach else []
+    if between_s:
+        reach_word["starts"] = (ps, max(between_s, key=lambda w: w["end"]))
         ps = None
-    if pe and any(w["start"] < pe[0] - 0.02 and w["start"] >= end - 0.02
-                  and end + 0.02 < w["end"] <= pe[1] + 0.02 for w in said):
+    between_e = [w for w in said if w["start"] < pe[0] - 0.02 and w["start"] >= end - 0.02
+                 and end + 0.02 < w["end"] <= pe[1] + 0.02] if pe and "ends" not in keep_reach else []
+    if between_e:
         # (a next word whose clock spans the whole pause was stretched back
         # over it, Whisper's way: its start snapped to the word before's end,
         # its sound after the pause: "This" 248.52-249.22 on the clean mix.)
@@ -1634,6 +1644,7 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
         # reverb under "things.", with "Just" clocked into it 0.5 s early).
         lw_end = max((w["end"] for w in said if w["end"] <= end + 0.02), default=end)
         if rises_after_dip(re_, lw_end - 0.05, pe[0]):
+            reach_word["ends"] = (pe, min(between_e, key=lambda w: w["start"]))
             pe = None
 
     def audible(w, r):
@@ -1968,6 +1979,30 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     _, off = sound_edges(levels.near(new_end), new_start, new_end)
     report["clip_sound"] = [None if on is None else round(on, 3),
                             None if off is None else round(off, 3)]
+    # Refusing the reach pause can leave the edge with no pause between the
+    # word between and the word asked for: the cut would land inside one of
+    # them. Then the whole word between is the lesser harm: the edge stays in
+    # the reach pause and says so (the round-12 auditor's LIGHT cue starts on
+    # the fresh mixes: "And then," cut at "then,"'s clock, inside "And").
+    redo = frozenset(where for where in reach_word
+                     if any(x.startswith(f"the clip {where} inside unbroken talk")
+                            for x in report["warnings"]))
+    if redo:
+        rep = {"warnings": []}
+        words, new_start, new_end = place_clip(levels, words_in, start, end, pad, in_word, rep,
+                                                keep_reach | redo)
+        for where in sorted(redo):
+            w = reach_word[where][1]["word"]
+            rep["warnings"].append(
+                f"the clip starts at the pause before \"{w}\", a word clocked to end at the "
+                "requested start: no pause parts it from the word after it, so the clip keeps it "
+                "whole rather than cut into it; to start after it, pick an edge at a pause"
+                if where == "starts" else
+                f"the clip ends at the pause after \"{w}\", a word clocked to start at the "
+                "requested end: no pause parts it from the word before it, so the clip keeps it "
+                "whole rather than cut into it; to end before it, pick an edge at a pause")
+        report.clear()
+        report.update(rep)
     return words, new_start, new_end
 
 

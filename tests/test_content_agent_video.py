@@ -2339,6 +2339,25 @@ class AuditRound15(unittest.TestCase):
         self.assertGreater(s, 265.23)                      # after "guy,"
         self.assertLess(s, 265.75)
 
+    def test_a_word_between_that_runs_into_the_next_is_kept_whole_and_warned(self):
+        # My cue sweep after the reach fix (the round-12 auditor's LIGHT cue
+        # starts, edges at the nearest Whisper word): "And" clocked 1.00-1.36
+        # from inside the pause, said 1.29-1.42 straight into "then,"; asked
+        # for at 1.36, the start was cut inside "And" with an "unbroken talk"
+        # WARN, on 20 to 28 cue starts a mix. A whole word is the lesser harm.
+        runs = [(0, 0.16, 1.29), (1, 1.29, 5.33), (0, 5.33, 5.8), (1, 5.8, 7.0)]
+        loud = [(1.29, 5.33, -15.0), (5.8, 7.0, -15.0)]
+        words = _said(("And", 1.0, 1.36), ("then,", 1.36, 1.6), ("once", 1.88, 1.94),
+                      ("that", 1.94, 2.84), ("done.", 4.9, 5.3), ("Next", 5.8, 6.0))
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(_QuietRoom(runs, loud, 0.0, 8.0, -80.0, -53.4), words,
+                                    1.36, 5.3, 0.08, 0.4, rep)
+        self.assertLess(s, 1.29)                           # "And" whole
+        self.assertGreater(s, 0.16)
+        self.assertTrue(any(x.startswith('the clip starts at the pause before "And"')
+                            for x in rep["warnings"]))
+        self.assertFalse(any("unbroken" in x for x in rep["warnings"]))
+
     def test_an_end_at_the_next_words_clock_start_does_not_reach_over_it(self):
         # H3's mirror, fan47 ending at 213.4 ("Proof"'s clock start): the pause
         # after "Proof" (213.57) begins within the reach; the clip ended
