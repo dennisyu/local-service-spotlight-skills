@@ -1878,7 +1878,8 @@ class AuditRound13(unittest.TestCase):
     # 132.15-132.17. Round 12 cut both clips at 132.07, mid-filler, PASS.
     SEG3_RUNS = [(1, 127.0, 131.83), (0, 131.83, 131.85), (1, 131.85, 133.0)]
     SEG3_LOUD = [(130.32, 131.78, -9.0), (131.78, 131.82, -29.0), (131.82, 131.85, -48.0),
-                 (131.85, 132.15, -18.0), (132.15, 132.18, -38.0), (132.18, 132.58, -10.0)]
+                 (131.85, 132.15, -18.0), (131.93, 131.95, -14.6), (132.15, 132.18, -38.0),
+                 (132.18, 132.58, -10.0)]
 
     def _seg3_words(self):
         return [dict(w("but", 122.2, 122.5), timing="word", heard=True),
@@ -1895,7 +1896,10 @@ class AuditRound13(unittest.TestCase):
         self.assertGreaterEqual(e, 131.82)                 # "realistically," whole
         self.assertFalse(131.86 < e < 132.15)              # in a dip, never mid-filler
         self.assertLess(e, 132.26)                         # "I" not begun
-        self.assertFalse(any("ends" in x for x in rep["warnings"]))
+        # (the end keeps the filler, past a dip from "realistically,": since
+        # round 14 that is a warning, not a clean note)
+        self.assertTrue(any("ends with 0.3" in x and "talk-level sound after its last word" in x
+                            for x in rep["warnings"]))
         self.assertTrue(any("quiet moment" in n for n in rep.get("notes", [])))
         rep = {"warnings": []}
         _, s, _ = finish.place_clip(lv, self._seg3_words(), 132.26, 139.7, 0.08, 0.4, rep)
@@ -1991,7 +1995,200 @@ class AuditRound13(unittest.TestCase):
         self.assertEqual(unescaped, 6)                     # five cells
 
 
-HAVE_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
+class _Room:
+    """Level runs for place_clip: 10 ms peaks at `floor_db` with `loud`
+    [(a, b, dB)] on top; the silence threshold raised to `thr_db` over a base
+    of `base_db` (room noise or a bed), and the runs given."""
+    def __init__(self, runs, loud, base, total, floor_db, thr_db, base_db):
+        n = int(round((total - base) / 0.01))
+        peaks = [floor_db] * n
+        for a, b, db in loud:
+            for k in range(int(round((a - base) / 0.01)), int(round((b - base) / 0.01))):
+                peaks[k] = db
+        self.r = finish.Runs(runs, base, [thr_db] * (n // 50 + 1), 0.5, base_db, peaks, 0.01)
+        self.total, self.style = total + 100.0, finish.load_style(None)
+
+    def near(self, t):
+        return self.r
+
+
+def _said(*ws, **extra):
+    return [dict(w(*x), timing="word", heard=True, **extra) for x in ws]
+
+
+class AuditRound14(unittest.TestCase):
+    """Fourteenth independent audit, 25 Oct 2026: each test pins one finding."""
+
+    # ac44 (and fan47, bedsn14) at 230.34: "right?" then a soft "It's" (said
+    # 230.30-230.36 and 230.43-230.49, -31 to -34 dBFS) under an AC whose
+    # raised threshold calls 230.30-230.57 a pause. Round 13 held "It's" as
+    # talk, called the edge mid-phrase, then cut in the middle of that same
+    # "pause" (230.435): Whisper heard "Costing Uncle Dennis", PASS.
+    AC_RUNS = [(1, 225.0, 230.30), (0, 230.30, 230.57), (1, 230.57, 231.13),
+               (0, 231.13, 231.6), (1, 231.6, 235.0)]
+    AC_LOUD = [(229.48, 229.8, -18.0), (230.02, 230.18, -17.0), (230.18, 230.30, -28.0),
+               (230.30, 230.36, -34.0), (230.43, 230.49, -31.0), (230.57, 231.13, -18.0),
+               (231.6, 235.0, -18.0)]
+    AC_WORDS = [("great,", 229.48, 229.8), ("right?", 230.02, 230.18), ("It's", 230.34, 230.52),
+                ("costing", 230.52, 230.86), ("Uncle", 230.86, 231.08), ("Dennis", 231.6, 231.9)]
+
+    def test_a_soft_first_word_in_a_noisy_pause_is_not_cut_in_half(self):
+        lv = _Room(self.AC_RUNS, self.AC_LOUD, 225.0, 235.0, -40.0, -36.2, -51.4)
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(lv, _said(*self.AC_WORDS), 230.34, 231.08, 0.08, 0.4, rep)
+        self.assertLessEqual(s, 230.30)                    # never inside "It's" (230.435)
+        self.assertTrue(any(x.startswith("the clip starts") for x in rep["warnings"]))
+        # The same with Descript's cues (FULL): cue 90 starts where cue 89 ends.
+        ws = _said(*self.AC_WORDS)
+        for o in ws:
+            o.update(cue_start=228.0, cue_end=230.309) if o["start"] < 230.3 else \
+                o.update(cue_start=230.309, cue_end=233.0)
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(lv, ws, 230.309, 231.08, 0.08, 0.4, rep)
+        self.assertLessEqual(s, 230.30)
+        self.assertTrue(any(x.startswith("the clip starts") for x in rep["warnings"]))
+
+    def test_a_cut_that_keeps_an_unheard_filler_warns(self):
+        # seg3 at 132.26: the only quiet moment before "I" is 131.82, before an
+        # unheard filler (-18 dBFS); the dip after the filler is not quiet. The
+        # short opened on the filler, PASS with a NOTE.
+        loud = [(130.32, 131.78, -9.0), (131.78, 131.82, -29.0), (131.82, 131.85, -48.0),
+                (131.85, 132.15, -18.0), (131.93, 131.95, -14.6), (132.15, 132.16, -27.6),
+                (132.16, 132.18, -38.0), (132.18, 132.58, -10.0), (139.2, 139.7, -10.0)]
+        lv = _QuietRoom(AuditRound13.SEG3_RUNS + [(0, 139.7, 140.2), (1, 140.2, 141.0)], loud,
+                        120.0, 141.0)
+        rep = {"warnings": []}
+        _, s, _ = finish.place_clip(lv, AuditRound13()._seg3_words(), 132.26, 139.7, 0.08,
+                                    0.4, rep)
+        self.assertLess(s, 131.86)
+        self.assertTrue(any(x.startswith("the clip starts with")
+                            and "talk-level sound before its first word" in x
+                            for x in rep["warnings"]))
+
+    def test_a_cut_that_keeps_a_misclocked_next_word_warns(self):
+        # ac44 at 111.68: "like," then "no," said 111.71-111.89 but clocked
+        # 112.04-112.12; the gap's quiet moment is after the real "no,". The
+        # short ended "I'm like, no," with only a NOTE (round 12 WARNed).
+        runs = [(0, 104.5, 105.15), (1, 105.15, 111.90), (0, 111.90, 111.99), (1, 111.99, 113.0)]
+        loud = [(105.15, 111.62, -15.0), (111.62, 111.68, -26.0), (111.68, 111.71, -32.0),
+                (111.71, 111.87, -21.0), (111.87, 111.90, -30.0), (111.99, 113.0, -15.0)]
+        lv = _Room(runs, loud, 100.0, 115.0, -40.0, -34.6, -52.9)
+        words = _said(("So", 105.2, 105.4), ("Versus", 111.14, 111.38), ("I'm", 111.38, 111.56),
+                      ("like,", 111.56, 111.68), ("no,", 112.04, 112.12), ("I'm", 112.16, 112.26),
+                      ("not", 112.26, 112.4))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(lv, words, 105.2, 111.68, 0.08, 0.4, rep)
+        self.assertTrue(any(x.startswith("the clip ends with")
+                            and "talk-level sound after its last word" in x
+                            for x in rep["warnings"]))
+
+    def test_an_end_never_runs_past_a_next_word_timed_as_an_instant(self):
+        # seg4 at 136.68: "day," then "like" timed as an instant at 136.98 but
+        # said before it, run straight on from "day,". settle_end took the
+        # instant's clock as the next word's start and cut at 137.05, after
+        # "like", PASS.
+        runs = [(0, 129.5, 130.2), (1, 130.2, 136.97), (0, 136.97, 137.72), (1, 137.72, 140.0)]
+        lv = _QuietRoom(runs, [(130.2, 136.95, -15.0), (136.95, 136.97, -36.0),
+                               (137.72, 140.0, -15.0)], 125.0, 140.0)
+        words = _said(("So", 130.28, 130.5), ("to", 135.84, 136.2), ("this", 136.2, 136.38),
+                      ("day,", 136.38, 136.68), ("like", 136.98, 136.98), ("I", 136.98, 137.8))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(lv, words, 130.28, 136.68, 0.08, 0.4, rep)
+        self.assertLess(e, 136.97)                         # not after "like"
+        self.assertTrue(any(x.startswith("the clip ends") for x in rep["warnings"]))
+
+    def test_a_loud_bed_is_not_quiet_because_the_threshold_rose_over_it(self):
+        # yt7hb at 10.0: a music bed at -17 dBFS between words at -4 to -6; the
+        # threshold rose to -16 over it, and the NOTE called the bed quiet.
+        n_runs = [(1, 0.0, 17.6), (0, 17.6, 18.2), (1, 18.2, 30.0)]
+        loud = [(9.4, 9.82, -6.0), (10.0, 10.4, -4.0), (10.4, 17.5, -5.0), (17.6, 18.2, -60.0),
+                (18.2, 30.0, -5.0)]
+        words = _said(("one", 9.4, 9.82), ("two", 10.0, 10.4), ("three", 10.4, 16.9),
+                      ("end.", 16.9, 17.5), ("next", 18.2, 18.5))
+        rep = {"warnings": []}
+        finish.place_clip(_Room(n_runs, loud, 0.0, 30.0, -17.0, -16.0, -50.0), words,
+                          10.0, 17.5, 0.08, 0.4, rep)
+        self.assertTrue(any(x.startswith("the clip starts in a") and "never goes quiet" in x
+                            for x in rep["warnings"]))
+        self.assertFalse(any("clip starts" in x and "quiet moment" in x
+                             for x in rep.get("notes", [])))
+        # Nor is a stretch the level could not measure, however low its peaks.
+        u_runs = [(1, 0.0, 9.82), (2, 9.82, 10.0), (1, 10.0, 17.6), (0, 17.6, 18.2),
+                  (1, 18.2, 30.0)]
+        rep = {"warnings": []}
+        finish.place_clip(_Room(u_runs, loud + [(9.82, 10.0, -60.0)], 0.0, 30.0, -17.0, -16.0,
+                                -50.0), words, 10.0, 17.5, 0.08, 0.4, rep)
+        self.assertFalse(any("clip starts" in x and "quiet moment" in x
+                             for x in rep.get("notes", [])))
+
+    def test_a_short_with_a_four_second_one_sided_guest_line_is_hard_panned(self):
+        # lav_center_guestR, clip 41.6-56.4: 3.8 s of the guest's own talk (of
+        # 8.1 s in that channel), 26 dB hard right; round 13 needed 5 s.
+        self.assertTrue(video_qa.hard_panned({"own_talk_s": [0.0, 3.8], "talk_s": [5.5, 8.1]}))
+        # Real stereo music in any 15 s: at most 0.4 s of one-sided "talk".
+        self.assertFalse(video_qa.hard_panned({"own_talk_s": [0.4, 0.0], "talk_s": [13.0, 13.0]}))
+        self.assertFalse(video_qa.hard_panned({"own_talk_s": [0.0, 2.2], "talk_s": [100.0, 104.0]}))
+
+    def test_an_edge_at_a_pause_after_an_unheard_word_warns(self):
+        # hum46 at 287.96: "stuff." then an unheard "right?" (-20 to -33 dBFS)
+        # past a dip, then the pause the END adopted (it starts within 0.25 s).
+        # The clip ended "All this stuff, right?", captions "ALL THIS STUFF.", PASS.
+        runs = [(0, 279.0, 280.45), (1, 280.45, 287.92), (0, 287.92, 287.99),
+                (1, 287.99, 288.2), (0, 288.2, 288.52), (1, 288.52, 290.0)]
+        loud = [(280.45, 287.74, -20.0), (287.74, 287.88, -29.0), (287.88, 287.92, -36.0),
+                (287.92, 287.99, -40.5), (287.99, 288.12, -20.0), (288.12, 288.2, -33.0),
+                (288.52, 290.0, -20.0)]
+        lv = _Room(runs, loud, 278.0, 290.0, -44.5, -41.2, -52.5)
+        words = _said(("So", 280.5, 280.8), ("All", 287.0, 287.58), ("this", 287.58, 287.74),
+                      ("stuff.", 287.74, 287.96), ("He's", 288.36, 288.66))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(lv, words, 280.5, 287.96, 0.08, 0.4, rep)
+        self.assertGreater(e, 288.2)                       # the pause the editor picked
+        self.assertTrue(any(x.startswith("the clip ends with")
+                            and "talk-level sound after its last word" in x
+                            for x in rep["warnings"]))
+
+    def test_an_end_settled_past_an_unheard_word_warns(self):
+        # hum46 at 426.08 (the developer's own sweep after round 14): "parents'"
+        # then an unheard "basement." (-23 to -27 dBFS) past a dip; settle_end
+        # took the first pause after it and kept the word, PASS.
+        runs = [(0, 419.0, 419.9), (1, 419.9, 426.57), (0, 426.57, 427.04), (1, 427.04, 429.0)]
+        loud = [(419.9, 425.93, -20.0), (425.93, 426.06, -24.0), (426.06, 426.12, -33.0),
+                (426.12, 426.16, -40.0), (426.16, 426.34, -27.0), (426.34, 426.37, -41.0),
+                (426.37, 426.5, -23.0), (426.5, 426.57, -36.0), (427.04, 429.0, -20.0)]
+        lv = _Room(runs, loud, 418.0, 429.0, -44.5, -40.6, -51.8)
+        words = _said(("So", 420.0, 420.3), ("their", 425.78, 425.88),
+                      ("parents'", 425.88, 426.08), ("and", 426.8, 427.16))
+        rep = {"warnings": []}
+        finish.place_clip(lv, words, 420.0, 426.08, 0.08, 0.4, rep)
+        self.assertTrue(any(x.startswith("the clip ends with") for x in rep["warnings"]))
+
+    def test_a_word_that_runs_on_past_its_clock_is_not_stray_talk(self):
+        # A guard: the ASR ends "foundation." 0.3 s early; its sound runs on with
+        # no dip, then a short stop burst after a closure, then the pause. The
+        # tail is the word: no warning.
+        runs = [(0, 9.0, 9.9), (1, 9.9, 15.42), (0, 15.42, 16.2), (1, 16.2, 18.0)]
+        loud = [(9.9, 15.3, -12.0), (15.3, 15.34, -40.0), (15.34, 15.39, -18.0),
+                (15.39, 15.42, -40.0), (16.2, 18.0, -12.0)]
+        words = _said(("So", 10.0, 10.3), ("foundation.", 14.4, 15.0), ("Next", 16.2, 16.5))
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(_QuietRoom(runs, loud, 8.0, 18.0), words, 10.0, 15.0,
+                                    0.08, 0.4, rep)
+        self.assertGreater(e, 15.39)                       # the whole word
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
+
+    def test_an_instants_sound_stops_at_a_pause_under_a_bed(self):
+        # bed20 at 337.46: "It" timed as an instant (said 337.42-337.46) after
+        # "maid." and a 0.16 s pause, under a bed 17 dB down. The walk ran back
+        # over the bed into "maid." (337.06), hiding the pause.
+        r = _Room([(1, 330.0, 345.0)], [(337.02, 337.15, -25.0), (337.42, 337.46, -21.0),
+                                         (337.46, 337.56, -20.0)], 330.0, 345.0, -37.0,
+                  -43.3, -49.8).r
+        self.assertGreaterEqual(finish.instant_onset(r, 337.46, 337.16), 337.38)
+        self.assertLessEqual(finish.instant_onset(r, 337.46, 337.16), 337.43)
+
+
+HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.
     raise RuntimeError("LSS_REQUIRE_FFMPEG is set but ffmpeg/ffprobe are missing")
@@ -3071,6 +3268,26 @@ class MediaRoundTrip(unittest.TestCase):
         c = {x["check"]: x["status"] for x in self._quiet_qa(src)["checks"]}
         self.assertEqual(c["speakers_hard_panned"], "WARN")
         rep = finish.finish(str(src), str(self.tmp / "guest_right_out.mp4"),
+                            finish.load_style(None), trim_head=False, loudness=True,
+                            words=None, burn=False, keywords=[])
+        self.assertTrue(any(s.get("speakers_hard_panned") for s in rep["steps"]))
+
+    def test_a_short_opening_on_a_one_sided_guest_line_is_folded(self):
+        # Round 14: a 15 s short opening on the guest's last 4 s (right input
+        # only), then the host centred. Under 5 s of one-sided talk, round 13
+        # neither folded nor warned, the guest 26 dB hard right.
+        src = self.tmp / "guest_line.mp4"
+        left = f"0.0095*{self.B_}*lt(t,4)+0.3*{self.A_}*gte(t,4)"
+        right = f"0.3*{self.B_}*lt(t,4)+0.3*{self.A_}*gte(t,4)"
+        self._ff("-f", "lavfi", "-i", "testsrc2=s=320x240:r=25:d=15", "-f", "lavfi", "-i",
+                 f"aevalsrc='{left}|{right}':s=48000:d=15", "-c:v", "libx264", "-preset",
+                 "ultrafast", "-c:a", "aac", "-shortest", str(src))
+        roles = video_qa.channel_roles(str(src))
+        self.assertLess(roles["own_talk_s"][1], 5.0)               # round 13's floor
+        self.assertTrue(roles["hard_panned"])
+        c = {x["check"]: x["status"] for x in self._quiet_qa(src)["checks"]}
+        self.assertEqual(c["speakers_hard_panned"], "WARN")
+        rep = finish.finish(str(src), str(self.tmp / "guest_line_out.mp4"),
                             finish.load_style(None), trim_head=False, loudness=True,
                             words=None, burn=False, keywords=[])
         self.assertTrue(any(s.get("speakers_hard_panned") for s in rep["steps"]))

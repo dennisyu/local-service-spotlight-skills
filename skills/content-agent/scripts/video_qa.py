@@ -45,9 +45,10 @@ What it can and cannot see (twelve independent audits, 23-25 Oct 2026):
   (talk on one input, a wireless mic's -20 dB safety track, a camera's scratch
   mic) is a `one_channel` WARN, and two channels that each carry a second or
   more of talk of their own while the other sits 20 dB or more under its own
-  (one lav per input, a recorder's split mode), or one channel with 5 s or
+  (one lav per input, a recorder's split mode), or one channel with 1.5 s or
   more of its own talk that is a fifth of all its talk (a guest's lav on one
-  input beside a centred host mic), are a `speakers_hard_panned` WARN (a
+  input beside a centred host mic, in a whole file or a 15 s short), are a
+  `speakers_hard_panned` WARN (a
   little own talk in one channel is what wide stereo music looks like, and
   is not); 5.1 with silent surrounds is normal. finish.py's warnings are
   joined with "; " and any pipe or backslash in a cell is escaped, so a
@@ -684,16 +685,18 @@ def channel_roles(path: str, start: float = 0.0, seconds: float | None = None,
 def hard_panned(roles: dict | None) -> bool:
     """A voice sits in one channel: both channels carry a second or more of talk
     of their own (one lav per input, split mode), or one channel carries at
-    least 5 s of its own talk and a fifth of all its talk (a guest's lav on
+    least 1.5 s of its own talk and a fifth of all its talk (a guest's lav on
     one input beside a centred host mic; audit round 13: 64.7 s of 99.1 s,
-    26 dB hard right, passed clean). Wide stereo music shows own "talk" in
-    one channel only, and little of it (2.2 s of 104 s in round 12's
-    build), so it is neither."""
+    26 dB hard right, passed clean; round 14: a 15 s short opening on 3.8 s of
+    that guest, under round 13's 5 s floor). Wide stereo music shows own
+    "talk" in one channel only, and little of it (2.2 s of 104 s in round
+    12's build; at most 0.4 s in any 15 s of real stereo music), so it is
+    neither."""
     own = (roles or {}).get("own_talk_s") or [0.0, 0.0]
     talk = (roles or {}).get("talk_s")
     if own[0] >= 1.0 and own[1] >= 1.0:
         return True
-    return bool(talk) and any(own[c] >= max(5.0, 0.2 * talk[c]) for c in (0, 1))
+    return bool(talk) and any(own[c] >= max(1.5, 0.2 * talk[c]) for c in (0, 1))
 
 
 def audio_scan(path: str, start: float = 0.0, seconds: float | None = None,
