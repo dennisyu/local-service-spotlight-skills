@@ -1445,12 +1445,17 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             spoken = {w.get("cue_start") for w in said if w["end"] >= w["start"]}
             r = levels.near(cut)
 
-            def span(w):
-                if w["end"] - w["start"] >= 0.01:
+            def instant(w):
+                return w is not None and w["end"] - w["start"] < 0.01
+
+            def sound(w):
+                """A word's sound: its clock, or for an instant (whose clock marks
+                where its sound ENDS), the run of level that ends at it (or up to
+                0.1 s before it), back to the first 10 ms window under the
+                silence threshold or 25 dB under the run's loudest, at most
+                0.4 s; 0.3 s without level peaks."""
+                if not instant(w):
                     return (w["start"], w["end"])
-                # An instant: its sound is the run of level that ends at (or up
-                # to 0.1 s before) it, back to the first 10 ms window 30 dB under
-                # its loudest, at most 0.4 s before the instant.
                 a = w["start"] - 0.3
                 pk = getattr(r, "peaks", None)
                 if pk and hasattr(r, "loudest"):
@@ -1459,48 +1464,61 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
                     k = min(len(pk), int(round((w["start"] - r.base) / r.window_s))) - 1
                     k0 = max(0, int(round((lo_ - r.base) / r.window_s)))
                     kq = max(k0, int(round((w["start"] - 0.1 - r.base) / r.window_s)))
-                    while top is not None and k >= kq and pk[k] <= top - 30.0:
+
+                    def quiet(k):
+                        return pk[k] <= max(r.threshold(r.base + k * r.window_s), top - 25.0)
+                    while top is not None and k >= kq and quiet(k):
                         k -= 1                       # the quiet just before the instant
-                    while top is not None and k >= k0 and pk[k] > top - 30.0:
+                    while top is not None and k >= k0 and not quiet(k):
                         k -= 1                       # the word's sound
                     if top is not None:
                         a = r.base + (k + 1) * r.window_s
                 return (a, w["start"])
-            occ = [span(w) for w in said] \
-                + [(w["start"], w["end"]) for w in words
+            # (start, end, word) on the words' clocks; an instant is a point there.
+            occ = [(w["start"], w["end"], w) for w in said] \
+                + [(w["start"], w["end"], None) for w in words
                    if w.get("timing") == "cue" and w["end"] > w["start"]] \
-                + [(w["cue_start"], w["cue_end"]) for w in words
+                + [(w["cue_start"], w["cue_end"], None) for w in words
                    if not w.get("heard", True) and w.get("cue_start") is not None
                    and w["cue_start"] not in spoken and any(ch.isalnum() for ch in w["word"])
                    and w.get("cue_end") is not None and w["cue_end"] > w["cue_start"]]
+            before = after = None
+            mine = other = None
             if where == "starts":
                 edge_w = min((w for w in said if w["start"] >= s_w - 0.02), default=None,
-                          key=lambda w: w["start"])
-                mine = span(edge_w) if edge_w else None
-                after = mine[0] if mine else None
-                before = max((y for x, y in occ if y <= (after or 0.0) + 0.01
-                              and (x, y) != mine), default=None) if mine else None
+                             key=lambda w: w["start"])
+                if edge_w is not None:
+                    mine = sound(edge_w)
+                    after = edge_w["start"]
+                    prev = max((o for o in occ if o[1] <= after + 0.01 and o[2] is not edge_w),
+                               key=lambda o: o[1], default=None)
+                    if prev is not None:
+                        before = prev[1]
+                        other = sound(prev[2]) if prev[2] is not None else prev[:2]
+                lo_s, hi_s = before, (mine[0] if mine else None)
             else:
                 edge_w = max((w for w in said if w["start"] <= e_w + 0.02
-                           and w["end"] <= e_w + 0.02), default=None, key=lambda w: w["end"])
-                mine = span(edge_w) if edge_w else None
-                before = mine[1] if mine else None
-                after = min((x for x, y in occ if x >= (before or 0.0) - 0.01
-                             and (x, y) != mine), default=None) if mine else None
+                              and w["end"] <= e_w + 0.02), default=None, key=lambda w: w["end"])
+                if edge_w is not None:
+                    mine = sound(edge_w)
+                    before = edge_w["end"]
+                    nxt = min((o for o in occ if o[0] >= before - 0.01 and o[2] is not edge_w),
+                              key=lambda o: o[0], default=None)
+                    if nxt is not None:
+                        after = nxt[0]
+                        other = sound(nxt[2]) if nxt[2] is not None else nxt[:2]
+                lo_s, hi_s = before, (other[0] if other else None)
             gap = (after - before) if before is not None and after is not None else 0.0
-            if gap >= 0.15:
-                nb = 0.0
+            if gap >= 0.15 and hi_s is not None and lo_s is not None:
+                # The gap on the clocks decides whether to look; the search stops
+                # at the far side's SOUND (an instant's sound runs before its clock).
+                nb = nb_loud = 0.0
                 if hasattr(r, "loudest"):
-                    # The softer of the clip's own word and its neighbour across the gap.
-                    other = (max((o for o in occ if o[1] <= before + 0.01 and o != mine),
-                                 key=lambda o: o[1], default=None) if where == "starts" else
-                             min((o for o in occ if o[0] >= after - 0.01 and o != mine),
-                                 key=lambda o: o[0], default=None))
-                    lv = [r.loudest(*o) for o in (mine, other) if o is not None]
+                    lv = [r.loudest(*o) for o in (mine, other) if o is not None and o[1] > o[0]]
                     lv = [v for v in lv if v is not None]
                     nb = min(lv) if lv else 0.0
                     nb_loud = max(lv) if lv else 0.0
-                q = gap_cut(r, "end" if where == "ends" else "start", before, after, nb, pad,
+                q = gap_cut(r, "end" if where == "ends" else "start", lo_s, hi_s, nb, pad,
                             nb_loud=nb_loud if hasattr(r, "loudest") else None)
                 if q is False:
                     # No 10 ms peaks to judge by: the gap's middle, at most 0.5 s

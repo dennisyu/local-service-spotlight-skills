@@ -1946,9 +1946,30 @@ class AuditRound13(unittest.TestCase):
                  dict(w("here's", 396.62, 397.7), timing="word", heard=True),
                  dict(w("done.", 399.0, 399.5), timing="word", heard=True)]
         rep = {"warnings": []}
-        finish.place_clip(lv, words, 396.62, 399.5, 0.08, 0.4, rep)
-        self.assertTrue(any("starts inside unbroken talk" in x for x in rep["warnings"]))
-        self.assertFalse(any("quiet" in n or "gap" in n for n in rep.get("notes", [])))
+        _, s, _ = finish.place_clip(lv, words, 396.62, 399.5, 0.08, 0.4, rep)
+        self.assertTrue(any(x.startswith("the clip starts") for x in rep["warnings"]))
+        self.assertFalse(any("quiet moment" in n for n in rep.get("notes", [])))
+
+    def test_an_instant_neighbour_does_not_eat_a_real_pause(self):
+        # seg5 at 171.3: "ten," then a real 80 ms pause, then "right?" timed as an
+        # instant at 171.66 (said 171.52-171.66). The search stops at its sound;
+        # the gap on the clocks is 0.36 s, so the pause is found.
+        # Under a bed (-34 dBFS) the instant's sound must not be walked back over
+        # the bed into "ten," (an intermediate fix did, and WARNed).
+        lv = _QuietRoom([(1, 165.0, 175.0)], [(165.0, 171.34, -10.0), (171.34, 171.37, -24.0),
+                                              (171.37, 171.43, -34.0), (171.43, 171.49, -50.0),
+                                              (171.49, 171.52, -34.0), (171.52, 171.66, -8.0),
+                                              (171.66, 175.0, -12.0)], 165.0, 175.0,
+                        floor_db=-34.0)
+        words = [dict(w("so", 165.5, 165.8), timing="word", heard=True),
+                 dict(w("ten,", 171.08, 171.3), timing="word", heard=True),
+                 dict(w("right?", 171.66, 171.66), timing="word", heard=True),
+                 dict(w("yes", 171.8, 172.1), timing="word", heard=True)]
+        rep = {"warnings": []}
+        _, _, e = finish.place_clip(lv, words, 165.5, 171.3, 0.08, 0.4, rep)
+        self.assertGreaterEqual(e, 171.43)                 # in the dip under the bed
+        self.assertLessEqual(e, 171.49)
+        self.assertEqual([x for x in rep["warnings"] if "ends" in x], [])
 
     def test_one_voice_hard_panned_is_a_voice_not_music(self):
         # A guest's lav on the right input beside a centred host mic: 64.7 s of
