@@ -2946,6 +2946,31 @@ class AuditRound16(unittest.TestCase):
         if s < 67.32:
             self.assertEqual(rep["clip_word_span"][0][0], "you")
 
+    def test_a_clip_too_short_for_loudnorm_says_so(self):
+        # A 2 s every-cue clip rendered in this round's checks landed at -17.6
+        # LUFS (FAIL) and the report blamed the audio; 3.2 s and longer reach
+        # the target. loudnorm's dynamic mode works on 3 s windows.
+        from unittest import mock
+        for dur, said_so in ((1.97, True), (12.0, False)):
+            with tempfile.TemporaryDirectory() as d:
+                part = os.path.join(d, ".o.partial.mp4")
+                Path(part).write_bytes(b"0")
+                cmd = ["ffmpeg", "-af", "loudnorm=I=-14.0:TP=-2.0:LRA=11", "-c:a", "aac",
+                       "-b:a", "256k", part]
+                seq = iter([{"integrated_lufs": -17.6, "true_peak_dbtp": -2.0},
+                            {"integrated_lufs": -17.6, "true_peak_dbtp": -2.0}])
+
+                def render(c, w_, o):
+                    Path(o).write_bytes(b"1")
+                rep = {"warnings": []}
+                with mock.patch.object(finish.video_qa, "measure_loudness", lambda p: next(seq)), \
+                        mock.patch.object(finish, "_run_render", render):
+                    finish._settle_loudness(cmd, Path(d), part, None, finish.load_style(None), rep,
+                                            2, dur)
+                msg = " ".join(rep["warnings"])
+                self.assertIn("loudness lands at -17.6 LUFS", msg)
+                self.assertEqual("3 s windows" in msg, said_so)
+
 HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.

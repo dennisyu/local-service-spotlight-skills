@@ -2673,7 +2673,8 @@ def words_in(words: list[dict], a: float, b: float, sound: list | None = None,
 
 
 def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
-                     report: dict, channels: int | None = None) -> tuple:
+                     report: dict, channels: int | None = None,
+                     duration: float | None = None) -> tuple:
     """Measure the file the render wrote and render again (twice at most) until
     it sits within 0.5 LU of the target and under the true-peak ceiling.
     ffmpeg's own AAC encoder adds inter-sample peaks the filter chain never had
@@ -2753,6 +2754,11 @@ def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
                "ffmpeg's loudness pass cannot lift this audio further without clipping")
         if channels and channels > 2:
             why += "; talk in one channel of a multichannel mix lands short this way"
+        if duration is not None and duration < 3.2:
+            # (round 16: a 2 s every-cue clip landed at -17.6 LUFS, a 2.8 s one
+            # at -18.5; 3.2 s and longer reached -14.3 to -14.5)
+            why += (f"; loudnorm's dynamic mode works on 3 s windows, and this clip is "
+                    f"{duration:.1f} s: a clip of 3 s or more reaches the target")
         report["warnings"].append(
             f"loudness lands at {li:g} LUFS, {li - target:+.1f} LU from {target:g}, after "
             f"{len(cands)} renders: {why}. A compressor or limiter in the editor lets it "
@@ -2851,7 +2857,8 @@ def _render(src, dst, style, info, report, fin, cap, words, all_words, burn, ref
     out_loud = None
     if loud_on:
         partial, res, out_loud = _settle_loudness(cmd, work, partial, res, style, report,
-                                                  (info.get("audio") or {}).get("channels"))
+                                                  (info.get("audio") or {}).get("channels"),
+                                                  duration)
     os.replace(partial, final)
     if words:
         sidecar.write_text(srt_text, encoding="utf-8")
