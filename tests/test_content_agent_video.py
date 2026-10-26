@@ -3472,6 +3472,294 @@ class AuditRound17(unittest.TestCase):
         self.assertEqual(rep["clip_word_span"][0][0], "And")
 
 
+class AuditRound18(unittest.TestCase):
+    """Eighteenth independent audit, 26 Oct 2026: each test pins one finding,
+    on the real files' own level runs and 10 ms peaks around the edge (a quiet
+    pause and a stand-in word make the clip's far edge, as in AuditRound17)."""
+    _fixture = AuditRound17._fixture
+    _end = AuditRound17._end
+    _start = AuditRound17._start
+
+    SEG4_REQUIRED = dict(
+        runs=[(1, 60.96, 62.06), (0, 62.06, 62.07), (1, 62.07, 62.23), (0, 62.23, 62.43), (1,
+            62.43, 62.57), (0, 62.57, 62.58), (1, 62.58, 63.15)],
+        words=[('the', 61.54, 61.66), ('work', 61.66, 61.86), ('ethic', 61.86, 62.22),
+            ('required.', 62.22, 62.92)],
+        t0=61.6, base_db=-47.9, thr_db=-47.9, floor_db=-73.6,
+        peaks=[-14.41, -17.4, -16.31, -18.04, -17.15, -17.57, -17.06, -17.8, -16.49, -14.75,
+            -12.18, -10.58, -9.22, -8.59, -8.28, -7.92, -8.15, -8.84, -9.76, -9.52, -10.5,
+            -9.47, -10.14, -16.75, -28.58, -33.08, -39.85, -30.53, -30.01, -11.4, -11.44,
+            -10.17, -11.19, -9.94, -9.18, -8.75, -8.55, -8.39, -11.81, -12.65, -20.4, -23.08,
+            -29.17, -36.33, -42.44, -46.9, -47.99, -33.4, -10.62, -10.41, -10.77, -11.41, -12.2,
+            -13.27, -13.32, -13.87, -13.89, -15.57, -18.1, -22.1, -30.86, -33.4, -38.73, -54.58,
+            -49.55, -53.2, -57.34, -56.08, -53.28, -35.14, -35.31, -43.92, -59.33, -64.43,
+            -70.58, -67.59, -71.16, -69.37, -71.03, -73.56, -71.07, -70.89, -66.71, -34.33,
+            -28.79, -21.41, -19.21, -17.52, -13.21, -12.31, -12.13, -12.28, -14.34, -21.38,
+            -30.13, -37.85, -42.6, -51.94, -35.42, -36.27, -32.19, -35.32, -37.55, -40.18,
+            -43.28, -34.55, -11.47, -11.75, -11.0, -10.08, -10.23, -12.35, -10.85, -10.16,
+            -10.3, -9.79, -10.38, -11.03, -10.9, -11.67, -10.68, -10.91, -11.24, -12.31, -12.8,
+            -12.62, -13.25, -14.03, -14.63, -14.73, -13.89, -13.67, -12.81, -13.85, -13.71,
+            -14.32, -14.81, -15.36, -15.14, -15.09, -15.3, -14.98, -14.52, -14.83, -16.81,
+            -20.15, -26.02, -30.62, -30.73, -30.94])
+
+    SEG2_360 = dict(
+        runs=[(0, 64.47, 64.86), (1, 64.86, 65.23), (0, 65.23, 65.45), (1, 65.45, 65.97), (0,
+            65.97, 66.0), (1, 66.0, 66.39)],
+        words=[('frickin', 64.42, 65.24), ('360', 65.24, 65.88), ('tomahawk', 65.88, 67.42)],
+        t0=64.7, base_db=-48.3, thr_db=-48.3, floor_db=-73.5,
+        peaks=[-73.27, -73.6, -74.64, -74.66, -73.07, -72.77, -74.49, -68.28, -68.02, -63.95,
+            -59.84, -55.3, -52.08, -51.91, -49.48, -21.41, -16.25, -15.54, -14.55, -14.94,
+            -15.46, -16.46, -18.94, -24.45, -31.33, -35.07, -35.3, -33.29, -29.83, -24.73,
+            -23.41, -22.9, -23.67, -25.82, -25.89, -25.86, -25.71, -25.57, -24.7, -25.58,
+            -26.19, -27.51, -28.19, -29.06, -28.71, -29.66, -30.67, -31.41, -32.22, -33.6,
+            -35.06, -38.48, -39.62, -52.62, -59.54, -67.59, -66.74, -70.45, -69.54, -73.2,
+            -71.13, -71.49, -73.48, -73.31, -73.67, -74.37, -72.64, -73.4, -73.51, -74.62,
+            -72.31, -74.59, -73.14, -73.92, -73.79, -42.82, -32.64, -16.09, -18.12, -18.41,
+            -18.97, -17.75, -16.04, -15.83, -15.11, -14.4, -14.67, -15.8, -16.18, -16.42,
+            -16.77, -18.54, -20.18, -23.6, -24.6, -24.2, -23.03, -26.04, -26.44, -26.94, -24.15,
+            -24.93, -26.89, -25.46, -24.24, -15.31, -13.95, -13.48, -16.34, -14.13, -14.2,
+            -14.16, -13.9, -19.16, -27.92, -40.27, -46.05, -41.56, -40.03, -36.83, -30.54,
+            -24.48, -22.23, -27.95, -32.67, -35.03, -55.28, -57.91, -59.94, -55.73, -47.49,
+            -34.0, -37.27, -24.15, -19.02, -17.44, -17.26, -17.23, -17.26])
+
+    SEG1_THIS = dict(
+        runs=[(1, 60.66, 61.52), (0, 61.52, 62.02), (1, 62.02, 62.81)],
+        words=[('presentations,', 60.66, 61.22), ('this', 61.22, 62.16), ('was', 62.16, 62.3),
+            ('in', 62.3, 62.44)],
+        t0=60.9, base_db=-47.6, thr_db=-47.6, floor_db=-69.5,
+        peaks=[-27.5, -28.4, -34.92, -42.51, -34.68, -32.97, -37.84, -34.86, -26.75, -24.63,
+            -23.25, -16.91, -16.55, -17.75, -18.14, -17.59, -17.12, -17.95, -18.3, -18.9,
+            -19.03, -23.36, -27.08, -28.93, -33.96, -33.81, -35.01, -35.12, -34.36, -40.63,
+            -33.15, -16.87, -15.16, -15.79, -15.94, -15.85, -16.25, -16.75, -16.84, -17.13,
+            -19.63, -19.02, -18.88, -18.81, -18.86, -18.86, -19.43, -20.99, -21.96, -27.22,
+            -32.63, -31.29, -30.91, -31.27, -30.81, -32.43, -34.81, -35.57, -36.46, -37.63,
+            -44.56, -45.17, -57.55, -64.76, -66.79, -69.57, -67.99, -66.7, -69.47, -71.09,
+            -70.16, -69.56, -69.27, -69.55, -69.67, -69.72, -69.68, -67.85, -70.27, -69.63,
+            -69.5, -68.08, -70.17, -70.4, -66.94, -65.79, -68.61, -68.08, -65.64, -64.7, -66.47,
+            -66.97, -67.11, -66.78, -70.32, -67.41, -69.94, -68.07, -71.01, -69.62, -70.33,
+            -73.09, -71.28, -69.53, -70.22, -74.08, -72.56, -47.94, -44.35, -52.67, -52.06,
+            -60.38, -39.81, -39.8, -32.37, -32.67, -28.83, -29.55, -26.67, -19.37, -12.03,
+            -10.33, -10.9, -11.49, -13.69, -15.65, -24.13, -22.68, -27.82, -30.74, -30.01,
+            -29.34, -21.68, -14.36, -12.39, -10.78, -10.47, -10.24, -10.98, -12.65, -14.0,
+            -14.77, -15.04, -14.04, -12.11, -10.26, -10.13, -10.58, -10.55, -10.44])
+
+    SEG1_CONTEST = dict(
+        runs=[(1, 85.49, 86.37), (0, 86.37, 86.77), (1, 86.77, 87.36), (0, 87.36, 87.39), (1,
+            87.39, 87.95)],
+        words=[('midnight', 85.84, 86.2), ('contest', 86.2, 87.22), ('that', 87.22, 87.5)],
+        t0=85.9, base_db=-49.1, thr_db=-49.1, floor_db=-74.6,
+        peaks=[-16.57, -16.02, -15.44, -15.62, -17.6, -21.0, -29.26, -29.36, -30.07, -27.62,
+            -26.03, -25.2, -24.81, -24.46, -25.28, -25.57, -24.99, -25.3, -21.19, -16.52,
+            -15.11, -15.43, -15.41, -14.83, -14.52, -14.63, -15.05, -15.77, -15.59, -18.11,
+            -17.32, -17.34, -17.93, -19.17, -20.28, -20.88, -21.79, -22.9, -24.32, -26.71,
+            -28.84, -29.54, -33.63, -30.26, -38.31, -36.6, -48.04, -51.72, -54.91, -44.47,
+            -51.14, -62.89, -68.03, -68.68, -67.4, -72.18, -72.11, -74.49, -73.52, -73.6,
+            -74.72, -74.57, -75.27, -74.94, -74.79, -74.57, -74.16, -74.57, -74.78, -73.58,
+            -73.26, -74.52, -73.49, -74.4, -73.28, -74.59, -73.74, -73.78, -74.63, -73.31,
+            -75.32, -73.39, -73.12, -73.32, -73.15, -72.15, -73.87, -46.11, -39.1, -35.44,
+            -31.45, -27.52, -37.9, -39.51, -43.23, -21.08, -16.07, -14.12, -15.05, -15.46,
+            -15.19, -15.49, -15.53, -15.09, -14.96, -16.57, -16.86, -20.77, -21.66, -22.57,
+            -23.04, -26.56, -28.15, -36.64, -39.25, -34.6, -33.42, -33.55, -39.41, -42.17,
+            -17.61, -15.45, -15.34, -13.26, -13.07, -14.47, -14.85, -14.51, -14.86, -14.94,
+            -13.63, -13.47, -13.68, -13.83, -16.71, -19.83, -20.36, -27.78, -29.24, -28.65,
+            -28.59, -27.77, -28.43, -28.2, -36.44, -47.58, -60.46, -61.52, -58.89, -42.14,
+            -24.3, -18.03, -16.38, -16.92, -17.64, -20.19, -21.71, -25.59, -24.85, -23.37])
+
+    SEG6_AND = dict(
+        runs=[(0, 25.55, 26.22), (1, 26.22, 26.97), (0, 26.97, 27.21), (1, 27.21, 27.51), (0,
+            27.51, 27.53), (1, 27.53, 27.82)],
+        words=[('and', 26.9, 27.26), ('Austin,', 27.26, 27.62)],
+        t0=25.6, base_db=-46.9, thr_db=-46.9, floor_db=-72.4,
+        peaks=[-67.5, -69.15, -66.09, -61.95, -63.17, -62.67, -60.16, -57.99, -55.17, -57.06,
+            -58.75, -58.01, -58.13, -58.66, -58.24, -57.19, -56.88, -60.63, -60.17, -58.7,
+            -57.9, -58.98, -60.29, -61.17, -59.44, -59.75, -61.41, -63.02, -62.74, -63.33,
+            -60.17, -64.32, -66.63, -68.69, -68.56, -70.17, -70.39, -68.1, -72.39, -72.37,
+            -71.93, -72.18, -71.26, -71.25, -72.65, -71.03, -70.35, -70.99, -69.49, -72.3,
+            -71.16, -71.04, -74.5, -71.32, -74.99, -71.1, -71.61, -71.56, -72.21, -74.55,
+            -74.78, -72.2, -26.17, -15.64, -13.02, -11.75, -10.12, -9.65, -8.94, -10.16, -9.87,
+            -9.16, -8.91, -8.82, -9.33, -9.53, -8.16, -7.85, -8.05, -8.16, -8.42, -8.28, -9.22,
+            -8.59, -8.74, -8.21, -8.8, -8.89, -8.69, -9.14, -8.79, -9.37, -8.69, -8.5, -8.76,
+            -8.56, -9.13, -9.25, -9.72, -9.66, -10.2, -10.68, -10.35, -11.03, -12.07, -11.85,
+            -12.14, -12.0, -11.82, -12.03, -12.64, -13.31, -13.06, -13.96, -13.91, -13.47,
+            -13.95, -15.32, -19.39, -20.86, -20.75, -20.7, -21.42, -21.36, -22.6, -23.28,
+            -24.24, -25.08, -25.66, -28.37, -29.95, -30.73, -36.04, -40.05, -44.08, -45.38,
+            -46.78, -55.96, -61.92, -67.4, -67.47, -72.76, -71.42, -71.38, -72.29, -71.59,
+            -76.0, -71.24, -73.37, -71.55, -69.67, -66.98, -74.61, -71.38, -72.21, -71.01,
+            -72.34, -72.53, -71.2, -74.53, -62.96, -26.83, -19.62, -16.69, -14.49, -12.03,
+            -11.25, -10.7, -8.05, -7.83, -7.69, -7.51, -7.84, -7.96, -8.58, -7.55, -6.85, -7.35,
+            -7.28, -10.27, -16.13, -18.22, -18.89, -22.77, -21.25, -20.45, -17.7, -23.35,
+            -25.64, -30.19, -36.33, -49.42, -54.25, -46.79, -36.68, -36.85, -14.61, -12.76,
+            -11.87, -11.94])
+
+    SEG2_WONT = dict(
+        runs=[(1, 172.16, 173.03), (0, 173.03, 173.04), (1, 173.04, 173.44), (0, 173.44,
+            173.75), (1, 173.75, 174.23), (0, 174.23, 174.28), (1, 174.28, 174.51)],
+        words=[('again', 172.56, 172.82), ('Oh,', 172.82, 173.02), ('they', 173.02, 173.18),
+            ("won't", 173.18, 173.78), ('implement', 173.78, 174.0), ('his', 174.0, 174.24),
+            ('tips.', 174.24, 174.58)],
+        t0=172.81, base_db=-47.7, thr_db=-47.7, floor_db=-74.6,
+        peaks=[-13.01, -12.34, -15.54, -14.24, -13.93, -14.57, -15.94, -14.65, -15.64, -18.7,
+            -20.57, -19.31, -18.21, -16.67, -16.77, -15.45, -15.98, -18.18, -16.78, -19.36,
+            -17.6, -22.82, -22.86, -48.63, -37.34, -36.51, -31.59, -32.4, -28.45, -23.02, -24.8,
+            -21.94, -21.91, -20.28, -18.84, -22.88, -25.51, -23.95, -19.46, -19.9, -19.42,
+            -19.85, -19.5, -18.93, -18.95, -18.35, -18.95, -19.67, -20.99, -20.92, -23.3,
+            -23.29, -24.24, -24.88, -25.37, -26.54, -26.49, -27.3, -27.91, -28.74, -30.52,
+            -35.23, -42.37, -46.11, -61.66, -67.03, -66.85, -60.34, -71.14, -70.23, -73.38,
+            -71.27, -73.52, -71.09, -70.18, -74.61, -70.36, -76.69, -73.43, -74.75, -74.64,
+            -71.11, -76.74, -73.49, -73.3, -71.98, -72.55, -75.08, -73.25, -74.67, -73.21,
+            -73.49, -74.78, -73.49, -71.59, -31.09, -29.12, -21.05, -15.65, -13.9, -13.38,
+            -14.3, -19.12, -19.75, -21.68, -26.33, -31.1, -36.19, -46.94, -31.45, -36.15,
+            -27.88, -19.03, -18.51, -20.25, -21.9, -22.29, -23.51, -24.18, -24.36, -22.56,
+            -20.93, -19.03, -19.23, -20.28, -22.07, -25.15, -28.26, -27.82, -29.01, -28.52,
+            -28.78, -28.42, -25.31, -22.95, -21.62, -22.6, -26.18, -29.63, -31.43, -31.97,
+            -35.25, -39.17, -48.37, -54.43, -59.8, -58.64, -60.85, -39.23, -44.53])
+
+    SEG1_AND = dict(
+        runs=[(1, 34.67, 34.83), (0, 34.83, 34.88), (1, 34.88, 35.16), (0, 35.16, 35.84), (1,
+            35.84, 36.59)],
+        words=[('back', 34.6, 34.8), ('then', 34.8, 35.12), ('and', 35.12, 35.36), ('Then',
+            35.96, 36.24), ('I', 36.24, 36.96)],
+        t0=34.7, base_db=-49.7, thr_db=-49.7, floor_db=-73.7,
+        peaks=[-17.49, -17.76, -17.59, -17.41, -18.54, -18.77, -19.17, -20.71, -23.01, -25.24,
+            -33.83, -38.58, -49.44, -61.25, -59.46, -66.48, -65.13, -64.52, -41.3, -48.22,
+            -22.83, -17.36, -17.79, -17.32, -16.9, -17.22, -17.28, -16.65, -17.15, -17.18,
+            -17.49, -17.84, -17.62, -17.41, -17.13, -16.91, -17.56, -18.35, -22.35, -22.1,
+            -23.02, -24.85, -28.19, -29.78, -35.8, -48.12, -59.52, -51.95, -59.38, -65.19,
+            -60.25, -65.46, -60.66, -59.4, -60.49, -60.16, -63.9, -61.5, -61.02, -61.97, -62.84,
+            -63.09, -62.21, -64.84, -63.72, -64.65, -66.69, -64.73, -66.4, -66.52, -67.08,
+            -65.03, -68.07, -70.72, -71.34, -70.51, -70.28, -73.49, -73.39, -73.22, -73.38,
+            -72.05, -73.29, -73.22, -73.46, -73.65, -72.48, -73.28, -74.9, -74.27, -73.3,
+            -74.53, -76.13, -72.25, -74.88, -73.33, -73.12, -73.36, -74.69, -73.22, -76.05,
+            -76.83, -73.71, -76.05, -74.32, -73.34, -76.17, -74.83, -74.47, -76.13, -75.87,
+            -73.3, -73.01, -62.34, -20.24, -16.31, -11.28, -17.91, -17.57, -15.62, -15.11,
+            -13.48, -14.3, -17.12, -16.86, -16.3, -16.36, -16.36, -14.33, -12.88, -12.21, -12.3,
+            -12.43, -11.79, -11.43, -12.16, -12.14, -11.86, -11.47, -11.53, -11.74, -11.38,
+            -11.1, -11.01, -12.16, -11.66, -11.82, -12.01, -13.04, -13.3, -14.26, -13.39,
+            -13.13, -14.08, -14.19, -14.16, -13.75, -14.84, -14.83, -15.39, -15.69, -16.07,
+            -15.7, -16.01, -16.63, -16.94, -18.16, -18.58, -18.88, -21.18, -19.98, -22.46,
+            -21.8, -21.99, -21.67, -22.24, -22.3, -22.6, -22.62, -23.27])
+
+    # H1: an END in the middle of a quiet pause closed the captions on the next
+    # word, clocked across that pause and said after it, with a PASS (84 of 602
+    # such ends on 29 real files; b6c23d0 caught only an end within 50 ms of
+    # that word's clock start).
+    def test_h1_an_end_inside_a_pause_leaves_out_a_word_clocked_across_it(self):
+        # seg4: "required." clocked 62.22-62.92, its start snapped to the end of
+        # "ethic", across the pause 62.23-62.43; the END asked for at 62.33.
+        # The clip ends "...knew the work ethic."; its captions closed "REQUIRED."
+        e, rep = self._end(self.SEG4_REQUIRED, 62.33)
+        self.assertLess(e, 62.43)
+        self.assertEqual(rep["clip_word_span"][1][0], "ethic")
+        self.assertFalse([x for x in rep["warnings"] if x.startswith("the clip ends")])
+
+    def test_h1_a_word_clocked_from_the_pauses_first_moment_is_said_after_it(self):
+        # seg2: "360" clocked 65.24-65.88, from 0.01 s into the pause
+        # 65.23-65.45; the captions closed "FRICKIN 360" over "...but freaking".
+        e, rep = self._end(self.SEG2_360, 65.345)
+        self.assertLess(e, 65.45)
+        self.assertEqual(rep["clip_word_span"][1][0], "frickin")
+
+    def test_h1_a_word_clocked_mostly_over_the_pause_and_past_it_is_said_after_it(self):
+        # seg1: "this" clocked 61.22-62.16 over the pause 61.52-62.02 (Whisper
+        # hears "This was in" after it); the 6 dB test took the tail of
+        # "presentations," for its sound. The END, past its clock's middle,
+        # asked for it: the receipt notes it is left out.
+        e, rep = self._end(self.SEG1_THIS, 61.765)
+        self.assertLess(e, 62.02)
+        self.assertEqual(rep["clip_word_span"][1][0], "presentations,")
+        self.assertTrue(any('before "this", clocked across that pause' in x
+                            for x in rep.get("notes", [])))
+
+    def test_h1_an_end_deep_in_a_stretched_words_clock_does_not_caption_it(self):
+        # seg1: "contest" clocked 86.20-87.22 across the pause 86.37-86.77, the
+        # END 0.37 s into its clock (round 17 left it out only within 0.05 s).
+        e, rep = self._end(self.SEG1_CONTEST, 86.57)
+        self.assertLess(e, 86.77)
+        self.assertEqual(rep["clip_word_span"][1][0], "midnight")
+
+    def test_said_before_pause_takes_a_clock_run_past_the_pause_as_said_after(self):
+        lv, words, _ = self._fixture(self.SEG1_THIS, "end")
+        prev, this = words[1], words[2]
+        self.assertEqual((prev["word"], this["word"]), ("presentations,", "this"))
+        r = lv.near(61.6)
+        self.assertTrue(finish.said_before_pause(r, prev, this, 61.52))   # the 6 dB test alone
+        self.assertFalse(finish.said_before_pause(r, prev, this, 61.52, 62.02))
+
+    def test_a_last_word_clocked_into_its_pause_and_ending_there_keeps_its_caption(self):
+        # Guard: seg2's "August", said before its pause and clocked
+        # 101.68-102.06 into it, its clock ending inside it; an END in the
+        # pause's middle keeps it (Whisper hears it last).
+        e, rep = self._end(AuditRound17.SEG2_AUG, 102.02)
+        self.assertEqual(rep["clip_word_span"][1][0], "August")
+
+    # M1: a word clocked across the pause a start sits in opens the captions
+    # (Whisper hears it open the clip at 99 of the auditor's 112 such starts),
+    # but where its clock runs only a few hundredths past the pause it may have
+    # been said before it, and the receipt now says so.
+    def test_m1_a_start_on_a_word_whose_clock_barely_runs_past_its_pause_warns(self):
+        # seg2: "won't" clocked 173.18-173.78 across the pause 173.44-173.75
+        # (0.03 s past it) and said before it; a START inside that pause.
+        s, rep = self._start(self.SEG2_WONT, 173.595)
+        self.assertGreater(s, 173.44)
+        self.assertTrue(any('opens its captions on "won\'t"' in x for x in rep["warnings"]))
+
+    def test_an_end_before_a_word_whose_clock_barely_runs_past_its_pause_warns(self):
+        # seg6: "and" clocked 26.90-27.26 across the pause 26.97-27.21 (0.05 s
+        # past it), said before it: left out of the captions by the rule, with
+        # a WARN that it may be in the clip.
+        e, rep = self._end(self.SEG6_AND, 27.09)
+        self.assertLess(e, 27.21)
+        self.assertNotEqual(rep["clip_word_span"][1][0], "and")
+        self.assertTrue(any('pause before "and", clocked across it' in x
+                            for x in rep["warnings"]))
+
+    # L1: settle_start's next-word branch looked for an earlier silence in a
+    # list that shadowed `before` and ignored it, so a start could settle into
+    # the reach pause refused for a word between (synthetic: no real case).
+    def test_l1_the_next_word_branch_never_settles_into_the_refused_pause(self):
+        w_ = 0.01
+        pk = [-70.0] * 800
+        for a, b, lv in ((0.2, 1.0, -12), (1.5, 1.65, -14), (2.2, 2.8, -12), (2.9, 3.6, -12),
+                         (4.0, 6.0, -12)):
+            for k in range(int(round(a / w_)), int(round(b / w_))):
+                pk[k] = lv
+        runs, kind, st = [], None, 0.0
+        for k, p in enumerate(pk):
+            kk = 0 if p <= -50.0 else 1
+            if kk != kind:
+                if kind is not None:
+                    runs.append((kind, st, round(k * w_, 2)))
+                kind, st = kk, round(k * w_, 2)
+        runs.append((kind, st, 8.0))
+        r = finish.Runs(runs, 0.0, [-50.0] * 20, 0.5, -50.0, pk, w_)
+
+        class _L:
+            total, style = 8.0, finish.load_style(None)
+
+            def near(self, t):
+                return r
+        words = _said(("said", 0.5, 1.0), ("he's", 1.3, 1.53), ("like", 1.9, 2.0),
+                      ("kill", 2.2, 2.8), ("him", 2.9, 3.6), ("now", 4.0, 6.0))
+        rep = {"warnings": []}
+        _, s, e = finish.place_clip(_L(), words, 1.53, 6.0, 0.08, 0.4, rep)
+        # The start asked for at "he's"'s clock end leaves "he's" (said
+        # 1.50-1.65) out of the clip, as asked: b6c23d0 settled into the refused
+        # pause, at 1.42, and played it uncaptioned with a PASS.
+        self.assertGreater(s, 1.65)
+        self.assertEqual(rep["clip_word_span"][0][0], "like")
+        self.assertFalse([x for x in rep["warnings"] if x.startswith("the clip starts")])
+
+    # L2: the start's add-back of a word said after its pause ran only at a
+    # pause the request was at, not at one settle_start chose.
+    def test_l2_a_start_settled_into_a_pause_opens_on_a_word_said_after_it(self):
+        # seg1: START asked 0.05 s before "Then"'s clock end; settle_start puts
+        # the cut in the pause 35.16-35.84, where "and" is clocked 35.12-35.36
+        # and said after it: the clip opens "And then I didn't".
+        s, rep = self._start(self.SEG1_AND, 36.19)
+        self.assertLess(s, 35.84)
+        self.assertEqual(rep["clip_word_span"][0][0], "and")
+
+
 class MediaRoundTrip(unittest.TestCase):
     """A quiet video with dead air at the head and a long pause must fail QA,
     and finish.py must fix what it claims to fix."""
@@ -4638,6 +4926,25 @@ class MediaRoundTrip(unittest.TestCase):
         self.assertTrue(any('before "So"' in x for x in rep.get("notes", [])))
         srt = out.with_suffix(".captions.srt").read_text(encoding="utf-8")
         self.assertNotIn("SO", srt.upper().split())
+        self.assertTrue(rep["steps"])
+
+    def test_a_clip_end_inside_a_pause_leaves_out_a_word_clocked_across_it(self):
+        # Round 18, H1: a word clocked across the pause an END sat in, its start
+        # snapped to the word before's end ("required." over seg4's pause),
+        # closed the burned captions and the sidecar over silence, PASS.
+        src = self._make("across.mp4", d=8, tone=f"{self.SYL}*(lt(t,3)+gte(t,4)*lt(t,7))")
+        # ("Then" clocked from the last word's clock end, with that word's last
+        # syllable still sounding under it, to past the 1 s silence)
+        words = self._words_for([(0.0, 2.5)]) + [dict(w("la", 2.5, 2.75), timing="word"),
+                                                  dict(w("Then", 2.75, 4.3), timing="word")] + \
+            self._words_for([(4.5, 7.0)])
+        out = self.tmp / "across_out.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=False,
+                            loudness=False, words=words, burn=False, keywords=[], clip=(0.0, 3.5))
+        self.assertLess(rep.get("clip_settled_on_sound", rep["clip_snapped_to_words"])[1], 3.2)
+        self.assertEqual(rep["clip_word_span"][1][0], "la")
+        srt = out.with_suffix(".captions.srt").read_text(encoding="utf-8")
+        self.assertNotIn("THEN", srt.upper().split())
         self.assertTrue(rep["steps"])
 
     def test_finish_notes_reach_the_receipt_as_a_note(self):
