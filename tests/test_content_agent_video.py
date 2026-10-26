@@ -3742,12 +3742,14 @@ class AuditRound18(unittest.TestCase):
                       ("kill", 2.2, 2.8), ("him", 2.9, 3.6), ("now", 4.0, 6.0))
         rep = {"warnings": []}
         _, s, e = finish.place_clip(_L(), words, 1.53, 6.0, 0.08, 0.4, rep)
-        # The start asked for at "he's"'s clock end leaves "he's" (said
-        # 1.50-1.65) out of the clip, as asked: b6c23d0 settled into the refused
-        # pause, at 1.42, and played it uncaptioned with a PASS.
+        # The start stays out of the refused pause (b6c23d0 settled into it, at
+        # 1.42, and played "he's" uncaptioned with a PASS). With no other pause
+        # for "like", whose sound by this branch's premise is the one before
+        # it, the receipt warns (round 19: 4e92784 put the cut in the word gap
+        # with a mere note, captions opening "LIKE").
         self.assertGreater(s, 1.65)
-        self.assertEqual(rep["clip_word_span"][0][0], "like")
-        self.assertFalse([x for x in rep["warnings"] if x.startswith("the clip starts")])
+        self.assertTrue(any(x.startswith("the clip starts where its first word is clocked inside a pause")
+                            for x in rep["warnings"]))
 
     # L2: the start's add-back of a word said after its pause ran only at a
     # pause the request was at, not at one settle_start chose.
@@ -3758,6 +3760,221 @@ class AuditRound18(unittest.TestCase):
         s, rep = self._start(self.SEG1_AND, 36.19)
         self.assertLess(s, 35.84)
         self.assertEqual(rep["clip_word_span"][0][0], "and")
+
+
+class AuditRound19(unittest.TestCase):
+    """Nineteenth independent audit, 26 Oct 2026: FULL mode (Descript's words on
+    the ASR clock, each with its cue's times), on the real files' own level runs
+    and 10 ms peaks around the edge, as in AuditRound17."""
+
+    def _full(self, fx, side):
+        lv, words, at = AuditRound17._fixture(self, dict(fx, words=[w[:3] for w in fx["words"]]),
+                                              side)
+        full = [dict(word=w, start=a, end=b, cue_start=cs, cue_end=ce, timing="word", heard=True)
+                for w, a, b, cs, ce in fx["words"]]
+        return lv, (words[:1] + full if side == "end" else full), at
+
+    def _place(self, fx, side, t):
+        lv, words, other = self._full(fx, side)
+        a, b = (other, t) if side == "end" else (t, other)
+        rep = {"warnings": []}
+        _, s, e = finish.place_clip(lv, words, a, b, 0.08, 0.4, rep)
+        return s, e, rep
+
+    SEG1_HOUSE = dict(
+        runs=[(1, 28.14, 28.66), (0, 28.66, 28.7), (1, 28.7, 29.29), (0, 29.29, 29.48), (1,
+            29.48, 29.95)],
+        words=[('to', 28.4, 28.5, 25.727, 28.861), ('my', 28.5, 28.62, 25.727, 28.861),
+            ("friend's", 28.62, 28.92, 25.727, 28.861), ('house', 28.92, 29.14, 28.861, 30.702),
+            ('when', 29.14, 29.54, 28.861, 30.702), ('I', 29.54, 29.68, 28.861, 30.702), ('was',
+            29.68, 29.78, 28.861, 30.702), ('like', 29.78, 30.02, 28.861, 30.702)],
+        t0=28.39, base_db=-50.8, thr_db=-50.8, floor_db=-73.2,
+        peaks=[-37.98, -44.84, -42.95, -38.03, -39.48, -45.08, -44.98, -22.16, -20.84, -20.26,
+            -20.79, -20.47, -18.18, -16.25, -17.55, -17.96, -25.22, -24.73, -25.85, -24.9,
+            -30.14, -42.31, -44.72, -46.78, -46.79, -47.99, -49.51, -50.89, -52.62, -51.17,
+            -25.32, -19.2, -21.85, -19.97, -23.97, -18.95, -18.51, -18.78, -20.31, -20.34,
+            -21.66, -22.03, -21.61, -21.62, -23.24, -26.98, -29.21, -29.01, -32.58, -35.23,
+            -40.35, -34.54, -24.61, -20.04, -16.24, -14.34, -17.87, -19.76, -18.21, -17.45,
+            -16.81, -14.77, -13.73, -13.4, -12.84, -14.28, -13.4, -14.18, -16.6, -15.92, -17.46,
+            -19.16, -22.73, -31.15, -33.69, -35.42, -36.61, -36.52, -36.56, -36.4, -35.83,
+            -37.71, -37.57, -38.82, -37.04, -42.86, -42.94, -48.23, -49.42, -64.57, -65.67,
+            -71.16, -71.1, -70.32, -71.31, -70.12, -71.1, -67.48, -71.49, -67.89, -49.07, -46.5,
+            -69.23, -69.19, -70.54, -67.8, -70.51, -61.79, -35.43, -31.61, -32.62, -26.05,
+            -29.67, -25.53, -26.13, -26.28, -23.59, -23.47, -23.42, -22.7, -23.63, -21.81,
+            -22.31, -21.56, -21.64, -23.87, -21.55, -21.8, -21.87, -21.75, -22.06, -23.73,
+            -26.58, -27.58, -30.22, -33.65, -31.96, -36.87, -35.05, -31.94, -28.99, -28.94,
+            -29.57, -32.5, -28.34, -28.74, -28.54, -29.23, -30.36, -32.57])
+
+    SEG1_OH = dict(
+        runs=[(1, 151.66, 152.48), (0, 152.48, 152.78), (1, 152.78, 154.07)],
+        words=[("it's", 152.24, 152.28, 149.081, 152.829), ('like,', 152.28, 152.44, 149.081,
+            152.829), ('"Oh', 152.8, 152.9, 149.081, 152.829), ('yeah,', 152.9, 153.02, 152.829,
+            154.529), ('my', 153.1, 153.18, 152.829, 154.529), ('first', 153.18, 153.4, 152.829,
+            154.529)],
+        t0=152.19, base_db=-47.8, thr_db=-47.8, floor_db=-74.7,
+        peaks=[-25.81, -28.94, -30.58, -30.27, -29.85, -27.26, -27.01, -22.64, -17.78, -13.45,
+            -11.62, -10.73, -12.27, -12.74, -13.91, -15.86, -15.31, -15.56, -16.4, -19.1,
+            -23.56, -29.05, -30.26, -33.55, -34.79, -33.59, -36.95, -39.93, -39.42, -52.2,
+            -39.92, -41.75, -57.29, -36.41, -44.61, -42.14, -48.29, -44.48, -59.39, -47.17,
+            -53.83, -58.78, -66.97, -66.79, -68.83, -69.36, -70.35, -68.12, -39.96, -58.89,
+            -71.8, -65.98, -72.35, -71.96, -73.4, -73.46, -68.71, -65.63, -61.11, -31.57, -23.3,
+            -22.67, -21.91, -22.37, -21.24, -21.61, -21.59, -21.88, -21.09, -21.34, -21.47,
+            -20.46, -18.75, -18.45, -17.33, -17.47, -15.68, -14.94, -15.68, -15.47, -14.99,
+            -13.75, -13.8, -14.29, -19.46, -18.77, -19.28, -19.48, -19.11, -19.5, -16.31,
+            -12.89, -12.92, -12.12, -12.14, -13.09, -17.11, -24.26, -28.31, -31.19, -42.3,
+            -44.94, -45.83, -45.62, -41.7, -37.25, -21.37, -14.55, -11.85, -10.58, -10.67,
+            -10.41, -11.23, -10.97, -11.53, -11.29, -13.03, -15.5, -18.03, -19.36, -23.22])
+
+    # H1: with Descript's cue times, the cue boundary nearest an edge's pause
+    # chose the caption word up to 0.5 s from it, before any word clock, and
+    # Descript splits cues mid-phrase: a heard word of the next cue, said
+    # before the pause, was in the sound and out of the captions, PASS.
+    def test_h1_a_full_end_keeps_a_word_of_the_next_cue_said_before_the_pause(self):
+        # seg1: cue "...to my friend's" ends 28.861; "house" (the next cue's)
+        # is clocked 28.92-29.14, before the pause 29.29-29.48. The clip ends
+        # "...to my friend's house."; 4e92784's captions closed "FRIEND'S".
+        for t in (29.375, 29.14):      # the pause's middle, "house"'s clock end
+            s, e, rep = self._place(self.SEG1_HOUSE, "end", t)
+            self.assertLess(e, 29.48)
+            self.assertEqual(rep["clip_word_span"][1][0], "house")
+
+    def test_h1_a_full_start_keeps_a_word_of_the_cue_before_said_after_the_pause(self):
+        # seg1: '"Oh' ends its cue (152.829) but is clocked 152.80-152.90,
+        # after the pause 152.48-152.78; the next cue opens "yeah,". The clip
+        # opens "Oh yeah, my first dunk"; 4e92784's captions opened "YEAH,".
+        s, e, rep = self._place(self.SEG1_OH, "start", 152.635)
+        self.assertGreater(s, 152.48)
+        self.assertEqual(rep["clip_word_span"][0][0], '"Oh')
+
+    @staticmethod
+    def _fw(word, a, b, cs, ce):
+        return dict(word=word, start=a, end=b, cue_start=cs, cue_end=ce, timing="word",
+                    heard=True)
+
+    def test_a_heard_word_between_the_cue_boundary_and_the_pause_is_the_edge_word(self):
+        fw = self._fw
+        # A heard word of the next cue clocked before the pause is the clip's
+        # last; one of the cue before clocked past the pause opens the clip.
+        words = [fw("my", 9.5, 9.7, 8.0, 9.75), fw("friend's", 9.7, 9.75, 8.0, 9.75),
+                 fw("house", 9.75, 10.05, 9.75, 12.0), fw("when", 10.62, 10.9, 9.75, 12.0)]
+        self.assertEqual(finish.word_before_pause(words, 10.1, 10.6, end=10.3)["word"], "house")
+        words = [fw("like,", 9.5, 9.9, 8.0, 10.65), fw("Oh", 10.62, 10.72, 8.0, 10.65),
+                 fw("yeah,", 10.72, 10.9, 10.65, 12.0)]
+        self.assertEqual(finish.word_after_pause(words, 10.1, 10.6)["word"], "Oh")
+
+    def test_the_cue_boundary_still_decides_with_no_heard_word_between(self):
+        fw = self._fw
+        # Guard: the next cue's first word clocked across the pause (said after
+        # it, round 18) leaves the cue's end in charge, and the start too.
+        words = [fw("my", 9.5, 9.7, 8.0, 9.9), fw("house.", 9.7, 9.9, 8.0, 9.9),
+                 fw("And", 9.9, 10.9, 10.6, 12.0), fw("so", 10.9, 11.1, 10.6, 12.0)]
+        self.assertEqual(finish.word_before_pause(words, 10.1, 10.6, end=10.3)["word"], "house.")
+        self.assertEqual(finish.word_after_pause(words, 10.1, 10.6)["word"], "And")
+        # The cue before's last word clocked late into the pause, ending inside
+        # it (said before it), leaves the next cue's start in charge.
+        words = [fw("my", 9.5, 9.7, 8.0, 9.75), fw("house.", 9.8, 10.4, 8.0, 9.75),
+                 fw("And", 10.62, 10.8, 10.6, 12.0)]
+        self.assertEqual(finish.word_after_pause(words, 10.1, 10.6)["word"], "And")
+
+    REPLAY_AND = dict(
+        runs=[(1, 3802.77, 3804.26), (0, 3804.26, 3805.39), (1, 3805.39, 3807.7)],
+        words=[('people', 3803.52, 3803.7, 3800.777, 3805.523), ('talking', 3803.7, 3803.92,
+            3800.777, 3805.523), ('about', 3803.92, 3804.14, 3800.777, 3805.523), ('it,',
+            3804.14, 3804.6, 3800.777, 3805.523), ('and', 3805.34, 3805.5, 3800.777, 3805.523),
+            ('that', 3805.5, 3805.6, 3805.524, 3806.853), ("it's", 3805.6, 3805.8, 3805.524,
+            3806.853), ('very', 3805.8, 3805.96, 3805.524, 3806.853), ('hard', 3805.96, 3806.14,
+            3805.524, 3806.853)],
+        t0=3803.6, base_db=-49.4, thr_db=-49.4, floor_db=-80.4,
+        peaks=[-25.08, -27.96, -27.85, -30.62, -33.8, -38.31, -39.26, -28.21, -22.09, -24.82,
+            -30.13, -31.72, -37.88, -26.26, -33.29, -24.25, -22.82, -19.02, -17.76, -17.06,
+            -15.09, -14.97, -18.5, -18.03, -22.88, -18.55, -23.75, -24.17, -27.75, -28.14,
+            -28.71, -33.16, -34.96, -36.68, -37.75, -34.07, -32.15, -25.91, -26.9, -30.34,
+            -32.52, -29.69, -34.28, -36.65, -36.62, -35.37, -26.03, -31.3, -25.24, -27.42,
+            -31.85, -23.73, -25.93, -27.05, -32.58, -33.77, -34.13, -33.96, -32.0, -37.39,
+            -38.46, -42.75, -41.75, -43.7, -43.06, -45.4, -49.76, -53.08, -52.77, -56.83,
+            -59.56, -59.18, -63.47, -65.73, -67.81, -68.02, -69.44, -71.02, -72.04, -71.21,
+            -71.96, -73.07, -73.38, -74.79, -76.33, -74.58, -74.55, -76.25, -77.83, -80.04,
+            -77.96, -78.21, -80.1, -79.96, -77.98, -76.3, -79.69, -78.21, -78.05, -78.02,
+            -80.15, -78.29, -78.0, -77.83, -78.16, -77.98, -76.03, -76.47, -76.06, -77.9,
+            -80.07, -79.4, -80.18, -79.86, -80.05, -80.6, -79.88, -80.14, -80.24, -83.24,
+            -78.16, -80.18, -79.69, -80.74, -83.35, -83.52, -80.76, -79.9, -80.08, -78.35,
+            -79.94, -80.29, -81.19, -77.99, -80.47, -83.2, -80.5, -80.74, -80.53, -77.97,
+            -80.94, -78.17, -79.52, -79.92, -80.72, -80.42, -80.29, -83.29, -80.04, -80.27,
+            -80.51, -84.05, -79.96, -80.14, -80.4, -79.76, -77.93, -80.53, -80.19, -76.58,
+            -78.11, -80.42, -80.23, -83.74, -79.79, -81.21, -81.13, -80.28, -80.32, -77.94,
+            -77.89, -83.4, -80.18, -76.33, -81.05, -80.32, -80.3, -80.35, -55.15, -46.85,
+            -36.52, -32.02, -21.78, -17.67, -18.9, -20.05, -20.32, -19.77, -19.91, -20.38,
+            -19.68, -17.43, -18.79, -19.24, -20.95, -20.68, -23.91, -23.44, -25.86, -25.78,
+            -29.85, -30.89, -32.61, -29.58, -25.84, -22.93, -23.78, -22.83, -22.3, -21.89,
+            -23.19, -29.59, -30.81, -32.66, -32.87, -33.5, -29.88, -26.86, -30.59, -32.99,
+            -35.73, -37.95, -34.75, -29.99, -26.81, -17.99, -13.04, -12.11, -9.33, -9.25, -8.4,
+            -10.52, -10.25, -11.02, -10.62, -9.99, -12.27, -11.32, -12.88, -14.22])
+
+    # The first version of round 19's fix, refuted on the replay before it
+    # shipped: a word of the neighbouring cue overruled the cue boundary even
+    # where Descript's own cue times put the pause between them, and the
+    # start's level add-back ran on at a cue boundary.
+    def test_a_word_whose_cue_starts_at_the_pause_end_is_not_the_last(self):
+        fw = self._fw
+        # The replay: "It's" is clocked 1011.50-1011.76, before the pause
+        # 1011.74-1012.51, but its cue starts at 1012.466, the pause's end;
+        # Whisper on the source heard it after the pause. The clip ends "...a
+        # top voice."
+        words = [fw("top", 1010.92, 1011.1, 1010.317, 1011.755),
+                 fw("voice.", 1011.1, 1011.5, 1010.317, 1011.755),
+                 fw("It's", 1011.5, 1011.76, 1012.466, 1014.043),
+                 fw("who", 1011.76, 1012.96, 1012.466, 1014.043)]
+        self.assertEqual(finish.word_before_pause(words, 1011.74, 1012.51, end=1012.125)["word"],
+                         "voice.")
+        # Mirror: a word of the cue before clocked past the pause, its cue
+        # ending inside the pause, leaves the next cue's start in charge.
+        words = [fw("my", 9.5, 9.7, 8.0, 10.3), fw("house.", 9.8, 10.7, 8.0, 10.3),
+                 fw("And", 10.72, 10.9, 10.35, 12.0)]
+        self.assertEqual(finish.word_after_pause(words, 10.1, 10.6)["word"], "And")
+
+    def test_with_a_cue_at_the_pause_the_start_takes_no_level_guess(self):
+        # The replay: a start asked for in the pause 3804.26-3805.39. "and" ends
+        # the cue before and is clocked across the pause's end; Whisper on the
+        # source heard "And then it's very hard..." after the cut and "...talking
+        # about it." before it. The level add-back took "it," (clocked
+        # 3804.14-3804.60 into the pause) as said after it: a caption word
+        # before the cut. 4e92784 opened the captions on "that".
+        s, e, rep = self._place(self.REPLAY_AND, "start", 3804.825)
+        self.assertGreater(s, 3805.0)
+        self.assertEqual(rep["clip_word_span"][0][0], "and")
+
+    def test_a_cue_closes_on_the_last_word_of_its_text(self):
+        fw = self._fw
+        # The replay: "have" and Descript's "a," (which the ASR did not hear,
+        # given "have"'s clock end) end the cue at 2833.548 together; Whisper
+        # on the source heard "a" before the pause 2833.57-2833.95. The
+        # captions close "...don't have a,"; 4e92784's closed "...don't have".
+        words = [fw("don't", 2832.96, 2833.1, 2830.018, 2833.548),
+                 fw("have", 2833.1, 2833.36, 2830.018, 2833.548),
+                 dict(fw("a,", 2833.36, 2833.36, 2830.018, 2833.548), heard=False),
+                 fw("an", 2833.36, 2833.6, 2833.899, 2837.835),
+                 fw("existing", 2833.6, 2834.3, 2833.899, 2837.835)]
+        self.assertEqual(finish.word_before_pause(words, 2833.57, 2833.95, end=2833.76)["word"], "a,")
+
+    def test_a_lone_ellipsis_is_never_the_edge_word(self):
+        fw = self._fw
+        # The replay's cue "program- ... how do they know?": Descript's lone
+        # "…", given 2027.38-2028.42 over the pause 2027.53-2028.53, closed the
+        # captions after "program-" (4e92784's closed on "training", before it).
+        words = [fw("training", 2025.96, 2026.98, 2023.292, 2027.074),
+                 fw("program-", 2026.98, 2027.38, 2027.074, 2029.26),
+                 dict(fw("\u2026", 2027.38, 2028.42, 2027.074, 2029.26), heard=False),
+                 fw("how", 2028.42, 2028.8, 2027.074, 2029.26)]
+        self.assertEqual(finish.word_before_pause(words, 2027.53, 2028.53, end=2028.03)["word"],
+                         "program-")
+        # A cue that opens on one opens on its first word.
+        words = [fw("know?", 9.0, 9.4, 7.0, 9.45),
+                 dict(fw("\u2026", 9.4, 10.65, 9.5, 12.0), heard=False),
+                 fw("So", 10.62, 10.8, 9.5, 12.0)]
+        self.assertEqual(finish.word_after_pause(words, 9.5, 10.6)["word"], "So")
+        # Guard: Whisper's lone "%" is a word ("percent") and still closes one.
+        words = _said(("about", 9.0, 9.3), ("50", 9.3, 9.6), ("%", 9.6, 9.9), ("of", 10.6, 10.8))
+        self.assertEqual(finish.word_before_pause(words, 10.0, 10.5, end=10.25)["word"], "%")
 
 
 class MediaRoundTrip(unittest.TestCase):
@@ -4945,6 +5162,26 @@ class MediaRoundTrip(unittest.TestCase):
         self.assertEqual(rep["clip_word_span"][1][0], "la")
         srt = out.with_suffix(".captions.srt").read_text(encoding="utf-8")
         self.assertNotIn("THEN", srt.upper().split())
+        self.assertTrue(rep["steps"])
+
+    def test_a_full_clip_end_keeps_a_word_of_the_next_cue_in_its_captions(self):
+        # Round 19, H1: with Descript's cue times, a cue ending 0.5 s before the
+        # pause an END sat in closed the captions there, and the next cue's
+        # first word, said before the pause ("house" in seg1), was in the sound
+        # and out of the burned captions and the sidecar, PASS.
+        src = self._make("cue_split.mp4", d=8, tone=f"{self.SYL}*(lt(t,3)+gte(t,4)*lt(t,7))")
+        # (the first cue ends 0.38 s before the pause, its last syllable 2.0-2.375;
+        # "house", the next cue's first word, is clocked 2.5-2.875, before it)
+        words = [dict(w, cue_start=0.0, cue_end=2.5) for w in self._words_for([(0.0, 2.5)])]
+        words += [dict(w("house", 2.5, 2.875), timing="word", cue_start=2.5, cue_end=6.9)]
+        words += [dict(w, cue_start=2.5, cue_end=6.9) for w in self._words_for([(4.0, 7.0)])]
+        out = self.tmp / "cue_split_out.mp4"
+        rep = finish.finish(str(src), str(out), finish.load_style(None), trim_head=False,
+                            loudness=False, words=words, burn=False, keywords=[], clip=(0.0, 3.5))
+        self.assertLess(rep.get("clip_settled_on_sound", rep["clip_snapped_to_words"])[1], 3.2)
+        self.assertEqual(rep["clip_word_span"][1][0], "house")
+        srt = out.with_suffix(".captions.srt").read_text(encoding="utf-8")
+        self.assertEqual(srt.upper().split()[-1], "HOUSE")
         self.assertTrue(rep["steps"])
 
     def test_finish_notes_reach_the_receipt_as_a_note(self):

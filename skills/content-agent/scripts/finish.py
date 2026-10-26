@@ -154,7 +154,18 @@ Usage:
     (seg4's "and", left out before), at a pause the request was at or one the
     start settled into (round 18: seg1's "and" before "Then"). On the round-18
     auditor's 230 words clocked over a quiet pause that Whisper on the source
-    could place, this agrees at 225.
+    could place, this agrees at 225. With Descript's cue times, a cue boundary
+    within 0.5 s of an edge's pause names the edge word (its words are the
+    sound's), unless a heard word of the neighbouring cue is clocked between
+    that boundary and the pause and Descript's own time for that cue reaches
+    the pause (at an end the next cue starts before the pause or in its first
+    0.1 s; at a start the cue before ends no earlier than 0.1 s before the
+    pause's end): Descript splits cues mid-phrase, and that word is the clip's
+    (round 19: seg1's "house" after the cue "...to my friend's", and "Oh"
+    before "Yeah, my first dunk", were in the sound and out of the captions
+    with a PASS). At such a boundary the level's add-back of a word said
+    after the pause does not run, and a lone "..." or "-" of Descript's is
+    never the edge word.
     Every warning the report carries (all but the dynamic-mode note) also
     reaches the QA receipt (`finish_report`), so every edge finish could not
     check is a WARN there; a word the ASR misclocked inside unbroken talk,
@@ -1215,7 +1226,9 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
     seg4's "he's", clocked 179.32-179.46 and said 179.41-179.55, opened a
     clip asked for at 179.46 from that very pause, out of its captions, with
     a PASS; settle_end's `past` already kept ends out of theirs), nor where
-    the next-word branch looks for an earlier silence (round 18)."""
+    the next-word branch looks for an earlier silence (round 18); when that
+    pause is the only one there, the branch finds none (None, a warning:
+    round 19)."""
     sil = _silences(runs, min_sil, talk)
     cands = [(x, y) for x, y in sil
              if x <= fw + 0.02 and y >= max(fw - 1.0, lo - 0.05)
@@ -1236,7 +1249,11 @@ def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
             return start, None
         earlier = [s for s in earlier if before is None or s[1] > before + 0.005]
         if not earlier:
-            return start, False         # only the refused pause: none for this start
+            # Only the refused pause: no cut keeps the word whole and the word
+            # between out (round 19: a word-gap cut there kept the start out of
+            # it with a mere note, captions opening on a word whose sound, by
+            # this branch's premise, the cut had left behind).
+            return start, None
         x, y = max(earlier, key=lambda s: s[1])
     sl = noise_slack(runs, x + 0.01, y - 0.01, style) if style else 0.0
     cut = max(cut_in_pause(x, y, "start", pad, sl), floor if floor is not None else x)
@@ -1980,15 +1997,21 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     # where soft talk reads as silence.
     left_out = []           # words the request asked for, said after the end's pause
     if ps:
-        fw_ = word_after_pause(words, *ps) or fw_
+        fw_ = word_after_pause(words, *ps, start=start) or fw_
         if "starts" in keep_reach and between_s and \
                 (fw_ is None or between_s[0]["start"] < fw_["start"]):
             # The words between, kept whole, open the captions too (round 16:
             # with an SRT the cue's own first word did, and seg1's "put",
             # "or" and "rim" were in the sound and out of the captions).
             fw_ = between_s[0]
-        elif fw_ is not None and sl_s == 0.0 and "starts" not in misclocked and not (
-                fw_.get("cue_start") is not None and ps[0] - 0.05 <= fw_["cue_start"] <= ps[1] + 0.5):
+        elif fw_ is not None and sl_s == 0.0 and "starts" not in misclocked \
+                and not cue_starts_in(words, *ps):
+            # (with a cue starting at the pause, Descript's times decide, and
+            # word_after_pause has taken a word of the cue before only when
+            # its clock and its cue both run past the pause: round 19, the
+            # replay's "it," clocked 3804.14-3804.60 into the pause
+            # 3804.26-3805.39, said before it, opened the captions here when
+            # "and", clocked across the pause's end, had opened them)
             for w in sorted((v for v in said if mostly_in(v, ps) and v["start"] < fw_["start"]
                              and not audible_in(v, rs, ps)), key=lambda v: v["start"]):
                 if said_before_pause(rs, prev_said(w), w, *ps) is False:
@@ -2002,8 +2025,8 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
             # The words between, kept whole, are in the clip's captions too
             # (round 16: the request alone left them out).
             lw_ = last_e
-        elif lw_ is not None and sl_e == 0.0 and "ends" not in misclocked and not (
-                lw_.get("cue_end") is not None and pe[0] - 0.5 <= lw_["cue_end"] <= pe[1] + 0.05):
+        elif lw_ is not None and sl_e == 0.0 and "ends" not in misclocked \
+                and not cue_ends_in(words, *pe):
             while lw_ is not None and any(lw_ is v for v in said) and mostly_in(lw_, pe) \
                     and not audible_in(lw_, re_, pe) \
                     and said_before_pause(re_, prev_said(lw_), lw_, *pe) is False:
@@ -2027,13 +2050,13 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
         return timed(w) and p[1] + 0.02 < w["end"] <= p[1] + 0.06 and w["start"] < p[0] + 0.1
     unsure_s = fw_ if ps and fw_ is not None and short_tail(fw_, ps) \
         and "starts" not in keep_reach and "starts" not in misclocked \
-        and not any("cue_start" in w and ps[0] - 0.05 <= w["cue_start"] <= ps[1] + 0.5
-                    for w in words) else None
+        and not (fw_.get("cue_start") is not None
+                 and ps[0] - 0.05 <= fw_["cue_start"] <= ps[1] + 0.5) else None
     unsure_e = next((w for w in sorted(said, key=lambda v: v["start"]) if short_tail(w, pe)
                      and w["start"] < end - 0.02 and (lw_ is None or w["start"] > lw_["start"])),
                     None) if pe and "ends" not in keep_reach and "ends" not in misclocked \
-        and not any("cue_end" in w and pe[0] - 0.5 <= w["cue_end"] <= pe[1] + 0.05
-                    for w in words) else None
+        and not (lw_ is not None and lw_.get("cue_end") is not None
+                 and pe[0] - 0.5 <= lw_["cue_end"] <= pe[1] + 0.05) else None
     new_start = (cut_in_pause(*ps, "start", pad, sl_s, fw_) if ps else s_w)
     new_end = (cut_in_pause(*pe, "end", pad, sl_e, lw_) if pe else e_w)
     # Under room noise the level cannot see soft talk: a next word (its clock
@@ -2484,27 +2507,89 @@ def edge_words(words: list[dict], start: float, end: float) -> tuple:
     return first, last
 
 
-def word_after_pause(words: list[dict], x: float, y: float) -> dict | None:
+def _heard_word(w: dict) -> bool:
+    """A word the ASR heard, with a clock of its own (not an SRT word spread
+    over its cue, nor an instant)."""
+    return w.get("timing") != "cue" and w.get("heard", True) and w["end"] - w["start"] >= 0.01
+
+
+_UNSPOKEN = "….,-–—!?;:'\"“”‘’()[]{}/\\*_~` "
+
+
+def _spoken(w: dict) -> bool:
+    """A token that is more than punctuation: a word (Whisper's lone "%" is
+    "percent"), not the lone "…" or "-" Descript writes between words (round
+    19: the replay's "program- … how", whose "…" closed a clip's captions)."""
+    return bool(w["word"].strip(_UNSPOKEN))
+
+
+def cue_starts_in(words: list[dict], x: float, y: float) -> bool:
+    """Whether an SRT cue starts in or just after the pause [x, y] (where
+    word_after_pause looks for one)."""
+    return any(w.get("cue_start") is not None and x - 0.05 <= w["cue_start"] <= y + 0.5
+               for w in words)
+
+
+def cue_ends_in(words: list[dict], x: float, y: float) -> bool:
+    """Whether an SRT cue ends in or just before the pause [x, y] (where
+    word_before_pause looks for one)."""
+    return any(w.get("cue_end") is not None and x - 0.5 <= w["cue_end"] <= y + 0.05
+               for w in words)
+
+
+def word_after_pause(words: list[dict], x: float, y: float,
+                     start: float | None = None) -> dict | None:
     """The first word spoken after a pause [x, y]. The SRT's cue times say it
     best (an ASR's clocks ran 0.4 s early on the replay's "And so"): the first
-    word of a cue starting in or just after the pause; else by the clock."""
+    word of a cue starting in or just after the pause, unless a heard word of
+    an earlier cue is clocked past the pause's end (and, with the requested
+    `start` given, past that too) and its cue, by Descript's own time, runs on
+    to the pause's end or past it: Descript splits cues mid-phrase, and that
+    word is said after the pause (round 19: seg1's "Oh" before the cue "Yeah,
+    my first dunk", the replay's "We need to" before "separate", in the sound
+    and out of the captions with a PASS); else by the clock. Never a lone "…"
+    or "-" of Descript's."""
     ws = sorted(words, key=lambda w: w["start"])
     cue = [w for w in ws if "cue_start" in w and x - 0.05 <= w["cue_start"] <= y + 0.5]
     if cue:
-        return min(cue, key=lambda w: (w["cue_start"], w["start"]))
-    return next((w for w in ws if w["end"] > y - 0.1), None)
+        first = min([w for w in cue if _spoken(w)] or cue, key=lambda w: (w["cue_start"], w["start"]))
+        earlier = [w for w in ws if _heard_word(w) and w["start"] < first["start"]
+                   and w.get("cue_start", first["cue_start"]) < first["cue_start"] - 1e-6
+                   and w.get("cue_end", y) > y - 0.1
+                   and w["end"] > y + 0.02 and (start is None or w["end"] > start + 0.02)]
+        if not earlier:
+            return first
+    return next((w for w in ws if w["end"] > y - 0.1 and _spoken(w)), None)
 
 
 def word_before_pause(words: list[dict], x: float, y: float,
                       end: float | None = None) -> dict | None:
-    """The last word spoken before a pause [x, y] (mirror of word_after_pause).
-    Without cue times, not a word that starts at or after the requested `end`:
-    the ASR stretched the next sentence's "and" back over the pause (audit
-    round 12), and it is not in the clip."""
+    """The last word spoken before a pause [x, y] (mirror of word_after_pause:
+    the last word of a cue ending in or just before the pause, unless a heard
+    word of a later cue is clocked from before the pause to within it, before
+    the requested `end`, and its cue, by Descript's own time, starts before the
+    pause or in its first 0.1 s: round 19, seg1's "house" after the cue "...to
+    my friend's", the replay's "Burton" after "...someone like Damon"; but not
+    the replay's "It's" after "...a top voice." or "an" after "...don't have
+    a,", clocked before their pause while Descript's next cue starts at its end,
+    and Whisper on the source heard both after it). Of a cue's words that end
+    together, the last in its text (the replay's "a," after "have", an SRT word
+    the ASR did not hear, in the sound before the pause). Without cue times,
+    not a word that starts at or after the requested `end`: the ASR stretched
+    the next sentence's "and" back over the pause (audit round 12), and it is
+    not in the clip. Never a lone "…" or "-" of Descript's."""
     ws = sorted(words, key=lambda w: w["start"])
     cue = [w for w in ws if "cue_end" in w and x - 0.5 <= w["cue_end"] <= y + 0.05]
     if cue:
-        return max(cue, key=lambda w: (w["cue_end"], w["end"]))
+        sp = [w for w in cue if _spoken(w)] or cue
+        last = sp[max(range(len(sp)), key=lambda i: (sp[i]["cue_end"], sp[i]["end"], sp[i]["start"], i))]
+        later = [w for w in ws if _heard_word(w) and w["start"] > last["start"]
+                 and w.get("cue_end", last["cue_end"]) > last["cue_end"] + 1e-6
+                 and w.get("cue_start", x) < x + 0.1
+                 and w["start"] < x - 0.02 and w["end"] <= y + 0.02
+                 and (end is None or w["start"] < end - 0.02)]
+        if not later:
+            return last
     if end is not None:
         # (a word whose clock ends by the requested end is before it, however
         # short: fan47's "right?", clocked 286.68-286.70 with the END asked for
@@ -2520,7 +2605,7 @@ def word_before_pause(words: list[dict], x: float, y: float,
     # 17: seg3's "and" at 64.14, 0.05 s into the pause, and youtube-4SnD's
     # "There you" at 14.70, 0.03 s in, closed the captions over silence; the
     # five instants that were said there sit at or before the pause's start))
-    ws = [w for w in ws if w["end"] - w["start"] >= 0.01 or w["start"] <= x + 0.02]
+    ws = [w for w in ws if (w["end"] - w["start"] >= 0.01 or w["start"] <= x + 0.02) and _spoken(w)]
     if end is not None:
         # (nor a word whose clock runs on past the pause's end, whatever the end
         # asked for: Whisper snaps a word's start back to the end of the word
