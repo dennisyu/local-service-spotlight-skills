@@ -2923,6 +2923,29 @@ class AuditRound16(unittest.TestCase):
         self.assertLess(s, 1.29)                           # "And" whole
         self.assertEqual(rep["clip_word_span"][0][0], "And")
 
+    # The fix above, in its own sweep: How_to at 67.51 under room noise, "you"
+    # clocked inside the pause before "know," (so not among the words between)
+    # and said into it; the captions, which had opened on "you", opened on
+    # "know,". The earlier of the two opens them.
+    YOU = [-38, -32, -33, -32, -32, -31, -31, -29, -30, -30, -29, -27, -28, -29, -30, -35, -34, -34, -33,
+           -35, -37, -39, -37, -36, -34, -33, -33, -31, -29, -32, -30, -30, -31, -30, -30, -30, -31, -34,
+           -36, -40, -39, -38, -39, -41, -43, -44, -46, -44, -45, -48, -48, -48, -48, -49, -46, -49, -47,
+           -49, -49, -48, -51, -53, -38, -33, -31, -27, -31, -28, -26, -24, -24, -26, -24, -24, -28, -30,
+           -31, -34, -37, -38, -36, -38, -40, -39, -43, -44, -42, -35, -33, -32, -33, -31, -31, -33, -32,
+           -32, -32, -35, -31, -33, -38, -39, -40, -43, -38, -36, -34, -33, -28, -30]
+
+    def test_a_kept_whole_start_keeps_an_earlier_caption_word(self):
+        runs = [(0, 65.0, 65.5), (1, 65.5, 67.15), (0, 67.15, 67.32), (1, 67.32, 67.54), (0, 67.54, 67.56),
+                (1, 67.56, 67.73), (0, 67.73, 67.74), (1, 67.74, 69.0), (0, 69.0, 69.6)]
+        lv = _Exact(runs, [(66.7, self.YOU)], 62.5, 72.5, -48.0, -43.3, -60.0,
+                    loud=[(65.5, 66.7, -30.0), (67.8, 69.0, -30.0)])
+        words = _said(("so", 65.54, 65.84), ("information", 66.48, 66.86), ("made,", 66.86, 67.12),
+                      ("you", 67.24, 67.32), ("know,", 67.32, 67.46), ("in", 67.56, 67.84),
+                      ("case", 67.84, 68.0), ("no", 68.0, 68.48), ("one.", 68.48, 68.8))
+        s, _, rep = self._place(lv, words, 67.51, 68.8)
+        if s < 67.32:
+            self.assertEqual(rep["clip_word_span"][0][0], "you")
+
 HAVE_FFMPEG =bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
 if os.environ.get("LSS_REQUIRE_FFMPEG") and not HAVE_FFMPEG:
     # CI sets this so the media tests can never silently turn into skips.

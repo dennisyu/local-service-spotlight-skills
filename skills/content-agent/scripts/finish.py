@@ -1852,17 +1852,20 @@ def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
     fw_, lw_ = edge_words(words, start, end)
     if ps:
         fw_ = word_after_pause(words, *ps) or fw_
-        if "starts" in keep_reach and between_s:
+        if "starts" in keep_reach and between_s and \
+                (fw_ is None or between_s[0]["start"] < fw_["start"]):
             # The words between, kept whole, open the captions too (round 16:
             # with an SRT the cue's own first word did, and seg1's "put",
             # "or" and "rim" were in the sound and out of the captions).
-            fw_ = min(between_s, key=lambda w: w["start"])
+            fw_ = between_s[0]
     if pe:
         lw_ = word_before_pause(words, *pe, end=end) or lw_
-        if "ends" in keep_reach and between_e:
+        last_e = max(between_e, key=lambda w: w["end"], default=None)
+        if "ends" in keep_reach and last_e is not None and \
+                (lw_ is None or last_e["end"] > lw_["end"]):
             # The words between, kept whole, are in the clip's captions too
             # (round 16: the request alone left them out).
-            lw_ = max(between_e, key=lambda w: w["end"])
+            lw_ = last_e
     style = getattr(levels, "style", None)
     new_start = (cut_in_pause(*ps, "start", pad, noise_slack(rs, ps[0] + 0.01, ps[1] - 0.01, style),
                               fw_) if ps else s_w)
