@@ -1,0 +1,3311 @@
+#!/usr/bin/env python3
+"""Finish a lightly edited video: trim dead air at the head, hit the loudness
+target, and add captions in the house style. One encode, then a QA receipt.
+
+WHY THIS EXISTS (23 Oct 2026)
+Descript (Studio Sound + Underlord) does the edit well. What it did not give us
+was a measured finish: our content-agent skill said "no burned-in captions" and
+nothing measured loudness, so shorts went out quiet and silent-scroll viewers got
+no words on screen. This is the deterministic last mile. It runs on any machine
+with ffmpeg, costs no Descript credits, and reads its look from one style file
+(video-style.json) so every agent ships the same captions.
+
+Usage:
+    finish.py IN -o OUT [--profile video-style.json]
+              [--trim-head] [--loudness]
+              [--words words.json] [--srt captions.srt] [--burn]
+              [--clip START-END] [--reframe 9:16 --focus-x 0.5]
+              [--keywords "Dollar a Day,GCT"]
+
+    --words takes word-level JSON (transcribe_words.py, ElevenLabs Scribe, or a
+    faster-whisper dump). --srt takes a Descript export_transcript srt and spreads
+    each cue's words evenly across the cue. Give BOTH and the captions use
+    Descript's corrected words on the ASR's word clock (best of each). A --clip
+    edge asked for at a pause (inside a level silence of 0.15 s or more, or
+    within 0.25 s of one with no heard word between) stays in that pause,
+    head_pad_s from the sound beside it, whatever the word clocks say: an ASR
+    clocks words up to 1.4 s early into the pause before them. A start asked
+    for at the previous word's clock end does not reach back over that word
+    (audit round 15: 51 of 830 such starts opened on it, "Look," on the clean
+    mix), nor an end at the next word's clock start over that one, unless no
+    pause parts that word from the one asked for: then the clip keeps it whole,
+    in the captions too, and warns, rather than cut inside either; once refused,
+    that pause is never where the edge settles after all (round 17: a start
+    asked for at "like,"'s clock settled back into it and opened on seg4's
+    "he's", out of the captions, with a PASS). At an end
+    the word between counts whatever its clock's length (round 16: a 20 ms
+    clock made seg4's "kill" the clip's last word), but not one Whisper timed
+    as an instant on the edge, whose sound comes before its clock: that one is
+    the clip's, in the sound and the captions alike, unless the level's sound
+    stopped more than 0.02 s before its clock (round 17: seg3's "and" at 64.14
+    went with "the", sharing its clock, said after the pause). It is the last word's
+    decay with a clock run early into it (rev7's "Just" under reverb) unless
+    its sound rises after a dip, or sits within 6 dB of the last word's, or,
+    under a bed that keeps dips shallow, within 10 dB (round 16: How_to's
+    "embroidery.", seg2's "Like," and copefl's "or bags." were kept with a
+    PASS). A word read as that decay stays out of the captions, and the
+    receipt warns when its clock lies in the clip: the level cannot tell a
+    reverb tail from a soft word run on with no dip (round 16: seg4's "I
+    would", 12 dB under "little,"). Which side of an edge a word is on goes by
+    its clock's middle, so a 20 ms clock ending at the edge is the clip's and
+    one starting there is not (fan47's "right?" was out of the captions).
+    Under room noise a next word clocked into the end's pause, its clock
+    starting before the cut, may be soft talk the level cannot see or a clock
+    run early: the clip keeps its clock, the captions show it, and the receipt
+    warns (round 17: colvnv's "it." was said there, ac44's "there." after it).
+    A word whose clock runs on past the end of a pause, from before it or its
+    first moment, is said after it (Whisper snaps a word's start back to the
+    end of the word before): at an end it is not the clip's, nor in its
+    captions, wherever in the pause the end was asked for (round 18: 84 of 602
+    ends asked for in the middle of a quiet pause on 29 real files closed the
+    captions on such a word, over silence, with a PASS; round 17 had caught
+    only an end within 50 ms of its clock), and the report notes it when the
+    request asked for it; at a start it opens the captions (the clip keeps it
+    whole, with a warning, when the start was asked for at its clock end).
+    Said before the pause after all, it is beyond the level and the clocks
+    (bed20's "an" and seg3's "dunked" at an end, in the sound and out of the
+    captions; seg2's "won't" at a start, captioned over the next word); where
+    its clock runs on 0.06 s or less past the pause, too little for the word,
+    the report warns either way. Under steady room noise the
+    silence threshold
+    rises and swallows a word's soft ending (and, less, its onset), so there
+    the end keeps the checker's noise slack (0.025 s per dB of rise, at most
+    0.5 s) or runs to the last word's own cue or clock end when that is
+    nearer, and the start keeps up to 0.15 s: under fans, AC and hum 11 to 23
+    dB under the talk, 0 of 30 clip ends lose talk (under the loudest fan one
+    cuts the last 0.06 s of a fading word, as on the quiet mix), against 11
+    to 25 of 30 before (audit rounds 11 and 12). Words the
+    ASR heard inside the level's "pause", on the clip's side of the edge, are
+    talk the level missed (soft words under an AC read as silence; round 12)
+    where the threshold rose over room noise; in a quiet room the level is
+    right, and such a word needs 30 ms over the threshold (round 15: a 20 ms
+    click inside seg5's "It" cost the editor's pause):
+    the pause starts after them (ends before them at the head), and with too
+    little left the edge is treated as mid-phrase, those words still talk when
+    the edge moves onto the sound (round 14: a cut in the middle of that same
+    "pause" halved a soft "It's" under an AC). A heard word there with no
+    sound of its own (its loudest 10 ms within 5 dB of the pause's noise) is a
+    clock error instead: when unheard talk sits just beyond the pause and the
+    word's neighbour claims the sound on the clip's side, that talk is the
+    word, the edge goes into the pause beyond it, and the report notes it
+    (Whisper put "But" 0.6 s late into the silence after it was said, in the
+    fresh sweep after round 12). The level itself is read
+    with the words, as the receipt reads it, so a short word is not a click.
+    When Descript's cue end (or, under noise, the ASR's word end) of the last
+    word still lies more than 0.15 s past the cut, the report says so; without
+    cue times the last word is never one that starts at or after the
+    requested END. An edge asked for mid-phrase snaps to word
+    boundaries, keeping whole a word it falls inside, then moves onto the sound
+    itself (a word whose clock starts in 0.4 s or more of silence was stretched
+    back over a pause and starts after it; a word clocked inside a pause, whose
+    next word claims the sound after it, is the sound before it, and when no
+    pause comes before that sound it runs on from the word before, so the
+    start stays on the word clock with a warning, round 15: "It's" halved
+    again with a start asked for just before its "pause"): the start
+    into the pause of 0.15 s or more before the first word's sound, the end
+    into the first pause after the last word's (never past where the next
+    word's sound begins: a next word Whisper timed as an instant was said
+    before its clock, round 14; nor into a pause after a next word that has
+    sound of its own before it: round 16, youtube-7Hb's "or", clocked at the
+    end of its own sound). Where talk runs on with no such pause, the edge stays on the word
+    clock: a cut inside a heard word's clock, or in a gap between words under
+    0.15 s, is a warning. In a clearer gap the cut moves, either way, to 30 ms
+    that are quiet in absolute terms: under the checker's base silence
+    threshold (not one raised over a bed or room noise, which can sit within
+    10 dB of the talk: round 14), 30 dB under the softer neighbouring word,
+    25 dB under the louder and 12 under the softer (a breath or a bed), or
+    within 8 dB of the stretch's floor and 20 dB under the softer word; never
+    where the level is unmeasurable. A quiet stretch of 0.15 s or more
+    nearest the clip's word wins, else the last short one before the gap's
+    far word with the fade where it is quietest; that is a note (`notes`, a
+    `finish_note` NOTE on the receipt, with the fade's level). A short quiet
+    run is also what a closure inside a word looks like: a start cut in one
+    right after word-loud sound no word's clock covers is a warning too
+    (round 15: the cut dropped "pro" of a "professional" clocked 0.4 s late,
+    with a note), and so is an end cut in one right before such sound (round
+    16: seg3's "-ly" and seg5's "-cle" dropped with a note). With nothing
+    quiet in the gap (a loud bed, a reverb tail, talk the ASR missed) it is a
+    warning that the cut cannot be checked (audit round 13: a "quietest
+    part" sat inside an unheard filler and inside a word's decay), and a
+    start stays before the sound of a first word timed as an instant. The gap is
+    bounded by heard words, by a word Whisper timed as an instant (its sound
+    is the level's run that ends at it, up to 0.4 s and not before the word
+    before it; under a bed a window near the stretch's floor and 15 dB under
+    the word ends the run), and by a Descript cue none of whose words the ASR
+    heard. A cut that keeps word-loud sound beyond the clip's edge word,
+    past a dip from it, that no caption word covers (a filler, a word the
+    ASR missed or clocked late: round 14 found an unheard filler, a
+    misclocked "no," and an unheard "right?" kept with a PASS) is a warning,
+    at an end however it was placed and at a start the word-gap rule placed
+    (a start at a pause, or moved onto the first word's sound, opens on that
+    sound by design: the ASR clocks the first word after a pause late). The
+    cut stays, since the level cannot tell such talk from the word's own
+    late syllable. The first
+    and last caption follow the clip's sound, not a late or early clock: at
+    a pause in a quiet room, a word clocked mostly over the pause's silence is
+    not said there, and goes with its sound. That is the sound after the
+    pause when its clock runs on past the pause (above); else the sound before
+    the pause when the word's clock before the pause holds sound within 6 dB
+    of the word before it, or that sound runs on 0.1 s or more past the word
+    before's clock end and rises there after a dip (round 17: seg2's
+    "August"); otherwise the sound after it, so an end leaves the word out of
+    the clip and its captions with a note (seg1's "at" and seg4's "not",
+    captioned over silence before), and a start opens the captions on it
+    (seg4's "and", left out before), at a pause the request was at or one the
+    start settled into (round 18: seg1's "and" before "Then"). On the round-18
+    auditor's 230 words clocked over a quiet pause that Whisper on the source
+    could place, this agrees at 225. With Descript's cue times, a cue boundary
+    within 0.5 s of an edge's pause names the edge word (its words are the
+    sound's), unless a heard word of the neighbouring cue is clocked between
+    that boundary and the pause and Descript's own time for that cue reaches
+    the pause (at an end the next cue starts before the pause or in its first
+    0.1 s; at a start the cue before ends no earlier than 0.1 s before the
+    pause's end): Descript splits cues mid-phrase, and that word is the clip's
+    (round 19: seg1's "house" after the cue "...to my friend's", and "Oh"
+    before "Yeah, my first dunk", were in the sound and out of the captions
+    with a PASS). At such a boundary the level's add-back of a word said
+    after the pause does not run, and a lone "..." or "-" of Descript's is
+    never the edge word.
+    Every warning the report carries (all but the dynamic-mode note) also
+    reaches the QA receipt (`finish_report`), so every edge finish could not
+    check is a WARN there; a word the ASR misclocked inside unbroken talk,
+    with no dip or gap to show it, is beyond what the level can see. The
+    notes and the dynamic-mode note reach it as a `finish_note` NOTE. Captions are
+    written as a sidecar .captions.srt unless --burn is given (burning re-encodes
+    the picture, so it is never the default). Caption text is cleaned of anything
+    a player would read as a command ({\\b1}, \\N, <font>) in both outputs.
+
+    --trim-head cuts to the first transcribed word when --words or --srt is given
+    ("[Music]" and "♪" cues are not words), otherwise to the first real sound by
+    the QA hook rule: clicks, noise-like typing and static do not count, and a
+    short sound followed by 2 s of dead air (a cough) is skipped and reported.
+    The cut to the first word lands in the pause before its sound, not on its
+    clock. It never cuts talk the transcript missed: sound that runs into the first word
+    without 2 s of silence is kept, and a bed or crowd as loud as talk before the
+    first word means nothing is cut; both are reported (an intro running straight
+    into the first word is then left for a person to cut). A lone short sound
+    with a pause after it (a cough, a breath, a click) is not talk running into
+    the word: it is cut, and reported. --srt also reads WebVTT; speaker labels
+    are stripped ("Speaker 1:", "Name (Role):", a plain "Name:" that opens two or
+    more cues, and the first cue's own "Name:" wherever it opens a cue, as in
+    Descript's default export). A name that opens one cue only stays text, so
+    "Google Maps:" is not dropped, unless in a labelled file the next named
+    cue opens with an established speaker (a second voice's single "Amy:
+    Yeah."); sentence openers such as "Update:", "Pro Tip:", "Monday:" or
+    "Price:" stay text however often they recur. A file whose first cue
+    opens with any other capitalised word and a colon ("Bloomington:") reads as
+    labelled, and that word is dropped where it opens a cue: the text alone
+    cannot tell it from a speaker's name. Exporting the SRT with
+    include_speaker_labels "off" avoids the question.
+
+    The sidecar .captions.srt for long-form reads like sentences (up to 16 words,
+    two lines of 42 characters, normal case); with --burn it matches what is on
+    screen. When the picture is re-encoded, an HDR source (an iPhone's HLG, PQ)
+    is tone-mapped to SDR BT.709 first and tagged that way (needs ffmpeg with
+    zscale; without it the report warns). A burned caption with a token too
+    wide for the frame (a domain name in 9:16) is shrunk until it fits.
+
+    --loudness on a mono source writes two identical channels: ffmpeg's loudnorm
+    lands 1.5-2 LU short on mono when it has to work in dynamic mode, and every
+    player plays mono on both speakers anyway. A stereo source gets its louder
+    channel copied to both when the other is 30 dB or more down (talk on one
+    input), 15 dB or more down with no talk of its own (a wireless mic's -20 dB
+    safety track, a camera's scratch mic), or the same voice polarity-inverted
+    (it cancels when a phone plays mono); two channels that EACH carry a
+    second or more of talk of their own (one lav per input, split mode), or
+    one channel with 1.5 s or more of its own talk that is a fifth of all its
+    talk (a guest's lav on one input beside a centred host mic, over the whole
+    file or a 15 s short), are folded to
+    the centre. "Talk of its own" is phrases where that channel is at its talk
+    level and the other sits 20 dB or more under its own
+    (video_qa.channel_roles); a little of it in one channel only is what wide
+    stereo music looks like, so that changes nothing. The loudness pass then measures the file it wrote and
+    renders again, twice at most: over the true-peak ceiling (ffmpeg's own AAC
+    encoder overshot transients by up to 2 dB at 192k), first at 320k, then
+    with the overshoot plus 0.3 dB off the target; more than 0.5 LU from the
+    target (loudnorm's dynamic mode lands short on peaky or one-sided audio),
+    with the target raised by the shortfall, unless a raise did not bring it
+    0.3 LU nearer. It keeps the render nearest the target under the ceiling, and says
+    so when it still misses. AAC is 256k by default.
+
+    An audio-only output (.wav .mp3 .m4a .flac .ogg .opus .aif) drops the picture;
+    the audio codec always matches the container. The render goes to a hidden
+    temporary file beside the output and is renamed only on success, so a failure
+    never leaves a stub. Bad input (a missing profile, a string where a number
+    belongs, a words file without times, a malformed --clip or --reframe, .webm
+    video) prints one plain line and exits 2.
+
+Video is copied untouched when only --loudness is asked for; any trim or burn
+re-encodes once with libx264 (preset veryfast unless the profile says otherwise).
+Nothing is ever played aloud.
+"""
+from __future__ import annotations
+
+import argparse
+import html
+import json
+import math
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import video_qa  # noqa: E402
+
+DEFAULT_STYLE = {
+    "captions": {
+        "font": "Inter", "bold": True, "uppercase": True,
+        "max_words": 3, "max_chars": 18, "break_gap_s": 0.3, "min_cue_s": 0.35,
+        "font_size_ratio": 0.055, "outline_ratio": 0.004, "margin_v_ratio": 0.22,
+        "primary_bgr": "FFFFFF", "outline_bgr": "000000", "highlight_bgr": "00FFFF",
+        "highlight_numbers": True, "keywords": [],
+    },
+    # The caption FILE uploaded beside a long-form video (YouTube, LinkedIn) reads
+    # as sentences: sentence case, up to two 42-character lines. Burned shorts keep
+    # the 2-3 word style above, and their sidecar matches what is on screen.
+    "sidecar_captions": {"max_words": 16, "max_chars": 84, "line_chars": 42,
+                         "uppercase": False, "break_gap_s": 0.7, "min_cue_s": 1.0,
+                         "merge_sentences": True},
+    "finish": {"head_pad_s": 0.08, "fade_s": 0.03, "x264_preset": "veryfast",
+               "x264_crf": 18, "audio_bitrate": "256k", "lra_target": 11.0,
+               "true_peak_headroom_db": 1.0},
+}
+
+PUNCT_BREAK = re.compile(r"[.,!?;:\-—–]\"?$")
+CROSSTALK = {"right", "yeah", "yes", "yep", "mhm", "mm", "hmm", "uh", "um",
+             "uhhuh", "okay", "ok", "wow", "nice", "sure"}
+NUMBERISH = re.compile(r"[\d$%]")
+# "Dennis Yu: ..." or "[Speaker 2]: ..." — every word capitalised (name particles
+# such as "van" or "de" aside), so "Step one:" and "So here's the thing:" are
+# left alone.
+_PARTICLE = (r"(?:van|von|der|den|de|del|della|da|di|du|dos|das|la|le|bin|ibn|al|el|"
+             r"ter|ten|zu|y)")
+_CAP = r"[A-Z][\w.'-]*"
+_NAME = (_CAP + r"(?: (?:" + _PARTICLE + r" ){0,2}" + _CAP + r"){0,2}"
+         r"(?: \([^)]{1,24}\))?")
+# The same shape in any case ("dennis yu:" from a Zoom export): a label only when
+# it opens two or more cues, like a plain capitalised one.
+_ANY_NAME = r"[^\W\d_][\w.'-]*(?: [^\W\d_][\w.'-]*){0,3}(?: \([^)]{1,24}\))?"
+_SPEAKER_N = r"(?i:speaker) ?\d{1,2}"
+SPEAKER_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|" + _SPEAKER_N + "|" + _NAME + r"):\s+")
+LOOSE_LABEL = re.compile(r"^\s*(" + _ANY_NAME + r"):\s+")
+# Unmistakable label forms: "[Speaker 2]:", "Speaker 1:", "SPEAKER 1:",
+# "Dennis Yu (Host):".
+SURE_LABEL = re.compile(r"^\s*(?:\[[^\]]{1,30}\]|" + _SPEAKER_N + "|" + _CAP +
+                        r"(?: " + _CAP + r"){0,2} \([^)]{1,24}\)):\s+")
+# ">> DENNIS:" or a bare ">>" marks a change of speaker anywhere in a cue.
+SPEAKER_CHANGE = re.compile(r">>\s*(?:(?:" + _SPEAKER_N + "|" + _NAME + r"):\s*)?")
+# Words that open a sentence with a colon ("Remember: ...") rather than name a
+# speaker; the first-cue rule below never strips these.
+NOT_A_SPEAKER = {"remember", "note", "tip", "step", "warning", "question", "answer",
+                 "update", "important", "reminder", "rule", "lesson", "bonus", "fact",
+                 "myth", "example", "problem", "solution", "goal", "why", "how", "what",
+                 "first", "second", "third", "next", "finally", "plus", "ps", "edit",
+                 "spoiler", "truth", "result", "results", "quote", "title", "chapter",
+                 "part", "day", "week", "breaking", "listen", "look", "okay", "ok", "so",
+                 "now", "here", "yes", "no", "well", "and", "but", "caution",
+                 "hint", "summary", "recap", "takeaway", "today", "tomorrow", "yesterday",
+                 # Audit round 9: "Pro Tip:", "Hot Take:" and "Disclaimer:" opening
+                 # cue 1 made an unlabelled file read as labelled.
+                 "pro", "hot", "disclaimer", "quick", "fun", "side", "bottom", "key",
+                 "big", "news", "fyi", "heads", "notice", "reality", "secret",
+                 "mistake", "pros", "cons", "case", "action",
+                 "homework", "challenge", "story", "point", "takeaways", "translation",
+                 "definition", "context", "background", "source", "sources", "caveat",
+                 "the", "a", "my", "our", "your", "this", "that", "one", "two", "three",
+                 # Audit round 11: "Monday:" and "Price:" opening two cues each were
+                 # read as speakers. (April, May, June and August are names too.)
+                 "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+                 "sunday", "january", "february", "march", "july", "september",
+                 "october", "november", "december", "morning", "afternoon", "evening",
+                 "tonight", "weekend", "price", "prices", "pricing", "cost", "costs",
+                 "date", "time", "when", "where", "who", "location", "address", "phone",
+                 "email", "website", "hours", "deadline", "budget", "total", "status",
+                 "agenda", "topic", "q", "faq", "option", "options", "offer", "deal",
+                 "sale", "discount", "free", "new", "also", "then", "later", "info",
+                 "details", "contact", "warning", "tldr", "spoilers", "sponsor"}
+
+
+def load_style(path: str | None) -> dict:
+    """DEFAULT_STYLE merged with a video-style.json. Raises ValueError with a plain
+    message (missing file, bad JSON) so main() can exit 2, never a traceback."""
+    style = json.loads(json.dumps(DEFAULT_STYLE))
+    qa_prof = video_qa.load_profile(None)
+    if path:
+        qa_prof = video_qa.load_profile(path)  # validates the file first
+        with open(path, encoding="utf-8") as fh:
+            raw = json.load(fh)
+        style = video_qa.deep_merge(style, {k: raw[k] for k in
+                                            ("captions", "finish", "sidecar_captions")
+                                            if k in raw})
+        for block in ("captions", "finish", "sidecar_captions"):
+            video_qa._check_types(style[block], DEFAULT_STYLE[block], block)
+    style["qa"] = qa_prof
+    return style
+
+
+# ---------------------------------------------------------------- words in
+
+# Caption conventions for sound, not speech: "[Music]", "[Applause]", "(laughs)",
+# "♪ ♪". They are never the first word and never caption text.
+_SOUND_WORDS = (r"music\w*|song|sing\w*|applau\w*|clap\w*|cheer\w*|laugh\w*|chuckl\w*|"
+                r"giggl\w*|sigh\w*|cough\w*|sneez\w*|breath\w*|gasp\w*|inaudible|"
+                r"crosstalk|silence|noise\w*|static|beep\w*|bell\w*|ring\w*|knock\w*|"
+                r"door\w*|footstep\w*|phone|typing|click\w*|wind|rain|thunder|engine|"
+                r"whoosh|background|foreign|speaking|speaks|whisper\w*|groan\w*|"
+                r"音楽|拍手|笑")
+SOUND_TAG = re.compile(
+    r"\[[^\]]{0,40}\]|［[^］]{0,40}］|"
+    r"[(（](?:[^)）]*(?:\b(?:" + _SOUND_WORDS + r")\b|音楽|拍手|笑)[^)）]*)[)）]|"
+    r"\*(?:[^*]{0,30}\b(?:" + _SOUND_WORDS + r")\b[^*]{0,30})\*", re.I)
+MUSIC_NOTES = re.compile(r"[♪♫♬♩🎵🎶]+")
+
+
+def is_sound_tag(text: str) -> bool:
+    """True for a token that is only a sound cue: "[Music]", "(applause)", "♪".
+    A token with no cue in it at all ("&", "-") is text, not a cue."""
+    if not SOUND_TAG.search(text) and not MUSIC_NOTES.search(text):
+        return False
+    rest = MUSIC_NOTES.sub("", SOUND_TAG.sub("", text)).strip()
+    return not re.sub(r"[^\w$%]", "", rest)
+
+
+WORDS_SHAPE = ("expected ElevenLabs Scribe, faster-whisper, or a list of "
+               "{word, start, end} objects with times in seconds")
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def normalize_words(data) -> list[dict]:
+    """Accept Scribe, faster-whisper or plain [{word,start,end}] JSON.
+    Whitespace inside a word (a stray newline from an editor) collapses to one
+    space so a caption line can never split. Raises ValueError naming the entry
+    when a time is missing or not a number."""
+    if isinstance(data, dict):
+        if "words" in data:
+            data = data["words"]
+        elif "segments" in data:
+            data = [w for seg in data["segments"] for w in (seg.get("words") or [])]
+    if not isinstance(data, list):
+        raise ValueError(f"words file has no word list; {WORDS_SHAPE}")
+    words = []
+    for i, w in enumerate(data):
+        if not isinstance(w, dict):
+            raise ValueError(f"words entry {i} is not an object; {WORDS_SHAPE}")
+        if w.get("type") not in (None, "word"):
+            continue  # Scribe spacing and audio_event entries
+        text = " ".join(_CONTROL.sub(" ", str(w.get("word", w.get("text", "")))).split())
+        if not text or is_sound_tag(text):
+            continue
+        try:
+            start, end = float(w["start"]), float(w["end"])
+        except KeyError as exc:
+            raise ValueError(f"words entry {i} ({text!r}) has no '{exc.args[0]}' time; "
+                             f"{WORDS_SHAPE}") from None
+        except (TypeError, ValueError):
+            raise ValueError(f"words entry {i} ({text!r}) has a time that is not a "
+                             f"number; {WORDS_SHAPE}") from None
+        if start != start or end != end or end < start:
+            raise ValueError(f"words entry {i} ({text!r}) ends before it starts")
+        words.append({"word": text, "start": start, "end": end, "timing": "word"})
+    words.sort(key=lambda w: w["start"])
+    return words
+
+
+def read_words_file(path: str) -> list[dict]:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except OSError as exc:
+        raise ValueError(f"could not read --words {path}: {exc.strerror or exc}") from None
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--words {path} is not valid JSON: {exc}") from None
+    try:
+        return normalize_words(data)
+    except ValueError as exc:
+        raise ValueError(f"--words {path}: {exc}") from None
+
+
+def _decode_text(raw: bytes) -> str:
+    """Subtitle files arrive as UTF-8, UTF-8 with a BOM, or UTF-16 (Windows tools)."""
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return raw.decode("utf-16", errors="replace")
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw[3:].decode("utf-8", errors="replace")
+    if len(raw) > 4 and raw[1:4:2] == b"\x00\x00" and raw[0] != 0:
+        return raw.decode("utf-16-le", errors="replace")
+    return raw.decode("utf-8", errors="replace")
+
+
+def read_srt_file(path: str) -> list[dict]:
+    try:
+        return words_from_srt(_decode_text(Path(path).read_bytes()))
+    except OSError as exc:
+        raise ValueError(f"could not read --srt {path}: {exc.strerror or exc}") from None
+    except ValueError as exc:
+        raise ValueError(f"--srt {path}: {exc} (expected SRT or WebVTT)") from None
+
+
+_TS = re.compile(r"(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:[,.](\d{1,3}))?")
+
+
+def _ts(s: str) -> float:
+    """SRT "00:00:01,500", WebVTT "00:01.500" or "00:00:01.500"; "…,5" is 0.5 s."""
+    m = _TS.fullmatch(s.strip())
+    if not m:
+        raise ValueError(f"not a subtitle time: {s.strip()!r}")
+    h, mi, sec, frac = m.groups()
+    return (int(h or 0) * 3600 + int(mi) * 60 + int(sec)
+            + (int(frac.ljust(3, "0")) / 1000.0 if frac else 0.0))
+
+
+def words_from_srt(text: str) -> list[dict]:
+    """SRT or WebVTT cues -> words spread evenly across each cue. Sound cues
+    ("[Music]", "♪") are dropped, and so are speaker labels: "[Speaker 2]:",
+    "Speaker 1:", "SPEAKER 1:", "Name (Role):" and ">> NAME:" always; a plain
+    "Name:", "Dennis Yu:", "Ludwig van Beethoven:" or "dennis yu:" when it opens
+    two or more cues (not a sentence opener such as "Update:", "Monday:" or
+    "Price:"); and in a file whose first cue opens with a name label
+    (Descript's default export labels the first cue and every change of
+    speaker), that first name wherever it opens a cue, and a one- or two-word
+    name opening a cue once when the next named cue opens with an established
+    speaker (a second voice's "Amy: Yeah." between two "Dennis:" cues).
+    "Remember:" or "Google:" at the start of one line of an unlabelled file
+    stays text, and so does "Google Maps:" once where no established speaker
+    follows."""
+    words = []
+    text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
+    blocks = re.split(r"\n\s*\n", text.strip())
+
+    def body_of(block: str) -> str | None:
+        lines = [l for l in block.strip().splitlines() if l.strip()]
+        timing = next((l for l in lines if "-->" in l), None)
+        if not timing:
+            return None
+        body = " ".join(lines[lines.index(timing) + 1:])
+        body = html.unescape(re.sub(r"<[^>]+>|\{[^}]+\}", "", body))
+        return SPEAKER_CHANGE.sub(" ", MUSIC_NOTES.sub(" ", SOUND_TAG.sub(" ", body)))
+
+    seen: dict = {}
+    openers: list = []  # (block index, name) for every cue that opens "Name:"
+    first_label = None  # the name opening the file's first cue, "" when none
+    for bi, block in enumerate(blocks):
+        b = body_of(block)
+        if b is None:
+            continue
+        m = LOOSE_LABEL.match(b)
+        if m:
+            key = m.group(1).strip().lower()
+            seen[key] = seen.get(key, 0) + 1
+            openers.append((bi, m.group(1).strip()))
+        if first_label is None and b.strip():
+            first_label = (m.group(1).strip() if m and SPEAKER_LABEL.match(b)
+                           and not SURE_LABEL.match(b) else
+                           ("sure" if SURE_LABEL.match(b) else ""))
+
+    def speaker(name: str) -> bool:
+        return name.split()[0].lower().strip(".") not in NOT_A_SPEAKER
+    # Descript's default SRT export ("changes") labels the first cue and every
+    # change of speaker: a file that opens with a label uses labels (audit round 8:
+    # "Dennis: So" on cue 1 only became the caption "So Dennis:").
+    labelled = bool(first_label) and (first_label == "sure" or speaker(first_label))
+
+    def established(name: str) -> bool:
+        return (speaker(name) and seen.get(name.lower(), 0) >= 2) or \
+            (labelled and name.lower() == first_label.lower())
+
+    def label_end(body: str, bi: int) -> int:
+        sure = SURE_LABEL.match(body)
+        if sure:
+            return sure.end()
+        m = LOOSE_LABEL.match(body)
+        if not m:
+            return 0
+        name = m.group(1).strip()
+        if seen.get(name.lower(), 0) >= 2 and speaker(name):
+            return m.end()
+        # A labelled file's first-cue name is a label even where it opens a cue
+        # once (Descript's default export labels cue 1 only). Any other name
+        # must open two or more cues: "Google Maps:" once is text (audit round 9)
+        # unless, in a labelled file, the next cue that opens with a name opens
+        # with an established speaker: Descript labels every change of speaker,
+        # so a second voice's one "Amy: Yeah." is followed by the first voice's
+        # label coming back (audit round 11).
+        if labelled and name.lower() == first_label.lower():
+            return m.end()
+        if labelled and speaker(name) and len(name.split()) <= 2:
+            nxt = next((n for i, n in openers if i > bi), None)
+            if nxt is not None and nxt.lower() != name.lower() and established(nxt):
+                return m.end()
+        return 0
+
+    for cue_id, block in enumerate(blocks):
+        lines = [l for l in block.strip().splitlines() if l.strip()]
+        timing = next((l for l in lines if "-->" in l), None)
+        if not timing:
+            continue  # WEBVTT header, NOTE and STYLE blocks
+        parts = timing.split("-->")
+        a, b = parts[0].strip().split()[-1], parts[1].strip().split()[0]
+        start, end = _ts(a), _ts(b)
+        # Sound cues first, then the speaker label they may hide ("[Music] Dennis Yu: …").
+        body = body_of(block) or ""
+        body = body[label_end(body, cue_id):]
+        toks = [t for t in body.split() if not is_sound_tag(t)]
+        if not toks or end <= start:
+            continue
+        step = (end - start) / len(toks)
+        for i, tok in enumerate(toks):
+            words.append({"word": tok, "start": round(start + i * step, 3),
+                          "end": round(start + (i + 1) * step, 3),
+                          "timing": "cue", "cue": cue_id,
+                          "cue_start": start, "cue_end": end})
+    return words
+
+
+def _norm(tok: str) -> str:
+    return re.sub(r"[^\w]", "", tok.lower())
+
+
+def align_text_to_timing(text_words: list[dict], timed: list[dict],
+                         keep_unheard: bool = False) -> list[dict]:
+    """Keep the better TEXT (Descript's corrected transcript) and the better
+    TIMING (word-level ASR). Matched and same-length replaced runs take the
+    timed word's clock; other runs are spread across the span they replace.
+    Returns text_words re-timed, limited to the window the timed words cover.
+    Words the ASR never heard are marked heard=False. A lone interjection the ASR
+    never heard is left out of the captions; with keep_unheard it is returned
+    anyway with caption=False and its cue's own timing, because for the QA
+    receipt it is still talk (someone said "Yeah" there). keep_unheard also keeps
+    the SRT's words outside the ASR's window, and the ones before the first heard
+    word, on their cue timing (an ASR that missed an opening under room chatter
+    must not erase it), and the ASR's own words the SRT lacks as caption=False
+    talk (a second voice Descript left out)."""
+    import difflib
+    if not timed:
+        return text_words
+    lo, hi = timed[0]["start"] - 1.0, timed[-1]["end"] + 1.0
+    text = [w for w in text_words if lo <= w["start"] <= hi]
+    outside = ([dict(w, timing="cue", heard=False) for w in text_words
+                if not lo <= w["start"] <= hi] if keep_unheard else [])
+    sm = difflib.SequenceMatcher(a=[_norm(w["word"]) for w in text],
+                                 b=[_norm(w["word"]) for w in timed], autojunk=False)
+    out: list[dict] = []
+    for op, a0, a1, b0, b1 in sm.get_opcodes():
+        span = text[a0:a1]
+        if not span:
+            if keep_unheard:
+                out += [{"word": s_["word"], "start": s_["start"], "end": s_["end"],
+                         "timing": "word", "heard": True, "caption": False}
+                        for s_ in timed[b0:b1]]
+            continue
+        if op in ("equal", "replace") and (a1 - a0) == (b1 - b0):
+            # (the SRT's cue times ride along: a gap between cues is where the
+            # SRT heard nobody talk)
+            out += [{"word": t["word"], "start": s["start"], "end": s["end"],
+                     "timing": "word", "heard": True,
+                     **({k: t[k] for k in ("cue_start", "cue_end") if k in t})}
+                    for t, s in zip(span, timed[b0:b1])]
+            continue
+        if b1 > b0:
+            s0, s1 = timed[b0]["start"], timed[b1 - 1]["end"]
+        else:
+            # Words the ASR never heard. A lone interjection ("Right", "Yeah") is
+            # almost always another person's crosstalk: leave it out of the
+            # speaker's captions. Anything else is squeezed, in order, into the
+            # gap between its neighbours so word order can never scramble.
+            if keep_unheard:
+                out += [dict(t, timing="cue", heard=False, caption=False)
+                        for t in span if _norm(t["word"]) in CROSSTALK]
+            span = [t for t in span if _norm(t["word"]) not in CROSSTALK]
+            if not span:
+                continue
+            if keep_unheard and not any(x.get("heard") for x in out):
+                # Before the first word the ASR heard: keep the SRT's own times.
+                out += [dict(t, timing="cue", heard=False) for t in span]
+                continue
+            s0 = out[-1]["end"] if out else timed[0]["start"]
+            s1 = timed[b0]["start"] if b0 < len(timed) else s0 + 0.2 * len(span)
+            s1 = max(s1, s0)
+        step = (s1 - s0) / len(span)
+        out += [{"word": t["word"], "start": round(s0 + i * step, 3),
+                 "end": round(s0 + (i + 1) * step, 3), "timing": "word",
+                 "heard": b1 > b0,
+                 **({k: t[k] for k in ("cue_start", "cue_end") if k in t})}
+                for i, t in enumerate(span)]
+    if keep_unheard:
+        out = sorted(out + outside, key=lambda w: w["start"])
+    return out
+
+
+# ---------------------------------------------------------------- chunking
+
+def chunk_words(words: list[dict], cap: dict) -> list[dict]:
+    """Group words into 1–max_words cues; break on punctuation and pauses."""
+    cues, cur = [], []
+
+    def flush():
+        if cur:
+            cues.append({"words": list(cur), "start": cur[0]["start"],
+                         "end": cur[-1]["end"]})
+            cur.clear()
+
+    for i, w in enumerate(words):
+        if cur:
+            gap = w["start"] - cur[-1]["end"]
+            chars = sum(len(x["word"]) + 1 for x in cur) + len(w["word"])
+            text = " ".join(x["word"] for x in cur + [w])
+            if (len(cur) >= cap["max_words"] or gap >= cap["break_gap_s"]
+                    or chars > cap["max_chars"] or not _fits(text, cap.get("line_chars", 0))):
+                flush()
+        cur.append(w)
+        if PUNCT_BREAK.search(w["word"]):
+            flush()
+    flush()
+    # Never flash a cue shorter than min_cue_s: stretch into the gap after it,
+    # else merge into the next cue when there is room.
+    merged: list[dict] = []
+    carry = None
+    for idx, cue in enumerate(cues):
+        if carry is not None:  # a short cue held back to open this one
+            cue = {"words": carry["words"] + cue["words"], "start": carry["start"],
+                   "end": cue["end"]}
+            carry = None
+        nxt = cues[idx + 1] if idx + 1 < len(cues) else None
+        if cue["end"] - cue["start"] < cap["min_cue_s"]:
+            limit = nxt["start"] if nxt else cue["start"] + cap["min_cue_s"]
+            cue["end"] = min(cue["start"] + cap["min_cue_s"], max(limit, cue["end"]))
+        joined = " ".join(x["word"] for x in (merged[-1]["words"] if merged else [])
+                          + cue["words"])
+        if (merged and cue["end"] - cue["start"] < cap["min_cue_s"]
+                and cue["words"][0]["start"] - merged[-1]["words"][-1]["end"] < cap["break_gap_s"]
+                and (cap.get("merge_sentences")
+                     or not re.search(r"[.!?]\"?$", merged[-1]["words"][-1]["word"]))
+                and len(merged[-1]["words"]) + len(cue["words"]) <= cap["max_words"]
+                and len(joined) <= cap["max_chars"]
+                and _fits(joined, cap.get("line_chars", 0))):
+            merged[-1]["words"] += cue["words"]
+            merged[-1]["end"] = cue["end"]
+            continue
+        if (cap.get("merge_sentences") and nxt and cue["end"] - cue["start"] < cap["min_cue_s"]
+                and nxt["start"] - cue["end"] < cap["break_gap_s"]
+                and len(cue["words"]) + len(nxt["words"]) <= cap["max_words"]):
+            both = " ".join(x["word"] for x in cue["words"] + nxt["words"])
+            if len(both) <= cap["max_chars"] and _fits(both, cap.get("line_chars", 0)):
+                carry = cue  # too short to stand alone: open the next cue with it
+                continue
+        merged.append(cue)
+    for a, b in zip(merged, merged[1:]):
+        a["end"] = min(a["end"], b["start"])  # cues never overlap
+    return merged
+
+
+def shift_cues(cues: list[dict], offset: float) -> list[dict]:
+    out = []
+    for c in cues:
+        s, e = c["start"] - offset, c["end"] - offset
+        if e <= 0:
+            continue
+        out.append({**c, "start": max(0.0, s), "end": e})
+    return out
+
+
+_HYPHENS = re.compile(r"[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]")
+
+
+def _clean(word: str) -> str:
+    word = _HYPHENS.sub("-", word).replace("\u2019", "'").replace("\u2018", "'")
+    return re.sub(r"[^\w$%'-]", "", word).lower()
+
+
+def _parts(text: str) -> list[str]:
+    """'Dollar-a-Day' and 'Dollar a Day' both become ['dollar', 'a', 'day']."""
+    out: list[str] = []
+    for chunk in re.split(r"\s+", _HYPHENS.sub("-", text)):
+        out += [p for p in _clean(chunk).split("-") if p]
+    return out
+
+
+def _same(token: str, key: str) -> bool:
+    """'day' matches "Day", "Day's", "Days" and "days'"; "GCT" matches "GCT's"."""
+    t = token.strip("'")
+    if t.endswith("'s"):
+        t = t[:-2]
+    return t == key or t in (key + "s", key + "es")
+
+
+def mark_keywords(words: list[dict], keywords: list[str]) -> list[dict]:
+    """Flag words that belong to a WHOLE keyword phrase ("Dollar a Day" lights up
+    only as three words in a row, never a lone "a"). Hyphens count as spaces on
+    both sides, so "Dollar-a-Day" matches too; a match must start and end on a
+    word boundary, so "a Day" never lights the whole of "Dollar-a-Day"."""
+    phrases = [ph for ph in (_parts(kw) for kw in keywords) if ph]
+    flat: list[tuple[int, str, bool, bool]] = []  # (word index, part, first, last)
+    for wi, w in enumerate(words):
+        parts = _parts(w["word"])
+        for pi, part in enumerate(parts):
+            flat.append((wi, part, pi == 0, pi == len(parts) - 1))
+    toks = [f[1] for f in flat]
+    out = [dict(w) for w in words]
+    for ph in phrases:
+        n = len(ph)
+        for i in range(len(toks) - n + 1):
+            if (all(toks[i + j] == ph[j] for j in range(n - 1))
+                    and _same(toks[i + n - 1], ph[-1])
+                    and flat[i][2] and flat[i + n - 1][3]):
+                for j in range(i, i + n):
+                    out[flat[j][0]]["hot"] = True
+    return out
+
+
+TAG_LIKE = re.compile(r"</?(?:b|i|u|s|font|c|v|ruby|rt|lang)\b[^<>]*>", re.I)
+ASS_OVERRIDE = re.compile(r"\{\\[^}]*\}")
+
+
+def _caption_safe(text: str) -> str:
+    """Players read backslash sequences (\\N), {override tags} and the subtitle
+    HTML tags (<b>, <i>, <font>…) as commands in BOTH .ass and .srt (libass, VLC,
+    YouTube). Remove those; keep ordinary text ("a<b", "vector<int>", "C++")."""
+    text = ASS_OVERRIDE.sub("", TAG_LIKE.sub("", text))
+    # Only \N, \n and \h are commands outside braces: drop the backslash there and
+    # keep every other one ("C:\path\to" stays readable).
+    text = re.sub(r"\\(?=[Nnh])", "", text)
+    return text.replace("{", "(").replace("}", ")")
+
+
+def _srt_safe(line: str) -> str:
+    """A '<' that meets a later '>' across two words ("x<b y>z") would open a tag
+    in an SRT reader; show angle brackets as look-alike quotes instead."""
+    return line.replace("<", "\u2039").replace(">", "\u203a")
+
+
+_ass_safe = _caption_safe  # kept for callers of the round-1 name
+
+
+def cue_text(cue: dict, cap: dict, ass: bool) -> str:
+    parts = []
+    for w in cue["words"]:
+        clean = " ".join(_caption_safe(w["word"]).split())
+        if not clean:
+            continue  # a word that was only a tag
+        txt = clean.upper() if cap["uppercase"] else clean
+        hot = w.get("hot") or (cap["highlight_numbers"] and NUMBERISH.search(clean))
+        if ass:
+            if hot:
+                txt = "{\\c&H%s&}%s{\\r}" % (cap["highlight_bgr"], txt)
+        parts.append(txt)
+    return " ".join(parts)
+
+
+def _ass_time(t: float) -> str:
+    cs = int(round(t * 100))
+    h, cs = divmod(cs, 360000)
+    m, cs = divmod(cs, 6000)
+    s, cs = divmod(cs, 100)
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+
+
+def _srt_time(t: float) -> str:
+    ms = int(round(t * 1000))
+    h, ms = divmod(ms, 3600000)
+    m, ms = divmod(ms, 60000)
+    s, ms = divmod(ms, 1000)
+    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+
+def _nonempty(cues: list[dict], cap: dict) -> list[dict]:
+    """Cues whose words were only tags have nothing to show: drop them."""
+    return [c for c in cues if cue_text(c, cap, ass=False).strip()]
+
+
+def build_ass(cues: list[dict], cap: dict, width: int, height: int) -> str:
+    cues = _nonempty(cues, cap)
+    size = max(18, round(height * cap["font_size_ratio"]))
+    outline = max(1, round(height * cap["outline_ratio"]))
+    margin_v = round(height * cap["margin_v_ratio"])
+    head = (
+        "[Script Info]\nScriptType: v4.00+\nWrapStyle: 0\nScaledBorderAndShadow: yes\n"
+        f"PlayResX: {width}\nPlayResY: {height}\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+        "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+        "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        f"Style: Cap,{cap['font']},{size},&H00{cap['primary_bgr']},&H00{cap['primary_bgr']},"
+        f"&H00{cap['outline_bgr']},&H00000000,{-1 if cap['bold'] else 0},0,0,0,100,100,0,0,"
+        f"1,{outline},0,2,{round(width * 0.06)},{round(width * 0.06)},{margin_v},1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+        "Effect, Text\n")
+    room = width - 2 * round(width * 0.06)
+    rows = []
+    for c in cues:
+        # libass wraps only at spaces: one token wider than the frame (a domain
+        # name, a URL) runs off both edges. Shrink that cue until its widest
+        # token fits (audit round 8: "LOCALSERVICESPOTLIGHT.COM" on a 9:16 short).
+        widest = max((_text_px(t, cap["font"], cap["bold"], size)
+                      for t in cue_text(c, cap, ass=False).split()), default=0.0)
+        fit = "" if widest <= room else "{\\fs%d}" % max(8, int(size * room / widest * 0.97))
+        rows.append(f"Dialogue: 0,{_ass_time(c['start'])},{_ass_time(c['end'])},Cap,,0,0,0,,"
+                    f"{fit}{cue_text(c, cap, ass=True)}")
+    return head + "\n".join(rows) + "\n"
+
+
+_FONTS: dict = {}
+
+
+def _text_px(text: str, family: str, bold: bool, size: int) -> float:
+    """Rendered width of text in pixels, from the font file fontconfig picks for
+    the caption family (Pillow); without Pillow or fontconfig, a wide estimate
+    (0.7 em a character, an uppercase bold face's widest average)."""
+    key = (family, bool(bold), size)
+    if key not in _FONTS:
+        font = None
+        try:
+            from PIL import ImageFont
+            path = subprocess.run(["fc-match", "-f", "%{file}",
+                                   f"{family}:bold" if bold else family],
+                                  capture_output=True, text=True).stdout.strip()
+            if path:
+                font = ImageFont.truetype(path, size)
+        except Exception:  # Pillow or fontconfig missing, or an unreadable font
+            font = None
+        _FONTS[key] = font
+    font = _FONTS[key]
+    if font is not None:
+        return float(font.getlength(text))
+    return len(text) * size * 0.7
+
+
+def _wrap(text: str, width: int) -> str:
+    """Two lines when a cue is longer than one: the cut that keeps the longer
+    line shortest (then the most balanced)."""
+    if not width or len(text) <= width:
+        return text
+    cuts = [i for i, ch in enumerate(text) if ch == " "]
+    if cuts:
+        cut = min(cuts, key=lambda i: (max(i, len(text) - i - 1), abs(2 * i - len(text))))
+        lines = [text[:cut], text[cut + 1:]]
+    else:
+        lines = [text]
+    out = []
+    for line in lines:
+        # A single token longer than a line (a URL) breaks after / . - when it can.
+        while len(line) > width:
+            at = max((i + 1 for i, ch in enumerate(line[:width]) if ch in "/.-"), default=width)
+            out.append(line[:at])
+            line = line[at:]
+        out.append(line)
+    return "\n".join(out)
+
+
+def _fits(text: str, width: int) -> bool:
+    """Whether text fits on two lines of `width` characters."""
+    if not width or len(text) <= width:
+        return True
+    return max(len(x) for x in _wrap(text, width).split("\n")) <= width
+
+
+def build_srt(cues: list[dict], cap: dict) -> str:
+    cues = _nonempty(cues, cap)
+    return "\n".join(f"{i}\n{_srt_time(c['start'])} --> {_srt_time(c['end'])}\n"
+                     f"{_wrap(_srt_safe(cue_text(c, cap, ass=False)), cap.get('line_chars', 0))}\n"
+                     for i, c in enumerate(cues, 1))
+
+
+def assert_font(family: str) -> str:
+    """Fonts fail silently in libass; refuse to render in a fallback face."""
+    if not shutil.which("fc-match"):
+        return "unverified (fc-match missing)"
+    res = subprocess.run(["fc-match", "-f", "%{family}", family],
+                         capture_output=True, text=True)
+    got = res.stdout.strip()
+    if family.lower() not in got.lower():
+        raise RuntimeError(f"caption font '{family}' not installed; fc-match gave "
+                           f"'{got}'. Install it or change captions.font.")
+    return got
+
+
+# ---------------------------------------------------------------- media ops
+
+def first_speech_s(path: str, style: dict, offset: float, window: float,
+                   sample_rate: int | None = None, until: float | None = None
+                   ) -> tuple[float | None, list[dict], str]:
+    """Source-timeline seconds of the first real start inside [offset,
+    offset+window], by the same rule as the QA hook check: the threshold follows
+    the window's loudness and its local noise floor; clicks, typing and other
+    sound with no voice in it do not count; a short sound followed by 2 s of
+    dead air (a cough) is skipped.
+    Returns (start or None, skipped sounds, reason when None)."""
+    qa_prof = style["qa"]
+    loud = video_qa.measure_loudness(path, offset, window)
+    aud = video_qa.analyze_audio(path, qa_prof, offset, window, sample_rate,
+                                 loud.get("integrated_lufs"))
+    # The decoded audio starts at the window or at the audio's own first sample,
+    # whichever is later (a recording whose sound starts after the picture).
+    info = video_qa.probe(path)
+    a_rel = 0.0
+    if info["audio"] and info["video"]:
+        a_rel = max(0.0, info["audio"]["start_s"] - info["video"]["start_s"])
+    base = max(offset, a_rel)
+    skipped = [dict(s, at_s=round(s["at_s"] + base, 3)) for s in aud["skipped"]]
+    if aud["first_sound"] is None:
+        reason = ("the start cannot be told from noise or music"
+                  if not aud["noise"]["hook_measurable"] else "no sustained sound")
+        return None, skipped, reason
+    if until is not None:
+        return base + aud["first_sound"], skipped, head_into_word(
+            aud, base, base + aud["first_sound"], until, qa_prof)
+    return base + aud["first_sound"], skipped, ""
+
+
+def head_into_word(aud: dict, base: float, fs: float, fw: float, prof: dict) -> dict:
+    """Sound before the first transcribed word (fw), from the first real start
+    fs: where talk that runs on into the word begins, if anywhere. Bursts of
+    sound (runs closer than merge_gap_s) shorter than max_skip_sound_s with
+    warn_pause_s or more of silence after them are a cough, a breath or a click,
+    not talk running into the word (audit round 8: a cough plus 1.4 s of dead
+    air was kept at the open). Returns {"start": source seconds or None, "gap":
+    longest silence from start to fw, "isolated": [(at, sound_s, silence_after)]}."""
+    hp, pp = prof["hook"], prof["pauses"]
+    join, short = hp.get("merge_gap_s", 0.25), hp.get("max_skip_sound_s", 0.6)
+    quiet = pp.get("warn_pause_s", 0.6)
+    bursts: list[list[float]] = []  # [start, end, sound seconds], source time
+    for k, a, b in aud["runs"]:
+        a, b = base + a, base + b
+        if k == 0 or b <= fs - 1e-6 or a >= fw:
+            continue
+        a, b = max(a, fs), min(b, fw)
+        if bursts and a - bursts[-1][1] < join:
+            bursts[-1][1], bursts[-1][2] = b, bursts[-1][2] + b - a
+        else:
+            bursts.append([a, b, b - a])
+    isolated, start = [], None
+    for i, (a, b, snd) in enumerate(bursts):
+        after = (bursts[i + 1][0] if i + 1 < len(bursts) else fw) - b
+        if snd < short and after >= quiet:
+            isolated.append((round(a, 3), round(snd, 3), round(after, 3)))
+            continue
+        start = a
+        break
+    gap = 0.0
+    if start is not None:
+        gap = max((base + x["end"] - max(base + x["start"], start) for x in aud["silences"]
+                   if base + x["end"] > start and base + x["end"] <= fw + 0.05), default=0.0)
+    return {"start": start, "gap": round(gap, 3), "isolated": isolated}
+
+
+UPMIX = "pan=stereo|c0=c0|c1=c0"
+
+
+FOLD3 = "pan=3.0|c0=c0|c1=c1|c2=0.5*c0+0.5*c1"
+
+
+def measure_loudnorm(path: str, start: float, style: dict,
+                     duration: float | None = None, pre: str = "",
+                     stereo: bool = False) -> dict:
+    """loudnorm's first-pass measurement, plus per-channel peak and RMS from
+    astats; for a stereo source also the mono fold-down's RMS, from which the
+    correlation of the two channels follows (same voice, unrelated, inverted)."""
+    lp = style["qa"]["loudness"]
+    stats = f"{FOLD3},astats,pan=stereo|c0=c0|c1=c1" if stereo else "astats"
+    flt = (f"{pre + ',' if pre else ''}{stats},loudnorm=I={lp['target_lufs']}:"
+           f"TP={lp['true_peak_max_dbtp']}:"
+           f"LRA={style['finish']['lra_target']}:print_format=json")
+    cmd = ["ffmpeg", "-hide_banner", "-nostats"]
+    if start > 0:
+        cmd += ["-ss", f"{start:.3f}"]
+    if duration:
+        cmd += ["-t", f"{duration:.3f}"]
+    cmd += ["-i", path, "-vn", "-af", flt, "-f", "null", "-"]
+    res = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+    blob = res.stderr[res.stderr.rfind("{"):res.stderr.rfind("}") + 1]
+    if res.returncode != 0 or not blob:
+        raise RuntimeError(f"loudnorm measure failed: {res.stderr[-400:]}")
+    out = json.loads(blob)
+    ch = astats_channels(res.stderr)
+    out["channel_peaks_db"] = [c["peak"] for c in ch[:2 if stereo else None]]
+    out["channel_rms_db"] = [c["rms"] for c in ch[:2 if stereo else None]]
+    if stereo and len(ch) == 3:
+        out["channel_corr"] = channel_corr(ch[0]["rms"], ch[1]["rms"], ch[2]["rms"])
+    return out
+
+
+def astats_channels(stderr: str) -> list[dict]:
+    """Per-channel peak and RMS dBFS from ffmpeg astats' summary (-120 for silence)."""
+    out, cur = [], None
+    for line in stderr.splitlines():
+        if re.search(r"\bChannel: \d+", line):
+            cur = {"peak": -120.0, "rms": -120.0}
+            out.append(cur)
+        elif re.search(r"\bOverall\b", line):
+            cur = None
+        elif cur is not None:
+            m = re.search(r"(Peak|RMS) level dB: (\S+)", line)
+            if m:
+                v = m.group(2)
+                cur["peak" if m.group(1) == "Peak" else "rms"] = \
+                    -120.0 if "inf" in v else max(-120.0, float(v))
+    return out
+
+
+def astats_peaks(stderr: str) -> list[float]:
+    """Per-channel peak dBFS from ffmpeg astats' summary (-120 for a silent channel)."""
+    return [c["peak"] for c in astats_channels(stderr)]
+
+
+def channel_corr(l_db: float, r_db: float, m_db: float) -> float | None:
+    """Correlation of two channels from their RMS and the RMS of (L+R)/2:
+    1 = the same signal at any gain (a backup track), 0 = unrelated, -1 = one
+    channel polarity-inverted (it cancels when a phone plays mono)."""
+    pl, pr, pm = (10 ** (x / 10.0) for x in (l_db, r_db, m_db))
+    if pl <= 1e-12 or pr <= 1e-12:
+        return None
+    return max(-1.0, min(1.0, (4 * pm - pl - pr) / 2.0 / (pl * pr) ** 0.5))
+
+
+class Runs(list):
+    """Level runs [(kind, start, end)] plus where the silence threshold had to
+    rise over room noise (`raised(t)`, dB over the stretch's base threshold)."""
+
+    def __init__(self, runs=(), base: float = 0.0, thresholds=None, block_s: float = 0.0,
+                 base_db: float | None = None, peaks=None, window_s: float = 0.01):
+        super().__init__(runs)
+        self.base, self.thresholds, self.block_s = base, list(thresholds or []), block_s
+        self.base_db, self.peaks, self.window_s = base_db, list(peaks or []), window_s
+
+    def floor(self, a: float, b: float) -> float | None:
+        """The median 10 ms peak level inside [a, b]: the pause's own noise."""
+        i = max(0, int(round((a - self.base) / self.window_s)))
+        j = min(len(self.peaks), int(round((b - self.base) / self.window_s)))
+        seg = sorted(self.peaks[i:j])
+        return seg[len(seg) // 2] if seg else None
+
+    def _span(self, a: float, b: float) -> range:
+        i = max(0, int(round((a - self.base) / self.window_s)))
+        j = min(len(self.peaks), max(i + 1, int(round((b - self.base) / self.window_s))))
+        return range(i, j)
+
+    def loudest(self, a: float, b: float) -> float | None:
+        """The loudest 10 ms peak inside [a, b]."""
+        seg = [self.peaks[k] for k in self._span(a, b)]
+        return max(seg) if seg else None
+
+    def floor_besides(self, a: float, b: float, spans: list[tuple]) -> float | None:
+        """The pause [a, b]'s own noise (median 10 ms peak) outside `spans`."""
+        skip = {k for x, y in spans for k in self._span(x, y)}
+        seg = sorted(self.peaks[k] for k in self._span(a, b) if k not in skip)
+        return seg[len(seg) // 2] if seg else None
+
+    def threshold(self, t: float) -> float:
+        """The silence threshold at t (dB), raised over room noise where it rose."""
+        if self.base_db is None:
+            return -120.0
+        return self.base_db + self.raised(t)
+
+    def raised(self, t: float) -> float:
+        if not self.thresholds or self.base_db is None or self.block_s <= 0:
+            return 0.0
+        i = min(len(self.thresholds) - 1, max(0, int((t - self.base) / self.block_s)))
+        return max(0.0, self.thresholds[i] - self.base_db)
+
+
+def level_runs(path: str, style: dict, info: dict, a: float, b: float,
+               words: list[dict] | None = None) -> "Runs":
+    """Silence (0), sound (1) and unmeasurable (2) runs of [a, b] on the source
+    clock, by the QA checker's level rules. With `words`, a short sound where
+    a heard word sits is not a click, as in the receipt (audit round 12: a
+    70 ms "do" under an AC was bridged into the pause after it)."""
+    a = max(0.0, a)
+    a_rel = 0.0
+    if info["audio"] and info.get("video"):
+        a_rel = max(0.0, info["audio"]["start_s"] - info["video"]["start_s"])
+    base = max(a, a_rel)
+    talk = [(max(0.0, x - base), y - base)
+            for x, y in video_qa.pinned_talk(words, style["qa"]["pauses"])
+            if y > a and x < b] if words else None
+    loud = video_qa.measure_loudness(path, a, b - a)
+    aud = video_qa.analyze_audio(path, style["qa"], a, b - a, info["audio"]["sample_rate"],
+                                 loud.get("integrated_lufs"), talk=talk)
+    return Runs([(k, base + x, base + y) for k, x, y in aud["runs"]], base,
+                aud.get("thresholds"), (aud.get("block") or 1) * aud.get("window_s", 0.01),
+                aud.get("noise", {}).get("base_threshold_db"), aud.get("peaks"),
+                aud.get("window_s", 0.01))
+
+
+def noise_slack(runs, t0: float, t1: float, style: dict) -> float:
+    """How far a soft word end or start can hide under a threshold raised over
+    room noise in the pause [t0, t1]: the checker's own slack (0.025 s per dB
+    of rise, at most 0.5 s). Zero where the threshold did not rise, or where
+    the pause itself is quiet (the rise came from music or talk next to it, and
+    a soft word end shows plainly over a quiet pause)."""
+    raised = getattr(runs, "raised", None)
+    if raised is None or not style:
+        return 0.0
+    pp = style["qa"]["pauses"]
+    r = max(raised(t0), raised(t1))
+    fl = runs.floor(t0 + 0.02, t1 - 0.02) if hasattr(runs, "floor") else None
+    if r <= 0.0 or fl is None or runs.base_db is None or fl < runs.base_db - 3.0:
+        return 0.0
+    return min(float(pp.get("noise_slack_max_s", 0.5)),
+               float(pp.get("noise_slack_s_per_db", 0.025)) * r)
+
+
+def cut_in_pause(x: float, y: float, side: str, pad: float, slack: float,
+                 word: dict | None = None) -> float:
+    """Where a cut goes in the pause [x, y] (the level's silence): pad after
+    the sound before it (side "end") or before the sound after it ("start").
+    Under room noise the threshold rises and swallows a word's soft ending
+    (audit round 11: "this." lost under a fan 22 dB down, the receipt clean),
+    so there the sound is taken to run `slack` into the pause, and to the
+    edge word's own clock or cue end when that lies within reach; the cut
+    still keeps clear of the sound on the far side, by the same margin."""
+    if slack <= 0.0:
+        return min(y, x + pad) if side == "end" else max(x, y - pad)
+    mid = (x + y) / 2.0
+    if side == "end":
+        tail = x + slack
+        for t in ((word or {}).get("cue_end"), (word or {}).get("end")):
+            if t is not None and tail < t <= x + 2 * slack + 0.3:
+                tail = t
+        hi = max(mid, y - slack - pad)
+        return min(y, max(x + pad, min(hi, tail + pad)))
+    # A word's onset is sharper than its ending: a soft start hides under the
+    # raised threshold for far less time (round 11: 0 to 3 of 30 starts lost
+    # under fans, AC and hum, against 11 to 25 of 30 ends), and the slack before
+    # it is dead air (or an intro's music) at the head of the clip.
+    sl = min(slack, 0.15)
+    lo = min(x + slack + pad, mid)
+    return max(x, min(y - pad, max(lo, y - sl - pad)))
+
+
+def _silences(runs: list[tuple], min_sil: float, talk=()) -> list[tuple]:
+    """The level's silences of min_sil or more, with `talk` spans (words the
+    ASR heard inside a level pause, with sound of their own) taken out."""
+    out = []
+    for k, x, y in runs:
+        if k != 0:
+            continue
+        pieces = [(x, y)]
+        for a, b in talk:
+            pieces = [p for s, e in pieces
+                      for p in ((s, min(e, a)), (max(s, b), e)) if p[1] > p[0]] \
+                if any(s < b and a < e for s, e in pieces) else pieces
+        out += [(s, e) for s, e in pieces if e - s >= min_sil - 1e-6]
+    return out
+
+
+def settle_start(runs: list[tuple], fw: float, lo: float, start: float,
+                 pad: float, min_sil: float = 0.15,
+                 floor: float | None = None,
+                 nxt: float | None = None, style: dict | None = None,
+                 talk=(), before: float | None = None) -> tuple[float, bool]:
+    """Put a cut before the first word in the silence before its SOUND: an ASR
+    word clock can start a word most of a second late (audit round 9: a short
+    opened 0.77 s into "Landscaping") or early. The silence is the last one of
+    min_sil or more that starts by the word's clock time (fw) and ends within a
+    second before it or later, and after `lo` (the previous word's end, or the
+    clip's own start): the word's sound begins where it ends. The cut lands
+    inside it, pad before that sound, and not before `floor` when given; the
+    previous word's end is a clock too, so it does not bound the cut. A cut
+    already in that silence stays. When the clock sits inside a pause and the
+    next word's clock (`nxt`) claims the sound after it, the word is the sound
+    before the pause. Under room noise (`style` given) the cut keeps the
+    checker's noise slack before the sound (cut_in_pause). `talk` spans are
+    words heard inside a level pause with sound of their own: soft talk under
+    a raised threshold, not silence (audit round 14: "It's" at 230.34 under an
+    AC, cut in half by a cut in the middle of the "pause" it sat in). Returns
+    (cut, found), found False when the word sits inside a second or more of
+    unbroken sound, and None when its clock sits in a pause whose sound after
+    it the next word claims but no pause precedes the sound before it: then
+    the word (or soft talk the level calls part of that pause) runs on from
+    the one before, and a cut anywhere in that pause can drop it (round 15:
+    "It's" halved again with a start asked for just before its "pause"). A
+    silence ending at or before `before` is the reach pause refused for a
+    word between it and the request, whose sound comes after it (round 17:
+    seg4's "he's", clocked 179.32-179.46 and said 179.41-179.55, opened a
+    clip asked for at 179.46 from that very pause, out of its captions, with
+    a PASS; settle_end's `past` already kept ends out of theirs), nor where
+    the next-word branch looks for an earlier silence (round 18); when that
+    pause is the only one there, the branch finds none (None, a warning:
+    round 19)."""
+    sil = _silences(runs, min_sil, talk)
+    cands = [(x, y) for x, y in sil
+             if x <= fw + 0.02 and y >= max(fw - 1.0, lo - 0.05)
+             and (before is None or y > before + 0.005)]
+    if not cands:
+        return start, False
+    x, y = max(cands, key=lambda s: s[0])
+    if x <= fw <= y and nxt is not None and nxt <= y + 0.05:
+        # The word's clock sits in a pause and the NEXT word claims the sound
+        # after it: this word is the sound just before the pause, its clock ran
+        # late (the replay's "And" was timed 0.57 s after it was said). Start
+        # before that sound when no earlier word claims it, and never in the
+        # refused reach pause either (round 18: this list shadowed `before`
+        # and was not filtered by it; a synthetic case settled there).
+        earlier = [(a, b) for a, b in sil if b <= x - 0.05
+                   and b >= max(fw - 1.0, lo - 0.05)]
+        if not earlier:
+            return start, None
+        earlier = [s for s in earlier if before is None or s[1] > before + 0.005]
+        if not earlier:
+            # Only the refused pause: no cut keeps the word whole and the word
+            # between out (round 19: a word-gap cut there kept the start out of
+            # it with a mere note, captions opening on a word whose sound, by
+            # this branch's premise, the cut had left behind).
+            return start, None
+        x, y = max(earlier, key=lambda s: s[1])
+    sl = noise_slack(runs, x + 0.01, y - 0.01, style) if style else 0.0
+    cut = max(cut_in_pause(x, y, "start", pad, sl), floor if floor is not None else x)
+    in_sound = any(k != 0 and a <= start < b for k, a, b in runs)
+    return (cut if cut < start or in_sound else start), True
+
+
+def settle_end(runs: list[tuple], lw: float, hi: float, end: float, pad: float,
+               min_sil: float = 0.15, style: dict | None = None,
+               talk=(), past: float | None = None) -> tuple[float, bool]:
+    """Put a cut after the last word in the silence after its SOUND (an ASR ends
+    a word early: "foundation." lost 0.6 s). The silence is the first one of
+    min_sil or more that ends after the word's clock end (lw) and starts within
+    a second after it or earlier, and before `hi` (the next word's start, or
+    where the sound of a next word timed as an instant begins): the word's
+    sound ends where it starts. The cut lands inside it, pad after that sound;
+    a cut already in that silence stays. Under room noise (`style` given) the
+    word's sound runs on by the checker's noise slack, or to its clock end
+    when that lies within reach (cut_in_pause). `talk` spans are words heard
+    inside a level pause with sound of their own, as in settle_start. A
+    silence starting at or after `past` is past the next word, whose sound
+    came before it (round 16: youtube-7Hb's "or", clocked 32.62-32.66 at the
+    end of its own sound, the pause after it at 32.65 within the 0.05 s
+    slack). Returns (cut, found)."""
+    sil = _silences(runs, min_sil, talk)
+    cands = [(x, y) for x, y in sil
+             if y >= lw - 0.02 and x <= min(lw + 1.0, hi + 0.05)
+             and (past is None or x < past)]
+    if not cands:
+        return end, False
+    x, y = min(cands, key=lambda s: s[0])
+    sl = noise_slack(runs, x + 0.01, y - 0.01, style) if style else 0.0
+    cut = cut_in_pause(x, y, "end", pad, sl, {"end": lw})
+    in_sound = any(k != 0 and a < end <= b for k, a, b in runs)
+    return (cut if cut > end or in_sound else end), True
+
+
+def clamp_stretched(words: list[dict], runs: list[tuple], min_silence: float = 0.4,
+                    lead: float = 0.1) -> list[dict]:
+    """A heard word whose clock STARTS in a level silence of min_silence or more
+    (within `lead` of its start) was stretched back over a pause: it starts
+    where that silence ends (the replay's "We're" ran 1.3 s back). A word whose
+    span starts in sound and runs on over a pause ("Wow" then 0.4 s of quiet)
+    keeps its start: its sound is at the front, and moving it would cut it."""
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_silence - 1e-6]
+    out = []
+    for w in words:
+        if w.get("timing") != "cue" and w.get("heard", True):
+            hit = [y for x, y in sil if x <= w["start"] + lead and w["start"] < y < w["end"]
+                   and y - max(x, w["start"]) >= min_silence - 1e-6]
+            if hit:
+                w = dict(w, start=max(hit), clamped_from=w["start"])
+        out.append(w)
+    return out
+
+
+class LevelRuns:
+    """Level runs of a source around a moment: ten seconds, so the level rules
+    see talk to compare it against, measured once per stretch. A stretch
+    serves a moment 2.5 s or more inside it (or at the file's own edge): the
+    floors the clip rules read span 2.5 s each side of a cut, and a stretch
+    measured for another clip in the same run cut them short: it read a fan's
+    floor 4 dB high and lost round 15's warning at fan47's 402.71 in the
+    developer's own sweep."""
+
+    def __init__(self, src: str, style: dict, info: dict, words: list[dict] | None = None):
+        self.src, self.style, self.info = src, style, info
+        self.words = words
+        self.total = info["duration_s"]
+        self.measured: list = []
+
+    def near(self, t: float) -> list[tuple]:
+        for a, b, r in self.measured:   # 2.5 s each side, or the file's own edge
+            if (a + 2.5 <= t or a <= 0.0 <= t) and \
+                    (t <= b - 2.5 or t <= b >= self.total - 0.01):
+                return r
+        a, b = max(0.0, t - 5.0), min(self.total, t + 5.0)
+        r = level_runs(self.src, self.style, self.info, a, b, self.words)
+        self.measured.append((a, b, r))
+        return r
+
+
+def edge_pause(runs: list[tuple], t: float, side: str, reach: float = 0.25,
+               min_sil: float = 0.15) -> tuple[float, float] | None:
+    """The level silence (min_sil or more) a requested clip edge sits in, or
+    that ends within `reach` before a start (begins within `reach` after an
+    end): the editor picked that pause. None when the edge is mid-phrase."""
+    sil = [(x, y) for k, x, y in runs if k == 0 and y - x >= min_sil - 1e-6]
+    if side == "start":
+        c = [(x, y) for x, y in sil if x <= t + 0.02 and y >= t - reach]
+        return max(c, key=lambda s: s[1]) if c else None
+    c = [(x, y) for x, y in sil if y >= t - 0.02 and x <= t + reach]
+    return min(c, key=lambda s: s[0]) if c else None
+
+
+def misclocked_pause(runs, pause: tuple, held: list[dict], said: list[dict],
+                     side: str, min_sil: float = 0.15):
+    """Words the ASR heard inside a level pause are usually soft talk the raised
+    threshold missed (place_clip's held words). But a word with no sound of
+    its own there (no 30 ms more than 5 dB over the pause's noise, away from
+    the pause's first and last 50 ms, where the neighbouring sound's decay
+    and attack still show; one 10 ms peak is the noise's own spread) is a
+    clock error: Whisper put "But" 0.6 s
+    late into the silence after it was said (audit round 12's fresh sweep,
+    nz_fan47 at 380.64, the clip opening after it). When an unheard
+    talk-level sound sits beside the pause (within 50 ms; a 10 ms fragment
+    of its decay between does not part them), on the far side from the clip
+    (before it at the head, after it at the tail, within 1.2 s of the word,
+    no heard word on it), and the word's neighbour claims the sound on the
+    clip's side, that sound is the word (round 15's fix: seg6's "And he's",
+    clocked into the pause after it was said, a decay fragment between). Returns
+    the pause beyond it (None when talk runs on there: the edge is then
+    mid-phrase), or False when the words are not misclocked."""
+    if not held or not getattr(runs, "peaks", None) or not hasattr(runs, "loudest"):
+        return False
+    x, y = pause
+    spans = [(w["start"] - 0.05, w["end"] + 0.05) if w["end"] - w["start"] < 0.05
+             else (w["start"], w["end"]) for w in held]
+    fl = runs.floor_besides(x, y, spans)
+    if fl is None:
+        return False
+    for a, b in spans:
+        ia, ib = max(a, x + 0.05), min(b, y - 0.05)     # off the pause's edges
+        run = best = 0
+        for k in runs._span(*((ia, ib) if ib - ia >= 0.03 else (a, b))):
+            run = run + 1 if runs.peaks[k] > fl + 5.0 else 0
+            best = max(best, run)
+        if best >= 3:
+            return False            # sound of its own: soft talk, not a clock error
+    others = [w for w in said if not any(w is h for h in held)]
+    lo, hi = min(w["start"] for w in held), max(w["end"] for w in held)
+    if side == "start":
+        snd = [(a, b) for k, a, b in runs if k == 1 and x - 0.05 <= b <= x + 0.02
+               and b - a >= 0.08]
+        if not snd:
+            return False
+        a, b = snd[-1]
+        nxt = min((w["start"] for w in others if w["start"] >= hi - 0.02), default=None)
+        if a < lo - 1.2 or nxt is None or nxt > y + 0.3:
+            return False
+    else:
+        snd = [(a, b) for k, a, b in runs if k == 1 and y - 0.02 <= a <= y + 0.05
+               and b - a >= 0.08]
+        if not snd:
+            return False
+        a, b = snd[0]
+        prv = max((w["end"] for w in others if w["end"] <= lo + 0.02), default=None)
+        if b > hi + 1.2 or prv is None or prv < x - 0.3:
+            return False
+    if b - a < 0.08 or (runs.loudest(a, b) or -120.0) < fl + 15.0:
+        return False                # a click or a breath, not a word
+    if any(w["start"] < b - 0.02 and w["end"] > a + 0.02 for w in others):
+        return False                # a heard word already claims that sound
+    sil = [(p, q) for k, p, q in runs if k == 0 and q - p >= min_sil - 1e-6]
+    if side == "start":
+        c = [(p, q) for p, q in sil if abs(q - a) <= 0.02]
+        return max(c, key=lambda s: s[1]) if c else None
+    c = [(p, q) for p, q in sil if abs(p - b) <= 0.02]
+    return min(c, key=lambda s: s[0]) if c else None
+
+
+def gap_cut(runs, side: str, before: float, after: float, nb: float, pad: float,
+            reach: float = 0.8, nb_loud: float | None = None):
+    """Where a clip edge with no level pause goes in the word gap [before,
+    after] (the clip's own word is `after` at a start, `before` at an end): a
+    moment that is quiet in absolute terms, not merely the gap's quietest
+    (audit round 13: a "quietest part" sat inside an unheard filler at -19
+    dBFS on a quiet recording, and inside a word's decay on the replay). A
+    moment is a 10 ms window that, with its neighbour on each side (30 ms,
+    room for the fade), peaks under the checker's base silence threshold (as
+    set for a quiet room: where the threshold rose over a bed or room noise,
+    the raised one can sit within 10 dB of the talk, audit round 14); or
+    30 dB or more under the softer neighbouring word `nb` (a pause too short
+    for the level's 0.15 s); or 25 dB under the louder one `nb_loud` and
+    12 dB under the softer (a breath or a bed between words; talk the ASR
+    missed runs nearer the words); or within 8 dB of the stretch's floor (its
+    5th-percentile peak) and 20 dB under the softer word; and not where the
+    level is unmeasurable. Within `reach` of
+    the clip's word, a quiet stretch of 0.15 s or more nearest that word wins
+    (a real pause), its cut `pad` from the word; failing one, the last short
+    stretch before the gap's far word (at an end, a stop's closure inside the
+    last word can be a short quiet stretch, its burst after it), its 30 ms
+    fade where it is quietest. Returns (cut, fade level, threshold, long),
+    long True when the cut sits in a quiet stretch of 0.15 s or more; None
+    when nothing in the gap is quiet, or False when the runs carry no peaks."""
+    peaks = getattr(runs, "peaks", None)
+    if not peaks or not hasattr(runs, "loudest"):
+        return False
+    lo, hi = (before, min(after, before + reach)) if side == "end" else \
+        (max(before, after - reach), after)
+    w, base, n = runs.window_s, runs.base, len(peaks)
+    srt = sorted(peaks)
+    bed = max(min(nb - 20.0, srt[int(0.05 * (len(srt) - 1))] + 8.0),
+              min(nb - 12.0, (nb if nb_loud is None else nb_loud) - 25.0))
+    # A quiet moment is a 10 ms window whose neighbours on both sides are
+    # quiet too: 30 ms, room for the fade.
+    k_lo = max(1, int(math.ceil((lo - base) / w - 1e-6)))
+    k_hi = min(n - 2, int(math.floor((hi - base) / w + 1e-6)) - 1)
+    thr = runs.base_db if getattr(runs, "base_db", None) is not None else -120.0
+    unmeasured = [(x, y) for kind, x, y in runs if kind == 2]
+    groups, cur = [], []
+    for k in range(k_lo, k_hi + 1):
+        t = base + (k + 0.5) * w
+        if max(peaks[k - 1:k + 2]) <= max(thr, nb - 30.0, bed) and \
+                not any(x - w <= t <= y + w for x, y in unmeasured):
+            cur.append(k)
+        elif cur:
+            groups.append(cur)
+            cur = []
+    if cur:
+        groups.append(cur)
+    if not groups:
+        return None
+
+    def span(g):                     # the quiet stretch: the centres and a window each side
+        return base + (g[0] - 1) * w, base + (g[-1] + 2) * w
+    long_ = [g for g in groups if span(g)[1] - span(g)[0] >= 0.15 - 1e-9]
+    g = (long_[0] if side == "end" else long_[-1]) if long_ else groups[-1]
+    qs, qe = span(g)
+    if long_:
+        # A real pause: pad from the clip's own word, the fade well inside it.
+        cut = min(qe, qs + max(0.03, pad)) if side == "end" else max(qs, qe - max(0.03, pad))
+        fk = int(round((cut - base) / w))
+        fade = max(peaks[max(0, fk - 3):fk] or [-120.0]) if side == "end" \
+            else max(peaks[fk:fk + 3] or [-120.0])
+    else:
+        # A short quiet run: the 30 ms fade where it is quietest, nearest the
+        # clip's word on a tie (a pad would push it back into a decay).
+        if side == "end":
+            cands = [(max(peaks[j - 3:j]), j) for j in range(g[0] + 2, g[-1] + 3)]
+            fade, j = min(cands, key=lambda c: (c[0], c[1]))
+        else:
+            cands = [(max(peaks[j:j + 3]), j) for j in range(g[0] - 1, g[-1])]
+            fade, j = min(cands, key=lambda c: (c[0], -c[1]))
+        cut = base + j * w
+    return round(cut, 3), fade, thr, bool(long_)
+
+
+def _p5(runs, a: float, b: float) -> float | None:
+    """The 5th-percentile 10 ms peak inside [a, b]: the stretch's floor."""
+    seg = sorted(runs.peaks[k] for k in runs._span(a, b))
+    return seg[int(0.05 * (len(seg) - 1))] if seg else None
+
+
+def instant_onset(runs, t: float, floor_t: float | None = None) -> float:
+    """Where the sound of a word Whisper timed as an instant at t begins: the
+    instant marks where its sound ENDS (audit round 13: "okay," at 396.62 was
+    said from 396.36). The run of level that ends at t (or up to 0.1 s before
+    it), back to the first 10 ms window that is quiet: under the silence
+    threshold, 25 dB under the run's loudest, or, under a bed, within 8 dB of
+    the stretch's floor and 15 dB under the run's loudest (round 14: under a
+    bed 20 dB down the walk ran on across a 0.16 s pause into "maid."). At
+    most 0.4 s, and not before `floor_t` (the previous word's clock end); 0.3 s
+    without level peaks."""
+    pk = getattr(runs, "peaks", None)
+    lo = max(t - 0.4, floor_t if floor_t is not None and floor_t < t else t - 0.4)
+    if not pk or not hasattr(runs, "loudest"):
+        return max(t - 0.3, lo)
+    w = runs.window_s
+    top = runs.loudest(lo, t)
+    fl = _p5(runs, t - 1.0, t + 0.2)
+    if top is None or fl is None:
+        return max(t - 0.3, lo)
+    k = min(len(pk), int(round((t - runs.base) / w))) - 1
+    k0 = max(0, int(round((lo - runs.base) / w)))
+    kq = max(k0, int(round((t - 0.1 - runs.base) / w)))
+
+    def quiet(i):
+        return pk[i] <= max(runs.threshold(runs.base + i * w), top - 25.0,
+                            min(top - 15.0, fl + 8.0))
+    while k >= kq and quiet(k):
+        k -= 1                       # the quiet just before the instant
+    while k >= k0 and not quiet(k):
+        k -= 1                       # the word's sound
+    return runs.base + (k + 1) * w
+
+
+def stray_talk(runs, side: str, edge: float, cut: float, top: float | None,
+               fade: float = 0.03) -> float:
+    """Seconds of talk-level sound a cut keeps beyond the clip's edge word, on
+    the far side of a dip from it: a filler, or a word the transcript missed or
+    clocked late (audit round 14: an unheard filler before seg3's "I", ac44's
+    "no," clocked 0.3 s late, hum46's unheard "right?" and "basement."). From
+    the edge word's clock (`edge`: its start at a start, its end at an end)
+    toward the cut, the word's own sound runs on until 30 ms of dip (10 ms
+    peaks under the higher of 15 dB under the word's loudest `top` and 6 dB
+    over the floor of the 2 s around the cut); after that, windows within 12 dB of the word
+    (and 3 dB over the dip) count, up to the cut's fade, when they reach
+    within 6 dB of the word and 18 dB over the floor (of the 2 s, or of the
+    5 s when that is lower): a word, not a breath,
+    a soft syllable or a bed the level cannot tell from talk. A word's own
+    tail with no dip in it counts as the word."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or top is None or not hasattr(runs, "_span"):
+        return 0.0
+    w, base, n = runs.window_s, runs.base, len(pk)
+    fl = _p5(runs, cut - 1.0, cut + 1.0)            # the floor beside the edge
+    fl_wide = _p5(runs, cut - 2.5, cut + 2.5)       # and of the 5 s around it
+    if fl is None or fl_wide is None:
+        return 0.0
+    dip = max(top - 15.0, fl + 6.0)
+    talk = max(top - 12.0, dip + 3.0)
+
+    def idx(x):
+        return int(round((x - base) / w))
+    if side == "end":
+        ks = range(max(0, idx(edge)), min(n, idx(cut - fade)))
+    else:
+        ks = range(min(n, idx(edge)) - 1, max(-1, idx(cut + fade) - 1), -1)
+    run = 0
+    dipped = False
+    stray = []
+    for k in ks:
+        if not dipped:
+            run = run + 1 if pk[k] <= dip else 0
+            dipped = run >= 3
+        elif pk[k] >= talk:
+            stray.append(pk[k])
+    if not stray or max(stray) < max(top - 6.0, min(fl, fl_wide) + 18.0):
+        return 0.0
+    return round(len(stray) * w, 2)
+
+
+def dropped_talk(runs, cut: float, covered_to: float, top: float | None,
+                 prev_start: float, reach: float = 0.06, back: float = 0.6) -> float:
+    """Seconds of word-loud sound no word's clock covers that a START cut in a
+    short dip leaves out (audit round 15: a start cut in the closure inside
+    "professional", its first syllable dropped with a NOTE, Whisper clocking
+    the word 0.4 s late). The sound runs right up to the cut's dip (it ends
+    within `reach` before the cut) and is a burst of its own: back to 30 ms of
+    dip within `back` (sound that runs on from further back is the previous
+    word's own tail past its clock end). It counts when it starts inside the
+    previous word's clock (after `prev_start`) or within 0.15 s after it (a
+    burst that starts later, in a stretch the ASR heard nothing in, was a
+    music bed in a public promo, not a syllable), after talk-level sound of
+    that word's own (otherwise it is that word, clocked early over the pause
+    before it: "right?" before "She" on the fresh mixes), reaches within 6 dB
+    of the first word `top` and 18 dB over the floor (not a bed or a breath:
+    a music bed between sentences in a public short), and holds talk-level
+    windows past `covered_to` (the previous word's clock end); those windows
+    are what is returned (place_clip warns at 0.12 s). A dip and talk are as
+    in stray_talk."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or top is None or not hasattr(runs, "_span"):
+        return 0.0
+    w, base, n = runs.window_s, runs.base, len(pk)
+    fl = _p5(runs, cut - 1.0, cut + 1.0)
+    fl_wide = _p5(runs, cut - 2.5, cut + 2.5)
+    if fl is None or fl_wide is None:
+        return 0.0
+    dip = max(top - 15.0, fl + 6.0)
+    talk = max(top - 12.0, dip + 3.0)
+
+    def idx(x):
+        return int(round((x - base) / w))
+    k = min(n, idx(cut)) - 1
+    j = 0
+    while k >= 0 and pk[k] <= dip and j < round(reach / w):
+        k -= 1                                # the dip the cut sits in
+        j += 1
+    if k < 0 or pk[k] <= dip:
+        return 0.0                            # a longer quiet: nothing abuts the cut
+    last, run, first = k, 0, None
+    while k >= max(0, idx(cut - back)):
+        run = run + 1 if pk[k] <= dip else 0
+        if run >= 3:
+            first = k + 3                     # the burst starts after this dip
+            break
+        k -= 1
+    if first is None or base + first * w <= prev_start + 0.03 \
+            or base + first * w > covered_to + 0.15:
+        return 0.0
+    own = [i for i in range(max(0, idx(prev_start)), first - 3) if pk[i] >= talk]
+    burst = pk[first:last + 1]
+    if len(own) < 5 or not burst or max(burst) < max(top - 6.0, min(fl, fl_wide) + 18.0):
+        return 0.0
+    got = [p for i, p in enumerate(burst, first) if base + i * w >= covered_to - 1e-9 and p >= talk]
+    return round(len(got) * w, 2)
+
+
+def dropped_tail(runs, cut: float, covered_from: float, top: float | None,
+                 next_start: float, reach: float = 0.06, ahead: float = 0.6) -> float:
+    """dropped_talk's mirror at an END the word-gap rule placed in a short dip
+    (audit round 16: seg3's "realistically," cut in the 30 ms dip before its
+    "-ly", 0.30 s at -16 dBFS that no clock covers dropped with a NOTE; seg5's
+    "cycle?" cut before its "-cle"). Seconds of word-loud sound no word's clock
+    covers that the cut leaves out: the sound starts right after the cut's dip
+    (within `reach`), is a burst of its own (a 30 ms dip within `ahead` of the
+    cut ends it, by 0.03 s after the next word's sound begins at `next_start`:
+    sound that runs on into the next word is that word, its clock late),
+    starts within 0.15 s after the last word's clock end (`covered_from`: a
+    burst further on is a bed or a breath), reaches within 9 dB of the last
+    word `top` (a last syllable is often unstressed: seg3's "-ly" peaked 5.3 dB
+    under "realistically,") and 18 dB over the floor (not a bed between
+    sentences: bedsn14's at 458.24), and holds talk-level windows before
+    `next_start`; those windows are what is returned (place_clip warns at
+    0.12 s). A dip and talk are as in dropped_talk. On 55 such ends on six
+    publishes and 23 public videos, and 138 on the fresh replay mixes, it
+    fires on the two that drop a syllable and nowhere else."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or top is None or not hasattr(runs, "_span"):
+        return 0.0
+    w, base, n = runs.window_s, runs.base, len(pk)
+    fl = _p5(runs, cut - 1.0, cut + 1.0)
+    fl_wide = _p5(runs, cut - 2.5, cut + 2.5)
+    if fl is None or fl_wide is None:
+        return 0.0
+    dip = max(top - 15.0, fl + 6.0)
+    talk = max(top - 12.0, dip + 3.0)
+
+    def idx(x):
+        return int(round((x - base) / w))
+    k, j = max(0, idx(cut)), 0
+    while k < n and pk[k] <= dip and j < round(reach / w):
+        k += 1                                # the dip the cut sits in
+        j += 1
+    if k >= n or pk[k] <= dip:
+        return 0.0                            # a longer quiet: nothing abuts the cut
+    first, run, last = k, 0, None
+    while k < min(n, idx(cut + ahead)):
+        run = run + 1 if pk[k] <= dip else 0
+        if run >= 3:
+            last = k - 3                      # the burst ends before this dip
+            break
+        k += 1
+    if last is None or base + first * w > covered_from + 0.15 \
+            or base + (last + 1) * w > next_start + 0.03 + 1e-9:
+        return 0.0
+    burst = pk[first:last + 1]
+    if not burst or max(burst) < max(top - 9.0, min(fl, fl_wide) + 18.0):
+        return 0.0
+    got = [p for i, p in enumerate(burst, first)
+           if base + (i + 1) * w <= next_start + 1e-9 and p >= talk]
+    return round(len(got) * w, 2)
+
+
+def sound_between(runs, lw: dict | None, wb: dict, x: float) -> bool:
+    """Whether a word the ASR clocked between a clip's last word `lw` and a
+    level pause starting at x has sound of its own before that pause, rather
+    than being the last word's decay with the word's clock run early into it
+    (round 15: rev7's reverb under "things.", "Just" clocked into it 0.5 s
+    before it was said after the pause). Its sound rises after a dip: a 30 ms
+    dip, then 30 ms 9 dB or more over it (rises_after_dip), looked for from
+    0.35 s before the word's clock start or 0.05 s before the last word's clock
+    end, whichever is earlier, but not in the last word's first 0.1 s (an ASR
+    starts a word late and lets the one before run on: round 16, How_to's
+    "embroidery." was said from 130.41 and clocked from 130.70, while
+    "painting," ran to 130.56 on the clock and to 130.33 in sound). Or its
+    clock holds sound within 6 dB of the last word's loudest, with no dip
+    between (seg2's "Like," running straight on from "find it."; rev7's decay
+    under "Just" was 9.3 dB down). Under a bed (the pause within 20 dB of the
+    last word) dips stay shallow and the words sit near it: there within 10 dB
+    (copefl's "or" 8.8 dB under "pocketbooks,", the bed at -18 dBFS). True
+    when the runs carry no peaks."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or not hasattr(runs, "loudest") or not hasattr(runs, "_span"):
+        return True
+    t0 = wb["start"] - 0.35
+    if lw is not None:
+        t0 = max(min(lw["end"] - 0.05, t0), lw["start"] + 0.1)
+    if rises_after_dip(runs, t0, x):
+        return True
+    if lw is None or lw["end"] <= lw["start"]:
+        return False
+    top = runs.loudest(lw["start"], lw["end"])
+    mine = runs.loudest(wb["start"], max(min(wb["end"], x), wb["start"] + 0.01))
+    if top is None or mine is None:
+        return False
+    if mine >= top - 6.0:
+        return True
+    bed = runs.floor(x, x + 0.3)
+    return bed is not None and top - bed < 20.0 and mine >= top - 10.0
+
+
+def said_before_pause(runs, prev: dict | None, w: dict, x: float,
+                      y: float | None = None) -> bool | None:
+    """Whether a word clocked mostly inside a quiet level pause [x, y] (so not
+    said there) was said in the sound just before that pause, its clock run
+    late, rather than in the sound after it, its clock run early.
+    After, always, when its clock runs on past the pause's end (by more than
+    0.02 s): Whisper snaps a word's start back to the end of the word before,
+    so such a word was stretched back over the pause, and the part of its
+    clock before the pause is the word before's own tail (round 18: Whisper
+    on the source put 60 of the 61 words this test had taken as said before
+    their pause after it). Otherwise before when the part of its clock before
+    the pause holds sound within 6 dB of the previous word `prev`'s loudest (a
+    word running straight on from it, its clock run late into the pause), or
+    the sound before the pause runs on 0.1 s or more past prev's clock end and
+    rises there after a dip (round 17: seg2's "August", clocked 101.68-102.06
+    after it was said, Whisper heard it in the clip); after when neither holds
+    (round 17: seg1's "at", seg4's "not", seg5's "It" and "Are", clocked into
+    the silence before them, captioned over silence, the clip ending before
+    them; seg4's "and" at a start, said after its pause and left out of the
+    captions). On the round-18 auditor's 254 words clocked over a quiet pause
+    on 29 real files, Whisper on the source agrees with this at 225 of the 230
+    it could place (167 before the first rule). None when the runs carry no
+    peaks."""
+    if y is not None and w["end"] > y + 0.02:
+        return False
+    pk = getattr(runs, "peaks", None)
+    if not pk or not hasattr(runs, "loudest") or not hasattr(runs, "_span"):
+        return None
+    if prev is not None and prev["end"] > prev["start"] and x - w["start"] >= 0.05:
+        top = runs.loudest(prev["start"], prev["end"])
+        mine = runs.loudest(w["start"], x)
+        if top is not None and mine is not None and mine >= top - 6.0:
+            return True
+    lo = prev["end"] if prev is not None else x - 1.0
+    if x - lo < 0.1:
+        return False
+    return rises_after_dip(runs, max(lo - 0.05, x - 1.0), x)
+
+
+def rises_after_dip(runs, t0: float, t1: float) -> bool:
+    """Whether the level in [t0, t1] dips (30 ms) and then rises 9 dB or more
+    over that dip for 30 ms: a sound of its own after the one before, not
+    the decay of the one before. True when the runs carry no peaks."""
+    pk = getattr(runs, "peaks", None)
+    if not pk or not hasattr(runs, "_span"):
+        return True
+    ks = list(runs._span(t0, t1))
+    best, run = None, 0
+    for i, k in enumerate(ks):
+        run = run + 1 if best is not None and pk[k] >= best + 9.0 else 0
+        if run >= 3:
+            return True
+        if 1 <= i < len(ks) - 1:
+            d = max(pk[ks[i - 1]], pk[k], pk[ks[i + 1]])
+            best = d if best is None else min(best, d)
+    return False
+
+
+def sound_edges(runs: list[tuple], start: float, end: float) -> tuple:
+    """Where the cut's sound starts (the cut itself when it lands in sound) and
+    where it stops (the same at the end)."""
+    live = [(a, b) for k, a, b in runs if k != 0 and b > start and a < end]
+    on = max(live[0][0], start) if live else None
+    off = min(live[-1][1], end) if live else None
+    return on, off
+
+
+def place_clip(levels: LevelRuns, words: list[dict], start: float, end: float,
+               pad: float, in_word: float, report: dict,
+               keep_reach: frozenset = frozenset()) -> tuple[list[dict], float, float]:
+    """--clip edges. An edge asked for at a pause stays in that pause, pad from
+    the sound beside it (audit round 10: the ASR clocks words up to 1.4 s early
+    into the pause before them, so snapping to words dropped the first word of
+    292 of 598 replay clips cut at a pause). An edge asked for mid-phrase snaps
+    to word boundaries (a word the edge falls inside is kept whole), then moves
+    onto the words' sound. Returns the words (stretched ones clamped) and the
+    clip's start and end. `keep_reach` names the edges ("starts", "ends")
+    whose reach pause stays the editor's despite a word between (the retry
+    below)."""
+    words_in = words
+    # What the report held before this placement, for the retry below: the
+    # report is finish.py's own (its "steps" and earlier warnings), so the
+    # retry undoes only this placement's entries (round 16: clearing it all
+    # crashed every finish.py run that kept a word between whole).
+    report_before = {k: (list(v) if isinstance(v, list) else v) for k, v in report.items()}
+    total = levels.total
+    rs, re_ = levels.near(start), levels.near(end)
+    # A word the ASR stretched back over a pause (its clock starts in in_word s
+    # or more of level silence) starts after that silence (the replay's
+    # "We're" ran 1.3 s back into the pause before it).
+    words = clamp_stretched(words, rs + re_, in_word)
+    s_w, e_w = snap_to_words(words, start, end, pad)
+    report["clip_snapped_to_words"] = [round(s_w, 3), round(e_w, 3)]
+    ps, pe = edge_pause(rs, start, "start"), edge_pause(re_, end, "end")
+    # A level "pause" that holds words the ASR heard on the clip's side of the
+    # edge is not the editor's pause: under room noise soft talk reads as
+    # silence (audit round 12: "what you need to do" under an AC, the END on
+    # "do", cut before "need"). The pause starts after those words (ends
+    # before them at the head); with too little left, the edge is mid-phrase.
+    said = [w for w in words if w.get("timing") != "cue" and w.get("heard", True)]
+    heard = [w for w in said if w["end"] > w["start"]]
+
+    def instant_at(w, t):   # Whisper times some words as an instant, on the edge
+        return w["end"] - w["start"] < 0.01 and abs(w["start"] - t) <= 0.02
+
+    def onset(w, r):
+        """Where a word's sound begins: its clock start, or for an instant
+        (whose clock marks where its sound ENDS) the level run ending there."""
+        if w["end"] - w["start"] >= 0.01:
+            return w["start"]
+        prv = max((v["end"] for v in said if v["start"] < w["start"] - 0.01
+                   and v["end"] <= w["start"]), default=None)
+        return instant_onset(r, w["start"], prv)
+    # Words heard inside what the level calls a pause, with sound of their own,
+    # where they leave no pause: soft talk for settle_start and settle_end
+    # (audit round 14: "It's" under an AC, cut in the middle of its "pause").
+    talk_s: list = []
+    talk_e: list = []
+    misclocked = set()
+    in_gap = set()          # edges the word-gap rule placed
+    # A pause the request only reaches (it ends within 0.25 s before a start,
+    # begins within 0.25 s after an end) is the editor's only when no heard
+    # word lies between it and the request: a start asked for at the previous
+    # word's clock end adopted the pause BEFORE that word, and the clip opened
+    # on it (audit round 15: "Look," on the clean mix, "-scapers" under a bed,
+    # 51 of 830 such starts).
+    reach_word = {}         # the word between, where the reach was refused
+    # Which side of the request a word is on goes by its clock's middle, so a
+    # 20 ms clock is a word too (round 16: seg4's "kill" and seg1's "Yeah.",
+    # clocked from an end asked for at their start, kept with a PASS); a word
+    # Whisper timed as an instant on the edge itself is the clip's (its sound
+    # comes before its clock, as in snap_to_words), one further in is between.
+    def mid(w):
+        return (w["start"] + w["end"]) / 2.0
+
+    def on_edge(w, t):
+        return w["end"] - w["start"] < 0.01 and abs(w["start"] - t) <= 0.02
+    # (A previous word whose clock spans the whole pause counts too: Whisper
+    # snaps a word's start back to the end of the word before, so it is
+    # usually said after the pause, as at ends; round 17, of the starts the
+    # developer tried taking such words as said before it, Whisper heard them
+    # open the clip at most.)
+    between_s = sorted((w for w in said if ps[1] + 0.02 < w["end"] <= start + 0.02
+                        and mid(w) < start and not on_edge(w, start)),
+                       key=lambda w: w["start"]) if ps else []
+    if between_s and "starts" not in keep_reach:
+        reach_word["starts"] = (ps, between_s)
+        ps = None
+    # At an end: heard words clocked from the request on and starting before
+    # the pause. Not a next word whose clock spans the whole pause: it was
+    # stretched back over it, Whisper's way, its start snapped to the word
+    # before's end, its sound after the pause ("This" 248.52-249.22 on the
+    # clean mix). (Nor can the level tell when such a word was said before
+    # the pause after all, from the last word's tail: round 17, bed20's "an",
+    # clocked 433.36-433.98 across the pause, the next word from 433.98, 0.03 s
+    # after the sound resumes; but seg1's "And", 0.05 s there, was said after
+    # it. A known limit.)
+    between_e = sorted((w for w in said if end - 0.02 <= w["start"] < pe[0] - 0.02
+                        and w["end"] <= pe[1] + 0.02 and mid(w) > end
+                        and not on_edge(w, end)), key=lambda w: w["start"]) if pe else []
+    # The clip's last word: the last one with a clock clocked mostly before the
+    # request (not a next word whose 20 ms clock ends by it, nor the last word
+    # itself when its 20 ms clock ends at the request: fan47's "right?").
+    lw0 = max((w for w in said if w["end"] - w["start"] >= 0.01 and mid(w) <= end),
+              key=lambda w: w["end"], default=None)
+    decayed = []            # words between the level reads as the last word's tail
+    if between_e and "ends" not in keep_reach:
+        if sound_between(re_, lw0, between_e[0], pe[0]):
+            reach_word["ends"] = (pe, between_e)
+            pe = None
+        else:
+            decayed = between_e
+
+    def audible(w, r):
+        """Whether a word clocked inside a level pause has sound of its own
+        there. Where the silence threshold rose over room noise, soft talk
+        reads as silence, so any heard word counts; in a quiet room the level
+        is right, and a word there needs 30 ms over the threshold (a click is
+        shorter): otherwise its clock ran into the pause (round 15: seg5's
+        "It" at 77.70, a 20 ms click inside it, lost the editor's pause)."""
+        pk = getattr(r, "peaks", None)
+        if not pk or not hasattr(r, "raised") or getattr(r, "base_db", None) is None:
+            return True
+        if max(r.raised(w["start"]), r.raised(w["end"])) > 0.0:
+            return True
+        thr = r.threshold(w["start"])
+        run = best = 0
+        for k in r._span(w["start"], max(w["end"], w["start"] + 0.01)):
+            run = run + 1 if pk[k] > thr else 0
+            best = max(best, run)
+        return best >= 3
+    if pe:
+        held = [w for w in said if w["start"] >= pe[0] - 0.02
+                and (w["start"] < end - 0.02 or instant_at(w, end))
+                and w["end"] <= end + 0.15 and w["end"] > pe[0] + 0.05
+                and not ("cue_start" in w and w["cue_start"] >= end - 0.05)]
+        moved = misclocked_pause(re_, pe, held, said, "end") if held else False
+        if moved is not False:
+            # The word's clock ran early into the pause; its sound comes after.
+            report.setdefault("notes", []).append(
+                "the clip's last word is clocked in silence; its sound is the talk "
+                "just after that pause, kept")
+            misclocked.add("ends")
+            pe = moved
+        elif [w for w in held if audible(w, re_)]:
+            held = [w for w in held if audible(w, re_)]
+            x2 = max(w["end"] for w in held)
+            if pe[1] - x2 < 0.15 - 1e-6:
+                talk_e = [(w["start"], w["end"]) for w in held]
+            pe = (x2, pe[1]) if pe[1] - x2 >= 0.15 - 1e-6 else None
+    if ps:
+        held = [w for w in said if w["end"] <= ps[1] + 0.02
+                and (w["end"] > start + 0.02 or instant_at(w, start))
+                and w["start"] >= start - 0.15 and w["start"] < ps[1] - 0.05
+                and not ("cue_end" in w and w["cue_end"] <= start + 0.05)]
+        moved = misclocked_pause(rs, ps, held, said, "start") if held else False
+        if moved is not False:
+            # The word's clock ran late into the pause; its sound came before.
+            report.setdefault("notes", []).append(
+                "the clip's first word is clocked in silence; its sound is the talk "
+                "just before that pause, kept")
+            misclocked.add("starts")
+            ps = moved
+        elif [w for w in held if audible(w, rs)]:
+            held = [w for w in held if audible(w, rs)]
+            y2 = min(w["start"] for w in held)
+            if y2 - ps[0] < 0.15 - 1e-6:
+                talk_s = [(w["start"], w["end"]) for w in held]
+            ps = (ps[0], y2) if y2 - ps[0] >= 0.15 - 1e-6 else None
+    if ps and ps[1] >= end - 0.1:
+        ps = None                       # nothing but the pause would be left
+    if pe and pe[0] <= start + 0.1:
+        pe = None
+    # Which words the clip holds, for its captions and its receipt.
+    fw_, lw_ = edge_words(words, start, end)
+    style = getattr(levels, "style", None)
+    sl_s = noise_slack(rs, ps[0] + 0.01, ps[1] - 0.01, style) if ps else 0.0
+    sl_e = noise_slack(re_, pe[0] + 0.01, pe[1] - 0.01, style) if pe else 0.0
+    order = sorted(words, key=lambda w: w["start"])
+
+    def timed(w):
+        return w["end"] - w["start"] >= 0.01
+
+    def mostly_in(w, p):        # at least half its clock inside the pause p
+        return timed(w) and \
+            min(w["end"], p[1]) - max(w["start"], p[0]) >= 0.5 * (w["end"] - w["start"])
+
+    def prev_said(w):
+        return max((v for v in said if timed(v) and v is not w and v["start"] < w["start"] - 0.01),
+                   key=lambda v: v["end"], default=None)
+
+    def audible_in(w, r, p):
+        """audible() over the part of its clock inside the pause p, away from
+        the pause's first and last 0.1 s, where the sound before it still
+        decays and the sound after it already starts (seg1: "stuff" decays
+        0.09 s into its pause, and "at" rises 0.09 s before the level's run)."""
+        a, b = max(w["start"], p[0] + 0.1), min(w["end"], p[1] - 0.1)
+        return b - a >= 0.03 and audible(dict(w, start=a, end=b), r)
+    # A word clocked mostly inside a quiet pause has no sound there (in a quiet
+    # room the level is right): it was said before the pause or after it, and
+    # the captions follow its sound, not its clock (round 17: at ends, seg1's
+    # "at", seg4's "not", seg5's "It" and "Are", clocked into the silence
+    # before them, closed the captions over silence with a PASS, the clip
+    # ending at the pause; at a start, seg4's "and", clocked into the pause
+    # before it was said, was in the sound and out of the captions). Not by a
+    # cue time of Descript's, which comes from the sound; not under room noise,
+    # where soft talk reads as silence.
+    left_out = []           # words the request asked for, said after the end's pause
+    if ps:
+        fw_ = word_after_pause(words, *ps, start=start) or fw_
+        if "starts" in keep_reach and between_s and \
+                (fw_ is None or between_s[0]["start"] < fw_["start"]):
+            # The words between, kept whole, open the captions too (round 16:
+            # with an SRT the cue's own first word did, and seg1's "put",
+            # "or" and "rim" were in the sound and out of the captions).
+            fw_ = between_s[0]
+        elif fw_ is not None and sl_s == 0.0 and "starts" not in misclocked \
+                and not cue_starts_in(words, *ps):
+            # (with a cue starting at the pause, Descript's times decide, and
+            # word_after_pause has taken a word of the cue before only when
+            # its clock and its cue both run past the pause: round 19, the
+            # replay's "it," clocked 3804.14-3804.60 into the pause
+            # 3804.26-3805.39, said before it, opened the captions here when
+            # "and", clocked across the pause's end, had opened them)
+            for w in sorted((v for v in said if mostly_in(v, ps) and v["start"] < fw_["start"]
+                             and not audible_in(v, rs, ps)), key=lambda v: v["start"]):
+                if said_before_pause(rs, prev_said(w), w, *ps) is False:
+                    fw_ = w                 # said after the pause: the clip's first word
+                    break
+    if pe:
+        lw_ = word_before_pause(words, *pe, end=end) or lw_
+        last_e = max(between_e, key=lambda w: w["end"], default=None)
+        if "ends" in keep_reach and last_e is not None and \
+                (lw_ is None or last_e["end"] > lw_["end"]):
+            # The words between, kept whole, are in the clip's captions too
+            # (round 16: the request alone left them out).
+            lw_ = last_e
+        elif lw_ is not None and sl_e == 0.0 and "ends" not in misclocked \
+                and not cue_ends_in(words, *pe):
+            while lw_ is not None and any(lw_ is v for v in said) and mostly_in(lw_, pe) \
+                    and not audible_in(lw_, re_, pe) \
+                    and said_before_pause(re_, prev_said(lw_), lw_, *pe) is False:
+                if mid(lw_) <= end:
+                    left_out.append(lw_)    # said after the pause: not in the clip
+                i = next(k for k, v in enumerate(order) if v is lw_)
+                lw_ = order[i - 1] if i > 0 else None
+    # Words the request asked for (their clock's middle by the end) clocked
+    # across the end's pause, which word_before_pause took as said after it.
+    across = [w for w in said if timed(w) and w["start"] < pe[0] + 0.1
+              and w["end"] > pe[1] + 0.02 and mid(w) <= end
+              and (lw_ is None or w["start"] > lw_["start"])] if pe else []
+    # A clock that runs on past the pause by 0.06 s or less leaves too little
+    # there for the word: Whisper may have run a word said before the pause on
+    # across it (round 18: seg2's "won't", clocked 173.18-173.78 over the pause
+    # 173.44-173.75, opened the captions of a start inside that pause and was
+    # said before it; seg6's "and", 0.05 s past its pause, likewise), as well
+    # as stretched one said after it back (seg1's "And", 0.05 s past). The
+    # captions follow the rule; the receipt says the clock cannot tell.
+    def short_tail(w, p):
+        return timed(w) and p[1] + 0.02 < w["end"] <= p[1] + 0.06 and w["start"] < p[0] + 0.1
+    unsure_s = fw_ if ps and fw_ is not None and short_tail(fw_, ps) \
+        and "starts" not in keep_reach and "starts" not in misclocked \
+        and not (fw_.get("cue_start") is not None
+                 and ps[0] - 0.05 <= fw_["cue_start"] <= ps[1] + 0.5) else None
+    unsure_e = next((w for w in sorted(said, key=lambda v: v["start"]) if short_tail(w, pe)
+                     and w["start"] < end - 0.02 and (lw_ is None or w["start"] > lw_["start"])),
+                    None) if pe and "ends" not in keep_reach and "ends" not in misclocked \
+        and not (lw_ is not None and lw_.get("cue_end") is not None
+                 and pe[0] - 0.5 <= lw_["cue_end"] <= pe[1] + 0.05) else None
+    new_start = (cut_in_pause(*ps, "start", pad, sl_s, fw_) if ps else s_w)
+    new_end = (cut_in_pause(*pe, "end", pad, sl_e, lw_) if pe else e_w)
+    # Under room noise the level cannot see soft talk: a next word (its clock
+    # mostly after the request) clocked into the end's pause, starting before
+    # the cut, may be said there (round 17: colvnv's "it." and ac44's "this,",
+    # clocked from an end asked for at their start into a "pause" 19 dB over
+    # the room's quiet, kept in the sound and out of the captions with a
+    # PASS) or after it (ac44's "there."). The cut keeps its clock, as the
+    # noise slack already did; the captions show it, and the receipt says the
+    # level cannot tell.
+    noisy_next = []
+    if pe and sl_e > 0.0 and "ends" not in keep_reach:
+        noisy_next = [w for w in said if timed(w) and mid(w) > end and not on_edge(w, end)
+                      and w["start"] >= pe[0] - 0.02 and w["start"] < new_end - 0.02
+                      and w["end"] <= pe[1] + 0.02]
+        if noisy_next:
+            lw_ = max(noisy_next, key=lambda w: w["end"])
+            new_end = cut_in_pause(*pe, "end", pad, sl_e, lw_)
+    ok_s = ok_e = True
+    # (a word with a clock that ends at the snapped start is before it, and one
+    # that starts at the snapped end after it, however short: a 20 ms clock
+    # fell inside the 0.02 s slack, and the start moved back over its word)
+    kept = [w for w in words if w["start"] >= s_w - 0.02
+            and w["end"] <= e_w + 0.02 and w["start"] <= e_w
+            and not (w["end"] - w["start"] >= 0.01
+                     and (w["end"] <= s_w + 0.005 or w["start"] >= e_w - 0.005))]
+    if kept and (not ps or not pe):
+        # Mid-phrase edges: onto the sound itself, the word clock can be most
+        # of a second off. The words the snap kept, zero-length ones included
+        # (Whisper times some words as an instant: "Helping." at 2063.12 was
+        # spoken from 2062.9).
+        fw, lw = min(w["start"] for w in kept), max(w["end"] for w in kept)
+        if not ps:
+            prev_end = max((w["end"] for w in words if w["end"] <= fw + 0.01
+                            and w["start"] < fw), default=0.0)
+            nxt = min((w["start"] for w in words if w["start"] > fw + 0.01), default=None)
+            # A first word timed as an instant marks where its sound ENDS (the
+            # nz fan47 "And" at 472.46 was said from 472.34): look for the
+            # silence before that sound, not the one the instant touches.
+            fw_s = fw - 0.1 if any(w["start"] == fw and w["end"] - w["start"] < 0.01
+                                   for w in kept) else fw
+            new_start, ok_s = settle_start(levels.near(fw_s), fw_s, prev_end, s_w, pad,
+                                           nxt=nxt, style=style, talk=talk_s,
+                                           before=reach_word["starts"][0][1]
+                                           if "starts" in reach_word else None)
+            # The add-back above, at the quiet pause settle_start chose too: a
+            # word clocked mostly inside it, before the first word, said after
+            # it, opens the captions (round 18: seg1's "and", clocked
+            # 35.12-35.36 inside the pause 35.16-35.84 and said after it, with
+            # the start asked for inside "Then", was in the sound and out of
+            # the captions with a PASS).
+            r_s = levels.near(new_start)
+            p2 = next(((a, b) for k, a, b in r_s if k == 0 and b - a >= 0.15 - 1e-6
+                       and a - 1e-6 <= new_start <= b + 1e-6), None) if ok_s else None
+            if p2 and fw_ is not None and "starts" not in misclocked \
+                    and noise_slack(r_s, p2[0] + 0.01, p2[1] - 0.01, style) == 0.0 and not (
+                        fw_.get("cue_start") is not None
+                        and p2[0] - 0.05 <= fw_["cue_start"] <= p2[1] + 0.5):
+                for w in sorted((v for v in said if mostly_in(v, p2) and v["start"] < fw_["start"]
+                                 and not audible_in(v, r_s, p2)), key=lambda v: v["start"]):
+                    if said_before_pause(r_s, prev_said(w), w, *p2) is False:
+                        fw_ = w
+                        break
+        if not pe:
+            # The next word bounds the search: where its sound begins (a next
+            # word timed as an instant was said BEFORE its clock: audit round
+            # 14, seg4's "like" at 136.98 said from about 136.77, the end cut
+            # after it at 137.05).
+            r_lw = levels.near(lw)
+            nxt_w = min((w for w in words if w["start"] >= lw - 0.01 and w["end"] > lw),
+                        key=lambda w: w["start"], default=None)
+            next_start = total if nxt_w is None else \
+                max(lw, onset(nxt_w, r_lw)) if any(nxt_w is v for v in said) else nxt_w["start"]
+            # Not a silence after the next word's clock is over when that word
+            # has sound of its own before it (its clock is then right, or
+            # late), and never the reach pause refused above.
+            past = None
+            if "ends" in reach_word:
+                past = reach_word["ends"][0][0]
+            elif nxt_w is not None and any(nxt_w is v for v in said) \
+                    and nxt_w["end"] - nxt_w["start"] >= 0.01:
+                lw_w = max((w for w in kept if w["start"] < nxt_w["start"] - 0.01),
+                           key=lambda w: w["end"], default=None)
+                if sound_between(r_lw, lw_w, nxt_w, max(nxt_w["end"], nxt_w["start"] + 0.05)):
+                    past = nxt_w["end"] - 0.02
+            new_end, ok_e = settle_end(r_lw, lw, next_start, e_w, pad, style=style,
+                                       talk=talk_e, past=past)
+    for ok, where, moved, cut in ((ok_s, "starts", new_start - start, new_start),
+                                  (ok_e, "ends", new_end - end, new_end)):
+        if not ok:
+            # No level pause, but the cut may still sit in a clear gap between
+            # words: a music bed or room noise hides the pause, or the pause is
+            # under 0.15 s (audit round 12: 16 of 17 such edges on real public
+            # videos kept their words). When the gap holds a moment that is
+            # quiet in absolute terms, the cut goes there, either way, and that
+            # is a note; otherwise, or in a gap under 0.15 s, a warning.
+            # Talk in the gap: heard words; a word Whisper timed as an instant
+            # marks where its sound ENDS (round 13: "okay," at 396.62 was said
+            # from 396.36); and a cue of Descript's the ASR missed entirely,
+            # over the cue's own times (the replay's "I don't know.",
+            # 3038.656-3038.896). "…" alone is not talk.
+            spoken = {w.get("cue_start") for w in said if w["end"] >= w["start"]}
+            r = levels.near(cut)
+
+            def instant(w):
+                return w is not None and w["end"] - w["start"] < 0.01
+
+            def sound(w):
+                """A word's sound: its clock, or for an instant (whose clock marks
+                where its sound ENDS), the level run that ends at it (instant_onset)."""
+                return (w["start"], w["end"]) if not instant(w) else (onset(w, r), w["start"])
+            # (start, end, word) on the words' clocks; an instant is a point there.
+            occ = [(w["start"], w["end"], w) for w in said] \
+                + [(w["start"], w["end"], None) for w in words
+                   if w.get("timing") == "cue" and w["end"] > w["start"]] \
+                + [(w["cue_start"], w["cue_end"], None) for w in words
+                   if not w.get("heard", True) and w.get("cue_start") is not None
+                   and w["cue_start"] not in spoken and any(ch.isalnum() for ch in w["word"])
+                   and w.get("cue_end") is not None and w["cue_end"] > w["cue_start"]]
+            before = after = prev_s = None
+            mine = other = None
+            if where == "starts":
+                edge_w = min((w for w in said if w["start"] >= s_w - 0.02
+                              and not (w["end"] - w["start"] >= 0.01 and w["end"] <= s_w + 0.005)),
+                             default=None, key=lambda w: w["start"])
+                if edge_w is not None:
+                    mine = sound(edge_w)
+                    after = edge_w["start"]
+                    prev = max((o for o in occ if o[1] <= after + 0.01 and o[2] is not edge_w),
+                               key=lambda o: o[1], default=None)
+                    if prev is not None:
+                        before, prev_s = prev[1], prev[0]
+                        other = sound(prev[2]) if prev[2] is not None else prev[:2]
+                lo_s, hi_s = before, (mine[0] if mine else None)
+            else:
+                edge_w = max((w for w in said if w["start"] <= e_w + 0.02 and w["end"] <= e_w + 0.02
+                              and not (w["end"] - w["start"] >= 0.01 and w["start"] >= e_w - 0.005)),
+                             default=None, key=lambda w: w["end"])
+                if edge_w is not None:
+                    mine = sound(edge_w)
+                    before = edge_w["end"]
+                    nxt = min((o for o in occ if o[0] >= before - 0.01 and o[2] is not edge_w),
+                              key=lambda o: o[0], default=None)
+                    if nxt is not None:
+                        after = nxt[0]
+                        other = sound(nxt[2]) if nxt[2] is not None else nxt[:2]
+                lo_s, hi_s = before, (other[0] if other else None)
+            gap = (after - before) if before is not None and after is not None else 0.0
+            # (a far word whose sound runs back to the clip's word leaves no gap;
+            # a word whose sound runs on from the one before has none either)
+            if ok is False and gap >= 0.15 and hi_s is not None and lo_s is not None \
+                    and hi_s - lo_s >= 0.03:
+                # The gap on the clocks decides whether to look; the search stops
+                # at the far side's SOUND (an instant's sound runs before its clock).
+                nb = nb_loud = 0.0
+                if hasattr(r, "loudest"):
+                    lv = [r.loudest(*o) for o in (mine, other) if o is not None and o[1] > o[0]]
+                    lv = [v for v in lv if v is not None]
+                    nb = min(lv) if lv else 0.0
+                    nb_loud = max(lv) if lv else 0.0
+                q = gap_cut(r, "end" if where == "ends" else "start", lo_s, hi_s, nb, pad,
+                            nb_loud=nb_loud if hasattr(r, "loudest") else None)
+                if q is False:
+                    # No 10 ms peaks to judge by: the gap's middle, at most 0.5 s
+                    # from the word (ASR clocks end words early).
+                    if where == "ends":
+                        new_end = max(new_end, min(before + gap / 2.0, before + 0.5, after - pad))
+                    else:
+                        new_start = min(new_start, max(after - gap / 2.0, after - 0.5, before + pad))
+                    report.setdefault("notes", []).append(
+                        f"the level shows no pause of 0.15 s or more where the clip {where}; the "
+                        f"cut sits in the middle of a {gap:.2f}s gap between words")
+                    continue
+                if q is None:
+                    # Nothing in the gap is quiet: a loud bed, a reverb tail, or
+                    # talk the transcript missed. The cut cannot be checked.
+                    report["warnings"].append(
+                        f"the clip {where} in a {gap:.2f}s gap between words that never goes "
+                        "quiet (a loud bed, a reverb tail or talk the transcript missed), so the "
+                        "cut cannot be checked by level; listen to the edge, or pick one at a "
+                        "pause")
+                    if where == "starts" and instant(edge_w):
+                        # The cut stays on the word clock; an instant's clock is
+                        # where its sound ENDS, so keep the start before its sound.
+                        new_start = min(new_start, mine[0] - pad)
+                    continue
+                if where == "ends":
+                    new_end = q[0]
+                else:
+                    new_start = q[0]
+                in_gap.add(where)
+                report.setdefault("notes", []).append(
+                    f"the level shows no pause of 0.15 s or more where the clip {where} (a "
+                    f"shorter pause, or a bed or room noise over it); the cut sits in a quiet "
+                    f"moment of a {gap:.2f}s gap between words (its 30 ms fade peaks at "
+                    f"{q[1]:.0f} dBFS; silence threshold {q[2]:.0f} dB)")
+                if where == "starts" and not q[3] and hasattr(r, "loudest") and prev_s is not None:
+                    # A short dip right after word-loud sound no clock covers may be
+                    # a closure inside the first word, clocked late (round 15).
+                    top = max(v for v in (r.loudest(*mine), r.loudest(q[0], mine[1]), -120.0)
+                              if v is not None)
+                    d = dropped_talk(r, q[0], before, top, prev_s)
+                    # (0.15 s: an ASR often ends a word up to 0.15 s early, so a
+                    # shorter run past its clock is likely that word's own last
+                    # syllable after a closure: the replay's "score." at 588.1,
+                    # 0.08 s; round 16, seg3's "seventeen" 0.13 s and seg4's
+                    # "still," 0.14 s past their clocks, both heard whole from
+                    # the cut)
+                    if d >= 0.15:
+                        report["warnings"].append(
+                            f"the clip starts in a short dip right after {d:.2f}s of word-loud "
+                            "sound that no word's clock covers: the first word may begin before "
+                            "its clock, so its start may be cut; listen to the start")
+                if where == "ends" and not q[3] and hasattr(r, "loudest") and mine and other:
+                    # The mirror: a short dip right before word-loud sound no
+                    # clock covers may be a closure inside the last word, its
+                    # clock ended early (round 16: seg3's "-ly", seg5's "-cle").
+                    top = max(v for v in (r.loudest(*mine) if mine[1] > mine[0] else None,
+                                          r.loudest(mine[0], q[0]), -120.0) if v is not None)
+                    d = dropped_tail(r, q[0], before, top, other[0])
+                    if d >= 0.12:
+                        report["warnings"].append(
+                            f"the clip ends in a short dip right before {d:.2f}s of word-loud "
+                            "sound that no word's clock covers: the last word may run on past "
+                            "its clock, so its end may be cut; listen to the end")
+                continue
+            if where == "starts" and instant(edge_w):
+                new_start = min(new_start, mine[0] - pad)   # before an instant's sound
+                cut = new_start
+            if ok is None:
+                report["warnings"].append(
+                    "the clip starts where its first word is clocked inside a pause but the "
+                    "word (or soft talk the level reads as part of that pause) runs on from "
+                    "the word before it, so no cut there keeps it whole; listen to the "
+                    "start, or pick an edge at a pause")
+                continue
+            far = (f" (the cut sits {abs(moved):.2f}s {'after' if moved > 0 else 'before'} "
+                   "the requested edge, on a word boundary)" if abs(moved) > 0.5 else "")
+            report["warnings"].append(
+                f"the clip {where} inside unbroken talk: the requested edge is not at a "
+                "pause, and there is no pause of 0.15 s or more within a second of the "
+                f"nearest word; the cut lands mid-phrase{far}. Pick an edge at a pause")
+    new_start, new_end = max(0.0, new_start), min(total, new_end)
+    for where, cut in (("starts", new_start), ("ends", new_end)):
+        # Talk-level sound the cut keeps beyond the clip's edge word, past a dip
+        # from it, that no caption word covers: a filler, or a word
+        # the transcript missed or clocked late (audit round 14: seg3 opened on
+        # an unheard filler, ac44 ended on "no," clocked 0.3 s late, hum46 on
+        # an unheard "right?", all PASS). The cut stays; the edge is flagged.
+        # (A word found clocked in silence is that talk, and already noted.) A
+        # start at a pause, or moved onto the first word's sound, opens on that
+        # sound by design: the ASR clocks the first word after a pause late
+        # (the replay's "Landscaping" by 0.77 s), and its first syllable,
+        # past a closure, looks like stray talk. So a start is checked where the
+        # word-gap rule placed it; an end, however it was placed.
+        if where in misclocked or any(f"the clip {where}" in x for x in report["warnings"]) \
+                or (where == "starts" and where not in in_gap):
+            continue
+        r = levels.near(cut)
+        if not hasattr(r, "loudest"):
+            continue
+        # The clip's first (last) word by the clocks: the first one whose clock
+        # ends after the cut (starts before it), so a word clocked early into
+        # the pause the cut sits in is the edge word, and the sound after the
+        # pause is its own.
+        if where == "starts":
+            w = min((v for v in words if v["end"] > cut + 0.02), key=lambda v: v["start"],
+                    default=None)
+            sw = min((v for v in said if v["end"] > cut + 0.02), key=lambda v: v["start"],
+                     default=None)
+            edge = None if w is None else max(
+                onset(w, r) if w["end"] - w["start"] < 0.01 and any(w is v for v in said)
+                else w["start"], cut)
+        else:
+            w = max((v for v in words if v["start"] < cut - 0.02), key=lambda v: v["end"],
+                    default=None)
+            sw = max((v for v in said if v["start"] < cut - 0.02), key=lambda v: v["end"],
+                     default=None)
+            edge = None if w is None else min(w["end"], cut)
+        if w is None or sw is None:
+            continue
+        span = (onset(sw, r), sw["start"]) if sw["end"] - sw["start"] < 0.01 else \
+            (sw["start"], sw["end"])
+        d = stray_talk(r, "start" if where == "starts" else "end", edge, cut,
+                       r.loudest(*span))
+        if d >= 0.08:
+            report["warnings"].append(
+                f"the clip {where} with {d:.2f}s of talk-level sound "
+                f"{'before its first' if where == 'starts' else 'after its last'} word that no "
+                "caption word covers, past a dip from that word (a filler, a word the "
+                "transcript missed or clocked late, or an interjection left out of the "
+                f"captions); listen to the {'start' if where == 'starts' else 'end'}")
+    if (new_start, new_end) != (s_w, e_w):
+        report["clip_settled_on_sound"] = [round(new_start, 3), round(new_end, 3)]
+    if fw_ is not None and lw_ is not None and lw_["end"] >= fw_["start"]:
+        report["clip_word_span"] = [[fw_["word"], fw_["end"]], [lw_["word"], lw_["end"]]]
+    # A word between the level read as the last word's tail, its clock run
+    # early into it, stays out of the captions; but the level cannot tell a
+    # tail from a soft word run on from the last one with no dip (round 16:
+    # seg4's "I would" at -25 dBFS, 12 dB under "little,", kept in the sound
+    # and out of the captions with a PASS, just as rev7's reverb under
+    # "things." with "Just" clocked into it), so the receipt says so.
+    left = [w for w in decayed if w["end"] > w["start"]
+            and min(w["end"], new_end) - max(w["start"], new_start) >= 0.5 * (w["end"] - w["start"])
+            and (lw_ is None or w["start"] >= lw_["end"] - 0.01)]
+    if left and not any(x.startswith("the clip ends") for x in report["warnings"]):
+        ww = " ".join(w["word"] for w in left)
+        report["warnings"].append(
+            f"the clip ends in a pause after \"{ww}\", clocked inside the clip, which the "
+            "level does not show as a word of its own (a last word's reverb tail and a soft "
+            "word run on from it look alike), so the captions leave it out; listen to the end")
+    if noisy_next and not any(x.startswith("the clip ends") for x in report["warnings"]):
+        ww = " ".join(w["word"] for w in sorted(noisy_next, key=lambda w: w["start"]))
+        report["warnings"].append(
+            f"the clip ends after \"{ww}\", clocked after the requested end, inside a pause "
+            "that room noise fills: the level cannot show whether it is said there (the clip "
+            "keeps it, in its captions too) or after the pause (its caption then shows over "
+            "silence); listen to the end, or pick an end at a clear pause")
+    if left_out:
+        ww = " ".join(w["word"] for w in sorted(left_out, key=lambda w: w["start"]))
+        report.setdefault("notes", []).append(
+            f"the clip ends at the pause before \"{ww}\": clocked inside the clip, but the "
+            "level is silent under its clock, so it is said after that pause, and the clip and "
+            "its captions leave it out (to keep it, pick an end after its sound)")
+    if unsure_s is not None and not any(x.startswith("the clip starts") for x in report["warnings"]):
+        tail = unsure_s["end"] - ps[1]
+        report["warnings"].append(
+            f"the clip opens its captions on \"{unsure_s['word']}\", clocked across the pause it "
+            f"starts in: Whisper usually clocks a word said after a pause back over it, but this "
+            f"clock runs only {tail:.2f}s past the pause, too little for the word, so it may have "
+            "been said before the pause (then its caption shows over the next word); listen to "
+            "the start")
+    if unsure_e is not None and not any(x.startswith("the clip ends") for x in report["warnings"]):
+        tail = unsure_e["end"] - pe[1]
+        report["warnings"].append(
+            f"the clip ends in the pause before \"{unsure_e['word']}\", clocked across it: Whisper "
+            f"usually clocks a word said after a pause back over it, so the captions leave it out, "
+            f"but this clock runs only {tail:.2f}s past the pause, too little for the word, so it "
+            "may have been said before the pause (in the clip, out of its captions); listen to "
+            "the end")
+    across = [w for w in across if w is not unsure_e]
+    if across:
+        ww = " ".join(w["word"] for w in sorted(across, key=lambda w: w["start"]))
+        report.setdefault("notes", []).append(
+            f"the clip ends at the pause before \"{ww}\", clocked across that pause: Whisper "
+            "clocks a word said after a pause back over it, so the clip and its captions leave "
+            "it out (to keep it, pick an end after its sound)")
+    if ps or pe:
+        report["clip_edges_at_pause"] = [w for w, p in (("start", ps), ("end", pe)) if p]
+    def opens_cue(w):   # a cue's own first word carries the cue's start
+        return not any(o is not w and o.get("cue_start") == w.get("cue_start")
+                       and o["start"] < w["start"] for o in words)
+
+    def closes_cue(w):
+        return not any(o is not w and o.get("cue_end") == w.get("cue_end")
+                       and o["end"] > w["end"] for o in words)
+    if fw_ is not None and fw_.get("cue_start") is not None and opens_cue(fw_) \
+            and fw_["cue_start"] < new_start - 0.15 and fw_["end"] > new_start:
+        # The mirror at the head: Descript's cue start well before the cut.
+        early = new_start - fw_["cue_start"]
+        report["clip_first_word_before_cut_s"] = round(early, 2)
+        report["warnings"].append(
+            f"the clip starts {early:.2f}s after its first word (\"{fw_['word']}\") begins by "
+            "Descript's timing; the level shows a pause there, but the word may be cut "
+            "short; listen to the start")
+    if lw_ is not None:
+        # Descript's cue end (and, under room noise, the ASR's word end) past the
+        # cut: the last word may be cut short; the level alone cannot tell.
+        ref = levels.near(new_end)
+        x0 = pe[0] if pe else new_end
+        noisy = noise_slack(ref, x0 + 0.01, (pe[1] if pe else new_end + 0.3) - 0.01, style) > 0
+        marks = ([lw_.get("cue_end")] if closes_cue(lw_) else []) + \
+            ([lw_["end"]] if noisy else [])
+        over = max((m - new_end for m in marks if m is not None), default=0.0)
+        if over > 0.15:
+            report["clip_last_word_past_cut_s"] = round(over, 2)
+            report["warnings"].append(
+                f"the clip ends {over:.2f}s before its last word (\"{lw_['word']}\") ends by "
+                "the transcript's timing; the level shows a pause there, but the word may be "
+                "cut short; listen to the end")
+    on, _ = sound_edges(levels.near(new_start), new_start, new_end)
+    _, off = sound_edges(levels.near(new_end), new_start, new_end)
+    report["clip_sound"] = [None if on is None else round(on, 3),
+                            None if off is None else round(off, 3)]
+    # Refusing the reach pause can leave the edge with no pause between the
+    # word between and the word asked for: the cut would land inside one of
+    # them. Then the whole word between is the lesser harm: the edge stays in
+    # the reach pause and says so (the round-12 auditor's LIGHT cue starts on
+    # the fresh mixes: "And then," cut at "then,"'s clock, inside "And").
+    redo = frozenset(where for where in reach_word
+                     if any(x.startswith(f"the clip {where} inside unbroken talk")
+                            for x in report["warnings"]))
+    if redo:
+        report.clear()
+        report.update(report_before)
+        rep = report
+        words, new_start, new_end = place_clip(levels, words_in, start, end, pad, in_word, rep,
+                                                keep_reach | redo)
+        for where in sorted(redo):
+            ws_ = reach_word[where][1]
+            w = " ".join(v["word"] for v in ws_)
+            it = "it" if len(ws_) == 1 else "them"
+            if where == "starts":
+                what = ("a word clocked to end at the requested start" if len(ws_) == 1 else
+                        "words clocked between that pause and the requested start")
+                rep["warnings"].append(
+                    f"the clip starts at the pause before \"{w}\", {what}: no pause parts "
+                    f"{it} from the word after, so the clip keeps {it} whole rather than cut "
+                    f"into {it}; to start after {it}, pick an edge at a pause")
+            else:
+                what = ("a word clocked to start at the requested end" if len(ws_) == 1 else
+                        "words clocked between the requested end and that pause")
+                rep["warnings"].append(
+                    f"the clip ends at the pause after \"{w}\", {what}: no pause parts "
+                    f"{it} from the word before, so the clip keeps {it} whole rather than cut "
+                    f"into {it}; to end before {it}, pick an edge at a pause")
+    return words, new_start, new_end
+
+
+def edge_words(words: list[dict], start: float, end: float) -> tuple:
+    """The first and last word a cut [start, end] asked for mid-phrase keeps: a
+    word the edge falls inside is kept whole (its clock may simply start early),
+    one it barely touches (50 ms) is not."""
+    def instant(w, t):   # a word timed as an instant, on the edge itself
+        return w["end"] - w["start"] < 0.01 and abs(w["start"] - t) <= 0.02
+    inside = [w for w in words if (w["end"] > start or instant(w, start))
+              and (w["start"] < end or instant(w, end))]
+    if not inside:
+        return None, None
+    first = next((w for w in inside if w["end"] > start + 0.05
+                  or w["start"] >= start - 0.02), inside[0])
+    last = next((w for w in reversed(inside) if w["start"] < end - 0.05
+                 or w["end"] <= end + 0.02), inside[-1])
+    # An edge on one of the SRT's cue boundaries (Descript's, the documented
+    # way to pick a clip) means that cue's first or last word, wherever the
+    # ASR's clock put it (the replay's "If" was clocked 0.25 s before its cue).
+    # (not when the aligner put that word's clock more than a second away: it
+    # squeezed "Jeff Bezos. Yeah" into the ASR's "2,357.", and the edge moved
+    # 1.93 s; audit round 11)
+    cue_first = [w for w in words if "cue_start" in w and abs(w["cue_start"] - start) <= 0.05
+                 and abs(w["start"] - start) <= 1.0]
+    if cue_first:
+        first = min(cue_first, key=lambda w: w["start"])
+    cue_last = [w for w in words if "cue_end" in w and abs(w["cue_end"] - end) <= 0.05
+                and abs(w["end"] - end) <= 1.0]
+    if cue_last:
+        last = max(cue_last, key=lambda w: w["end"])
+    return first, last
+
+
+def _heard_word(w: dict) -> bool:
+    """A word the ASR heard, with a clock of its own (not an SRT word spread
+    over its cue, nor an instant)."""
+    return w.get("timing") != "cue" and w.get("heard", True) and w["end"] - w["start"] >= 0.01
+
+
+_UNSPOKEN = "….,-–—!?;:'\"“”‘’()[]{}/\\*_~` "
+
+
+def _spoken(w: dict) -> bool:
+    """A token that is more than punctuation: a word (Whisper's lone "%" is
+    "percent"), not the lone "…" or "-" Descript writes between words (round
+    19: the replay's "program- … how", whose "…" closed a clip's captions)."""
+    return bool(w["word"].strip(_UNSPOKEN))
+
+
+def cue_starts_in(words: list[dict], x: float, y: float) -> bool:
+    """Whether an SRT cue starts in or just after the pause [x, y] (where
+    word_after_pause looks for one)."""
+    return any(w.get("cue_start") is not None and x - 0.05 <= w["cue_start"] <= y + 0.5
+               for w in words)
+
+
+def cue_ends_in(words: list[dict], x: float, y: float) -> bool:
+    """Whether an SRT cue ends in or just before the pause [x, y] (where
+    word_before_pause looks for one)."""
+    return any(w.get("cue_end") is not None and x - 0.5 <= w["cue_end"] <= y + 0.05
+               for w in words)
+
+
+def word_after_pause(words: list[dict], x: float, y: float,
+                     start: float | None = None) -> dict | None:
+    """The first word spoken after a pause [x, y]. The SRT's cue times say it
+    best (an ASR's clocks ran 0.4 s early on the replay's "And so"): the first
+    word of a cue starting in or just after the pause, unless a heard word of
+    an earlier cue is clocked past the pause's end (and, with the requested
+    `start` given, past that too) and its cue, by Descript's own time, runs on
+    to the pause's end or past it: Descript splits cues mid-phrase, and that
+    word is said after the pause (round 19: seg1's "Oh" before the cue "Yeah,
+    my first dunk", the replay's "We need to" before "separate", in the sound
+    and out of the captions with a PASS); else by the clock. Never a lone "…"
+    or "-" of Descript's."""
+    ws = sorted(words, key=lambda w: w["start"])
+    cue = [w for w in ws if "cue_start" in w and x - 0.05 <= w["cue_start"] <= y + 0.5]
+    if cue:
+        first = min([w for w in cue if _spoken(w)] or cue, key=lambda w: (w["cue_start"], w["start"]))
+        earlier = [w for w in ws if _heard_word(w) and w["start"] < first["start"]
+                   and w.get("cue_start", first["cue_start"]) < first["cue_start"] - 1e-6
+                   and w.get("cue_end", y) > y - 0.1
+                   and w["end"] > y + 0.02 and (start is None or w["end"] > start + 0.02)]
+        if not earlier:
+            return first
+    return next((w for w in ws if w["end"] > y - 0.1 and _spoken(w)), None)
+
+
+def word_before_pause(words: list[dict], x: float, y: float,
+                      end: float | None = None) -> dict | None:
+    """The last word spoken before a pause [x, y] (mirror of word_after_pause:
+    the last word of a cue ending in or just before the pause, unless a heard
+    word of a later cue is clocked from before the pause to within it, before
+    the requested `end`, and its cue, by Descript's own time, starts before the
+    pause or in its first 0.1 s: round 19, seg1's "house" after the cue "...to
+    my friend's", the replay's "Burton" after "...someone like Damon"; but not
+    the replay's "It's" after "...a top voice." or "an" after "...don't have
+    a,", clocked before their pause while Descript's next cue starts at its end,
+    and Whisper on the source heard both after it). Of a cue's words that end
+    together, the last in its text (the replay's "a," after "have", an SRT word
+    the ASR did not hear, in the sound before the pause). Without cue times,
+    not a word that starts at or after the requested `end`: the ASR stretched
+    the next sentence's "and" back over the pause (audit round 12), and it is
+    not in the clip. Never a lone "…" or "-" of Descript's."""
+    ws = sorted(words, key=lambda w: w["start"])
+    cue = [w for w in ws if "cue_end" in w and x - 0.5 <= w["cue_end"] <= y + 0.05]
+    if cue:
+        sp = [w for w in cue if _spoken(w)] or cue
+        last = sp[max(range(len(sp)), key=lambda i: (sp[i]["cue_end"], sp[i]["end"], sp[i]["start"], i))]
+        later = [w for w in ws if _heard_word(w) and w["start"] > last["start"]
+                 and w.get("cue_end", last["cue_end"]) > last["cue_end"] + 1e-6
+                 and w.get("cue_start", x) < x + 0.1
+                 and w["start"] < x - 0.02 and w["end"] <= y + 0.02
+                 and (end is None or w["start"] < end - 0.02)]
+        if not later:
+            return last
+    if end is not None:
+        # (a word whose clock ends by the requested end is before it, however
+        # short: fan47's "right?", clocked 286.68-286.70 with the END asked for
+        # at 286.70, was in the sound and out of the captions; and a word
+        # Whisper timed as an instant on the edge itself is the clip's, its
+        # sound before its clock, as in snap_to_words: round 16, seg4's "like"
+        # at 136.98)
+        ws = [w for w in ws if w["start"] < end - 0.02 or w["end"] <= end + 0.005
+              or (w["end"] - w["start"] < 0.01 and abs(w["start"] - end) <= 0.02)]
+    # (but not an instant clocked inside the pause, after the sound before it
+    # stopped: an instant's clock marks where its sound ENDS, and Whisper put
+    # this one with the word sharing its clock, said after the pause (round
+    # 17: seg3's "and" at 64.14, 0.05 s into the pause, and youtube-4SnD's
+    # "There you" at 14.70, 0.03 s in, closed the captions over silence; the
+    # five instants that were said there sit at or before the pause's start))
+    ws = [w for w in ws if (w["end"] - w["start"] >= 0.01 or w["start"] <= x + 0.02) and _spoken(w)]
+    if end is not None:
+        # (nor a word whose clock runs on past the pause's end, whatever the end
+        # asked for: Whisper snaps a word's start back to the end of the word
+        # before, so a word clocked from before the pause, or from its first
+        # moment, to past its end was stretched back over it and is said after
+        # it. Round 17 caught only those an end touched within 50 ms (seg4's
+        # "So"); round 18: 84 of 602 ends asked for in the middle of a quiet
+        # pause on 29 real files closed the captions on such a word over
+        # silence with a PASS (seg4's "required." clocked 62.22-62.92 across
+        # the pause 62.24-62.42, seg2's "360" from the pause's first 0.01 s),
+        # and Whisper on the source heard 83 of them after the pause)
+        ws = [w for w in ws if not (w["end"] > y + 0.02 and w["start"] < x + 0.1
+                                    and w["end"] - w["start"] >= 0.01)]
+    return next((w for w in reversed(ws) if w["start"] < x + 0.1), None)
+
+
+def snap_to_words(words: list[dict], start: float, end: float,
+                  pad: float) -> tuple[float, float]:
+    """Never cut inside a word: move clip edges to word boundaries, then pad. A
+    word the edge falls inside is kept whole (its clock may simply start early)."""
+    first, last = edge_words(words, start, end)
+    if first is None:
+        return start, end
+    # (not the edge word itself: a zero-length word would pin the edge to its
+    # own instant, mid-word)
+    prev_end = max((w["end"] for w in words if w["end"] <= first["start"]
+                    and w is not first), default=0.0)
+    next_start = min((w["start"] for w in words if w["start"] >= last["end"]
+                      and w is not last), default=last["end"] + pad)
+    s = max(prev_end, first["start"] - pad, 0.0)
+    e = min(next_start, last["end"] + pad)
+    return s, e
+
+
+active_area = video_qa.active_area  # letterbox finder lives with the QA checks
+
+
+def reframe_filter(width: int, height: int, aspect: str, focus_x: float,
+                   ox: int = 0, oy: int = 0):
+    """Crop to aspect (e.g. 9:16) around focus_x (0 = left edge, 1 = right) of
+    the active picture that starts at (ox, oy)."""
+    aw, ah = (float(x) for x in aspect.split(":"))
+    target = aw / ah
+    if width / height > target:  # too wide: crop the sides
+        cw, ch = int(round(height * target / 2) * 2), height
+    else:  # too tall: crop top and bottom
+        cw, ch = width, int(round(width / target / 2) * 2)
+    x = ox + int(round(max(0, min(width - cw, focus_x * width - cw / 2))))
+    y = oy + int((height - ch) / 2)
+    out_h = 1920 if target < 1 else 1080
+    out_w = int(round(out_h * target / 2) * 2)
+    return f"crop={cw}:{ch}:{x}:{y},scale={out_w}:{out_h}:flags=lanczos", out_w, out_h
+
+
+def parse_clip(text: str) -> tuple[float, float]:
+    """'3301.2-3342.8' -> (3301.2, 3342.8); rejects reversed or empty windows."""
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*", text or "")
+    if not m:
+        raise ValueError(f"--clip must look like START-END in seconds, got {text!r}")
+    a, b = float(m.group(1)), float(m.group(2))
+    if b <= a:
+        raise ValueError(f"--clip end {b} is not after start {a}")
+    return a, b
+
+
+def _loudnorm_json(stderr: str) -> dict:
+    blob = stderr[stderr.rfind("{"):stderr.rfind("}") + 1]
+    try:
+        return json.loads(blob) if blob else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def audio_codec_args(dst: str, src_codec: str | None, bitrate: str,
+                     copy_ok: bool) -> list[str]:
+    """Pick the audio codec the OUTPUT container can hold. AAC written into a
+    .wav is undecodable (found 23 Oct 2026: QA read it as -70 LUFS silence)."""
+    ext = os.path.splitext(dst)[1].lower()
+    src_codec = (src_codec or "").lower()
+    if ext in (".wav", ".aif", ".aiff"):
+        pcm = src_codec if src_codec.startswith("pcm_") else "pcm_s16le"
+        if ext != ".wav" and pcm.endswith("le"):
+            pcm = pcm[:-2] + "be"  # AIFF is big-endian
+        return ["-c:a", pcm]
+    if ext == ".flac":
+        return ["-c:a", "flac"]
+    if ext == ".mp3":
+        return ["-c:a", "copy"] if copy_ok and src_codec == "mp3" else \
+            ["-c:a", "libmp3lame", "-b:a", bitrate]
+    if ext in (".ogg", ".opus", ".webm"):
+        return ["-c:a", "copy"] if copy_ok and src_codec in ("opus", "vorbis") else \
+            ["-c:a", "libopus", "-b:a", bitrate]
+    can_copy = {".m4a": ("aac", "alac"), ".mp4": ("aac", "mp3", "ac3", "eac3", "alac",
+                                                    "opus"),
+                ".mov": ("aac", "alac", "mp3", "ac3"), ".mkv": None}.get(ext, ("aac",))
+    if copy_ok and (can_copy is None or src_codec in can_copy):
+        return ["-c:a", "copy"]
+    return ["-c:a", "aac", "-b:a", bitrate]
+
+
+AUDIO_ONLY_EXT = (".wav", ".aif", ".aiff", ".flac", ".mp3", ".ogg", ".opus", ".m4a",
+                  ".aac")
+
+
+def finish(src: str, dst: str, style: dict, trim_head: bool, loudness: bool,
+           words: list[dict] | None, burn: bool, keywords: list[str],
+           reframe: str | None = None, focus_x: float = 0.5,
+           clip: tuple[float, float] | None = None) -> dict:
+    info = video_qa.probe(src)
+    if info["audio"] is None:
+        raise RuntimeError("source has no audio stream; nothing to normalise or caption")
+    ext = os.path.splitext(dst)[1].lower()
+    if ext in AUDIO_ONLY_EXT:
+        info = dict(info, video=None)  # an audio file out: drop the picture
+    if info["video"] is None and (burn or reframe):
+        raise RuntimeError("--burn and --reframe need a picture: the source has no "
+                           "video, or the output is an audio-only file")
+    if info["video"] is not None and ext == ".webm":
+        raise ValueError("a .webm video needs a VP9 re-encode this script does not do; "
+                         "write .mp4, .mov or .mkv (or .opus/.ogg for audio only)")
+    fin, cap = style["finish"], dict(style["captions"])
+    cap["keywords"] = list(cap.get("keywords", [])) + keywords
+    report = {"source": os.path.basename(src), "output": os.path.basename(dst),
+              "steps": [], "warnings": []}
+    all_words = words
+    if words:
+        # Interjections nobody's ASR heard (another speaker's "Yeah") are talk for
+        # the receipt but never caption text or a clip edge.
+        words = [w for w in words if w.get("caption", True)] or None
+
+    total = info["duration_s"]
+    clip_start, clip_end = clip if clip else (0.0, total)
+    if clip and (clip_start >= total or clip_end <= clip_start):
+        raise ValueError(f"--clip {clip_start}-{clip_end} is outside the "
+                         f"{total:.2f}s source")
+    if clip and clip_end > total + 0.05:
+        report["warnings"].append(f"--clip ends at {clip_end:g}s but the source is "
+                                  f"{total:.2f}s long; the clip stops at the end")
+    clip_end = min(clip_end, total)
+    levels = LevelRuns(src, style, info, words)
+    in_word = style["qa"]["pauses"].get("silence_in_word_s", 0.4)
+    if clip and words:
+        words, clip_start, clip_end = place_clip(levels, words, clip_start, clip_end,
+                                                 fin["head_pad_s"], in_word, report)
+    start = clip_start
+    if trim_head:
+        # The hook rule is about the first WORD: with a transcript, cut to it.
+        def first_in(ws):
+            return next((w for w in (ws or [])
+                         if w["start"] >= clip_start - 0.02 and w["start"] < clip_end), None)
+        first_word = first_in(words)
+        if first_word is not None:
+            # A first word stretched back over the dead air starts after it.
+            words = clamp_stretched(words, levels.near(first_word["start"]), in_word)
+            first_word = first_in(words)
+        if first_word is not None:
+            fw = first_word["start"]
+            start = max(clip_start, fw - fin["head_pad_s"])
+            report["trim_head_to"] = "first word"
+            if fw - clip_start > 1.0:
+                # Never cut talk the transcript missed (an opening under room
+                # chatter): sound that starts earlier and runs into the first word
+                # without 2 s of silence is kept and reported. A lone short sound
+                # with a pause after it (a cough, a breath, a click) is not talk
+                # running into the word: it is cut, and reported.
+                # Measure with some talk after the first word in the window, so the
+                # level rules have talk to compare the head against.
+                fs, _, head = first_speech_s(src, style, clip_start,
+                                             min(fw - clip_start + 5.0, clip_end - clip_start,
+                                                 120.0),
+                                             info["audio"]["sample_rate"], until=fw)
+                pause = style["qa"]["pauses"]["fail_pause_s"]
+                if isinstance(head, dict):
+                    for at, snd, after in head["isolated"]:
+                        report["warnings"].append(
+                            f"trim-head cut a {snd:.2f}s sound at {at:.2f}s before the first "
+                            f"word ({after:.1f}s of silence after it): a cough, a breath, a "
+                            "click, or a lone word the transcript missed; listen")
+                    ts = head["start"]
+                else:
+                    ts = None
+                if fs is None and str(head).startswith("the start cannot be told"):
+                    # A bed or crowd as loud as talk hides whether the speaker is
+                    # already talking under it: cut nothing rather than guess.
+                    start = clip_start
+                    report["trim_head_to"] = "nothing (noise or music hides the start)"
+                    report["warnings"].append(
+                        f"trim-head cut nothing: sound as loud as talk runs from "
+                        f"{clip_start:.2f}s to the first transcribed word at {fw:.2f}s, "
+                        "so talk the transcript missed could be under it; listen")
+                elif ts is not None and ts < fw - 0.5 and head["gap"] < pause:
+                    start = max(clip_start, ts - fin["head_pad_s"])
+                    report["trim_head_to"] = "first sustained sound before the first word"
+                    report["warnings"].append(
+                        f"trim-head kept {fw - ts:.1f}s of sound before the first "
+                        f"transcribed word ({ts:.2f}s to {fw:.2f}s): talk the transcript "
+                        "missed, or an intro; listen before publishing")
+            if report["trim_head_to"] == "first word":
+                # Onto the word's sound, not its clock (audit round 9: "Minnesota"
+                # timed 0.24 s after it began; the cut landed inside it).
+                nxt = min((w["start"] for w in words if w["start"] > fw + 0.01),
+                          default=None)
+                settled, _ = settle_start(levels.near(fw), fw, clip_start, start,
+                                          fin["head_pad_s"], floor=clip_start, nxt=nxt,
+                                          style=style)
+                if settled != start:
+                    report["trim_head_settled_on_sound"] = round(settled, 3)
+                start = settled
+                on, _ = sound_edges(levels.near(fw), start, clip_end)
+                report["clip_sound"] = [None if on is None else round(on, 3),
+                                        (report.get("clip_sound") or [None, None])[1]]
+        else:
+            fs, skipped, why = first_speech_s(src, style, clip_start,
+                                              min(clip_end - clip_start, 120.0),
+                                              info["audio"]["sample_rate"])
+            if fs is None:
+                report["warnings"].append(f"trim-head: {why} in the window; nothing "
+                                          "trimmed (give --words or --srt to cut to "
+                                          "the first word)")
+            else:
+                start = max(clip_start, fs - fin["head_pad_s"])
+                report["trim_head_to"] = "first sustained sound"
+                for sk in skipped:
+                    what = ("with no voice in it (typing, clicks or noise)"
+                            if sk.get("no_voice") else
+                            f"followed by {sk['silence_after_s']}s of silence")
+                    report["warnings"].append(
+                        f"trim-head skipped a {sk['sound_s']}s sound at {sk['at_s']}s "
+                        f"{what}; if it was a word, rerun with --words or --srt")
+    if levels.measured:
+        # The captions and the receipt's words get the same clamped clocks as
+        # the edges (else a word clamped onto its sound at the open is left out
+        # of the receipt's words, and the hook reads the next one).
+        heard_runs = [x for _, _, r in levels.measured for x in r]
+        words = clamp_stretched(words, heard_runs, in_word) if words else words
+        all_words = clamp_stretched(all_words, heard_runs, in_word) if all_words else all_words
+    duration = clip_end - start
+    if duration <= 0.1:
+        raise ValueError("nothing left to render after trimming; check --clip and "
+                         "--trim-head")
+    report["start_s"] = round(start, 3)
+
+    afilters = []
+    if start > 0 or clip:
+        afilters.append(f"afade=t=in:st=0:d={fin['fade_s']}")
+    if clip:
+        afilters.append(f"afade=t=out:st={max(0.0, duration - fin['fade_s']):.3f}"
+                        f":d={fin['fade_s']}")
+    loud_on = False
+    # ffmpeg's loudnorm lands 1.5-2 LU under target on mono when it has to work
+    # in dynamic mode (audit round 8: -15.5 LUFS for a -14 target). Every player
+    # plays mono on both speakers anyway, so the loudness pass writes that: two
+    # identical channels, measured and normalised as stereo.
+    mono = loudness and (info["audio"].get("channels") or 0) == 1
+    stereo = (info["audio"].get("channels") or 0) == 2
+    upmix = UPMIX if mono else ""
+    if loudness:
+        span = duration if (clip or start > 0) else None
+        m = measure_loudnorm(src, start, style, span, pre=upmix, stereo=stereo)
+        pk, rms = m.get("channel_peaks_db") or [], m.get("channel_rms_db") or []
+        rho = m.get("channel_corr")
+        if stereo and len(pk) == 2 and len(rms) == 2 and max(pk) > -60.0:
+            live = rms.index(max(rms))
+            why = None
+            # What each channel carries on its own (audit round 11: a camera's
+            # scratch mic decorrelates to 0.09 by delay and room, so correlation
+            # alone cannot call it a backup; a split-mode interview puts each
+            # speaker in one ear).
+            roles = video_qa.channel_roles(src, start, span, total=info["duration_s"])
+            own = (roles or {}).get("own_talk_s") or [0.0, 0.0]
+            if min(pk) < max(pk) - 30.0:
+                # Talk in one channel only (a lav or a camera mic on one input):
+                # one ear on earbuds, and loudness reads low (audit round 9).
+                why = "one_channel_source"
+            elif rho is not None and rho <= -0.8 and abs(rms[0] - rms[1]) < 6.0:
+                # One channel polarity-inverted: the two cancel when a phone or a
+                # speaker plays mono, and the transcriber hears nothing.
+                why = "inverted_channel"
+            elif rms[live] - rms[1 - live] >= 15.0 and roles and own[1 - live] < 1.0:
+                # The quieter channel 15 dB or more down carries no talk of its
+                # own: a backup or scratch track of the same voice (a wireless
+                # mic's -20 dB safety channel, round 10; a camera mic beside a
+                # lav, round 11), not a second speaker.
+                why = "quiet_backup_channel"
+            elif roles and video_qa.hard_panned(roles):
+                # Each channel carries talk of its own while the other sits 20 dB
+                # or more under its own talk (one lav per input, split mode): each
+                # voice in one ear, and loudnorm lands short. Both to the centre.
+                # Own "talk" in one channel only is also what wide stereo music
+                # looks like (audit round 12), so a little of it folds nothing;
+                # 1.5 s and a fifth of that channel's talk is a voice (rounds 13
+                # and 14: a 15 s short opening on a guest's 4 s line).
+                why = "speakers_hard_panned"
+            if why:
+                upmix = (f"pan=stereo|c0=c{live}|c1=c{live}" if why != "speakers_hard_panned"
+                         else "pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1")
+                step = {why: True, "channel_peaks_db": [round(x, 1) for x in pk],
+                        "channel_rms_db": [round(x, 1) for x in rms],
+                        "channel_corr": None if rho is None else round(rho, 2)}
+                if roles:
+                    step["own_talk_s"] = own
+                if why == "speakers_hard_panned":
+                    step["folded_to_centre"] = True
+                else:
+                    step["copied_channel"] = live + 1
+                report["steps"].append(step)
+                m = measure_loudnorm(src, start, style, span, pre=upmix)
+        try:
+            in_i = float(m["input_i"])
+        except (KeyError, ValueError):
+            in_i = float("-inf")
+        if in_i != in_i or in_i <= video_qa.SILENT_LUFS:
+            report["warnings"].append("audio is silent or unmeasurable; loudness "
+                                      "pass skipped")
+        else:
+            loud_on = True
+            lp = style["qa"]["loudness"]
+            if upmix:
+                afilters.append(upmix)
+                report["mono_to_stereo" if mono else "one_channel_to_both"] = True
+            afilters.append(
+                f"loudnorm=I={lp['target_lufs']}:"
+                # AAC encoding adds inter-sample overs and ffmpeg falls back to
+                # dynamic mode when linear gain would clip: aim well under the
+                # QA ceiling (1 dB measured enough on a 66-minute replay).
+                f"TP={lp['true_peak_max_dbtp'] - fin.get('true_peak_headroom_db', 1.0)}:"
+                f"LRA={fin['lra_target']}:measured_I={m['input_i']}:"
+                f"measured_TP={m['input_tp']}:measured_LRA={m['input_lra']}:"
+                f"measured_thresh={m['input_thresh']}:offset={m['target_offset']}:"
+                f"linear=true:print_format=json")
+            afilters.append(f"aresample={info['audio']['sample_rate'] or 48000}")
+            report["steps"].append({"loudness_in_lufs": in_i,
+                                    "true_peak_in_dbtp": float(m["input_tp"])})
+
+    work = Path(tempfile.mkdtemp(prefix="finish-"))
+    try:
+        return _render(src, dst, style, info, report, fin, cap, words, all_words, burn,
+                       reframe,
+                       focus_x, clip, start, duration, afilters, loud_on, work, ext)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+HDR_TRANSFERS = ("arib-std-b67", "smpte2084")
+
+
+def tonemap_filter(transfer: str) -> str | None:
+    """An ffmpeg filter chain that tone-maps HLG or PQ (BT.2020) to 8-bit SDR
+    BT.709, or None when this ffmpeg lacks zscale (libzimg) or tonemap."""
+    if not (video_qa.has_filter("zscale") and video_qa.has_filter("tonemap")):
+        return None
+    return (f"zscale=tin={transfer}:pin=bt2020:min=bt2020nc:t=linear:npl=100,"
+            "format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=mobius:desat=0,"
+            "zscale=t=bt709:m=bt709:r=tv,format=yuv420p")
+
+
+def words_in(words: list[dict], a: float, b: float, sound: list | None = None,
+             span: list | None = None) -> list[dict]:
+    """The words a cut [a, b] keeps, clipped to it. `span` = [[first word, its
+    clock end], [last word, its clock end]], as place_clip chose them, selects
+    them exactly; without it, a word counts when most of its clock lies inside
+    the cut. With `sound` = [onset, offset] of the cut's audio, head words clocked
+    before the onset start on it, a late first clock moves back onto it (audit
+    round 10: "LANDSCAPING" burned at 0.92 s for a word said from 0.07 s), and
+    the tail mirrors that, all in order."""
+    sel = None
+    if span:
+        # From the first word to the last, in clock order (a zero-length word
+        # can share an instant with its neighbour), each found by its text and
+        # its clock end (a clamp may move a start, never an end).
+        order = [w for _, w in sorted(enumerate(words), key=lambda iw: (iw[1]["start"], iw[0]))]
+
+        def find(key, last=False):
+            hits = [i for i, w in enumerate(order)
+                    if w["word"] == key[0] and abs(w["end"] - key[1]) < 1e-6]
+            return (hits[-1] if last else hits[0]) if hits else None
+        i0, i1 = find(span[0]), find(span[1], last=True)
+        if i0 is not None and i1 is not None and i1 >= i0:
+            sel = order[i0:i1 + 1]
+    if sel is None:
+        sel = []
+        for w in words:
+            lo, hi = max(w["start"], a), min(w["end"], b)
+            dur = w["end"] - w["start"]
+            if (dur <= 0 and a - 0.05 <= w["start"] <= b + 0.05) or \
+                    (dur > 0 and hi - lo >= 0.5 * dur):
+                sel.append(w)
+    out = [dict(w, start=min(max(w["start"], a), b), end=min(max(w["end"], a), b))
+           for w in sorted(sel, key=lambda w: w["start"])]
+    on, off = (sound or [None, None])[:2]
+    if out and on is not None:
+        if 0.05 < out[0]["start"] - on < 1.0:
+            out[0] = dict(out[0], start=on)
+        for i, w in enumerate(out):        # early clocks: nothing starts before the sound
+            if w["start"] >= on:
+                break
+            out[i] = dict(w, start=on, end=max(w["end"], on + 0.05))
+    if out and off is not None:
+        if 0.05 < off - out[-1]["end"] < 1.0:
+            out[-1] = dict(out[-1], end=off)
+        for i in range(len(out) - 1, -1, -1):
+            w = out[i]
+            if w["end"] <= off:
+                break
+            out[i] = dict(w, end=max(off, w["start"]), start=min(w["start"], off))
+    return out
+
+
+def _settle_loudness(cmd: list[str], work: Path, partial: str, res, style: dict,
+                     report: dict, channels: int | None = None,
+                     duration: float | None = None) -> tuple:
+    """Measure the file the render wrote and render again (twice at most) until
+    it sits within 0.5 LU of the target and under the true-peak ceiling.
+    ffmpeg's own AAC encoder adds inter-sample peaks the filter chain never had
+    (audit round 9: -0.1 dBTP at 192k from a -2.0 dBTP chain): first raise the
+    bitrate to 320k, and lower the true-peak target only if that is not enough
+    (audit round 10: lowering it at once cost 1.3-1.7 LU). loudnorm's dynamic
+    mode lands up to 2 LU short on peaky or one-sided audio (audit round 10: a
+    vlog at -15.9 LUFS): raise its target by the shortfall. The render closest
+    to the target that is under the ceiling is kept. A raise that does not
+    bring the result 0.3 LU nearer the target stops the ladder (audit round
+    11: on a short clip under room noise two raises moved -15.1 LUFS to
+    -15.2; on another, -15.3 to -15.7 and back to -15.1)."""
+    lp = style["qa"]["loudness"]
+    ceiling, target = lp["true_peak_max_dbtp"], lp["target_lufs"]
+    ext = os.path.splitext(partial)[1]
+    cands = [(partial, list(cmd), res, video_qa.measure_loudness(partial))]
+    tries = []
+    stalled = None
+    for k in range(2):
+        _, cur, _, mk = cands[-1]
+        tp, li = mk.get("true_peak_dbtp"), mk.get("integrated_lufs")
+        ai = cur.index("-af") + 1
+        m = re.search(r"loudnorm=I=(-?[\d.]+):TP=(-?[\d.]+)", cur[ai])
+        if not m or li is None:
+            break
+        nxt, step = list(cur), {}
+        if tp is not None and tp > ceiling:
+            step["reason"] = f"true peak {tp:g} dBTP over {ceiling:g}"
+            bi = nxt.index("-b:a") + 1 if "-b:a" in nxt else None
+            if bi and nxt[nxt.index("-c:a") + 1] == "aac" and _kbps(nxt[bi]) < 320:
+                nxt[bi] = step["bitrate"] = "320k"
+            else:
+                tpt = round(float(m.group(2)) - (tp - ceiling) - 0.3, 2)
+                nxt[ai] = nxt[ai][:m.start(2)] + f"{tpt}" + nxt[ai][m.end(2):]
+                step["tp_target"] = tpt
+        elif abs(li - target) > 0.5:
+            step["reason"] = f"loudness {li:g} LUFS, {li - target:+.1f} LU from {target:g}"
+            it = round(min(-5.0, max(-70.0, float(m.group(1)) + (target - li))), 2)
+            nxt[ai] = nxt[ai][:m.start(1)] + f"{it}" + nxt[ai][m.end(1):]
+            step["i_target"] = it
+        else:
+            break
+        out = os.path.join(os.path.dirname(partial),
+                           f".{os.path.basename(partial)}.{k + 1}{ext}")
+        nxt[-1] = out
+        r = _run_render(nxt, work, out)
+        mn = video_qa.measure_loudness(out)
+        step.update(lufs=mn.get("integrated_lufs"), dbtp=mn.get("true_peak_dbtp"))
+        tries.append(step)
+        cands.append((out, nxt, r, mn))
+        if "i_target" in step and mn.get("integrated_lufs") is not None \
+                and round((mn["integrated_lufs"] - li) * (1 if target > li else -1), 2) < 0.3:
+            # Not 0.3 LU nearer the target (or further off): loudnorm's dynamic
+            # mode is not steered by its target here; more renders are guesses.
+            stalled = round(mn["integrated_lufs"] - li, 1)
+            break
+
+    def score(c):
+        mm = c[3]
+        tp, li = mm.get("true_peak_dbtp"), mm.get("integrated_lufs")
+        return (tp is not None and tp > ceiling, abs(li - target) if li is not None else 99.0)
+    best = min(cands, key=score)
+    for c in cands:
+        if c[0] != best[0] and os.path.exists(c[0]):
+            os.remove(c[0])
+    if tries:
+        first = cands[0][3]
+        report["loudness_passes"] = {
+            "first": {"lufs": first.get("integrated_lufs"), "dbtp": first.get("true_peak_dbtp")},
+            "retries": tries, "kept": cands.index(best)}
+    if best[0] != partial:
+        os.replace(best[0], partial)
+    li = best[3].get("integrated_lufs")
+    if li is not None and abs(li - target) > lp.get("pass_tolerance_lu", 1.0):
+        why = (f"raising loudnorm's target moved it {stalled:+.1f} LU (its dynamic mode "
+               "does not follow the target on this audio)" if stalled is not None else
+               "ffmpeg's loudness pass cannot lift this audio further without clipping")
+        if channels and channels > 2:
+            why += "; talk in one channel of a multichannel mix lands short this way"
+        if duration is not None and duration < 3.2:
+            # (round 16: a 2 s every-cue clip landed at -17.6 LUFS, a 2.8 s one
+            # at -18.5; 3.2 s and longer reached -14.3 to -14.5)
+            why += (f"; loudnorm's dynamic mode works on 3 s windows, and this clip is "
+                    f"{duration:.1f} s: a clip of 3 s or more reaches the target")
+        report["warnings"].append(
+            f"loudness lands at {li:g} LUFS, {li - target:+.1f} LU from {target:g}, after "
+            f"{len(cands)} renders: {why}. A compressor or limiter in the editor lets it "
+            "reach the target")
+    return partial, best[2], best[3]
+
+
+def _render(src, dst, style, info, report, fin, cap, words, all_words, burn, reframe,
+            focus_x,
+            clip, start, duration, afilters, loud_on, work, ext) -> dict:
+    vfilters = []
+    if info["video"]:
+        out_w, out_h = info["video"]["width"], info["video"]["height"]
+    if reframe:
+        aw, ah, ax, ay = active_area(src, start, min(duration, 4.0))
+        if aw >= out_w * 0.5 and ah >= out_h * 0.5:  # ignore a near-black frame
+            out_w, out_h, offset = aw, ah, (ax, ay)
+            report["active_area"] = [aw, ah, ax, ay]
+        else:
+            offset = (0, 0)
+        crop, out_w, out_h = reframe_filter(out_w, out_h, reframe, focus_x, *offset)
+        vfilters.append(crop)
+        report["reframe"] = {"aspect": reframe, "focus_x": focus_x, "size": [out_w, out_h]}
+    out_words = None
+    if words:
+        sound = report.get("clip_sound") or [None, None]
+        span = report.get("clip_word_span")
+        inside = mark_keywords(words_in(words, start, start + duration, sound, span),
+                               cap["keywords"])
+        cues = shift_cues(chunk_words(inside, cap), start)
+        everything = words_in(all_words or words, start, start + duration, sound, span)
+        out_words = [{**w, "start": max(0.0, w["start"] - start), "end": w["end"] - start,
+                      **({"cue_start": w["cue_start"] - start, "cue_end": w["cue_end"] - start}
+                         if "cue_start" in w else {})} for w in everything]
+        sidecar = Path(dst).with_suffix(".captions.srt")
+        if burn:
+            srt_text = build_srt(cues, cap)  # the file matches what is on screen
+        else:
+            side = dict(cap, **style.get("sidecar_captions", DEFAULT_STYLE["sidecar_captions"]))
+            side["highlight_numbers"] = False
+            srt_text = build_srt(shift_cues(chunk_words(inside, side), start), side)
+        # written only after the render succeeds
+        report["steps"].append({"caption_cues": len(cues), "sidecar_srt": sidecar.name,
+                                "burned": bool(burn)})
+        if burn:
+            report["caption_font"] = assert_font(cap["font"])
+            (work / "cap.ass").write_text(build_ass(cues, cap, out_w, out_h),
+                                          encoding="utf-8")
+            vfilters.append("ass=cap.ass")  # LAST in the chain, after any overlay
+    elif burn:
+        report["warnings"].append("--burn given without --words or --srt; no captions")
+    has_video = info["video"] is not None
+    reencode = has_video and (bool(vfilters) or start > 0 or bool(clip))
+    hdr = str(info["video"].get("transfer") or "") if has_video else ""
+    sdr_tags = []
+    if reencode and hdr in HDR_TRANSFERS:
+        tm = tonemap_filter(hdr)
+        if tm:
+            # The re-encode is 8-bit H.264: tone-map HDR (an iPhone's HLG, PQ) down
+            # to SDR first, so it plays right everywhere, and tag it as SDR.
+            vfilters.insert(0, tm)
+            sdr_tags = ["-color_primaries", "bt709", "-color_trc", "bt709",
+                        "-colorspace", "bt709", "-color_range", "tv"]
+            report["hdr_tonemapped"] = hdr
+        else:
+            report["warnings"].append(
+                "HDR source (HLG/PQ) and this ffmpeg has no zscale/tonemap: the re-encode "
+                "is 8-bit without tone mapping and may look washed out; export SDR from "
+                "the editor first")
+    cmd = ["ffmpeg", "-hide_banner", "-nostats", "-y"]
+    if start > 0:
+        cmd += ["-ss", f"{start:.3f}"]
+    if clip or start > 0:
+        cmd += ["-t", f"{duration:.3f}"]
+    cmd += ["-i", os.path.abspath(src)]
+    cmd += (["-map", "0:v:0", "-map", "0:a:0"] if has_video else ["-map", "0:a:0", "-vn"])
+    if vfilters:
+        cmd += ["-vf", ",".join(vfilters)]
+    if has_video:
+        cmd += (["-c:v", "libx264", "-preset", fin["x264_preset"], "-crf",
+                 str(fin["x264_crf"]), "-pix_fmt", "yuv420p"] + sdr_tags if reencode
+                else ["-c:v", "copy"])
+    if afilters:
+        cmd += ["-af", ",".join(afilters)]
+    cmd += audio_codec_args(dst, info["audio"].get("codec"), fin["audio_bitrate"],
+                            copy_ok=not afilters)
+    if ext in (".mp4", ".m4a", ".mov"):
+        cmd += ["-movflags", "+faststart"]
+    # Render beside the destination, then rename: a failed render never leaves a
+    # stub file where the finished one should be.
+    final = os.path.abspath(dst)
+    partial = os.path.join(os.path.dirname(final),
+                           f".{os.path.basename(final)}.partial{ext}")
+    cmd += [partial]
+    res = _run_render(cmd, work, partial)
+    out_loud = None
+    if loud_on:
+        partial, res, out_loud = _settle_loudness(cmd, work, partial, res, style, report,
+                                                  (info.get("audio") or {}).get("channels"),
+                                                  duration)
+    os.replace(partial, final)
+    if words:
+        sidecar.write_text(srt_text, encoding="utf-8")
+    if loud_on:
+        ln = _loudnorm_json(res.stderr)
+        report["loudnorm_mode"] = ln.get("normalization_type", "unknown")
+        if report["loudnorm_mode"] != "linear":
+            report["warnings"].append(
+                "loudnorm fell back to dynamic mode (linear gain would have clipped); "
+                "loudness range is slightly compressed")
+    report["video_reencoded"] = reencode
+    report["expected_duration_s"] = round(duration, 3)
+    report["_out_words"] = out_words
+    report["_out_loudness"] = out_loud
+    return report
+
+
+def _kbps(rate: str) -> float:
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)([kKmM]?)", rate.strip())
+    if not m:
+        return 0.0
+    return float(m.group(1)) * {"": 0.001, "k": 1, "K": 1, "m": 1000, "M": 1000}[m.group(2)]
+
+
+def _run_render(cmd: list[str], work: Path, partial: str) -> subprocess.CompletedProcess:
+    res = subprocess.run(cmd, cwd=work, capture_output=True, text=True, errors="replace")
+    if res.returncode != 0 or not os.path.exists(partial):
+        if os.path.exists(partial):
+            os.remove(partial)
+        raise RuntimeError("render failed: " + video_qa.first_error(res.stderr))
+    return res
+
+
+def load_words(args) -> list[dict] | None:
+    timed = text = None
+    if args.words:
+        timed = read_words_file(args.words)
+        if not timed:
+            raise ValueError(f"--words {args.words} holds no words")
+    if args.srt:
+        text = read_srt_file(args.srt)
+        if not text:
+            raise ValueError(f"--srt {args.srt} holds no words; check the file and "
+                             "its encoding")
+    if timed and text:
+        return align_text_to_timing(text, timed, keep_unheard=True)
+    return timed or text
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("src")
+    ap.add_argument("-o", "--out", required=True)
+    ap.add_argument("--profile", help="video-style.json")
+    ap.add_argument("--trim-head", action="store_true", help="cut dead air before the hook")
+    ap.add_argument("--loudness", action="store_true", help="two-pass loudnorm to target")
+    ap.add_argument("--words", help="word-level JSON (timing)")
+    ap.add_argument("--srt", help="cue-level SRT, e.g. Descript export (text). "
+                    "Give both to keep Descript's words on the ASR's clock.")
+    m = ap.add_mutually_exclusive_group()
+    m.add_argument("--burn", action="store_true",
+                   help="burn captions into the picture (re-encodes the video)")
+    m.add_argument("--sidecar", action="store_true",
+                   help="write captions.srt only (the default when --burn is absent)")
+    ap.add_argument("--keywords", default="", help="comma list to highlight")
+    ap.add_argument("--reframe", help="crop to an aspect such as 9:16 or 1:1")
+    ap.add_argument("--focus-x", type=float, default=0.5,
+                    help="horizontal centre of the crop, 0-1 (default 0.5)")
+    ap.add_argument("--clip", help="START-END seconds on the source, e.g. 3301.2-3342.8")
+    ap.add_argument("--no-qa", action="store_true", help="skip the QA receipt")
+    args = ap.parse_args(argv)
+    try:
+        style = load_style(args.profile)
+        if args.reframe and not (re.fullmatch(r"\d+(?:\.\d+)?:\d+(?:\.\d+)?", args.reframe)
+                                 and all(float(x) > 0 for x in args.reframe.split(":"))):
+            raise ValueError(f"--reframe must look like 9:16 with both sides above 0, "
+                             f"got {args.reframe!r}")
+        if not 0.0 <= args.focus_x <= 1.0:
+            raise ValueError(f"--focus-x must be between 0 and 1, got {args.focus_x}")
+        if not os.path.exists(args.src):
+            raise ValueError(f"source {args.src} does not exist")
+        words = load_words(args)
+        rep = finish(args.src, args.out, style, args.trim_head, args.loudness, words,
+                     burn=args.burn,
+                     keywords=[k.strip() for k in args.keywords.split(",") if k.strip()],
+                     reframe=args.reframe, focus_x=args.focus_x,
+                     clip=parse_clip(args.clip) if args.clip else None)
+        out_words = rep.pop("_out_words", None)
+        out_loud = rep.pop("_out_loudness", None)
+        if not args.no_qa:
+            qa = video_qa.qa(args.out, style["qa"], Path(args.out + ".qa"),
+                             words=out_words, loud=out_loud,
+                             finish_warnings=rep.get("warnings"),
+                             finish_notes=rep.get("notes"))
+            rep["qa_verdict"] = qa["verdict"]
+            rep["qa_receipt"] = args.out + ".qa/qa-receipt.md"
+            got = qa["probe"]["duration_s"]
+            if abs(got - rep["expected_duration_s"]) > 0.25:
+                rep["duration_mismatch_s"] = round(got - rep["expected_duration_s"], 3)
+    except Exception as exc:
+        print(f"finish failed: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(rep, indent=2))
+    return 1 if rep.get("qa_verdict") == "FAIL" or "duration_mismatch_s" in rep else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
