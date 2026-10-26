@@ -45,7 +45,7 @@ Work from three folders — **Knowledge Base** (voice, ideal client, links), **R
    - **Backlogs: route the edit by authority, not by habit.** The recording you picked for this week always gets the full run above. A backlog (dozens or thousands of old recordings) does not: Descript credits and media hours are bought per seat. Transcribe the backlog free on the machine (`scripts/transcribe_words.py`), score each recording against the client's GCT, and give it an **edit tier** using the same four words the repurposing agent uses for article effort: **SKIP** = no edit, log the reason; **LIGHT** = no Descript, just step 2b on the raw file (loudness and captions); **MODERATE / STRONG** = the Descript edit above, then step 2b. A SKIP is logged with its reason and leaves the queue; it is never "pending".
 2b. **Finish and prove it — every video, whichever editor cut it.** Needs ffmpeg on the machine; without it, skip 2b, ship anyway and mark the video **UNMEASURED** in the report — never block on tooling. Load the client's `video-style.json` (start from `references/video-style.example.json`; save it once in the Knowledge Base and never ask for the style again). Then:
    - Long-form for YouTube: `scripts/transcribe_words.py edited.mp4 -o words.json`, then `scripts/finish.py edited.mp4 -o final.mp4 --loudness --srt descript.srt --words words.json` → hits −14 LUFS with true peak at or under −1 dBTP without re-encoding the picture, and writes a sentence-style caption file to upload beside the video (Descript's words on the word clock; captions are a sidecar unless you ask for `--burn`). The word timing is what lets the receipt tell a breath or a cough inside dead air from a word; it is free and local (66 s for a 3-minute slice on two cores). With `--srt` alone the receipt says so in a `word_timing` WARN. Export the SRT from Descript with speaker labels off (`include_speaker_labels: "off"`); labels left in are stripped. A mono recording comes out as two identical channels, because that is the only way ffmpeg's loudness pass lands on target for it; a stereo file with the talk in one channel only, a quiet backup or camera scratch track in the other, or one channel polarity-inverted gets its louder channel copied to both, and an interview recorded one lav per channel (each speaker in one ear), or with one guest's lav alone on one input, is folded to the centre. On a raw file (LIGHT tier) add `--trim-head`: it cuts into the pause before the first transcribed word's sound, or without a transcript to the first sustained sound, never to a record-button click. It keeps sound before the first word only when that sound runs into the word the way talk does (an opening the transcript missed); a lone cough, breath or click with a pause after it is cut and reported, and the receipt WARNs when sound as loud as talk sits more than a second before the first word.
-   - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Pick START at a cue that begins 0.3 s or more after the cue before it ends, and END at a cue followed by 0.3 s or more: on two of our publishes all 42 such starts and all 33 such ends sit at a level pause and none WARNs, against 164 of the 210 edges at cues closer together. Descript's cue edges are not usually pauses: fewer than half of its cue starts sit at one (34 of 73 and 28 of 72 there), and about half its cues run straight into the next (38 of 72 and 41 of 71 there, 679 of 1,468 on the replay). An edge at a pause, or within 0.25 s of one with no heard word between, stays in it, just before the first word's sound and just after the last word's, whatever the ASR's word clock says (a start asked for at the previous word's clock end does not open on that word, unless no pause parts the two: then it keeps that word whole and WARNs); under steady room noise, which hides a word's soft ending, the end runs on to the last word's own cue or clock end, and words the ASR heard inside what the level calls a pause count as talk, also when the edge then moves onto the sound (one clocked in plain silence, with unheard talk just beyond the pause, is that talk; in a quiet room a click inside a word's clock does not make it talk). An edge mid-phrase keeps the word it falls inside and moves to the nearest pause within a second of it, never past where the next word's sound begins; a first word whose sound runs on from the word before, with no pause between, keeps the start on its clock and WARNs. When the cut still lands inside a heard word or a gap under 0.15 s, or Descript's timing says the last word runs past the cut, the receipt carries it as a `finish_report` WARN; a cut in a clear gap between words goes to 30 ms there that are quiet in absolute terms (under the checker's base silence threshold, or far under the words; a threshold raised over a loud bed does not count) and the receipt notes it (`finish_note`, a NOTE, with the fade's level), unless a start lands in a short dip right after word-loud sound no word's clock covers, which can be a closure inside a first word clocked late: that WARNs; a gap that never goes quiet (a loud bed, a reverb tail, talk the transcript missed) WARNs that the cut cannot be checked. An end, however it was placed, or a start placed in a word gap that keeps word-loud sound beyond the clip's last (first) word, past a dip from it, that no caption word covers (a filler, a word the ASR missed or clocked late, an interjection left out of the captions) WARNs: listen to that edge. Captions use Descript's corrected words on the word-level clock, and the first one lands on the clip's first sound.
+   - Shorts: `scripts/finish.py edited.mp4 -o short.mp4 --clip START-END --reframe 9:16 --focus-x 0.5 --loudness --srt descript.srt --words words.json --burn` → 2–3 word uppercase captions burned in the lower third, numbers and the style file's keywords in yellow. Pick START at a cue that begins 0.3 s or more after the cue before it ends, and END at a cue followed by 0.3 s or more: on two of our publishes all 42 such starts and all 33 such ends sit at a level pause and none WARNs, against 164 of the 210 edges at cues closer together. Descript's cue edges are not usually pauses: fewer than half of its cue starts sit at one (34 of 73 and 28 of 72 there), and about half its cues run straight into the next (38 of 72 and 41 of 71 there, 679 of 1,468 on the replay). An edge at a pause, or within 0.25 s of one with no heard word between, stays in it, just before the first word's sound and just after the last word's, whatever the ASR's word clock says (a start asked for at the previous word's clock end does not open on that word, nor does an end asked for at the next word's clock start keep that one, however short its clock, unless no pause parts the two: then the clip keeps that word whole, in its captions too, and WARNs; a word Whisper timed as an instant, a zero-length clock with its sound just before it (59 of 7,754 words on 29 real files), belongs to an edge asked for at that clock, so to leave it out ask for the edge at the next word's clock start, or at the previous word's clock end); under steady room noise, which hides a word's soft ending, the end runs on to the last word's own cue or clock end, and words the ASR heard inside what the level calls a pause count as talk, also when the edge then moves onto the sound (one clocked in plain silence, with unheard talk just beyond the pause, is that talk; in a quiet room a click inside a word's clock does not make it talk). An edge mid-phrase keeps the word it falls inside and moves to the nearest pause within a second of it, never past where the next word's sound begins; a first word whose sound runs on from the word before, with no pause between, keeps the start on its clock and WARNs. When the cut still lands inside a heard word or a gap under 0.15 s, or Descript's timing says the last word runs past the cut, the receipt carries it as a `finish_report` WARN; a cut in a clear gap between words goes to 30 ms there that are quiet in absolute terms (under the checker's base silence threshold, or far under the words; a threshold raised over a loud bed does not count) and the receipt notes it (`finish_note`, a NOTE, with the fade's level), unless a start lands in a short dip right after word-loud sound no word's clock covers, or an end right before it, which can be a closure inside a first word clocked late or a last word clocked short: that WARNs; a gap that never goes quiet (a loud bed, a reverb tail, talk the transcript missed) WARNs that the cut cannot be checked. An end, however it was placed, or a start placed in a word gap that keeps word-loud sound beyond the clip's last (first) word, past a dip from it, that no caption word covers (a filler, a word the ASR missed or clocked late, an interjection left out of the captions) WARNs: listen to that edge. Captions use Descript's corrected words on the word-level clock, and the first one lands on the clip's first sound.
    - `finish.py` ends by running `scripts/video_qa.py`, which writes `qa-receipt.md` + `.json`: whether the whole file decodes (a half-downloaded mp4, a cut-off WAV or Ogg, or a decoder error is a FAIL, never a clean receipt); loudness and true peak; the hook rule (first transcribed word within 2 s when a transcript is given, "[Music]" cues ignored; otherwise the first real sound: clicks, noise-like typing and a cough before dead air are skipped, and audio that starts after the picture counts as dead air); the longest pauses and the pause rate (a NOTE, not a WARN, while the edit removes only pauses over 2 s), with silence measured against the file's own loudness and its local noise floor (WARN "unmeasurable" where noise or a music bed never lets the sound drop; with word timing a breath, a soft "mm", a sigh or a thump inside dead air does not end the pause, a loud sound right next to a word is listed rather than failed, and a `talk_gaps` WARN marks where the talk stops under a bed; with an SRT alone, a `possible_pauses` WARN lists the stretches to listen to); trailing dead air (a FAIL when the microphone died); a picture that stops before the sound; black runs of two frames or a held black frame (FAIL) and mostly dark frames with something on screen, such as a dead screen with a camera tile or a dark slide (WARN, with the frame saved to look at), at the open, inside and at the close; letterbox bars; a contact sheet; and real-frame thumbnail candidates ranked by face size and sharpness. Run `video_qa.py --srt descript.srt --words words.json` on its own against anything already published. A FAIL is fixed or reported, never shipped silently.
    - Titles and descriptions come from step 6, thumbnails from the receipt's real-frame candidates. If you ask Underlord for anything beyond the edit, add: **"thumbnail: choose a real frame, never generate one."**
 3. **Transcript.** Export from Descript; or pull auto-captions if already on YouTube; or work from a transcript provided. Save `Outputs/<video-slug>/transcript.md` (timestamped where available).
@@ -239,9 +239,9 @@ sidecar or burned captions from one `video-style.json`) and `scripts/video_qa.py
 reputation", came out at −14.4 LUFS / −2.0 dBTP, first word at 0.08 s, QA PASS, in 51 s on two CPU
 cores with zero Descript credits.
 
-### The checker was broken fifteen times before it shipped
+### The checker was broken sixteen times before it shipped
 
-Fifteen fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
+Sixteen fresh-context auditors attacked the receipt in turn, each after the last round was fixed. Every
 break below is now a regression test that fails on the code before its fix; the full reports are on
 pull request #94 of the skills repo.
 
@@ -405,6 +405,28 @@ pull request #94 of the skills repo.
   into a quiet pause after it was said, a dropped-syllable check that fired on 19 edges besides the
   2 true ones before it was narrowed (the word before, its decay, a music bed, the word before's own
   last syllable), and a level stretch reused from another clip that hid a warning.
+  Round sixteen: the reach rule held at starts but not at ends on real recordings. An end asked for
+  at the next word's clock start kept that word with a PASS, and left it out of the captions, when
+  Whisper clocked it 20 ms long ("kill", "Yeah."), when the dip before it lay inside the last word's
+  clock ("embroidery."), when it ran on from the last word with no dip ("Like," across two touching
+  Descript cues), under a bed that keeps dips shallow ("or bags."), or when the pause after it began
+  within the search's 0.05 s slack ("or"); a word-gap end in a closure dropped "-ly" and "-cle" with
+  a NOTE; the start-side dropped-syllable WARN fired only on correct cuts on our publishes; and this
+  guide undercounted the soft AC tail. Now a word's side of an edge goes by its clock's middle, a word
+  is told from the last word's decay by a dip and rise looked for 0.35 s before its clock or by sound
+  within 6 dB of the last word's (10 dB under a bed), words kept whole are in the captions, a word
+  read as decay but clocked inside the clip WARNs, and an end cut in a short dip right before
+  uncovered word-loud sound WARNs. On the auditor's 343 ends at the next word's clock start on 29
+  real files, unwarned ends keeping a next word with a clock fall from 5 to 0 (three now stop before
+  it, two keep it whole with a WARN); on its 770 other ends the same two keepers WARN or stop short
+  and both dropped syllables WARN; its 661 starts do not move, and on the round-15 auditor's sweeps
+  of the fresh mixes and the replay no cut moves. Rendering those cases caught what no sweep had:
+  since round 15 every `finish.py` run that kept a word between whole crashed (`finish failed:
+  'steps'`), because the retry wiped the report finish.py passed in while the sweeps pass a fresh
+  one; my own sweep of the first fix caught a 20 ms last word ("right?") taken for the word after
+  the request, which also showed such a word had been in the sound and out of the captions since
+  round twelve; and a scan of every swept clip for heard words in the sound but out of the captions
+  found a word kept whole at a start left out whenever Descript's cues were given ("put", "or").
 - **Plus the dull ones**: stub files and temp folders after a failed render, cryptic errors on bad
   input, captions a player would read as commands, keywords that missed "Dollar-a-Day's", a
   long-form caption file cut into 1,177 three-word ALL-CAPS cues, an iPhone HDR clip re-encoded to
@@ -445,7 +467,9 @@ only the ASR's word gap is left, which it shortens: a dead 2.05 to 2.45 s stop t
 (3 of 21 under a compressor, 4 of 21 under an 11 LU fan in the round-ten builds). When the ASR skips
 a whole sentence, `talk_gaps` can list continuous speech. A file whose first cue opens with a single
 capitalised word and a colon ("Bloomington:") reads as Descript's labelled export; export with
-labels off. Talk in one channel of a 5.1 mix can land 1.4 LU short of −14, and the report says so.
+labels off. Talk in one channel of a 5.1 mix can land 1.4 LU short of −14, and the report says so; so does a
+clip under about 3 s that loudnorm must compress (its dynamic mode works on 3 s windows: a 2 s clip
+landed at −17.6 LUFS and FAILs, 3.2 s and longer reach the target).
 Under noise within about 12 dB of the talk the level loses pauses altogether: clip edges fall back
 to the word clocks: in the round-eleven fan build no start loses talk and one end in 30 cuts the
 last 0.06 s of a fading word (0.01 s of it above −40 dBFS, as on the quiet mix). A clip edge in
@@ -465,10 +489,24 @@ captions), and the other 5 did not. A guest only 12 dB off-centre (the host mic 
 down) is neither folded nor flagged. The WARN for a start cut in a short dip after uncovered
 word-loud sound catches a first syllable cut off at a closure only when a dip parts it from the word
 before, it starts inside that word's clock or within 0.15 s after it, it reaches within 6 dB of the
-word and it runs 0.12 s past the word before's clock end (an ASR ends words up to 0.1 s early): on
-the auditor's sweeps it fires on the 2 such edges and nowhere else. Under an AC the level reads a soft tail of the word
-before as part of a pause, so a start asked for in that pause can open on 0.1 s of it (1 of the
-auditor's 830). A first word whose clock spans a pause, with the word before running on into its
+word and it runs 0.15 s past the word before's clock end (an ASR ends words up to 0.15 s early: at
+0.12 s its only 2 firings on our publishes were the word before's own last syllable, 0.13 and 0.14 s
+past its clock, and Whisper heard the wanted word whole from both cuts): on the round-15 auditor's
+sweeps it fires on the 2 such edges and nowhere else. Its mirror at an end catches a last syllable
+cut off only when a 30 ms dip ends that sound before the next word's begins, it starts within 0.15 s
+of the last word's clock end, reaches within 9 dB of the word and 18 dB over the floor, and holds
+0.12 s at talk level: on 55 word-gap ends on 29 real files and 138 on the fresh mixes it fires on
+the 2 that drop a syllable and nowhere else. An end asked for at the next word's clock start, where
+that word's sound begins inside the last word's clock with no pause between (How_to's
+"embroidery.", said 0.3 s before its clock), keeps that word whole with a WARN rather than cut in a
+dip the clocks do not show. A word Whisper clocks into what the level reads as the last word's
+fading tail stays out of the captions, with a WARN when its clock lies in the clip, because the
+level cannot tell a reverb tail from a soft word run on with no dip (seg4's "I would" 12 dB under
+"little,", said there; rev7's "Just", said after the pause): on about 3,900 clip ends swept it
+fires on 5, and Whisper hears the word in the clip on 2. Under an AC or a hum the level reads a soft tail of the word before as
+part of a pause, so a start asked for in that pause can open on 0.1 s of it (3 of the round-15
+auditor's 830 starts by Whisper on the clean speech, two of them the "-s" of "landscapers," at −27
+to −37 dBFS). A first word whose clock spans a pause, with the word before running on into its
 clock (a reverb tail, a tag question), keeps the start on its clock with a WARN rather than finding
 the pause inside its clock. A start asked for at a word's clock just after a pause, where Whisper
 stretched the word before back into that pause and nothing parts the two, keeps that word whole and
@@ -509,7 +547,7 @@ half a second can pass, because nothing in the file says it was longer.
 7. **A checker is only as honest as its last audit.** Self-QA wrote the first receipt. The first
    independent audit broke it six ways; after each round of fixes the next audit found
    more (six, then sixteen, then twenty-one, then fourteen, then twelve, then twelve, then
-   thirteen, then eight, then eleven, then nine, then six, then four, then eight, then seven), mostly in
+   thirteen, then eight, then eleven, then nine, then six, then four, then eight, then seven, then five), mostly in
    cases the fixes themselves opened or the documented command never exercised. Commission
    the refuting audit before telling anyone the number, run it again after every fix, and ship only
    when an audit finds nothing high or medium.
