@@ -104,6 +104,15 @@ Record:
 CONNECTED means the tool reaches its endpoint. AUTHENTICATED means the intended
 account is observed. VERIFIED_READ means the specified read succeeded. None proves
 write permission, every domain, another profile, another agent app or a later run.
+
+Confirm VERIFIED_READ from the actual connector/API/CLI request and returned
+service result, or the browser action and observed page. Establish the intended
+account and one harmless service fact; a profile response can establish both.
+A "Connected" badge, a tool label or agent summary, and shell placeholders such as
+`echo` or `true` do not establish a service read. If you cannot inspect the real
+result, record the evidence limit and leave the read unverified. A missing or
+unexecuted call does not establish bad credentials.
+
 Recheck at task start when identity, scope or freshness matters; do not retain page
 content or URLs containing tokens just to make the receipt look more complete.
 
@@ -128,16 +137,31 @@ revision and runtime test separately; never call distribution or all-site access
 complete from a file write or one browser connection.
 
 <!-- shared-rule:agents-draft-humans-send:start -->
-## Agents draft; a human sends and publishes
+## Selective human review; agents finish authorized work
 
-- **An agent may write anything and send nothing.** Email, DMs, social posts, client
-  messages, public pages — staged and ready, never dispatched.
-- **Stage it so approving is one click**, not one more round of work: the full text, the
-  recipient, the subject, and where it will appear.
-- This is a security control, not a confidence rating. It holds even when the draft is
-  obviously correct, because the failure it prevents is the one nobody predicted.
-- It is the boundary on `be-proactive-see-it-through`: act freely on reversible work,
-  stop at anything that reaches another person or the public.
+Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
+
+- **Done is better than perfect.** Complete routine work within the user's recorded
+  authority, including factual replies, ordinary project coordination, approved client
+  tweaks, and publishing on authorized properties. Do not require Dennis to review
+  every draft, message, change, or publication in advance. Review friction has a cost.
+- **Ask in advance only for a consequential decision or missing authority:** new
+  commitments or changes to pricing/scope, contracts, financial transactions outside
+  existing authority, personnel decisions, sensitive disclosures, new access/security
+  privileges, destructive or hard-to-reverse changes, disputed client intent, crisis/press
+  statements, or material claims whose facts cannot be verified. Existing explicit holds
+  and client consent requirements still apply. An assigned owner or qualified reviewer
+  may resolve matters within their authority; do not make Dennis the default bottleneck.
+- **Prepare the concrete result before asking.** Name the exact decision, risk, recipient
+  or property, and recommended action. Continue independent authorized work while waiting.
+  Uncertainty about polish alone is not a reason to stop.
+- **Verify and report after acting.** Check facts, destination, duplication, release
+  results, and an appropriate rollback/recovery path. Preserve any required independent
+  QA. Log what shipped and what needs follow-up; fix ordinary misses promptly.
+- **Authority is not human review.** Never imply Dennis reviewed an item he did not.
+  Use the existing identity/receipt rules and mark authorized work accurately.
+  This policy does not supply missing credentials, bypass platform approval gates,
+  authorize impersonation, or authorize changes on a client's property without consent.
 <!-- shared-rule:agents-draft-humans-send:end -->
 
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:start -->
@@ -167,9 +191,10 @@ complete from a file write or one browser connection.
 - **The second time the same dependency blocks, stop treating it as a people problem.**
   Build the thing that makes their non-response harmless — a watchdog, a fallback route, a
   second credential, a cached copy. Building it once costs less than chasing it forever.
-- This does not loosen `agents-draft-humans-send`. Rescue means doing the *work* yourself,
-  never dispatching messages, publishing, spending or deleting on someone's behalf because
-  they went quiet. Where the rescue would cross that line, stage it and say so.
+- Use the selective-review standard in `agents-draft-humans-send`: execute routine
+  rescue work, messages, and publication within recorded authority. Silence never supplies
+  missing authority or clears an explicit hold. Stage only the consequential decision
+  that still requires advance review, and continue the independent work.
 - Rescue toward the function, not the person — see `assign-work-to-a-function`. A rescue
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
@@ -258,9 +283,10 @@ penalty. Use the maintained shared audit run contract.
 - **You do not need permission for reversible work.** Do it, then report exactly what you
   did so it can be adjusted. Asking first for everything makes an agent slower than doing
   the work by hand.
-- **Reversible is the line, not confidence.** Sending a message, publishing to the public,
-  spending money, and deleting data stay behind an explicit approval — see
-  `agents-draft-humans-send`. Everything short of that, act.
+- **Use selective review, not a blanket send/publish gate.** Complete routine work,
+  including messages and publication, within recorded authority. Bring only consequential
+  decisions or missing authority for advance review — see `agents-draft-humans-send`.
+  Keep verification and recovery proportional to the actual risk.
 - Report what you changed in enough detail that undoing it is a one-line instruction.
 <!-- shared-rule:be-proactive-see-it-through:end -->
 
@@ -715,6 +741,8 @@ separate executions. Enforce this through the run record, evidence manifest and 
 <!-- shared-rule:named-entities-link-to-the-most-helpful-canonical-destination:start -->
 ## Named entities link to the most helpful canonical destination
 
+Before writing or reviewing an article, open the current [Article Guidelines](https://localservicespotlight.com/article-guidelines/) and [link-building guide](https://blitzmetrics.com/link-building/). Use the [internal-linking process](https://blitzmetrics.com/internal-linking/) to connect pages and the [entity-linking decision tree](https://blitzmetrics.com/entity-linking/) to choose destinations. These are complementary owners, not competing copies. The older Blog Posting Guidelines and dated downloads are historical references, not the maintained writing standard. Record the checked URLs, date and available page revision or content hash in the existing work record, separately from the installed skill commit. If a current source is unavailable or conflicts with a copied instruction, record the gap and resolve it before claiming the review passed.
+
 - **Route the first meaningful mention of a named entity to the page that best helps
   the reader understand or act on it.** Link once; do not turn every repeated name
   into a link. Use the entity's natural name for a person or company, and use 3–6
@@ -723,6 +751,7 @@ separate executions. Enforce this through the run record, evidence manifest and 
   website over an author archive, search result or social profile. If no owned site can
   be verified, use the relevant first-party company page or a canonical article that
   establishes who the person is; otherwise leave the name plain.
+- **Program members and clients get exactly one link per article — to their personal brand site.** Anyone in the AI Builder program, or any client, named in an article gets one link to their verified personal-brand site, on the first mention, and no repeat links later in that article. Standing rule from Dennis Yu (2026-10-08): one article, one link per person.
 - **Companies point to their owned company site.** Correct the entity name before
   linking it. A plausible domain for the wrong spelling teaches the wrong association.
 - **Tools and concepts point to our canonical training when it exists.** In explanatory
@@ -1146,6 +1175,116 @@ No regex can honestly decide which lane a job needs. Enforce this by reading
 the lane table before you schedule or claim a job, and by naming the live
 lane in the job's receipt.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
+
+<!-- shared-rule:audit-quality-gate:start -->
+## Audit deliverables preserve evidence and pass independent quality review
+
+- Apply the [Universal Audit Quality Gate](https://github.com/dennisyu/local-service-spotlight-skills/blob/69b00032c482826d6934ba24c04604d4dddf1b22/docs/audit-quality/README.md) to content, document, SEO, website and operational audit deliverables. Pin the actual standard/profile revision and adoption state. It assesses report quality; keep specialist exam weights, caps, coverage and pass lines separate.
+- Preserve valid detail, proof, examples, citations and meaningful visuals. Map baseline items to final locations; justify corrections, outdated/incorrect removals and authorized privacy omissions. More than 10% extracted-text loss or any missing substantive item triggers semantic review, not an automatic verdict.
+- Trace material claims to exact dated sources; distinguish FACT, DECIDED, PROPOSED and UNKNOWN from OBSERVED, REPORTED and INFERRED evidence. Missing evidence is null, never zero. Inspect hidden artifact content and public links for privacy.
+- Fix authorized defects at the source, propagate to every dependent output, and retest the actual final artifacts. Require fresh-context content/privacy and design review of the exact final revision. Preserve all applicable holds and consequential human decision thresholds; do routine authorized work without unnecessary review requests.
+- The proposed default quality profile uses weights 25/25/20/15/10/5 and threshold 85, plus hard gates. Calibrate before operational scoring; uncalibrated scores stay provisional. No critical/major defect or missing required evidence passes through a high score.
+- Release through one authorized owner using current destination-specific access, preimage and rollback. Verify private recipient delivery or anonymous public body, canonical, mobile, links and downloads as applicable. Observed harmful live defects require authorized containment; unavailable readback alone stays unverified. Keep versioned receipts and previous editions.
+
+- When adopting the proposed UAQG1.1.0 tier annex, pin the product profile separately from the specialist exam: paid/full, free/bounded diagnostic or bulk/screening. Lower cost narrows agreed coverage, never truth, privacy or review. Bind required checks and typed review receipts to every exact final artifact hash; preserve source locators, semantic page visuals, distinct link/access/media states and UNKNOWN time/cost. Paid/free material judgments need independent review. Validate every bulk record, review flags and a reproducible random sample, and keep unreviewed leads SCREENING. Preserve the six dimension meanings, weights and calibration gate; stop on missing access, exhausted allowance or a stale review. See the [tier contract and tests](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/audit-quality/tier-contracts.md).
+- For every new audit governed by this pack, follow the [common execution gate](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/audit-quality/enforcement.md). Read current instructions in the actual runtime, retain all valid baseline detail, obtain exact-final independent review, and run `docs/audit-quality/verify_bundle.py` against the private final files and evidence snapshots before release and after delivery readback. Synthetic exercises never establish production acceptance. A bundle consistency result cannot certify source truth or supply missing calibration. Delivery plus verified filing is required; record runtime adoption and real-run results separately. Use the existing owner, publisher and review clock; no new access or job is implied.
+
+No regular expression honestly certifies semantic fidelity, evidence quality or independent review. These are evidence-backed review gates; counters are screening aids. This public procedure is a proposed quality profile until its receiving owner records adoption; it grants no new account access, publication authority or schedules.
+<!-- shared-rule:audit-quality-gate:end -->
+
+<!-- shared-rule:update-the-canonical-master-never-start-a-silo:start -->
+## Update the canonical master, never start a silo
+
+- **Before you inventory assets or publish a definitive article, hub or list page, find
+  the master that already owns that topic, read it, and make your work an update to
+  it.** Your output is a delta against the master — added, changed, confirmed,
+  dropped — never a fresh standalone list or a second canonical page or tracker for the
+  same subject. Supporting pages link up to the master.
+- This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
+  topic, one owner in the SEO Tree) from links to whole runs, and generalises the
+  in-place rule `positive-mentions-harvester` already applies to mentions inventories.
+- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
+  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
+  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
+  were already on it, and the YouTube pass that was actually requested was skipped.
+  Every silo like that is a second count that drifts — the hub itself records that the
+  network once carried more than twenty different podcast numbers. A silo also splits
+  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+
+### Pre-flight, every run, before the first search or the first draft
+
+1. **Resolve the master.** Look up the topic in `docs/canonical-masters.json` in the
+   skills repository. If it is not there, or you do not have the repository, search
+   whichever of these you can reach before concluding no master exists, and record
+   which you could not reach: shared memory, the Canonical Directory and Task Library,
+   site search across our domains by title *and* by likely slug (two slugs can serve
+   one article), and the Drive or repository the team uses.
+2. **Learn it (L of LDT).** Open the live master and read its method, its stated update
+   cadence and its source of truth. If the master says the count comes from one place,
+   that place is your baseline — not memory, not a number in the prompt.
+3. **Treat anything pasted into your prompt as a skin, not the master.** A list,
+   count or excerpt in a prompt is a copy that may be stale. Re-derive it from the
+   master; if they disagree, the master wins and you report the gap.
+4. **Claim the work** in your team's shared work-claims ledger, where one exists, with a
+   claim id that names the work and the pass, for example
+   `master:<topic-slug>:<pass>:<YYYY-MM-DD>`. If someone else holds it, stop and name
+   the holder. If the ledger is unreachable, proceed and say a duplicate is possible.
+
+### Doing the work (D of LDT)
+
+- Deduplicate against the master's **source of truth** (`source_of_truth` in the
+  registry), not against its visible table — which may be partial — and never against
+  a list you were handed.
+- Write your result as a delta that names, for each item, which of these it is:
+  already in the master, net-new and verified, candidate needing a check, or dropped
+  with a reason.
+- Apply the delta **in place**: the master sheet first, then the hub, then every derived
+  page (skin) that repeats its numbers, so they all show one number from one source. If
+  the master sheet's location is unknown, do not create a new one; record the gap and
+  apply the delta to the hub. Where those skills are installed, use `one-master-merge`
+  when a second competing copy already exists and `congruency-audit` to confirm the
+  master and its skins agree afterwards.
+- **If no master exists, you are creating it.** Create exactly one, register it in
+  `docs/canonical-masters.json` in the same change, and link it into its SEO Tree
+  parent. If you do not have the repository, record the new master's location in your
+  run's meta article instead.
+
+### Closing the loop (T of LDT)
+
+- Write the run's meta article and link it to the master.
+- If the master's method was missing a step you needed, propose the smallest supported
+  fix to the master's method (or its skill) in the same session, under existing
+  authority — do not leave the fix only in your run notes.
+- Update the master's `last_verified` in the registry with what you opened and when, or
+  record it in the meta article if you do not have the repository. Do not copy the
+  master's counts into the registry; that is a second source.
+
+### How this maps to Content · Checklist · Software (CCS)
+
+- **Content** is the master hub and its published method — the thing a reader and an
+  agent both learn from.
+- **Checklist** is this pre-flight. It is what turns "check what's already there" from a
+  hope into a step every agent runs.
+- **Software** is the registry file, the skill that owns each topic, and the claims
+  ledger. The registry is hand-maintained, not generated, and a congruency audit is its
+  only check. A registry entry whose owning skill is not in this repository is a known
+  gap and is recorded as one, not papered over.
+- CCS reads in build order when the Content already exists, as it did here: the master
+  hub is the Content, this pre-flight compresses it into a Checklist, and the registry
+  and skill are the Software. `capture-what-you-learn`'s Checklist-first order is for a
+  brand-new rule that has no Content yet. Both hold.
+
+### Exemption
+
+None for inventories, definitive articles, hubs or list pages. A one-off answer in chat
+that publishes nothing and creates no file needs no pre-flight. A supporting post or
+meta article does not need its own master; it links up to the one it supports.
+
+No regex can honestly prove an agent looked for the master before it started, so this
+rule carries no `checks` block. It is enforced by being read pre-flight, by the
+registry, and by a congruency audit catching two surfaces that publish different
+numbers for the same thing.
+<!-- shared-rule:update-the-canonical-master-never-start-a-silo:end -->
 
 <!-- shared-rule:audit-method-and-correction-propagation:start -->
 ## Audit the business and propagate every correction

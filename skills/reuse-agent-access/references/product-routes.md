@@ -1,26 +1,80 @@
 # Product routes and limits
 
-Checked September 21, 2026. Product support changes; verify the current app, build,
-plan and exposed tools before using a route. “No documented import” means the
+Documentation checked October 14, 2026; this does not certify runtime access.
+Product support changes; verify the current app, build, plan and exposed tools
+before using a route. “No documented import” means the
 reviewed sources do not establish one, not proof that every build lacks it.
 
 | Product / surface | Supported route to investigate | Limit and source |
 |---|---|---|
-| Codex / ChatGPT app with Chrome extension tools | Connect the supported Chrome extension to the intended existing profile and verify a site read. | Existing Chrome sessions can be used where these tools are exposed. Do not assume an ordinary ChatGPT web chat has the same tools. [Chrome extension](https://learn.chatgpt.com/docs/chrome-extension) |
+| Claude desktop | Import selected sites' cookies into the built-in browser, or reuse signed-in Chrome through Claude in Chrome. | Import supports Chrome/Edge/Firefox on macOS and Firefox on Windows/Linux beta; not Safari. The built-in browser needs the desktop app open and online, including web/mobile control. [Built-in browser and import](https://support.claude.com/en/articles/16607400-use-the-built-in-browser-in-claude-cowork) |
+| Codex / ChatGPT desktop app with browser extension tools | Use the supported extension in the intended Chrome, Edge, Brave, Opera or Vivaldi profile; verify a site read. | Availability depends on build and workspace. `@Browser` uses a separate built-in browser. [Browser extension](https://learn.chatgpt.com/docs/chrome-extension) |
 | ChatGPT cloud browser | Use its secure sign-in form and retained browser session. | Its browser is separate from the device browser and does not use the device's cookies. [Cloud browser](https://help.openai.com/en/articles/20001280-using-cloud-browser-in-chatgpt) |
-| ChatGPT Atlas | Inspect the native browser-data import and its offered categories. | Setup documents passwords, bookmarks and history; it does not promise cookie transfer. Atlas import does not provision every other ChatGPT/Codex runtime. [Atlas setup](https://help.openai.com/en/articles/12628461-setting-up-the-atlas-browser) |
+| ChatGPT Atlas | Retired; do not recommend for new setup. | Existing browser data does not automatically transfer to a supported browser. [Atlas retirement](https://help.openai.com/en/articles/20001371-chatgpt-atlas-retirement) |
 | Cursor | Native browser keeps workspace session state. A compatible local browser bridge can reuse Chrome when installed and enabled. | Native persistence is isolated per workspace; the native browser docs do not establish Chrome import. Kimi lists Cursor as a supported local agent for its extension. [Cursor browser](https://prod.cursor.com/docs/agent/tools/browser), [Kimi setup](https://www.kimi.com/en/help/kimi-webbridge/kimi-webbridge-introduction) |
-| Kimi Work / Kimi Code / Kimi browser sidebar | Kimi Browser Extension, formerly WebBridge, uses the real Chrome/Edge browser and its signed-in sessions. | Work/Code need their companion plugin or skill plus the browser extension. Plain web chat is a different surface. Local-agent mode does not require Kimi account sign-in. [Kimi plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins), [official extension](https://chromewebstore.google.com/detail/kimi/fldmhceldgbpfpkbgopacenieobmligc) |
-| Qwen Code | Native Browser Use reuses existing Chrome tabs and sessions through its first-party extension. | Documented for macOS/Linux, Chrome 125+; extension must currently be built and loaded unpacked. No Web Store listing. This does not establish Qwen web-chat access or that Qwen Code is installed. [Browser Use](https://qwenlm.github.io/qwen-code-docs/en/users/features/browser-use/) |
+| Kimi Work | Select an existing connected service plugin with `/`. Use the supported browser extension if needed; on Mac, Work also documents Chrome-cookie import into its built-in browser. | Import was introduced in Work 3.2.0 and is off by default; inspect current Settings and consent. This Work-only import route is not a Code or web-chat claim. [Work plugins](https://www.kimi.com/en/help/kimi-work/plugin-center), [Work release notes](https://www.kimi.com/en/help/kimi-work/release-notes) |
+| Kimi Code / Kimi browser sidebar | Kimi Browser Extension, formerly WebBridge, uses the real Chrome/Edge browser and its signed-in sessions. | Code needs its companion plugin or skill plus the browser extension. Plain web chat is a different surface. Local-agent mode does not require Kimi account sign-in. [Kimi plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins), [official extension](https://chromewebstore.google.com/detail/kimi/fldmhceldgbpfpkbgopacenieobmligc) |
+| Qwen Code | Browser Use reuses Chrome sessions through its official extension. | macOS/Linux, Chrome 125+, Qwen Code 0.24.2+. Use the Chrome Web Store route; source build is a regional fallback. Keep one extension copy per profile. This does not establish Qwen web-chat access or installation. [Browser Use](https://qwenlm.github.io/qwen-code-docs/en/users/features/browser-use/) |
 | Qwen or another model inside a host app | Inspect the host's actual browser/connector tools. | Model weights and a local inference worker do not themselves contain Chrome access. Use the host's verified route; do not create a second runtime merely because its name matches the model. |
 | Grok web | Existing OAuth connectors; custom remote MCP where supported and authorized. | No Chrome password/cookie import is established by these docs. A public MCP endpoint requirement is not permission to expose a desktop browser bridge. [Grok connectors](https://docs.x.ai/grok/connectors) |
-| Grok Bot | Inspect Computer settings and available tools for the installed build; documented cloud browser sessions persist across the user's Bots. | September 21 local app inspection also found selectable Mac execution, while published docs describe cloud computers. Treat local execution as an observed build-specific capability, not proof of Chrome session reuse. Verify the selected execution target and site separately. [Computer and apps](https://docs.x.ai/grok-bot/computer-and-apps), [security FAQ](https://docs.x.ai/grok-bot/security-faq) |
+| Grok Bot | Inspect the selected computer. Cloud browser sessions persist and are shared across the user's Bots; local execution is separately enabled. | Official documentation now covers local Mac/Windows execution. That does not establish Chrome profile reuse; verify a site read. [Computer and apps](https://docs.x.ai/grok-bot/computer-and-apps), [mobile](https://docs.x.ai/grok-bot/mobile) |
 | Muse | Reuse connected services and persistent browser access; use its secure credential UI when sign-in is required. Inspect Mac local-app/tab tools where available. | Meta describes a persistent secure VM and credentials held outside the model. Mac app access does not establish Chrome import; the product page lists 1Password integration as coming soon at review time. [Muse security design](https://research.meta.ai/blog/security-and-safety-for-ai-agents-our-approach-with-muse), [Muse capabilities](https://ai.meta.com/muse/) |
 
 An agent's ability to reuse a session is distinct from its ability to read a saved
 password. Native import, an authenticated connector, browser session persistence
 and remote control are different mechanisms. No verified route promises that all
 saved passwords or every site's session works across all these products.
+
+## Kimi Work: a connected plugin has no tools in the task
+
+Try one fresh Work task and choose the existing plugin from the `/` menu. Ask the
+agent to load the offered connector tool when the runtime provides a tool loader,
+then run one harmless account read and inspect its actual result. Loading a tool
+does not complete the read. This recovery check does not guarantee that every
+connected plugin is available in a fresh task. If it remains unavailable, use the
+next supported route before requesting new authorization.
+
+## Grok web: Connected, but no Calendar result
+
+1. Verify the intended Grok account and sign-in method separately from the Google
+   account bound to Calendar. A matching Google account does not prove the Grok
+   account is the one the user normally uses. Resolve any app-account mismatch
+   before reconnecting the provider; see [Grok account guidance](https://docs.x.ai/grok/faq).
+   If X sign-in reaches a Grok/xAI authenticator prompt, let the user finish it
+   in the official sign-in form; keep codes out of chat. This app verification
+   is separate from Calendar's Google passkey or consent. Verify the returned
+   Grok identity before testing the existing Calendar connection.
+   Then check the read tools actually enabled and explicitly select
+   `@Google Calendar` in the chat if offered.
+2. Request one harmless read within the existing scope: primary-calendar metadata
+   when the calendar-list tool is enabled, or a narrow date/keyword event search.
+   Inspect the actual provider response and intended account; a Connected badge,
+   public web search or an unsupported “zero results” answer is not that proof.
+   A calendar list verifies metadata, not event contents. For upcoming events,
+   use an enabled event-read tool for the intended calendar with a short date
+   window, explicit timezone and small result limit where supported. Inspect
+   the real request and response. A successful query returning no events proves
+   the query ran, not that event contents were read. Summarize event results in
+   the private receipt with only the window, timezone, returned count and whether
+   more results remain; omit event details.
+   A date-window search can include events already in progress. Before calling
+   an event upcoming, verify its actual start is still in the future and within
+   the requested window, using its timezone. If cards omit dates, fetch one
+   identified event through an enabled read tool. Google's [event-list bounds](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)
+   use `timeMin` to filter event end, not start; do not assume a connector uses
+   identical parameters.
+3. If the current connector flow explicitly requests reconnecting, complete its
+   supported sign-in for the same intended account and existing scopes. Leave any
+   human verification to the user; new permissions need their own authority.
+   After the refresh, try one fresh chat with the connector selected.
+4. If reconnecting repeats without a provider result, stop the loop and record
+   the missing read. Record rate-limit, capacity or conversation-length errors as
+   task failures, not proof of bad credentials or a fixable password problem.
+   Keep the read unverified; do not infer that paying or scheduling it will help.
+
+This is a bounded troubleshooting sequence, not a guaranteed recovery. Calendar
+listing and event search use different permissions; do not enable extra tools
+just for this test. See the [official Calendar capabilities and scopes](https://docs.x.ai/grok/connectors/gmail-google-calendar).
 
 ## Cross-agent local browser bridge
 
@@ -45,7 +99,7 @@ than replacing a user's entire configuration.
 
 | Runtime | Documented route |
 |---|---|
-| Cursor local | `~/.agents/skills/<name>/SKILL.md` or `~/.cursor/skills/<name>/SKILL.md`; compatible Codex/Claude skill folders also work. Only `~/.cursor/skills/` supports the documented personal Cloud Agent sync control. [Cursor skills](https://prod.cursor.com/docs/skills) |
+| Cursor local | `~/.agents/skills/<name>/SKILL.md` or `~/.cursor/skills/<name>/SKILL.md`; compatible Codex/Claude skill folders also work. Only `~/.cursor/skills/` supports the documented personal Cloud Agent sync control. Instruction sync does not establish browser sign-in transfer. [Cursor skills](https://prod.cursor.com/docs/skills) |
 | Kimi Code | `~/.agents/skills/` or `~/.kimi-code/skills/`; current global instructions can use `~/.agents/AGENTS.md` or `~/.kimi-code/AGENTS.md`. Older installs may use `~/.kimi`; inspect the version. [Kimi skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html), [Kimi instructions](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/agents) |
 | Qwen Code | `~/.qwen/skills/<name>/SKILL.md`, global `~/.qwen/QWEN.md`, or project `AGENTS.md`. [Qwen skills](https://qwenlm.github.io/qwen-code-docs/en/users/features/skills/), [Qwen memory](https://qwenlm.github.io/qwen-code-docs/en/users/features/memory/) |
 | Other local apps or cloud agents | Inspect their supported skill, project-file, memory or instruction UI. Attach/import the public procedure where supported and prove fresh-session discovery; do not invent a filesystem path or assume a URL gets loaded automatically. |

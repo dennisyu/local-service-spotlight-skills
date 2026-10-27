@@ -1,22 +1,37 @@
 ---
 {
-  "title": "Agents draft; a human sends and publishes",
+  "title": "Selective human review; agents finish authorized work",
   "severity": "error",
-  "captured": "2026-08-16",
-  "captured_from": "Dennis Yu, Office Hours, 2026-07-30 00:18:01: 'I'm still sitting on send. Okay, you can send emails on your behalf, but actually, no, it can draft them, but you have to press send as a security feature, right?' Endorsing Michael Krigsman's practice, 2026-08-10 00:05:59: Krigsman — 'I have certain tasks where it will stage, like, an article. But I don't let it publish the article, I have to be the one that publishes it.' Dennis — 'I just care that there's an ongoing process, and, you know, you as the publisher want to review everything, which is good.'",
+  "captured": "2026-10-07",
+  "captured_from": "Dennis Yu, direct instruction, 2026-10-07: replace blanket advance review with selective human review; done is better than perfect; reduce friction; propagate across GitHub, websites, and skill files. Supersedes the July/August blanket draft-only rule.",
   "applies_to": [
     "agent-behaviour"
   ]
 }
 ---
 
-## Agents draft; a human sends and publishes
+## Selective human review; agents finish authorized work
 
-- **An agent may write anything and send nothing.** Email, DMs, social posts, client
-  messages, public pages — staged and ready, never dispatched.
-- **Stage it so approving is one click**, not one more round of work: the full text, the
-  recipient, the subject, and where it will appear.
-- This is a security control, not a confidence rating. It holds even when the draft is
-  obviously correct, because the failure it prevents is the one nobody predicted.
-- It is the boundary on `be-proactive-see-it-through`: act freely on reversible work,
-  stop at anything that reaches another person or the public.
+Marker: `SELECTIVE-HUMAN-REVIEW-2026-10-07`.
+
+- **Done is better than perfect.** Complete routine work within the user's recorded
+  authority, including factual replies, ordinary project coordination, approved client
+  tweaks, and publishing on authorized properties. Do not require Dennis to review
+  every draft, message, change, or publication in advance. Review friction has a cost.
+- **Ask in advance only for a consequential decision or missing authority:** new
+  commitments or changes to pricing/scope, contracts, financial transactions outside
+  existing authority, personnel decisions, sensitive disclosures, new access/security
+  privileges, destructive or hard-to-reverse changes, disputed client intent, crisis/press
+  statements, or material claims whose facts cannot be verified. Existing explicit holds
+  and client consent requirements still apply. An assigned owner or qualified reviewer
+  may resolve matters within their authority; do not make Dennis the default bottleneck.
+- **Prepare the concrete result before asking.** Name the exact decision, risk, recipient
+  or property, and recommended action. Continue independent authorized work while waiting.
+  Uncertainty about polish alone is not a reason to stop.
+- **Verify and report after acting.** Check facts, destination, duplication, release
+  results, and an appropriate rollback/recovery path. Preserve any required independent
+  QA. Log what shipped and what needs follow-up; fix ordinary misses promptly.
+- **Authority is not human review.** Never imply Dennis reviewed an item he did not.
+  Use the existing identity/receipt rules and mark authorized work accurately.
+  This policy does not supply missing credentials, bypass platform approval gates,
+  authorize impersonation, or authorize changes on a client's property without consent.

@@ -1,0 +1,182 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UAQG tier annex candidate</title><style>body{margin:0;background:#f6f4ee}main{max-width:1120px;margin:auto;padding:24px}@media(max-width:700px){main{padding:18px}}.uaqg-tier{font:17px/1.6 system-ui,sans-serif;color:#182f38;overflow-wrap:anywhere;max-width:100%}.uaqg-tier *{box-sizing:border-box}.uaqg-tier h1{font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.1;margin:12px 0}.uaqg-tier h2,.uaqg-tier h3,.uaqg-tier h4{line-height:1.25;margin-top:1.7em}.uaqg-tier p{max-width:85ch}.uaqg-tier a{color:#075c81;text-decoration:underline}.uaqg-tier a:focus{outline:3px solid #bd6612;outline-offset:3px}.uaqg-tier figure{margin:20px 0;padding:18px;background:#fff;border:1px solid #b3c9c4}.uaqg-tier svg{display:block;width:100%;height:auto}.uaqg-tier figcaption{font-size:15px;color:#435965}.uaqg-tier .mobile-flow,.uaqg-tier .mobile-repair{display:none}.uaqg-tier table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse}.uaqg-tier th,.uaqg-tier td{padding:12px;vertical-align:top;text-align:left;border:1px solid #b3c9c4;min-width:140px}.uaqg-tier th{background:#e6f0eb}.uaqg-tier pre{white-space:pre-wrap;background:#edf2ef;padding:16px}.uaqg-tier code{overflow-wrap:anywhere}.uaqg-tier .mobile-flow li{list-style:none;background:#e6f0eb;border:1px solid #12665d;border-radius:6px;padding:10px 14px;margin:0;font-weight:650}.uaqg-tier .mobile-flow li+li:before{content:"↓";display:block;margin:-5px 0 5px;color:#12665d}@media(max-width:700px){.uaqg-tier figure svg{display:none}.uaqg-tier .mobile-flow{display:grid;gap:8px;padding:0}.uaqg-tier .mobile-repair{display:block;background:#fff3db;padding:12px}.uaqg-tier figure{padding:12px}.uaqg-tier td,.uaqg-tier th{padding:10px}}.uaqg-tier .responsive-table{max-width:100%}.uaqg-tier .responsive-table table{display:table;width:100%;overflow:visible}.uaqg-tier .cell-label{display:none}@media(max-width:700px){.uaqg-tier .responsive-table table,.uaqg-tier .responsive-table tbody,.uaqg-tier .responsive-table tr,.uaqg-tier .responsive-table td{display:block;width:100%;min-width:0}.uaqg-tier .responsive-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.uaqg-tier .responsive-table tr{border:1px solid #b3c9c4;margin-bottom:16px;background:#fff}.uaqg-tier .responsive-table td{border:0;border-bottom:1px solid #d9e4df;padding:12px}.uaqg-tier .cell-label{display:block;font-weight:700;color:#12665d;margin-bottom:5px}}</style></head><body><main class="uaqg-tier"><h1>Engagement tiers and capability routing</h1>
+<p>Proposed annex UAQG-TIERS 1.0.0 · 16 October 2026 · part of proposed UAQG 1.1.0.
+Proposed operational profile: publication does not establish calibration, installed
+adoption or an accepted client audit.</p>
+<p>An audit should give its reader a supported decision and an action they can check.
+Agree the coverage and delivery format before choosing tools. The three products
+below use the <a href="README.md">same quality gates</a>; a smaller allowance changes scope,
+not truth, identity, privacy or the meaning of acceptance.</p>
+<figure><svg viewBox="0 0 1000 350" role="img" aria-labelledby="flow-title flow-desc"><title id="flow-title">Evidence-to-acceptance workflow with a repair loop</title><desc id="flow-desc">Freeze scope and evidence; build the report; validate claims and rendering; obtain independent review. A failure returns to the authoritative source for repair and regeneration. A pass allows authorized delivery and verified readback. A missing permission or exhausted budget creates a hold.</desc><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#12665d"/></marker></defs><g fill="#e6f0eb" stroke="#12665d" stroke-width="2"><rect x="15" y="40" width="170" height="95" rx="8"/><rect x="215" y="40" width="170" height="95" rx="8"/><rect x="415" y="40" width="170" height="95" rx="8"/><rect x="615" y="40" width="170" height="95" rx="8"/><rect x="815" y="40" width="170" height="95" rx="8"/><rect x="315" y="235" width="370" height="85" rx="8" fill="#fff3db"/></g><g fill="#182f38" font-family="system-ui,sans-serif" font-size="20" text-anchor="middle"><text x="100" y="78">Freeze scope</text><text x="100" y="107">and evidence</text><text x="300" y="78">Build the</text><text x="300" y="107">bounded report</text><text x="500" y="78">Check claims</text><text x="500" y="107">and render</text><text x="700" y="78">Independent</text><text x="700" y="107">final review</text><text x="900" y="78">Authorized</text><text x="900" y="107">delivery + verify</text><text x="500" y="269">Fix the authoritative source</text><text x="500" y="299">Regenerate affected outputs</text><text x="747" y="185" font-size="17">FAIL / missing evidence</text><text x="790" y="28" font-size="16">PASS + authority</text></g><g fill="none" stroke="#12665d" stroke-width="3" marker-end="url(#arrow)"><path d="M185 88H210"/><path d="M385 88H410"/><path d="M585 88H610"/><path d="M785 88H810"/><path d="M700 135V215H590V230"/><path d="M315 277H280V142"/></g></svg><ol class="mobile-flow" aria-label="Audit workflow"><li>1. Freeze scope and evidence</li><li>2. Build the bounded report</li><li>3. Check claims and rendered pages</li><li>4. Independently review final revision</li><li>5. Authorize delivery, then verify access</li></ol><p class="mobile-repair"><strong>If a check fails:</strong> repair the authoritative source, rebuild affected outputs, and return to checking. Missing authority or exhausted budget means HOLD.</p><figcaption>Text equivalent: freeze → build → validate → independent final review → authorized delivery and readback. Defects return to source, then every affected output is rebuilt and rechecked. Missing authority or exhausted resources means HOLD, never a lower pass line.</figcaption></figure>
+<h2>Product contract, separate from the scoring exam</h2>
+<div class="responsive-table" role="region" aria-label="Comparison table 1"><table role="table">
+<thead role="rowgroup">
+<tr role="row">
+<th scope="col" role="columnheader">Profile ID, version 1.0.0</th>
+<th scope="col" role="columnheader">Intended decision and required output</th>
+<th scope="col" role="columnheader">Review and boundary</th>
+</tr>
+</thead>
+<tbody role="rowgroup"><tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Profile ID, version 1.0.0</span><code>paid-full</code></td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Intended decision and required output</span>Agreed client question, goal, buyer, offer and proof; decision-led summary, evidence inventory, gaps and strengths, conflicts, owned action plan and complete contracted outputs. The personal-brand full product uses its existing 20-page blueprint; when 20 pages are contracted, deliver exactly 20.</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Review and boundary</span>Independent content/privacy and visual review of every required final artifact and material judgment. Preserve contracted coverage; do not deliver a free diagnostic in its place.</td>
+</tr>
+<tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Profile ID, version 1.0.0</span><code>free-diagnostic</code></td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Intended decision and required output</span>Explicit narrow question and source window, useful supported findings, coverage/exclusions, unknowns and conditional first actions in the agreed brief format.</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Review and boundary</span>Independent review of accepted material judgments and every required final artifact. It cannot claim full-audit coverage. A free PDF still follows the applicable every-human-page visual requirement.</td>
+</tr>
+<tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Profile ID, version 1.0.0</span><code>bulk-screening</code></td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Intended decision and required output</span>Structured per-record identity/evidence fields, coverage, flags, next question and routing; every record receives deterministic schema/mechanical validation.</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Review and boundary</span>Review all flagged records plus a reproducibly selected random sample for pipeline quality. Record the population, selection method, seed, selected IDs and reviewed IDs. Sampling never proves every record received independent review. Unreviewed leads remain <code>SCREENING</code>; individually checked leads may be <code>REVIEWED_SCREENING</code>, never an accepted full audit.</td>
+</tr>
+</tbody></table></div>
+<p>Freeze <code>product_profile.id/version</code>, the contract reference and agreement state,
+scope, exclusions, required outputs and checks, human-page count, source window,
+goal/buyer, allowed actions, outcome owner and time/cost/iteration allowance.
+Defaults in <a href="product-profiles.json">product-profiles.json</a> are versioned separately
+from the <a href="tier-receipt.schema.json">receipt schema</a>. Existing contracted deliverables
+continue until their owner authorizes an explicit scope change. An exhausted budget
+holds release. A proposed rescope is not accepted scope; record authority and a new
+contract before continuing. Do not spend above the allowance to finish.</p>
+<p>Keep <code>specialist_exam</code> separate: exam ID/version, authoritative source revision and
+exam receipt, or null for unscored strategy work. Scoring holds until <code>receipt_ref</code>
+resolves to inspected <code>EXAM_VALIDATION</code> evidence, independently reviewed for the
+exact artifact and scoped as <code>exam_id@version#source_revision</code>. A bare locator or
+ordinary source row is not that validation. Never infer a rubric from the
+product name. <a href="../../skills/personal-brand-audit/references/brand-authority-rubric.md">Brand Authority v1.0</a>,
+<a href="../../skills/personal-brand-audit/references/acceptance-tests.md">specialist acceptance tests</a>
+and the <a href="../../skills/personal-brand-audit/references/20-page-pdf-blueprint.md">20-page blueprint</a>
+are the available public contracts at baseline commit
+<code>dcc098bf7d8aa96ff627e4998bed6e406db891d8</code>. The live method describes Brand
+Authority v1.1 while this historical rubric file is v1.0. Pin what was actually
+used; do not relabel old work or compare cross-version scores as a trend. The <a href="https://github.com/dennisyu/local-service-spotlight-skills/blob/a9e7d6690c6cf0653d3b8e39884175a3a1e99819/skills/personal-brand-audit/references/audit-run-contract.md">shared run contract pinned by the live method</a>
+is AUDIT-METHOD-2026.10.02 at commit <code>a9e7d6690c6cf0653d3b8e39884175a3a1e99819</code>.
+That exact pinned file was read for this release; it is not present in the
+UAQG1.0.0 baseline main tree. Keep its historical revision explicit rather than
+claiming it is a new specialist scoring version.</p>
+<h2>Make the reasoning and action inspectable</h2>
+<p>Every material finding records evidence IDs and exact locations → interpretation
+and uncertainty → consequence for this goal and buyer → proposed action → test.
+Keep contrary evidence and UNKNOWN visible. A public self-claim establishes that
+the claim is published; it does not independently establish the claimed outcome.</p>
+<p>Every action points back to a finding and evidence and names an accountable
+function, or an explicitly proposed role awaiting acceptance. Include first step,
+dependencies (including an explicit empty list), required authority, actual due date
+or proposed timeframe, destination, observable done-when test, and business metric
+with source/baseline or UNKNOWN. Proposed ownership, dates and benefits are not
+accepted commitments or measured results. No action executes solely because it
+appears in an audit. Reuse the existing task and MAA review instead of adding clocks.</p>
+<h2>Give each visual a job</h2>
+<p>For every human-facing PDF page record a semantic visual-function manifest: page,
+question answered, meaningful visual kind, source/evidence IDs, caption and exact
+render-review evidence. A proof map, annotated recording gallery, demand comparison,
+relationship diagram or conflict map should explain that page&#39;s finding. Decorative
+cards, bars, logo counts, link counts and ordinary text tables do not satisfy the
+existing every-human-page meaningful-visual requirement. Retain all-page renders,
+rights/provenance and readability checks. The validator can require manifests and
+review receipts; it cannot decide whether a diagram teaches something true.</p>
+<p>For each link preserve four distinct states with method, evidence and time:
+<code>reachable</code>, <code>expected_content</code>, <code>recipient_access</code>, <code>media_inspected</code>.
+Use PASS/FAIL/UNKNOWN/BLOCKED or justified N/A. HTTP200 is reachability only; a login
+page may have the wrong content or be inaccessible to the intended recipient.
+oEmbed metadata and thumbnails do not prove media inspection. A recording supporting
+a material claim needs inspected content at the cited location, or the claim stays
+limited/UNKNOWN and the affected required check holds. Browser playback must be muted
+with volume zero; use a bounded transcript or silent inspection when appropriate,
+and record what was actually inspected. Do not convert transcript review into video
+playback. Never claim all links usable because an availability check passed.</p>
+<p>The four PASS assertions require different typed evidence, bound to the report
+hash and exact target URL: <code>LINK_REACHABILITY</code> may use HTTP or oEmbed metadata;
+<code>LINK_CONTENT</code> requires inspected HTML/document/transcript/video content;
+<code>RECIPIENT_ACCESS</code> requires an actual anonymous or authorized recipient read and
+a matching non-secret <code>recipient_ref</code>; <code>MEDIA_CONTENT</code> requires inspected media
+or its cited transcript. Metadata cannot stand in for content or recipient access.
+Delivery readback check names must be unique, and every asserted check must PASS;
+a later failure cannot be hidden by an earlier PASS. Unknown, duplicate or
+conflicting readback rows hold delivery verification.</p>
+<h2>Route by proven capability and evidence</h2>
+<div class="responsive-table" role="region" aria-label="Comparison table 2"><table role="table">
+<thead role="rowgroup">
+<tr role="row">
+<th scope="col" role="columnheader">Stage</th>
+<th scope="col" role="columnheader">Cheapest capable route</th>
+<th scope="col" role="columnheader">Escalation and receipt</th>
+</tr>
+</thead>
+<tbody role="rowgroup"><tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Stage</span>Retrieval/parsing</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Cheapest capable route</span>Existing authorized read, bounded export, tested parser or validated low-cost worker</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Escalation and receipt</span>Record source access and one successful read/parser check. Missing access requires retrieval or an authorized export, not a stronger model.</td>
+</tr>
+<tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Stage</span>Arithmetic/schema</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Cheapest capable route</span>Deterministic code</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Escalation and receipt</span>Pin code/schema and input revisions; unknowns stay null. Catch totals, enum and cross-reference errors before model review.</td>
+</tr>
+<tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Stage</span>Identity/conflicts/synthesis</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Cheapest capable route</span>Reasoning worker proven on the task&#39;s evidence and negative cases</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Escalation and receipt</span>Escalate ambiguity, contradictory identity or unsupported claims; preserve uncertainty. A model name alone is not capability evidence.</td>
+</tr>
+<tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Stage</span>Layout/render</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Cheapest capable route</span>Appropriate renderer plus visual reviewer</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Escalation and receipt</span>Inspect actual final pages/viewports and source-backed figures. Text extraction, image counts and screenshots alone do not certify meaning or rights.</td>
+</tr>
+<tr role="row">
+<td role="cell"><span class="cell-label" aria-hidden="true">Stage</span>Final challenge</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Cheapest capable route</span>Fresh-context independent reviewer with sources and exact final artifacts</td>
+<td role="cell"><span class="cell-label" aria-hidden="true">Escalation and receipt</span>Review content/privacy and design; bind each required artifact ID and SHA256. A material change invalidates prior PASS and reruns affected checks.</td>
+</tr>
+</tbody></table></div>
+<p>Record actual executing app/device, model/effort if surfaced else UNKNOWN, code/tool
+revision, capability test evidence, access state and allowance for each routed stage.
+Bound attempts, waits and total cost. No universal model ranking, free-plan guarantee,
+autonomous uptime promise or paid service requirement is implied. If capability or
+budget is insufficient, hold the affected release and give the owner an actionable
+retrieval, repair or authorized rescope step.</p>
+<h2>Timing and acceptance are evidence, not badges</h2>
+<p>Separate brief/demo duration, draft generation, QA elapsed time, human minutes,
+agent runtime, waits, retries/rework and actual cost/currency. Each measured value
+needs its unit, method and evidence; missing values are null/UNKNOWN. Overlapping
+durations must not be added as if sequential. A reported stage demo duration does
+not measure end-to-end production, checking, export or delivery.</p>
+<p>Paid/full and free/diagnostic acceptance composes this annex with existing UAQG
+hard gates and the original six report-quality dimensions, weights
+25/25/20/15/10/5 and 85 threshold <strong>only with recorded calibration</strong>. Uncalibrated
+numbers remain provisional. Do not change scoring to accommodate cheaper work.
+The evidence-backed gate is evaluated per artifact, not a generic Reviewed badge.
+Each bulk record requires inspected <code>MECHANICAL_VALIDATION</code> evidence bound to
+that record ID and hash; an ordinary source row cannot establish validation.
+Open S2 defects need the same accepted disposition fields as other tiers; an
+incomplete screening run may retain its leads privately as INCOMPLETE/HOLD,
+but receives no successful SCREENING validation result.
+Bulk screening reports pipeline validation and coverage; it does not claim an
+accepted report-quality score or full-population independent review. Promoting a
+lead to a diagnostic/full product needs a new explicit profile and exact review.</p>
+<p>Use <a href="tier-receipt.schema.json">the JSON contract</a>,
+<a href="tier-run-template.json">starter receipt</a>, <a href="check_quality.py">existing checker</a> and
+<a href="tier-examples.md">examples</a>. Mechanical checks validate asserted receipts, not
+source truth, reviewer independence or rendered quality. Keep receipts private
+when they identify clients, contacts, private sources or operational access.</p>
+<h2>Test the method against public examples</h2>
+<p>Start with the existing <a href="https://blitzmetrics.com/how-we-audit/#business-strategy-audit-starter">business-strategy audit exercise</a> and its <a href="https://blitzmetrics.com/wp-content/uploads/2026/10/wispr-audit-starter-audit-starter-1.0.0.zip">downloadable synthetic practice kit</a>. The kit supplies inputs, correction examples and expected outputs so another operator can reproduce its bounded checks. Compare the reasoning and proof presentation in the public <a href="https://blitzmetrics.com/george-leith-personal-brand-audit/">George Leith personal-brand audit demonstration</a>. Pin each example’s actual exam/version and evidence window; it is teaching material, not evidence that the example passed this later quality profile. Then apply the <a href="tier-examples.md">tier receipt tests</a> to a clearly labeled synthetic copy. Do not invent current business measurements or redistribute a private client benchmark.</p>
+<h2>Benchmark patterns, with their limitations</h2>
+<p>The supplied 20-page founder/business audit is a strong design exemplar,
+not a certified pass or a new exam. Useful patterns: pages1–2 decision-led proof,
+gap and action; page3 assumption-labeled goal-to-market reasoning; page6 ranked
+proof; page7 relationship map; page8 inspectable recording gallery; page12
+comparable market demand; page15 entity/conflict diagram; page18 owned dated
+actions with approvals and done-when tests; page19 contradiction register.</p>
+<p>Its page20 says the final v1.1 independent recheck was UNTESTED after a usage cap;
+the page19 Reviewed badge must not override that. Page5 pins historical Brand
+Authority v1.0 while the maintained method names v1.1. The supplied link receipt&#39;s
+48/48 reachable does not establish recipient access (two need login) or inspected
+media (13 checks use oEmbed metadata). The reported520 links/102 bookmarks are
+not quality targets. Test intended destinations, inspectability and section navigation.
+Dennis&#39;s roughly three-minute on-stage account is reported demo timing; measured
+end-to-end production duration is UNKNOWN. Public teaching may use these bounded
+lessons; the supplied client benchmark and private receipts are not redistributed.</p>
+</main></body></html>

@@ -1,0 +1,146 @@
+{
+  "schema_version": "UAQG-RECEIPT-1.0.0",
+  "run_id": "REPLACE",
+  "standard": "UAQG-1.0.0",
+  "profile": "UAQG-default-1.0.0",
+  "status": "INCOMPLETE",
+  "audience": "PRIVATE",
+  "decision": "REPLACE",
+  "scope": {
+    "included": [],
+    "excluded": [],
+    "source_window": null,
+    "required_outputs": [],
+    "max_iterations": 3
+  },
+  "authority": {
+    "record": null,
+    "owner_function": null,
+    "publisher": null,
+    "current_holds": [],
+    "verified": false
+  },
+  "specialist_exam": null,
+  "execution": {
+    "app": null,
+    "device": null,
+    "account_check": null,
+    "model": null,
+    "effort": null,
+    "tools_observed": [],
+    "started_at": null,
+    "finished_at": null,
+    "cost": null
+  },
+  "baseline": {
+    "version": null,
+    "sha256": null
+  },
+  "candidate": {
+    "version": null,
+    "sha256": null
+  },
+  "sources": [],
+  "claims": [],
+  "fidelity_crosswalk": [],
+  "findings": [],
+  "checks": [
+    {
+      "name": "authority",
+      "required": true,
+      "status": "NOT_CHECKED",
+      "evidence": null
+    },
+    {
+      "name": "privacy",
+      "required": true,
+      "status": "NOT_CHECKED",
+      "evidence": null
+    },
+    {
+      "name": "fidelity",
+      "required": true,
+      "status": "NOT_CHECKED",
+      "evidence": null
+    },
+    {
+      "name": "provenance",
+      "required": true,
+      "status": "NOT_CHECKED",
+      "evidence": null
+    },
+    {
+      "name": "usability",
+      "required": true,
+      "status": "NOT_CHECKED",
+      "evidence": null
+    },
+    {
+      "name": "reproducibility",
+      "required": true,
+      "status": "NOT_CHECKED",
+      "evidence": null
+    }
+  ],
+  "quality": {
+    "weights": [
+      25,
+      25,
+      20,
+      15,
+      10,
+      5
+    ],
+    "ratings": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "rationales_and_evidence": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "known_subtotal": 0,
+    "assessed_weight": 0,
+    "total": null,
+    "calibration": {
+      "status": "NOT_RUN",
+      "anchor_artifacts": [],
+      "reviewer_spread": null,
+      "adjudication": null
+    }
+  },
+  "independent_review": {
+    "reviewer": null,
+    "model_observed": null,
+    "fresh_context": false,
+    "candidate_sha256": null,
+    "content_privacy": "NOT_CHECKED",
+    "design": "NOT_CHECKED",
+    "evidence": null
+  },
+  "outputs": [],
+  "release": {
+    "attempted": false,
+    "preimage_sha256": null,
+    "candidate_sha256": null,
+    "deployment_id": null,
+    "rollback": null,
+    "destination": null,
+    "readback": [],
+    "observed_harm": false
+  },
+  "remaining": {
+    "blocker": null,
+    "owner_function": null,
+    "next_action": null,
+    "review_date": null
+  }
+}
