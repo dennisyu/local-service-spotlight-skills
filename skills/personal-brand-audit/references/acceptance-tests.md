@@ -5,6 +5,13 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
 
 ## 1. Scope, identity, and evidence
 
+- [ ] The shared [audit run contract](audit-run-contract.md) was pinned. The base
+  audit proceeded from existing evidence; relevant GCT clarification is optional.
+  Supplied, inferred and UNKNOWN fields are distinct, confirm/edit/continue is
+  available, and skipped answers produce conditional priorities without lowering
+  reputation or blocking the base audit. Revised findings retain the base revision
+  and explain what changed.
+
 - [ ] The subject is qualified by current company/role and at least two independent identity
   attributes; excluded namesakes are listed.
 - [ ] Every substantive PDF claim, chart value, score, quote, and relationship edge points to
@@ -58,6 +65,14 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   security-sensitive fields do not appear in public artifacts.
 
 ## 3. Score and analysis integrity
+
+- [ ] The selected exam family, rubric ID/version/hash and coverage are pinned.
+  Run `scripts/audit_report_contract.py` against the approved manifest/report.
+  Evaluate the pass line before display rounding; never renormalize missing
+  required rows. Use no invented Singapore weights or blended scores.
+- [ ] Shared corrections name every final dependent artifact. Batch validation
+  checks current hashes and fact revisions, rejects retired claims, and binds
+  fresh PDF extraction to the exact final PDF. Render/source review is separate.
 
 - [ ] The receipt names the Brand Authority rubric version, and every numeric row cites both
   its evidence IDs and the exact anchor or documented interpolation that produced the score.

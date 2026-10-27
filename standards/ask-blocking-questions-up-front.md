@@ -22,3 +22,12 @@
   so — that is information too.
 - Once the questions are answered, work continuously to the end rather than stopping to
   check in on things you could have decided.
+
+### Audit intake refinement — Dennis Yu, October 2, 2026
+
+Only a truly blocking identity or action-authority question stops that lane.
+Premium/conference GCT clarification is relevant and optional after the base
+proof audit. Do not interpret front-loading as a generic questionnaire required
+to receive value. Record inferred/UNKNOWN strategy, offer confirm/edit/continue,
+and deliver qualified findings and conditional priorities without a reputation
+penalty. Use the maintained shared audit run contract.

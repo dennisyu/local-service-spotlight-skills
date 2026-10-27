@@ -1,0 +1,2 @@
+# Final PDF text/binary binding. No network/model calls during validation.
+pypdf==6.13.2

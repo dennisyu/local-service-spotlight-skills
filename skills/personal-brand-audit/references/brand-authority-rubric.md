@@ -1,6 +1,9 @@
-# Brand Authority rubric v1.0
+# Brand Authority rubric v1.1
 
-Version: **1.0 — 4 September 2026**
+Version: **1.1 — 2 October 2026** (ten rows, equal weights and pass line unchanged).
+This revision separates the graph-presence anchor from ordinary panel visibility
+and owner claim, and clarifies optional GCT. Retain version 1.0 in history; do not
+show a direct score trend across these anchor versions.
 
 Use this rubric only for the ten-row Brand Authority exam. Cite evidence IDs beneath every
 row. Do not change the categories, weights, or 80/100 pass line inside a client report. A
@@ -38,13 +41,19 @@ distinguish 0 from missing evidence, score **UNKNOWN**, not 0.
 | 7 | Current-channel momentum | No current publishing or distribution found in the defined window | Sporadic recent activity exists without reliable reach or engagement evidence | Recent source-backed publishing reaches and engages the intended audience consistently across priority channels |
 | 8 | Link authority to entity home | No credible referring domain points to the entity home after junk exclusion | One or a few weak/relevant links exist, or most authority points elsewhere | Diverse authoritative domains link to the correct entity home in relevant editorial context |
 | 9 | Search visibility beyond name | No non-name discovery found in the defined query/data coverage | One weak or low-ranking non-name discovery signal exists | Multiple non-name topics/pages rank or drive evidenced qualified discovery tied to the buy box |
-| 10 | Knowledge Graph presence | No reliable machine-readable identity found after graph/entity coverage | A weak, uncorroborated, incomplete, or split identity candidate exists | The correct person has one corroborated machine-readable identity, stable KGMID/graph presence, and an eligible or claimable panel |
+| 10 | Knowledge Graph presence | No reliable machine-readable identity found after graph/entity coverage | A weak, uncorroborated, incomplete, or split identity candidate exists | The correct person has one corroborated machine-readable identity and stable KGMID/graph presence, supported by distinct identity receipts. Ordinary panel visibility and owner claim are recorded separately, never inferred from this graph score. |
 
 Use 0 instead of 1 only when the evidence shows active harm—for example, an owned identity
 home points to the wrong person, a broken primary conversion route blocks action, or the live
 graph merges the subject with a namesake. Name the harmful condition and evidence IDs.
 
 ## Scoring receipt
+
+Missing attendee GCT answers never reduce reputation. Score the public evidence
+that was actually checked. Mark buyer-specific relevance/strategy provisional
+when unconfirmed; where a criterion truly cannot be evaluated, use UNKNOWN rather
+than a low score. Observed weak public offer clarity and a skipped intake answer
+are different findings. Follow the shared [run contract](audit-run-contract.md).
 
 For each row record: rubric version, score or UNKNOWN, coverage performed, evidence IDs,
 anchor selected, interpolation reason, capture date, and reviewer. Add the numeric rows only.
