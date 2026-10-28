@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install \u2014 all 38 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 39 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -36,6 +36,7 @@
         "./skills/measurement-analytics",
         "./skills/model-judgment",
         "./skills/nine-triangles",
+        "./skills/one-canonical-page",
         "./skills/one-session-client-onboarding",
         "./skills/outbound-action-closeout",
         "./skills/personal-brand-audit",
@@ -122,6 +123,7 @@
         "./skills/outbound-action-closeout",
         "./skills/skill-registry",
         "./skills/nine-triangles",
+        "./skills/one-canonical-page",
         "./skills/shared-memory"
       ]
     }
