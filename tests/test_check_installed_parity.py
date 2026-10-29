@@ -112,6 +112,20 @@ class InstalledParityTests(unittest.TestCase):
         self.assertFalse(report["ok"])
         self.assertIn("references/notes.md: missing from install", report["skills"]["beta"]["reasons"])
 
+    def test_bytecode_caches_and_dot_files_are_ignored_on_both_sides(self):
+        cache = self.installed / "alpha" / "scripts" / "__pycache__"
+        cache.mkdir(parents=True)
+        (cache / "tool.cpython-313.pyc").write_bytes(b"\x00compiled")
+        (self.installed / "alpha" / "stray.pyc").write_bytes(b"\x00compiled")
+        (self.installed / "alpha" / ".DS_Store").write_bytes(b"finder")
+        (self.repo / "skills" / "beta" / "__pycache__").mkdir()
+        (self.repo / "skills" / "beta" / "__pycache__" / "x.pyc").write_bytes(b"\x00")
+        (self.installed / "__pycache__").mkdir()
+        report = check(self.installed, self.repo)
+        self.assertTrue(report["ok"], report)
+        self.assertEqual(report["counts"], {"identical": 2})
+        self.assertNotIn("__pycache__", report["skills"])
+
     def test_repository_frontmatter_a_strict_parser_rejects_is_listed(self):
         skill = self.repo / "skills" / "alpha" / "SKILL.md"
         skill.write_text(

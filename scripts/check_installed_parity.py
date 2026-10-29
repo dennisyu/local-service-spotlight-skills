@@ -23,6 +23,11 @@ It also lists repository SKILL.md files whose frontmatter a strict YAML parser
 would reject, because a strict loader may skip them while a lenient one loads
 them, which reads as "missing" on one runtime and "fine" on another.
 
+Ignored on both sides: dot-files and dot-folders, ``__pycache__`` folders and
+``*.pyc``/``*.pyo``/``*.pyd`` files. The repository's .gitignore already keeps
+those out of the library, and running a skill's script in place creates them,
+so they would otherwise report a clean install as drifted.
+
 Exit 0: nothing missing and nothing drifted. Exit 1: missing or drift.
 Exit 2: bad arguments. Standard library only; PyYAML is used when present.
 """
@@ -52,12 +57,28 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+_IGNORED_DIR_NAMES = frozenset({"__pycache__"})
+_IGNORED_SUFFIXES = (".pyc", ".pyo", ".pyd")
+
+
+def _ignored(relative: Path) -> bool:
+    """Leftovers the library never ships: dot-files, bytecode caches."""
+    return (
+        any(part.startswith(".") or part in _IGNORED_DIR_NAMES for part in relative.parts)
+        or relative.suffix in _IGNORED_SUFFIXES
+    )
+
+
 def _files(skill_dir: Path) -> dict[str, Path]:
     return {
         path.relative_to(skill_dir).as_posix(): path
         for path in sorted(skill_dir.rglob("*"))
-        if path.is_file() and not any(part.startswith(".") for part in path.relative_to(skill_dir).parts)
+        if path.is_file() and not _ignored(path.relative_to(skill_dir))
     }
+
+
+def _skill_names(skills_dir: Path) -> list[str]:
+    return sorted(p.name for p in skills_dir.iterdir() if p.is_dir() and not _ignored(Path(p.name)))
 
 
 def split_frontmatter(text: str) -> tuple[str | None, str]:
@@ -194,8 +215,8 @@ def compare_skill(repo_dir: Path, installed_dir: Path) -> dict[str, object]:
 
 def check(installed: Path, repository: Path = REPOSITORY) -> dict[str, object]:
     repo_skills = repository / "skills"
-    repo_names = sorted(p.name for p in repo_skills.iterdir() if p.is_dir() and not p.name.startswith("."))
-    installed_names = sorted(p.name for p in installed.iterdir() if p.is_dir() and not p.name.startswith("."))
+    repo_names = _skill_names(repo_skills)
+    installed_names = _skill_names(installed)
 
     skills: dict[str, dict[str, object]] = {}
     for name in repo_names:
