@@ -5,6 +5,12 @@ task, such as checking a customer claim or drafting an article. Read the steps,
 make one draft, and check the result before you share it.
 
 This is the maintained source for the Local Service Spotlight Claude marketplace.
+
+## New here? Start with START-HERE.md
+
+**START-HERE.md** is the front door: the whole system on one screen, install paths for Claude, Codex, ChatGPT, Grok, Cursor and Muse, and how the pieces fit.
+
+Want your own agents (any mix) to coordinate like ours — one shared job board, claimed tasks, written handoffs, no duplicated work? Copy **`coordination-starter/`**: template `JOBS.md`, `NOW.md`, `AGENTS.md`, `SHARED-MEMORY.md` and a decision registry, with the loop explained. The full method is [How the Agents Run the Company](https://dennisyu.com/how-agents-run-the-company/).
 Its current package list and skill counts come from `.claude-plugin/marketplace.json`.
 
 ## Install
