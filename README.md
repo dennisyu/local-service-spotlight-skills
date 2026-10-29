@@ -80,15 +80,16 @@ Run this deterministic inventory canary:
 grok inspect --json | python3 -c 'import json,sys; d=json.load(sys.stdin); p=next(p for p in d["plugins"] if p["name"] == "lss-everything"); assert p["enabled"] and p["provides"]["skills"] > 0; print("Grok canary passed: lss-everything, %s skills discovered" % p["provides"]["skills"])'
 ```
 
-Then prove that a fresh agent can activate one of the shared skills (this uses one
-model request):
+Then test a fresh task using authorized capacity. Keep the runtime's selected-
+skill/load evidence as well as its checked output:
 
 ```bash
 grok -p 'Use the skill-registry skill. In one sentence, identify the numbered registry system that is the only canonical source.'
 ```
 
-The answer should identify **System 1, the canonical GitHub marketplace**. A
-passing inventory command proves discovery; the model canary proves activation.
+The answer should identify **System 1, the canonical GitHub marketplace**. The inventory command checks recorded plugin discovery. The expected answer alone
+does not prove activation: retain the runtime's actual selection/load evidence
+and inspect the fresh result. Without that evidence, mark activation UNVERIFIED.
 
 ## What was installed
 
