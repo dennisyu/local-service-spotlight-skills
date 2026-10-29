@@ -1,0 +1,26 @@
+# Local Service Spotlight Skills — Dennis Yu
+
+> Portable SKILL.md library and agent-coordination system by Dennis Yu.
+> Agents (Claude, Codex, ChatGPT, Grok, Muse, Cursor) coordinate
+> through shared files — a job board, a memory file, a decision
+> registry — and run skills from one canonical source.
+
+## Start here
+
+- [START-HERE.md](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/START-HERE.md): The front door — the system on one screen, install paths per agent, and what is public vs private.
+- [coordination-starter/](https://github.com/dennisyu/local-service-spotlight-skills/tree/main/coordination-starter): Copyable JOBS.md, NOW.md, AGENTS.md, SHARED-MEMORY.md and decision-registry templates to run your own multi-agent team off one shared repo.
+- [How the Agents Run the Company](https://dennisyu.com/how-agents-run-the-company/): The canonical guide to the full method.
+
+## Install
+
+- Claude: add this repo as a marketplace, install `lss-everything` — https://localservicespotlight.com/install/
+- Grok: `grok plugin install dennisyu/local-service-spotlight-skills --trust`
+- Other agents: read AGENTS.md, then load matching files from `skills/`.
+
+## Key files
+
+- [HOW-KNOWLEDGE-PROPAGATES.md](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/HOW-KNOWLEDGE-PROPAGATES.md): How one rule file becomes the agent instruction, the human checklist, and the automated check.
+- [ACCEPTANCE.md](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md): How an install or update is verified — states from Available to Outcome.
+- [How Skills Propagate](https://dennisyu.com/how-skills-propagate/): The Learn, Do, Teach loop in article form.
+
+Last verified: 2026-10-29
