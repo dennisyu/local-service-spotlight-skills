@@ -3,7 +3,7 @@
   "title": "An unanswered ask never stops the work",
   "severity": "error",
   "captured": "2026-09-04",
-  "captured_from": "Dennis Yu, 2026-09-04: 'Where our team members are not reliable, we know that creates a huge burden on me. Figure out a way where, if they don't reply, you just go in and rescue, or even better, just do it so it doesn't even go to them. And make this a part of our ongoing process so I don't have to remember. This costs me so much time.' Captured after a client site sat blocked for three weeks on a vendor merge that six chase attempts never produced; the fix was a watchdog that made the vendor's silence harmless.",
+  "captured_from": "Dennis Yu / Local Service Spotlight public standard: An unanswered ask never stops the work. Original capture date is retained in captured. Public-safety clarification authorized by the owner on 2026-10-29; this reusable copy omits private conversation, personnel, account and incident details.",
   "applies_to": [
     "agent-behaviour"
   ]
@@ -44,10 +44,10 @@
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.

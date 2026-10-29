@@ -3,8 +3,11 @@
   "title": "Placeholder copy never reaches production",
   "severity": "error",
   "captured": "2026-08-16",
-  "captured_from": "Found live on georgepaladichuk.com, 2026-08-15: a hero stat block reading '$34K Monthly MRR' that no one could source, sitting on a paying client's public site. Written up the same week; entered standards/ 2026-08-16.",
-  "applies_to": ["published-html", "design-review"],
+  "captured_from": "Dennis Yu / Local Service Spotlight public standard: Placeholder copy never reaches production. Original capture date is retained in captured. Public-safety clarification authorized by the owner on 2026-10-29; this reusable copy omits private conversation, personnel, account and incident details.",
+  "applies_to": [
+    "published-html",
+    "design-review"
+  ],
   "checks": [
     {
       "id": "template-placeholder-strings",
@@ -38,7 +41,7 @@
 - **A testimonial needs a real, nameable person.** No initials-only quotes, no
   "a client in Minneapolis".
 - **The sweep only catches the obvious half, and you need to know which half.** A
-  placeholder that looks like a real number — a hero stat reading "$34K Monthly MRR" that
-  nobody can source — is indistinguishable from a true one to any regex. That exact
-  string sat live on a paying client's site. The only defence is that whoever publishes a
-  number can name its source before it goes up.
+  placeholder that looks like a real number is indistinguishable from a true one to
+  any regex. A synthetic example is a hero stat reading "$34K Monthly MRR" with no
+  source; this is a test example, not a client metric. Whoever publishes a number must
+  be able to name its source before it goes up.

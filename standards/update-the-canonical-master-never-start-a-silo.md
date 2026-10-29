@@ -3,7 +3,7 @@
   "title": "Update the canonical master, never start a silo",
   "severity": "error",
   "captured": "2026-10-17",
-  "captured_from": "Dennis Yu, Cowork session, 2026-10-17: 'are we updating the existing inventory sheet and the corresponding definitive article that lists all my podcast episodes? or are we perhaps working in a silo and violating the \"SEO tree\" concept we teach? Our hope is that all agents who inventory assets or publish an article check what's already there, so we don't reinvent the wheel.' Follow-up, same session: 'fix the process. consider the 9 triangles (9 principles we operate on), which include LDT and CCS, so we operate effectively as a system.' Incident: on 2026-10-09 an agent was asked to find Dennis's podcast appearances, checked only a 44-item list pasted into the prompt, and delivered a standalone file of '56 new finds'. The canonical hub at https://blitzmetrics.com/dennis-yu-podcast-appearances/ already carried 619 credits across 353 shows; a show-name match on 2026-10-17 found at least 22 of the 56 already on it, and the YouTube pass that was actually requested was never run.",
+  "captured_from": "Dennis Yu / Local Service Spotlight public standard: Update the canonical master, never start a silo. Original capture date is retained in captured. Public-safety clarification authorized by the owner on 2026-10-29; this reusable copy omits private conversation, personnel, account and incident details.",
   "source": "https://blitzmetrics.com/seo-tree/",
   "applies_to": [
     "agent-behaviour"
@@ -21,13 +21,11 @@
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

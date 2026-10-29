@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Recorded agent handoff, not remote attestation",
+  "description": "The CLI also checks cross-field revision, time and reviewer consistency. A valid document does not authenticate evidence.",
+  "type": "object",
+  "required": ["schema_version", "exercise", "task_id", "source_revision", "scope", "acceptance", "producer", "receiver", "artifact", "receiver_ack", "verification", "status"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "exercise": {"enum": ["practice", "real"]},
+    "task_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "scope": {"type": "string", "minLength": 1},
+    "acceptance": {"type": "string", "minLength": 1},
+    "producer": {"$ref": "#/$defs/identity"},
+    "receiver": {"$ref": "#/$defs/identity"},
+    "artifact": {"type": "object", "required": ["ref", "revision"], "properties": {"ref": {"type": "string", "minLength": 1}, "revision": {"type": "string", "minLength": 1}}},
+    "receiver_ack": {"anyOf": [{"type": "null"}, {"type": "object", "required": ["artifact_ref", "artifact_revision", "evidence", "observed_at"], "properties": {"artifact_ref": {"type": "string", "minLength": 1}, "artifact_revision": {"type": "string", "minLength": 1}, "evidence": {"type": "string", "minLength": 1}, "observed_at": {"type": "string", "format": "date-time"}}}]},
+    "verification": {"type": "object", "required": ["reviewer", "result", "evidence", "observed_at"], "properties": {"reviewer": {"type": "string", "minLength": 1}, "result": {"enum": ["PASS", "FAIL", "NOT_CHECKED"]}, "evidence": {"type": "string"}, "observed_at": {"type": ["string", "null"]}}},
+    "status": {"enum": ["NOT_DELIVERED", "DELIVERED", "VERIFIED", "BLOCKED"]}
+  },
+  "$defs": {"identity": {"type": "object", "required": ["agent", "runtime"], "properties": {"agent": {"type": "string", "minLength": 1}, "runtime": {"type": "string", "minLength": 1}}}}
+}
