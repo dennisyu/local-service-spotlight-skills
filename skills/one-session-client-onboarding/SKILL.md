@@ -1,6 +1,6 @@
 ---
 name: one-session-client-onboarding
-description: Use when a new client signs up or an onboarding is dragging across multiple calls. One session: agent prefills GCT, client confirms and grants access, first Friday MAA is the certainty date. Humans are not the routing layer.
+description: "Use when a new client signs up or an onboarding is dragging across multiple calls. One session: agent prefills GCT, client confirms and grants access, first Friday MAA is the certainty date. Humans are not the routing layer."
 author: Dennis Yu — Local Service Spotlight
 references:
   - https://localservicespotlight.com/client-onboarding/

@@ -66,6 +66,68 @@ def _frontmatter(path: Path) -> dict[str, str]:
     return values
 
 
+_RESERVED_PLAIN_START = {
+    "@": "starts with '@', which YAML reserves",
+    "`": "starts with '`', which YAML reserves",
+    "%": "starts with '%', which YAML reads as a directive",
+    "&": "starts with '&', which YAML reads as an anchor",
+    "*": "starts with '*', which YAML reads as an alias",
+    "!": "starts with '!', which YAML reads as a tag",
+}
+
+
+def frontmatter_yaml_problems(text: str) -> list[str]:
+    """Simple ``key: value`` frontmatter lines a strict YAML parser rejects or misreads.
+
+    The lenient reader above accepts them, and Claude's installer re-quotes them on
+    install, so the skill still loads there. A runtime with a strict loader (PyYAML's
+    safe_load and most others) does not, and may skip the skill without a word.
+    Quoted values, block scalars (``|`` and ``>``), flow collections and list items
+    are left alone. Found 2026-10-29: three SKILL.md descriptions carried an
+    unquoted ``": "``.
+    """
+    if not text.startswith("---\n"):
+        return []
+    end = text.find("\n---", 4)
+    if end == -1:
+        return ["is not closed with ---"]
+    problems: list[str] = []
+    for number, line in enumerate(text[4:end].splitlines(), start=2):
+        match = re.match(r"^([A-Za-z0-9_-]+):[ \t]+(\S.*?)\s*$", line)
+        if not match:
+            continue
+        key, value = match.groups()
+        first = value[0]
+        if first in "\"'":
+            if len(value) < 2 or value[-1] != first:
+                problems.append(f"line {number}: {key} opens a quote it never closes")
+            continue
+        if first in "|>[{":
+            continue
+        if first in _RESERVED_PLAIN_START:
+            problems.append(
+                f"line {number}: {key} {_RESERVED_PLAIN_START[first]}; quote the value"
+            )
+            continue
+        if first in "-?:" and (len(value) == 1 or value[1] in " \t"):
+            problems.append(
+                f"line {number}: {key} starts with '{first} ', which YAML reads "
+                "as structure; quote the value"
+            )
+            continue
+        if ": " in value or ":\t" in value or value.endswith(":"):
+            problems.append(
+                f"line {number}: {key} has an unquoted ': ' that strict YAML "
+                "parsers reject; quote the value"
+            )
+        if " #" in value or "\t#" in value:
+            problems.append(
+                f"line {number}: {key} has an unquoted ' #' that YAML reads as a "
+                "comment; quote the value"
+            )
+    return problems
+
+
 def validate(root: Path) -> list[str]:
     errors: list[str] = []
     manifest_path = root / ".claude-plugin" / "marketplace.json"
@@ -208,6 +270,8 @@ def validate(root: Path) -> list[str]:
         if not metadata.get("description"):
             errors.append(f"{skill_file.relative_to(root)} needs a description")
         skill_text = skill_file.read_text(encoding="utf-8")
+        for problem in frontmatter_yaml_problems(skill_text):
+            errors.append(f"{skill_file.relative_to(root)} frontmatter {problem}")
         try:
             expected_here = blocks_for_skill(root, skill_file)
         except StandardError as exc:
