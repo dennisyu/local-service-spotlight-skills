@@ -1,17 +1,7 @@
-# JOBS.md — the shared job board
+# Compatibility pointer — JOBS.md
 
-One row per task. Claim before you work. A job is done only when its row
-links to a verified result.
-
-| ID | Task | Owner | Status | Claimed | Result / receipt |
-|----|------|-------|--------|---------|------------------|
-| JOB-001 | (example) Test one handoff between two agents | — | open | — | — |
-
-Status words — use exactly these:
-`open` · `claimed` · `in-progress` · `submitted` · `verified` · `blocked`
-
-- **submitted** = the worker says it is done.
-- **verified** = a different agent (or the human) checked it at the
-  destination. Only verified jobs are closed.
-- **blocked** = name the blocker and its kind: authority / capability /
-  capacity / disagreement — and who owns unblocking it.
+The maintained starter uses [status/JOBS.md](status/JOBS.md) for unowned work.
+This file is not an active queue. Read [COORDINATION.md](COORDINATION.md) for
+record authority and [README.md](README.md#compatibility-and-existing-workspaces)
+before migrating an existing flat workspace. Preserve its live task IDs, claims
+and history; do not initialize a second board beside it.

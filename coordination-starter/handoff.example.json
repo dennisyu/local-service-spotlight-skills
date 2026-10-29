@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "exercise": "practice",
+  "task_id": "synthetic-format-example-only",
+  "source_revision": "synthetic-source-v1",
+  "scope": "Format fixture only; no actual work, read or agreement is asserted.",
+  "acceptance": "Illustrate a complete receipt structure. Replace all example observations before claiming a real pass.",
+  "producer": {"agent": "example-builder", "runtime": "synthetic-fixture"},
+  "receiver": {"agent": "example-receiver", "runtime": "synthetic-fixture"},
+  "artifact": {"ref": "synthetic://practice-result", "revision": "synthetic-v1"},
+  "receiver_ack": {
+    "artifact_ref": "synthetic://practice-result",
+    "artifact_revision": "synthetic-v1",
+    "evidence": "Synthetic acknowledgment field; not an actual read receipt.",
+    "observed_at": "2026-10-29T12:00:00-04:00"
+  },
+  "verification": {
+    "reviewer": "example-reviewer",
+    "result": "PASS",
+    "evidence": "Synthetic format demonstration; does not establish a real PASS.",
+    "observed_at": "2026-10-29T12:01:00-04:00"
+  },
+  "status": "VERIFIED"
+}

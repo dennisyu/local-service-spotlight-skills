@@ -3,123 +3,74 @@ name: model-judgment
 description: The operating layer that makes boil-the-ocean affordable — let the agent use its OWN judgment to route each task to the cheapest model tier that clears the quality bar, delegating bulk work DOWN to smaller models in subagents and escalating hard judgment UP to the top model. Read alongside boil-the-ocean; this governs WHICH engine runs each part of every skill.
 ---
 
-# Model Judgment — pick the right engine for each part of the job
+# Model Judgment — choose the least costly capable lane
 
-This file sits beside `boil-the-ocean`. Boil-the-ocean says *do the whole thing, don't stop at 90%*. This file says *here's how to power the whole thing so doing it completely stays cheap*. Together: full coverage (boil-the-ocean) at a fraction of the cost (model-judgment). Neither changes WHAT a skill produces — only HOW it runs.
+Use this alongside `boil-the-ocean`: completeness describes the required coverage, while routing chooses the tools and workers that can meet its acceptance criteria. The current session's model is a ceiling, not a reason to put every extraction or check on the most expensive engine.
 
-This file picks the **model tier** inside a session. Which **fleet lane** should
-run the job at all is a different question — cheapest capable seat, never two
-lanes at once. The table is the house rule `pick-the-cheapest-capable-fleet-lane`,
-stamped into this file below and kept in
-`standards/pick-the-cheapest-capable-fleet-lane.md`. A cheap model on the wrong
-seat still costs too much. The fallback tier this file requires for unattended
-jobs is a second model inside the same seat, not a second lane.
+## Inputs
 
-## The principle
+- Task scope, original acceptance criteria and required review independence.
+- Available supported scripts, models, tools and execution environments.
+- The caller's actual permissions, usage limits, approved budget and current pricing where relevant.
+- Prior run evidence, failure cases and a recovery or escalation policy.
 
-Don't dictate the model. **Let the agent use its own judgment to choose one.**
+A subscription or an installed skill does not prove a callable model, free capacity, tool access or permission to spend. Inspect the actual runtime and current official documentation before selecting provider-specific controls.
 
-The old habit was to run everything through one premium model — the harvest, the boilerplate, the file-wrangling, AND the one hard judgment call — because that's whatever model your session happened to open on. That's how you burn a plan's cap by 3pm and pay ceiling prices for grunt work.
+## Route each step by its demands
 
-The fix is one instruction: *for each task, decide the tier yourself and route it there.* Cat Wu and Thariq Shihipar of the Claude Code team put it plainly — it's better to tell a top model to **use its own judgment** about how to work than to hand it rigid rules. Simon Willison's working version (2026-07-03): *"For all tasks, use your judgment to decide an appropriate lower-power model and run that in a subagent."* Same idea, applied to a whole content operation instead of one repo.
+| Work | Starting lane | Acceptance limit |
+|---|---|---|
+| Deterministic conversion, sorting, counting or fixed-rule validation | Maintained scripts with fixtures | Validate format, completeness and failure paths |
+| Bounded extraction, classification and first-pass gathering | Least costly capable supported worker | Check outputs against source evidence; sample or verify according to consequence |
+| Strategy, entity disambiguation, reputation judgment and voice | Qualified judgment worker at appropriate effort | Preserve uncertainty, original criteria and independent review |
+| Interactive operations behind approved access | Runtime that actually supports the required tools | Confirm identity, scope, permitted effects and destination readback |
 
-## Two directions — both are "let the model pick the tier"
+Legal, security and other consequential decisions retain any required specialist or frontier review. A cheap worker's plausible answer is not a substitute for that gate.
 
-**Delegate DOWN (the default).** The orchestrator — the smart model you're talking to — does the thinking, then spins up **subagents on a cheaper model** for the high-volume, mechanical, first-draft work. Keep judgment, review, and synthesis in the main loop; push the bulk to the basement.
+## Effort, escalation and fallback
 
-**Escalate UP (the Advisor Strategy).** The mirror image, from Anthropic (2026-04-09): a **cheap executor drives the whole task** and consults a top model **only when it gets stuck**. In an API harness this is a real feature — the `advisor` tool: run on Haiku or Sonnet, and it pings Opus for a short plan at the exact moments it needs frontier reasoning, then keeps going. Anthropic's own benchmark: Haiku's hard-research score more than doubled (19.7% → 41.2%) with an Opus advisor, at a fraction of Opus's cost. In a chat/Cowork session, "escalate up" is the mental rule: when a cheap subagent is spinning, hand that one subtask up a tier instead of dropping to premium for everything.
+1. Split mechanical batches from the few hard judgments before execution.
+2. Use supported effort controls for a named hard sub-step when appropriate; do not raise the cost of unrelated work.
+3. Escalate only the step that fails a stated quality or capability check. Keep its inputs, attempted result and failure evidence.
+4. For unattended work, name an approved capable fallback or a bounded pause with an accountable owner. Never silently downgrade quality, data protection, budget or permissions.
+5. Verify the delegated output at its source or destination. A different model name alone does not establish independence or correctness.
 
-## The tier map — the whole ladder, not just "the expensive one"
+## Worked routing patterns
 
-| Tier | The work in THIS pack | Engine |
-|------|----------------------|--------|
-| **0 — Mechanical** | Transcript pulls, REST publishing, PDF/image generation, dedup, file wrangling, enrichment lookups | **Plain scripts, no model** (~$0) |
-| **1 — Bulk / first draft** | Positive-mentions harvesting, first-pass article drafts, boilerplate pages, restyles, bulk social copy | **Small model in subagents** — Sonnet for anything that chains tool calls, Haiku or an open model like GLM for single-shot extraction and classification |
-| **2 — Judgment** | Reputation scoring, the "earned but illegible" insight, entity disambiguation, strategy, and **writing in the subject's real voice** | **Top model** — Opus at raised effort, → the flagship (Fable) for crown-jewel work |
-| **3 — Computer-use** | Logged-in publishing, browser-driven fixes, anything behind a login or a firewall | **The interactive agent on your own machine** (Cowork / browser control) |
+These are illustrative task shapes, not measured client outcomes.
 
-Most of your token volume lives in tiers 0 and 1 and does not need a frontier model. Only the thin tier-2 slice — the real score, the real insight, your actual voice — earns the ceiling.
+- **Public mention discovery:** scripts or bounded workers gather sources; a qualified reviewer verifies identity, proof and relevance.
+- **Article production:** lower-cost drafting can follow approved source material; a separate qualified review checks facts, audience, claims and voice before authorized publication.
+- **Reputation scoring:** use the approved rubric, original evidence and required reviewer. Missing evidence remains unknown rather than receiving a flattering score.
+- **Pricing comparison:** bounded workers retrieve official pricing and recheck arithmetic; a reviewer verifies units, dates, input/output token distinctions and the conclusions.
 
-### The effort dial — a rung between the tiers (new, July 24, 2026)
+Measure cost from actual run receipts and current rates, including checker effort and rework. An invented token count, a model label or a historical price cannot establish savings. Report observed time returned and accepted results rather than promising a throughput multiplier.
 
-Opus 5 added a per-turn reasoning-effort setting: low, medium, high, xhigh. That puts a rung on the ladder that did not exist before, and it changes the default move when a cheap tier stalls.
+## Required run record
 
-The old escalation was binary — the small model struggles, so jump to the flagship and pay ceiling prices for the whole remaining run. Now there is a cheaper step in between: **raise effort before you raise model.** Take the one hard sub-step to Opus at high, leave everything around it where it was, and only reach for the flagship when raised effort has actually failed a named quality check.
+Record task/run ID, selected worker/runtime, source revision, approved scope, tool/access outcome, actual usage where available, checks, reviewer, accepted result and unresolved limits. Distinguish built, available, loaded, tested, scheduled and observed. Unknown usage remains unknown.
 
-It cuts the other way too. Plenty of tier-2 work is judgment in name only — a scoring pass with an unambiguous rubric, a dedup call with clear rules. Drop the effort instead of dropping the model and you keep the reasoning quality you were paying for while spending less on it.
+Keep one outcome owner and supported locking or serialization for mutable destinations. Delegate a concrete task with inputs, permitted effects, acceptance test and stop condition; require the receiver to read the exact artifact and return its result to the same task.
 
-### Every scheduled job needs a fallback tier
+## Sources and maintained methods
 
-Fable was suspended for two and a half weeks in June 2026 by an export-control order and came back July 1. Nothing was wrong with the routing table; the model was simply gone.
+- [Boil the Ocean](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/boil-the-ocean/SKILL.md): coverage and completion.
+- [Acceptance checks](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md): source, account and job receipts.
+- Consult the current official documentation for the exact provider, product, surface and account before using model selection, effort, delegation or scheduling controls.
 
-So: any job that runs unattended names a second engine. If the top tier is unavailable, the run drops to Opus at xhigh and says so in its output rather than stalling at 4am. A routing table with exactly one path through it is not a routing table.
+## Operational lessons
 
-## How to actually do it
+These portable lessons describe checks and failure modes, not a report of a
+particular account or client. Verify current vendor contracts before use.
 
-- **In Cowork or Claude Code:** the agent spawns a subagent and sets the model per call (haiku/sonnet/opus/flagship). This is not a coding-only trick — it works for research, writing, scoring, and site builds just as well. You can also just *say it once* as a standing instruction: *"For substantial tasks, use your judgment to route bulk work to a cheaper model in a subagent and keep the judgment calls on the top model."*
-- **In an API harness (a factory you run on a schedule):** set the executor model per tier in config, and turn on the `advisor` tool so the cheap tier can consult the top model when stuck. Route drafts to the small model; route scoring to the top model.
-- **The one-line standing rule to paste into a Project or memory:**
-  > For any substantial build, research, or writing task, use your own judgment to route it to the cheapest model tier that clears the quality bar. Delegate bulk and first-draft work down to a smaller model in a subagent; reserve the top model for scoring, strategy, disambiguation, and voice; escalate a stuck cheap tier up. Verify subagent output before shipping. The bar stays "holy shit, that's done."
+- Do not assume `--help` or an unknown flag is harmless. Inspect the script entry point and argument parser, or use a documented read-only mode, before invoking a command with possible side effects.
 
-## The decision, in one breath
+- Argument parsers should reject unknown flags before mutation, provide a real help path, and make dry-run behavior explicit. Test help, invalid flags and dry-run against isolated fixtures.
 
-Ask of each task: *does getting this wrong require taste, judgment, or my voice?* If **no** → push it down to a cheaper model in a subagent. If **yes** → keep it on the top model, and let the cheap tiers escalate up to it when they stall. That's the whole discipline.
+- Select the least costly capable worker within the caller's actual allowance and authority. Confirm current pricing and observed usage; a historical example is not a current cost guarantee.
 
-## Worked examples — patterns first, then a real receipt
-
-Patterns (where each tier runs):
-
-- **Harvesting every good mention** of a client across the web → tier 1. A small model in parallel subagents sweeps the sources; the top model only ranks and interprets the shortlist.
-- **A 400-article wave** for a client's topic cluster → tier 1 drafting, tier 2 editing. Drafts on a cheap model, the canonical hub and the voice pass on the top model.
-- **Scoring a personal brand straight** (the KP-gated rubric) → tier 2, top model only. Never let a cheap model hand out a flattering number.
-- **Writing in the subject's voice** → tier 2, flagship. This is the one thing that reliably reads as "AI" when you cheap out — so don't.
-
-**A real receipt (2026-07-20).** Before publishing a pricing article, we ran its entire QA as three parallel **Haiku 4.5 subagents** — the $1/M model — while the flagship only orchestrated and judged: a numbers auditor re-derived all 8 cost scenarios from scratch (8/8 pass), an adversarial claims auditor checked every published claim against the raw artifacts, and a source verifier re-fetched the four primary pricing/benchmark pages. Worker total: **100,423 tokens ≈ $0.16 on Haiku, vs ≈ $1.61 had the flagship run the same passes — 90% saved on identical deliverables.** Two catches made it a teaching receipt: the *cheap* auditor caught the *orchestrator* overclaiming ("has run" where the artifact only proved "was built"), and the *flagship judge* caught the *cheap* worker mislabeling units by a factor of a million in a table whose arithmetic was otherwise correct. Delegate down, judge up top — both directions earned their keep in one run. Full receipts, token tables, and the delegate-vs-don't math on two live article programs (81% and 90% saved): blitzmetrics.com/kimi-k3-vs-claude-content-factory-math/
-
-**Show receipts, not vibes.** When you document a run, include the token counts, the cost both ways, and what the judge caught. "Built" is not "running" — never claim a lane runs until it has a receipt. And if no worked example exists yet, run one before you publish; the example is part of the deliverable.
-
-## Why this is the affordable half of boil-the-ocean
-
-Boiling the ocean — full coverage, every edge case, the test, the doc, run-it-again-until-done — is only sustainable if each run is cheap. Tiering by judgment is what makes "run it again until the Definition of done passes" cost pennies instead of dollars. Route by tier and you get roughly 3× the throughput at a fraction of the cost, with no quality loss where quality matters. Cheap where it's mechanical; expensive where it's judgment; complete, always.
-
-## Sources & links
-
-- Simon Willison, *"Fable's judgement"* (2026-07-03) — https://simonwillison.net/2026/Jul/3/judgement/
-- Anthropic, the Advisor Strategy (2026-04-09) — https://claude.com/blog/the-advisor-strategy
-- Anthropic, *Create custom subagents* — https://code.claude.com/docs/en/sub-agents
-- Runs beneath: all skills in this pack. Read with `boil-the-ocean` (WHAT to finish) — this file is WHICH engine finishes it.
-
-## Learned in the field
-
-*Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
-
-<!-- learning:2026-07-31-an-unknown-flag-is-not-a-no-op -->
-**July 31, 2026** (from: skill-pack-propagation daily run, July 31, 2026)
-
-`--help` is not a safe probe. On July 31, 2026, mid-run, `python3 harvest_learnings.py --help` was
-typed to check the script's interface before filing a note. The script read only the three flags it
-knew (`--dry-run`, `--replay-applied`, `--dirs=`) and silently ignored the rest, so `--help` fell
-through to the default action and performed a real harvest: eight source skill files rewritten, the
-inbox emptied, and the published packs instantly one revision behind their own sources. Nothing
-errored. The output looked exactly like a successful intentional run, and the only reason the
-divergence did not ship was that the operator recognised it in the log.
-
-The general shape: a script that MUTATES state and treats an unrecognised argument as "proceed with
-the default" has inverted its own safety. Someone typing a flag the script does not know is, by
-definition, unsure what it does — that is the worst possible moment to run the destructive path.
-Argument parsing that only whitelists is not parsing; it is a filter with a trapdoor underneath.
-
-The rule: every state-changing script exits non-zero on an unrecognised argument and ships a `--help`
-that prints and exits 0. Never probe an unfamiliar script by guessing a flag — read its argv handling
-first, or run it with the flag it documents for dry runs. Where a `--dry-run` exists, it is the probe.
-
-Corollary on recovery: when an accidental write does happen, finish the loop rather than unwinding it.
-Reverting eight source files would have left the applied/ ledger, the manifests and the live packs in
-three different states; re-running propagate + republish took four minutes and left every artifact
-consistent, with the lesson genuinely carried into all 13 packs.
-
-Fixed July 31, 2026: harvest_learnings.py now rejects unknown arguments with exit 2 and prints usage
-on --help/-h/help, verified against --help (exit 0), --bogus (exit 2), --dry-run and a bare run.
+Apply the maintained [Learn, Do, Teach method](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/agent-setup/LEARN-DO-TEACH.md)
+and [acceptance checks](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md).
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
@@ -188,8 +139,8 @@ penalty. Use the maintained shared audit run contract.
 
 - **Every task is owned by a function** — web, content, analytics, client success — and
   people sit inside functions. People join, leave and go on holiday; the function does not.
-- **Escalate to a function too.** "I told Muzamil" is not an escalation if Muzamil is
-  away; "escalated to the web function" is.
+- **Escalate to a function too.** "I told one colleague" is not an escalation if that
+  colleague is away; "escalated to the web function" is.
 - A function with exactly one person in it is still a function. Name it that way, so the
   second person changes nothing.
 - Work assigned to a named individual and nowhere else is work that silently stops when
@@ -215,12 +166,10 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
-- **A rule that lives only in an article, a chat message, a call recording, or your
-  context window is a rule the next agent will break.** That is not a prediction. The
-  black-button rule was published, illustrated, and given an enforcement plugin on
-  17 May 2026, and on 15 August 2026 an agent holding the entire skill pack in context
-  shipped a black button. The rule was never in `standards/`, so it never reached the
-  skills, so it was not there to be read.
+- **A lesson kept only in an article, chat, recording or context window may be
+  absent from the instructions the next operator loads.** Capture its reusable
+  criteria in the canonical standard, distribute the applicable source copies,
+  and test the receiving runtime before claiming adoption.
 - When anyone — the client, the account owner, an audit, or your own failure — states a
   rule that should hold next time, **your job is not to remember it. It is to write
   `standards/<slug>.md` before the session ends.** Memory does not survive a session
@@ -234,29 +183,36 @@ penalty. Use the maintained shared audit run contract.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies the rule into `AGENTS.md` and each distributed `SKILL.md`
+  whose declared scope applies. This prepares source copies; it does not update an
+  existing installation. Record the released revision, required sync action and a
+  fresh-session activation test for each account being claimed.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
-  header compiles straight into the live fleet sweep, so a violation on a published page
-  is caught by a schedule instead of by a person noticing. Every check must carry
-  passing and failing examples — a pattern that matches nothing reports a clean site
-  forever, which is worse than no check at all.
+  header is consumed by the fleet sweep when that sweep actually runs against an
+  applicable target. Every check must carry passing and failing examples. Exercise
+  a separate failing case too: a pattern that matches nothing can look healthy.
+  Record scheduling and actual firing separately; a check in source creates neither.
 - **Where a machine check would be dishonest, say so and leave `checks` out.** Judgement
-  rules are still rules; they are enforced by being read pre-flight, and pretending a
-  regex covers them hides the fact that nothing does.
+  rules still need a qualified reviewer to apply them to the actual result. Reading
+  a rule is not evidence of compliance, and a regex cannot certify judgement.
 - **Provenance is required, not decoration.** `captured_from` is how the team sees which
-  channels leak. If dozens of recorded calls have produced no standards, those calls are
-  not being captured, and that is visible at a glance instead of being a suspicion.
+  channels leak. Missing provenance is a reason to inspect the capture path; it does
+  not establish how many recordings exist or whether an undocumented process ran.
 - **When a new rule contradicts an existing one, resolve it in the file and say so
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
 - The order is Checklist → Content → Software. Write the checkable rule first, publish
   the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+  rather than hand-written beside it when the declarative check types suffice.
+  Complex checks need maintained code and tests linked from the rule. CCS means
+  Content, Checklists, Software; this checklist-first capture sequence preserves
+  that framework. An article alone leaves checks and adoption unproved.
+- **Close the learning loop with another operator.** Link the actual run, correction,
+  standard, teaching content and software check. Give a fresh operator only the
+  guide and permitted inputs; record the tested revision, result, failures and help
+  required. Fix ambiguity in the master and replay the affected steps. Saying the
+  lesson was shared does not prove another operator can use it.
 <!-- shared-rule:capture-what-you-learn:end -->
 
 <!-- shared-rule:keep-the-system-of-record-outside-the-model:start -->
@@ -298,10 +254,24 @@ penalty. Use the maintained shared audit run contract.
 
 - **Read the standard before you touch the work.** Skipping to doing produces output that
   looks right and is wrong in ways the person reviewing it has to find for you.
-- **Then do it,** all the way to a verified artifact.
-- **Then teach it** — write the run up so the next agent inherits what you learned. That
-  write-up is what turns one person's lesson into everyone's default, and it is the whole
-  reason `standards/` exists.
+- **Practice safely, then do it.** A public or synthetic rehearsal helps a new
+  operator learn the procedure. Label it as practice; it does not prove a client
+  result, production readiness, or mastery. Real Do requires an authorized task,
+  its original acceptance criteria, a checked artifact and destination evidence.
+- **Then teach it** — preserve the inputs and source revisions, steps, choices,
+  mistakes, fixes, checks and limits in a reusable guide. Keep private evidence
+  private and use only approved public examples. Update the canonical standard
+  and its Content, Checklist and Software forms instead of creating a competing SOP.
+- **Test the teaching with a fresh operator.** Another person or agent must work
+  from the guide and permitted inputs without the author filling in missing steps.
+  Record the tested revision, independent result, help required and failures. Fix
+  the guide and repeat the affected part. A replay proves only the tested scope;
+  agreement, publication, or a successful synthetic case alone does not prove mastery.
+- **Check that the checker can fail.** Run a known bad case and a clean case; where
+  practical add an independently chosen failure beyond the checker's own examples.
+  Report what software did not check, including meaning, permissions and actual
+  runtime behavior. Preserve the separate account and job evidence in the release
+  receipt rather than treating source consistency as adoption.
 - The order is not a preference. A rule taught before it is understood is repeated
   without judgement; a rule learned and then taught survives contact with a case it did
   not anticipate.
@@ -397,30 +367,24 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
 ## Basecamp updates stay in Basecamp
 
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
+- For an authorized project update, identify the exact existing thread and its
+  intended audience before writing. Use the team's approved source-system
+  connector, API or interface; the task still needs communication authority.
+- A notification is a cue to read the source record, not a destination. Do not
+  address a message to a generic notification sender or assume that changing
+  the sender identity makes a failed delivery route valid.
+- In this workflow, keep the update in its original project thread rather than
+  substituting an email route. If the approved write route is unavailable,
+  record BLOCKED with the failed step, evidence, owner and bounded next action.
+- Read the destination after the write. Verify the intended thread, expected
+  author and distinctive new content, and retain its location and observation
+  time. A successful send/save response alone does not establish delivery.
+- Ensure each participating runtime loads the current delivery policy before
+  acting, including scheduled workers. Source publication alone is not evidence
+  that those workers loaded or followed it.
+- This rule describes a reusable delivery safeguard. It names no account,
+  project, recipient, private incident or active deployment, and it grants no
+  permission to post, send or change access.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:screen-gct-before-amplification:start -->
@@ -739,8 +703,8 @@ entity-linking preflight and a live link audit.
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —
@@ -856,13 +820,13 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
@@ -1046,8 +1010,9 @@ Use these terms to choose the setup your business needs. Start with one guide an
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.
@@ -1093,72 +1058,66 @@ It supplements access and action-approval rules rather than granting new authori
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
 
-- **Route each job to the cheapest fleet lane that can actually do it.** Cost
-  order: local Qwen (free) first, then Muse, then everything else. This rule
-  picks the *seat* that runs the job. `model-judgment` still picks the *model
-  tier* inside that seat. They are two ladders, not one. There is no separate
-  skill-router skill; this file is the fleet router.
-- **Muse (Meta Muse Spark) is the default for high-volume work that does not
-  need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
-  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
-  tokens **per week**, not per month. A Muse token is Meta's own meter — do
-  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
-  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
-  put disputes, must-be-right research, or code/docs that matter on it.
+- **Route each job to the cheapest authorized lane that can actually do it.**
+  Compare the available runtimes' capabilities, cost, allowance, availability,
+  data-handling limits and required review. Lower-cost local text processing
+  may suit offline bulk work; an authorized hosted runtime may suit work that
+  needs a browser, connector or unattended availability. Verify those facts in
+  the actual account rather than assuming a product name establishes them.
+- **Choose the execution seat and model tier separately.** This rule picks the
+  runtime that owns the job. `model-judgment` picks an appropriate model tier
+  inside that runtime. A cheaper model without the required tools or reliability
+  is not a capable lane. Include retry and review costs in the comparison.
+- **Reserve stronger reasoning and independent review for demanding work.**
+  Disputes, consequential research and consequential code or documentation need
+  an appropriately capable worker. Experimental output must not be the sole
+  basis for a critical action; a qualified person or separate fresh-context
+  reviewer checks the original evidence and actual result first.
 
 | Lane | Takes | Hard stop |
 |---|---|---|
-| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
-| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
-| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
-| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
-| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+| **Offline text lane** | Authorized transcript triage, first drafts, preliminary analyses and bulk rewrites that need no external tools | No browser, login or publication unless separately supported and authorized. Confirm device availability before relying on it |
+| **Hosted volume lane** | Bounded repetitive work with tested tools, access and sufficient allowance | Do not route consequential reasoning here merely because it is cheap. Verify unattended availability rather than inferring it from hosting |
+| **Reasoning and review lane** | Hard reasoning, disputes, consequential research, code and documentation | Preserve independent review and specialist requirements. A model name alone does not establish competence |
+| **Existing recurring lane** | A recurring job whose current owner, schedule and result have actually been observed | Retain one owner while testing a replacement; an instruction or saved schedule alone does not prove a successful firing |
+| **Action or publishing lane** | Work requiring a specific authorized connector, account, destination or approval route | Stay within recorded authority. Access to one service or account does not establish access to another |
+| **Specialized lane** | Work only a particular approved runtime can reach or perform | Record the capability that justifies the cost; do not move work solely because another product is available |
 
-Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
-volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
-that is offline bulk text with no browser or login, and that can wait for a
-Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
-or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
-A fallback model inside one seat is fine — `model-judgment` requires one for
-unattended jobs — but a second lane for the same job is not.
+These are capability categories, not claims about any installed fleet. Record
+the actual runtime and tested capability in the team's private job record.
+One agent name may cover multiple execution environments; route by the environment
+the task needs. Product prices, quotas and capabilities need current verification
+for the specific plan and account. Token meters from different providers are not
+automatically comparable. This rule does not authorize another subscription.
 
-Lanes are seats, not desk names. Trenton appears twice because that desk has
-both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
-job needs.
+- **Keep one outcome owner and one active execution lane per job.** A fallback
+  model within that lane can handle an approved failure path. It must not create
+  a second independent owner or repeat an external action whose result is uncertain.
+- **Migrate through a controlled cutover.** Test the replacement in a paused,
+  dry-run or otherwise isolated state that cannot duplicate production effects.
+  Reconcile pending runs and uncertain writes, pause the old trigger, transfer
+  ownership through the authoritative task record, then enable the replacement.
+  Verify its actual result and retain the previous configuration for rollback.
+  If a safe cutover is unavailable, retain the current owner and record the blocker.
+- **Instructions do not grant authority.** Sending, publishing, spending,
+  installing, changing access and deleting require the owner's existing authority
+  and applicable approval rails. Keep passwords, tokens, account inventories and
+  private schedules out of this rule and its public copies.
 
-- **Until there are many Dots, keep dividing work across the existing
-  agents.** "Many Dots" means the models absorb the harness so humans do not
-  have to split tasks and project-manage them. Until that is true, do not
-  collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** Offline bulk text with no browser or login that can wait
-  for a Mac → Qwen first (free). Other high-volume work that does not need
-  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
-  to be right, or code/docs that matter → Astra, spot-checked while Dot is
-  new and never Dot alone on anything critical. Recurring mechanical work
-  already on a Kimi or Codex cron stays there until a Muse task is live. A
-  decision or a public post that needs a Grok desk stays on that desk, in a
-  short turn. Every other seat keeps the work already assigned to it.
-- **Never run the same job on two lanes.** When a job moves, the new lane
-  must be live before the old one is turned off.
-- This rule picks the seat. It does not grant permission to send, publish,
-  spend, or delete. Those still need the existing approval rails. Do not put
-  passwords, tokens, or account inventories in this file or in any public
-  copy of it.
+### Synthetic example — recurring media indexing
 
-### Worked example — weekly Google Photos person-albums
+This is a fictional routing exercise, not an account or schedule receipt. A
+recurring media-indexing job needs an authorized browser session and availability
+at its scheduled time. An offline text runner without those capabilities is
+unsuitable even if its marginal model cost is lower. A tested hosted volume lane
+may fit; a stronger reasoning lane is unnecessary unless the task's decisions
+require it. Check actual access and allowance, then use the controlled cutover
+above if changing an existing owner. No account connection or schedule is created
+by this example.
 
-On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
-Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
-from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
-runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
-browser. It is not an Astra/Dot job: it is high-volume album work, not hard
-reasoning.
-
-No regex can honestly decide which lane a job needs. Enforce this by reading
-the lane table before you schedule or claim a job, and by naming the live
-lane in the job's receipt.
+No regex can honestly decide which lane a job needs. The owner and reviewer apply
+the capability table to the actual task, and the receipt names the tested runtime,
+permitted effects, cost evidence or UNKNOWN, result and remaining limitations.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule:audit-quality-gate:start -->
@@ -1188,13 +1147,11 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

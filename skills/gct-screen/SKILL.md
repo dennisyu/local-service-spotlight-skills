@@ -291,8 +291,8 @@ penalty. Use the maintained shared audit run contract.
 
 - **Every task is owned by a function** — web, content, analytics, client success — and
   people sit inside functions. People join, leave and go on holiday; the function does not.
-- **Escalate to a function too.** "I told Muzamil" is not an escalation if Muzamil is
-  away; "escalated to the web function" is.
+- **Escalate to a function too.** "I told one colleague" is not an escalation if that
+  colleague is away; "escalated to the web function" is.
 - A function with exactly one person in it is still a function. Name it that way, so the
   second person changes nothing.
 - Work assigned to a named individual and nowhere else is work that silently stops when
@@ -302,30 +302,24 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
 ## Basecamp updates stay in Basecamp
 
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
+- For an authorized project update, identify the exact existing thread and its
+  intended audience before writing. Use the team's approved source-system
+  connector, API or interface; the task still needs communication authority.
+- A notification is a cue to read the source record, not a destination. Do not
+  address a message to a generic notification sender or assume that changing
+  the sender identity makes a failed delivery route valid.
+- In this workflow, keep the update in its original project thread rather than
+  substituting an email route. If the approved write route is unavailable,
+  record BLOCKED with the failed step, evidence, owner and bounded next action.
+- Read the destination after the write. Verify the intended thread, expected
+  author and distinctive new content, and retain its location and observation
+  time. A successful send/save response alone does not establish delivery.
+- Ensure each participating runtime loads the current delivery policy before
+  acting, including scheduled workers. Source publication alone is not evidence
+  that those workers loaded or followed it.
+- This rule describes a reusable delivery safeguard. It names no account,
+  project, recipient, private incident or active deployment, and it grants no
+  permission to post, send or change access.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:be-proactive-see-it-through:start -->
@@ -362,12 +356,10 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
-- **A rule that lives only in an article, a chat message, a call recording, or your
-  context window is a rule the next agent will break.** That is not a prediction. The
-  black-button rule was published, illustrated, and given an enforcement plugin on
-  17 May 2026, and on 15 August 2026 an agent holding the entire skill pack in context
-  shipped a black button. The rule was never in `standards/`, so it never reached the
-  skills, so it was not there to be read.
+- **A lesson kept only in an article, chat, recording or context window may be
+  absent from the instructions the next operator loads.** Capture its reusable
+  criteria in the canonical standard, distribute the applicable source copies,
+  and test the receiving runtime before claiming adoption.
 - When anyone — the client, the account owner, an audit, or your own failure — states a
   rule that should hold next time, **your job is not to remember it. It is to write
   `standards/<slug>.md` before the session ends.** Memory does not survive a session
@@ -381,29 +373,36 @@ penalty. Use the maintained shared audit run contract.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies the rule into `AGENTS.md` and each distributed `SKILL.md`
+  whose declared scope applies. This prepares source copies; it does not update an
+  existing installation. Record the released revision, required sync action and a
+  fresh-session activation test for each account being claimed.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
-  header compiles straight into the live fleet sweep, so a violation on a published page
-  is caught by a schedule instead of by a person noticing. Every check must carry
-  passing and failing examples — a pattern that matches nothing reports a clean site
-  forever, which is worse than no check at all.
+  header is consumed by the fleet sweep when that sweep actually runs against an
+  applicable target. Every check must carry passing and failing examples. Exercise
+  a separate failing case too: a pattern that matches nothing can look healthy.
+  Record scheduling and actual firing separately; a check in source creates neither.
 - **Where a machine check would be dishonest, say so and leave `checks` out.** Judgement
-  rules are still rules; they are enforced by being read pre-flight, and pretending a
-  regex covers them hides the fact that nothing does.
+  rules still need a qualified reviewer to apply them to the actual result. Reading
+  a rule is not evidence of compliance, and a regex cannot certify judgement.
 - **Provenance is required, not decoration.** `captured_from` is how the team sees which
-  channels leak. If dozens of recorded calls have produced no standards, those calls are
-  not being captured, and that is visible at a glance instead of being a suspicion.
+  channels leak. Missing provenance is a reason to inspect the capture path; it does
+  not establish how many recordings exist or whether an undocumented process ran.
 - **When a new rule contradicts an existing one, resolve it in the file and say so
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
 - The order is Checklist → Content → Software. Write the checkable rule first, publish
   the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+  rather than hand-written beside it when the declarative check types suffice.
+  Complex checks need maintained code and tests linked from the rule. CCS means
+  Content, Checklists, Software; this checklist-first capture sequence preserves
+  that framework. An article alone leaves checks and adoption unproved.
+- **Close the learning loop with another operator.** Link the actual run, correction,
+  standard, teaching content and software check. Give a fresh operator only the
+  guide and permitted inputs; record the tested revision, result, failures and help
+  required. Fix ambiguity in the master and replay the affected steps. Saying the
+  lesson was shared does not prove another operator can use it.
 <!-- shared-rule:capture-what-you-learn:end -->
 
 <!-- shared-rule:every-article-has-pictures:start -->
@@ -556,10 +555,24 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 
 - **Read the standard before you touch the work.** Skipping to doing produces output that
   looks right and is wrong in ways the person reviewing it has to find for you.
-- **Then do it,** all the way to a verified artifact.
-- **Then teach it** — write the run up so the next agent inherits what you learned. That
-  write-up is what turns one person's lesson into everyone's default, and it is the whole
-  reason `standards/` exists.
+- **Practice safely, then do it.** A public or synthetic rehearsal helps a new
+  operator learn the procedure. Label it as practice; it does not prove a client
+  result, production readiness, or mastery. Real Do requires an authorized task,
+  its original acceptance criteria, a checked artifact and destination evidence.
+- **Then teach it** — preserve the inputs and source revisions, steps, choices,
+  mistakes, fixes, checks and limits in a reusable guide. Keep private evidence
+  private and use only approved public examples. Update the canonical standard
+  and its Content, Checklist and Software forms instead of creating a competing SOP.
+- **Test the teaching with a fresh operator.** Another person or agent must work
+  from the guide and permitted inputs without the author filling in missing steps.
+  Record the tested revision, independent result, help required and failures. Fix
+  the guide and repeat the affected part. A replay proves only the tested scope;
+  agreement, publication, or a successful synthetic case alone does not prove mastery.
+- **Check that the checker can fail.** Run a known bad case and a clean case; where
+  practical add an independently chosen failure beyond the checker's own examples.
+  Report what software did not check, including meaning, permissions and actual
+  runtime behavior. Preserve the separate account and job evidence in the release
+  receipt rather than treating source consistency as adoption.
 - The order is not a preference. A rule taught before it is understood is repeated
   without judgement; a rule learned and then taught survives contact with a case it did
   not anticipate.
@@ -572,8 +585,8 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
   Bing and every AI answer engine "this person is that entity". Pointed at a deleted or
   wrong target, it does not merely fail — it actively teaches the wrong association.
 - **Verify every `sameAs` target returns 200 before publishing schema, and re-verify
-  quarterly.** Entities get deleted. A Wikidata item asserted on a client site was
-  deleted on 7 July 2026 and the claim stood until an audit found it five weeks later.
+  quarterly.** Targets can be deleted or change identity after publication.
+  Recheck the current destination rather than relying on a past successful read.
 - **Only anchors count.** `preconnect`, `dns-prefetch`, `canonical` and `alternate`
   hints are not links a visitor can follow, and treating them as links reports
   `googletagmanager.com` as a dead link on every site that loads analytics — noise that
@@ -643,10 +656,10 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 - **A testimonial needs a real, nameable person.** No initials-only quotes, no
   "a client in Minneapolis".
 - **The sweep only catches the obvious half, and you need to know which half.** A
-  placeholder that looks like a real number — a hero stat reading "$34K Monthly MRR" that
-  nobody can source — is indistinguishable from a true one to any regex. That exact
-  string sat live on a paying client's site. The only defence is that whoever publishes a
-  number can name its source before it goes up.
+  placeholder that looks like a real number is indistinguishable from a true one to
+  any regex. A synthetic example is a hero stat reading "$34K Monthly MRR" with no
+  source; this is a test example, not a client metric. Whoever publishes a number must
+  be able to name its source before it goes up.
 <!-- shared-rule:no-placeholder-copy:end -->
 
 <!-- shared-rule:no-popup-on-load:start -->
@@ -1192,8 +1205,8 @@ entity-linking preflight and a live link audit.
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —
@@ -1309,13 +1322,13 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
@@ -1686,8 +1699,9 @@ Use these terms to choose the setup your business needs. Start with one guide an
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.
@@ -1733,72 +1747,66 @@ It supplements access and action-approval rules rather than granting new authori
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
 
-- **Route each job to the cheapest fleet lane that can actually do it.** Cost
-  order: local Qwen (free) first, then Muse, then everything else. This rule
-  picks the *seat* that runs the job. `model-judgment` still picks the *model
-  tier* inside that seat. They are two ladders, not one. There is no separate
-  skill-router skill; this file is the fleet router.
-- **Muse (Meta Muse Spark) is the default for high-volume work that does not
-  need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
-  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
-  tokens **per week**, not per month. A Muse token is Meta's own meter — do
-  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
-  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
-  put disputes, must-be-right research, or code/docs that matter on it.
+- **Route each job to the cheapest authorized lane that can actually do it.**
+  Compare the available runtimes' capabilities, cost, allowance, availability,
+  data-handling limits and required review. Lower-cost local text processing
+  may suit offline bulk work; an authorized hosted runtime may suit work that
+  needs a browser, connector or unattended availability. Verify those facts in
+  the actual account rather than assuming a product name establishes them.
+- **Choose the execution seat and model tier separately.** This rule picks the
+  runtime that owns the job. `model-judgment` picks an appropriate model tier
+  inside that runtime. A cheaper model without the required tools or reliability
+  is not a capable lane. Include retry and review costs in the comparison.
+- **Reserve stronger reasoning and independent review for demanding work.**
+  Disputes, consequential research and consequential code or documentation need
+  an appropriately capable worker. Experimental output must not be the sole
+  basis for a critical action; a qualified person or separate fresh-context
+  reviewer checks the original evidence and actual result first.
 
 | Lane | Takes | Hard stop |
 |---|---|---|
-| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
-| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
-| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
-| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
-| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+| **Offline text lane** | Authorized transcript triage, first drafts, preliminary analyses and bulk rewrites that need no external tools | No browser, login or publication unless separately supported and authorized. Confirm device availability before relying on it |
+| **Hosted volume lane** | Bounded repetitive work with tested tools, access and sufficient allowance | Do not route consequential reasoning here merely because it is cheap. Verify unattended availability rather than inferring it from hosting |
+| **Reasoning and review lane** | Hard reasoning, disputes, consequential research, code and documentation | Preserve independent review and specialist requirements. A model name alone does not establish competence |
+| **Existing recurring lane** | A recurring job whose current owner, schedule and result have actually been observed | Retain one owner while testing a replacement; an instruction or saved schedule alone does not prove a successful firing |
+| **Action or publishing lane** | Work requiring a specific authorized connector, account, destination or approval route | Stay within recorded authority. Access to one service or account does not establish access to another |
+| **Specialized lane** | Work only a particular approved runtime can reach or perform | Record the capability that justifies the cost; do not move work solely because another product is available |
 
-Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
-volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
-that is offline bulk text with no browser or login, and that can wait for a
-Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
-or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
-A fallback model inside one seat is fine — `model-judgment` requires one for
-unattended jobs — but a second lane for the same job is not.
+These are capability categories, not claims about any installed fleet. Record
+the actual runtime and tested capability in the team's private job record.
+One agent name may cover multiple execution environments; route by the environment
+the task needs. Product prices, quotas and capabilities need current verification
+for the specific plan and account. Token meters from different providers are not
+automatically comparable. This rule does not authorize another subscription.
 
-Lanes are seats, not desk names. Trenton appears twice because that desk has
-both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
-job needs.
+- **Keep one outcome owner and one active execution lane per job.** A fallback
+  model within that lane can handle an approved failure path. It must not create
+  a second independent owner or repeat an external action whose result is uncertain.
+- **Migrate through a controlled cutover.** Test the replacement in a paused,
+  dry-run or otherwise isolated state that cannot duplicate production effects.
+  Reconcile pending runs and uncertain writes, pause the old trigger, transfer
+  ownership through the authoritative task record, then enable the replacement.
+  Verify its actual result and retain the previous configuration for rollback.
+  If a safe cutover is unavailable, retain the current owner and record the blocker.
+- **Instructions do not grant authority.** Sending, publishing, spending,
+  installing, changing access and deleting require the owner's existing authority
+  and applicable approval rails. Keep passwords, tokens, account inventories and
+  private schedules out of this rule and its public copies.
 
-- **Until there are many Dots, keep dividing work across the existing
-  agents.** "Many Dots" means the models absorb the harness so humans do not
-  have to split tasks and project-manage them. Until that is true, do not
-  collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** Offline bulk text with no browser or login that can wait
-  for a Mac → Qwen first (free). Other high-volume work that does not need
-  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
-  to be right, or code/docs that matter → Astra, spot-checked while Dot is
-  new and never Dot alone on anything critical. Recurring mechanical work
-  already on a Kimi or Codex cron stays there until a Muse task is live. A
-  decision or a public post that needs a Grok desk stays on that desk, in a
-  short turn. Every other seat keeps the work already assigned to it.
-- **Never run the same job on two lanes.** When a job moves, the new lane
-  must be live before the old one is turned off.
-- This rule picks the seat. It does not grant permission to send, publish,
-  spend, or delete. Those still need the existing approval rails. Do not put
-  passwords, tokens, or account inventories in this file or in any public
-  copy of it.
+### Synthetic example — recurring media indexing
 
-### Worked example — weekly Google Photos person-albums
+This is a fictional routing exercise, not an account or schedule receipt. A
+recurring media-indexing job needs an authorized browser session and availability
+at its scheduled time. An offline text runner without those capabilities is
+unsuitable even if its marginal model cost is lower. A tested hosted volume lane
+may fit; a stronger reasoning lane is unnecessary unless the task's decisions
+require it. Check actual access and allowance, then use the controlled cutover
+above if changing an existing owner. No account connection or schedule is created
+by this example.
 
-On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
-Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
-from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
-runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
-browser. It is not an Astra/Dot job: it is high-volume album work, not hard
-reasoning.
-
-No regex can honestly decide which lane a job needs. Enforce this by reading
-the lane table before you schedule or claim a job, and by naming the live
-lane in the job's receipt.
+No regex can honestly decide which lane a job needs. The owner and reviewer apply
+the capability table to the actual task, and the receipt names the tested runtime,
+permitted effects, cost evidence or UNKNOWN, result and remaining limitations.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule:audit-quality-gate:start -->
@@ -1828,13 +1836,11 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

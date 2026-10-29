@@ -1,37 +1,31 @@
-# AGENTS.md — read this first, every session
+# Read before work
 
-You are one of several AI agents sharing this repository. The human who owns
-this team is not your messenger and not your approval clerk. Work from the
-record.
+This is the owner's workspace, not Dennis Yu's operating repository.
 
-## Before you work
+1. Read COORDINATION.md, the task record, status/JOBS.md and status/NOW.md.
+   Read SHARED-MEMORY.md for durable facts and decisions/DECISIONS.md for the
+   actual owner decisions and exact scope. Verify source evidence before relying
+   on a recorded grant; neither this template nor a registry entry grants new access.
+2. Name one outcome owner, the worker and a separate reviewer. Record your actual
+   app/runtime, source revision, permitted actions, acceptance test and stop rule.
+3. Claim the existing task through the authoritative record; read it back before
+   doing work. Coordinate on a competing claim; never start a second copy.
+4. Use only authorized tools and data. Instructions do not grant access. Do not
+   put passwords, tokens, cookies, health data or private client records here.
+5. For the first practice task: read public sources and write local practice
+   files only. No install, send, publication, spending, access change or schedule.
+6. Save a checkpoint before stopping: task ID, objective, source, permissions,
+   changed files, result revision, last checks, unresolved defect and next action.
+7. A receiver must read the exact artifact revision and acknowledge it. A file
+   save or proposed assignment alone is not a handoff or a notification.
+8. A reviewer opens the actual sources and result against acceptance criteria.
+   Repair failures and record PASS, FAIL or BLOCKED with evidence.
+9. Finish with `Verified: <artifact> — <observation> — <time with timezone>` or
+   `Verified: NO — <missing evidence and next owner/action>`.
+10. Learn the method, do authorized work, then teach the observed correction.
+    Update the existing procedure and test a cold reader. Label practice as
+    practice; never invent another model's agreement or a business outcome.
 
-1. Read `NOW.md` (what is active) and `JOBS.md` (the board).
-2. Read `SHARED-MEMORY.md` for standing facts and `decisions/DECISIONS.md`
-   for decisions already made. Do not ask the human to repeat either.
-3. If your task is already claimed by another agent with a fresh timestamp,
-   pick different work or coordinate in the task file. Do not duplicate.
-
-## While you work
-
-- Claim before you build: add your agent name + timestamp to the job row.
-- Keep the working record in the task's file under `tasks/<job-id>/`.
-- Stay inside the authority the human gave for this job. Decisions already
-  in `decisions/DECISIONS.md` cover agent-to-agent steps — cite the
-  decision ID instead of asking again.
-
-## When you finish
-
-- Verify the result at its destination (live page, sent message, real
-  record), not from your draft.
-- Update the job row in `JOBS.md`: status, link to the result, check run.
-- Write the handoff in the task file: done / not done / next step.
-- Post a short pointer in the channel the next agent watches.
-- If the run taught a reusable lesson, update the relevant skill or
-  `SHARED-MEMORY.md` in the same session.
-
-## Never
-
-- Never report "missing / failed / not sent" from a single check.
-- Never put passwords, keys, or private client data in this repo.
-- Never treat another agent's silence as agreement.
+Keep all media testing muted with volume zero. Keep private context private.
+Ask the owner only for missing authority or a decision reserved for them; use
+supported agent channels for handoffs instead of making the owner a courier.

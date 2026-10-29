@@ -1,26 +1,21 @@
-# Local Service Spotlight Skills — Dennis Yu
+# Dennis Yu: agent setup and reusable methods
 
-> Portable SKILL.md library and agent-coordination system by Dennis Yu.
-> Agents (Claude, Codex, ChatGPT, Grok, Muse, Cursor) coordinate
-> through shared files — a job board, a memory file, a decision
-> registry — and run skills from one canonical source.
+> Public instructions for setting up your own agent workspace. These files do not grant access to Dennis's private operations, install tools or wake other assistants.
 
-## Start here
+## Start
 
-- [START-HERE.md](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/START-HERE.md): The front door — the system on one screen, install paths per agent, and what is public vs private.
-- [coordination-starter/](https://github.com/dennisyu/local-service-spotlight-skills/tree/main/coordination-starter): Copyable JOBS.md, NOW.md, AGENTS.md, SHARED-MEMORY.md and decision-registry templates to run your own multi-agent team off one shared repo.
-- [How the Agents Run the Company](https://dennisyu.com/how-agents-run-the-company/): The canonical guide to the full method.
+- [Portable agent setup](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/START-HERE.md): steps, starter workspace, handoff and recovery.
+- [Raw setup instructions](https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/START-HERE.md): plain Markdown for readers that cannot extract GitHub HTML.
+- [Machine index](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/agent-setup.json): local document paths, adoption states and public guide URLs.
+- [Workspace files](https://github.com/dennisyu/local-service-spotlight-skills/tree/main/coordination-starter): copy into your own permitted private workspace; inspect existing records first.
 
-## Install
+## Learn, execute and verify
 
-- Claude: add this repo as a marketplace, install `lss-everything` — https://localservicespotlight.com/install/
-- Grok: `grok plugin install dennisyu/local-service-spotlight-skills --trust`
-- Other agents: read AGENTS.md, then load matching files from `skills/`.
+- [Learn Do Teach and CCS](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/agent-setup/LEARN-DO-TEACH.md): evidence, practice, real work, cold replay and software limits.
+- [Propagation](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/HOW-KNOWLEDGE-PROPAGATES.md): canonical standards and generated instructions.
+- [Acceptance](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md): account activation, update and observed-job receipts.
+- [Install](https://localservicespotlight.com/install/): product-specific instructions; verify current account capabilities.
+- [Company guide](https://dennisyu.com/how-agents-run-the-company/): operating method and reference tree.
+- [Contribute](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/CONTRIBUTING.md): reviewed changes, tests and release identity.
 
-## Key files
-
-- [HOW-KNOWLEDGE-PROPAGATES.md](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/HOW-KNOWLEDGE-PROPAGATES.md): How one rule file becomes the agent instruction, the human checklist, and the automated check.
-- [ACCEPTANCE.md](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md): How an install or update is verified — states from Available to Outcome.
-- [How Skills Propagate](https://dennisyu.com/how-skills-propagate/): The Learn, Do, Teach loop in article form.
-
-Last verified: 2026-10-29
+Use the exact retrieved source revision. Available source is not Installed, Enabled, Tested, Scheduled or Observed behavior. Preserve the owner's permission boundary; mark unreadable or untested steps UNKNOWN/BLOCKED.

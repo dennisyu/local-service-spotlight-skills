@@ -1,206 +1,140 @@
 ---
 name: client-relationship-cadence
-description: The canonical SOP for recurring client-relationship agents that are NOT a scored metrics loop — monthly/weekly jobs whose real work is checking for replies/approvals since last run, doing exactly one safe incremental improvement, and keeping a human relationship warm without spamming it. Use this instead of weekly-brand-maa.md when the entity isn't being scored against a Personal Brand Score or SOW milestones — it's a person or small client you're quietly maintaining momentum with. Each scheduled agent passes a PARAMETERS block and follows this file.
+description: Run recurring client-relationship maintenance without a scored metrics loop. Check for movement, perform one authorized safe increment, track asks and preserve state without unnecessary messages. Use when a relationship or mid-build project needs scoped continuity rather than a Personal Brand Score or MAA metrics report.
 author: Dennis Yu — Local Service Spotlight
 references:
-  - weekly-brand-maa.md (the sibling SOP for scored metrics-loop agents — use that one instead if the entity has a Personal Brand Score, SOW targets, or a metrics baseline to track)
-  - boil-the-ocean.md
-  - recursive-self-improvement-qa.md
   - https://blitzmetrics.com/meta-article-prompt/
 ---
 
 # Client Relationship Cadence — canonical SOP
 
-**Use this when** a scheduled agent's real job is relationship maintenance, not metrics tracking: a monthly brand-refresh check-in on a friend/peer (no scored rubric), or a client project still mid-build where you're waiting on THEM (logins, approvals, content sign-off) between runs. The two current examples are `igor-ivitskiy-monthly-brand-refresh` (monthly relationship refresh + content update) and `junks-above-daily-progress` (weekly client-project cadence pending a handoff meeting) — different cadences, same shape. Never improvise the method — if something's missing, flag it and propose the fix back into this file (see `recursive-self-improvement-qa`).
+Use this when the real task is maintaining useful momentum between substantive
+milestones. Keep client identities, private channels, approval history and live
+caller registries in the caller's private task record. Use `weekly-brand-maa`
+when a scored rubric, SOW metrics or an accepted comparison baseline is required.
 
 ## PARAMETERS the caller provides
-```
-entity_name:        # the person or client
-context_docs:       # absolute path(s) to read FIRST — canonical brief, project plan, "easy checklist", baseline notes
-comms_channels:      # where to check for replies/approvals since last run — email thread id/search terms, Basecamp project + thread URLs
-approval_gate:       # what specifically needs their sign-off before it goes live (e.g. "draft posts 498/499", "GoDaddy login", "Instagram photo permission") and what to do the moment each one arrives
-safe_increment_policy: # what "one incremental improvement needing no new access" is allowed to touch this run (e.g. repurpose existing public material into a draft post, fix one Yoast title, tidy one QA item) — and what's explicitly off-limits (never enter passwords into a login form, bring consequential publication decisions or missing authority for advance review, never permanently delete data)
-notify_rule:         # when to post/reply vs. stay quiet (e.g. "only if something material changed"; "one friendly nudge if no checklist progress in 7+ days AND no nudge sent in the past 14 days")
-state_file:          # where the running "state of the project" note lives — update it every run, don't just append noise
-voice:               # tone to write in (e.g. entity's own casual voice for client-facing drafts; Dennis's direct voice for outreach email)
+
+```yaml
+entity_name:           # verified person/client identity
+context_docs:          # current brief, plan, criteria and authorized source references
+comms_channels:        # approved source threads and destination references
+approval_gate:        # exact changes needing sign-off; how authority is evidenced
+safe_increment_policy: # allowed low-risk increment and explicit off-limits effects
+notify_rule:          # conditions, frequency, audience and authority for notifications
+state_file:           # private current checkpoint and dated run-log destination
+voice:                # approved tone; no impersonation of another person
 ```
 
-## STEP 0 — Load context
-Read every file in `context_docs` (there is no memory between runs — the docs + the last state note ARE the memory). Read the current `state_file` if it exists to see what happened last run.
+A synthetic policy example is “prepare one draft from approved public material;
+no publication, new access, spend or deletion.” It demonstrates the parameter
+format and is not a real client's instruction.
 
-## STEP 1 — Check for movement since last run
-Search `comms_channels` (Gmail thread, Basecamp project/thread) for anything new: replies, approvals, completed checklist items, sent credentials. For each item found:
-- **An approval arrived** → execute exactly what was approved (e.g. publish the specific posts that were greenlit), nothing more.
-- **Credentials arrived that violate `safe_increment_policy`** (e.g. a password sent in plain text) → do NOT use them to log in. Flag it to Dennis as top priority instead. Never enter a password into a login form on the entity's behalf.
-- **Nothing new** → say so plainly and move to Step 2.
+## STEP 0 — Load context and reconcile ownership
+
+Read every current `context_docs` reference and the latest `state_file`. Verify
+the task, owner, source revisions, permissions and previous effects. Do not rely
+on a prior chat being available in the current runtime. Check for a duplicate run
+or active claim before doing work or writing a new task.
+
+## STEP 1 — Check for movement
+
+Read only the approved channels for new replies, approvals and completed items.
+Inspect the actual artifact when a reply says work is complete.
+
+- **Approval arrived:** verify its source, scope and continued validity, then do
+  exactly the covered work after required checks. Approval of one item does not
+  authorize a related redesign, new recipient or new publication.
+- **Access information arrived:** use the approved secure access-reuse route.
+  Do not print, log, forward or commit credential values. A credential arriving
+  does not prove it works or grant permission to use it. Preserve actual platform
+  login, consent and MFA gates; rotate exposed credentials through the authorized
+  owner rather than copying them into a task record.
+- **No movement:** record that observation, then continue independent permitted
+  work. Missing access blocks only the dependent action.
 
 ## STEP 2 — One safe increment
-Do exactly ONE incremental improvement that fits `safe_increment_policy` and needs no new access — routine public-facing work proceeds within recorded scope and client consent under the selective-review standard; stage only consequential decisions or missing authority. Prefer real, repurposable material (the entity's own site, public press, existing reviews) over generic filler. Then QA whatever you touched (fetch the live pages, check nav/contact info/schema still parse) before moving on.
 
-## STEP 2.5 — Put the ask where it can be tracked, and OWN the chase
+Perform one useful change within `safe_increment_policy`, current authority and
+client consent. Prefer approved real material over filler. Honor explicit drafts
+and holds. Stage consequential changes or those lacking authority.
 
-**Standing since August 1, 2026 (Dennis).** *"I want it so there's no follow-up on me."* An ask that lives in an email thread has no owner, no state and no due date — it survives only as long as someone remembers it. Two of these agents had been staging email drafts for months and calling that follow-up. It isn't; it's a notification.
+Verify what changed at its intended destination, including relevant navigation,
+contact information, schema or artifact integrity. Keep a recovery target when
+appropriate. Do not report a draft as live or a tool save as delivery.
 
-**Every ask goes in the client's Basecamp project as a to-do, assigned to the person who has to do it, including the client.** Not a message, not a bullet in a status post, not an email paragraph. A to-do has an owner and a state; everything else is prose.
+## STEP 2.5 — Track the ask and own the follow-through
 
-- **Give the client access on day one.** A client-visible to-do that the client cannot see is worse than no to-do, because it looks done from the inside. Convention: project named `Google Knowledge Panel: <Name>`, tools = message board + todoset, internal team + the client as a **Client** (not Team), one client-visible list for their asks and one internal list for ours. Basecamp gotchas are in [[basecamp-lexxy-editor-gotcha]] — in particular, client visibility on a message cannot be set until the project actually has a client, so **add the client before you post**.
-- **Assign to the real owner, not the nearest human.** Rotating a password on the *client's own site* is the client's to-do, not ops'. A PHP fix is a developer's, not a VA's. Routing work to whoever is closest is how one person becomes the bottleneck for every client.
-- **When you must route through ops, make it a routing job, not a research job.** Title it with the verb and the time cost — "Route X to someone with file access (2 min)" — and carry the full spec so the person who receives it needs no context from anyone.
-- **Bundle defects by owner, not by discovery date.** Four separate small fixes in one codebase is one trip for one person, not four to-dos on four days.
+Every ask needs a stable task record, responsible function, actual assignee where
+appropriate, due/recheck time, original criterion and permitted rescue. Use the
+existing source system and task rather than create a competing email queue.
+Basecamp can supply that task record when the project uses it; another team's
+approved issue/task system can serve the same purpose.
 
-**Then chase it.** The next run re-reads every open to-do and decides whether reality moved, **by checking the artifact rather than the reply** — an unanswered to-do whose work is visibly done should be closed, not nudged. For what is genuinely still open, post one consolidated comment on the to-do and escalate on a written schedule: run 1 friendly nudge · run 2 nudge naming the cost in their terms · run 3 hand it to the human with the exact ask. **Write the next escalation date into `state_file`** — the next run is a different session with no memory of the promise, so an undated intention is not a mechanism (see the twelve-day Christine gap in [[blocked-work-becomes-muzamil-todo]]).
+- Verify the intended assignee can see the exact task and private/public tier.
+  Client-visible content must not expose internal-only analysis. New invitations
+  or access changes need their own authority and product-supported flow.
+- Assign the work to the function that can perform it. When routing is needed,
+  carry the complete specification so the recipient need not reconstruct context.
+- Bundle defects that share one owner and code path rather than create duplicate
+  chasers. Preserve one follow-up owner and next check.
+- Re-read the destination before nudging. If the work is already complete, verify
+  and close it. If status is uncertain, reconcile instead of repeating an action.
 
-Escalating to the principal is the *last* rung, not the first. If a run ends with "Dennis needs to chase this," ask first whether an agent could have checked it, an owner could have been named, or a date could have been set instead.
+Apply the recorded follow-up policy and frequency; neither silence nor an elapsed
+counter grants permission to send. Prefer safe work that removes the dependency.
+Escalate to the owning function first and bring the principal only a concrete
+bounded decision that genuinely requires their authority or relationship context.
+Do not bypass a contact into their own personal relationships without permission.
 
-## STEP 3 — Notify per `notify_rule`
-Most runs should NOT generate a client-facing message — only post/reply when something material happened (an approval was executed, a real update shipped) or the specific nudge condition in `notify_rule` is met. Silence is a valid, correct outcome for this step; don't manufacture an update to justify the run. Internal-only notes (to Dennis) can be more frequent than client-facing ones.
+## STEP 3 — Notify under `notify_rule`
 
-## STEP 4 — Update state and log
-Overwrite/update `state_file` with a short "state of the project" summary: what's approved, what's still pending from the entity, what was shipped this run, what the next milestone is. This is what the NEXT run (and any human who opens the file) reads first — keep it current, not additive noise.
+Send or post only when the exact policy permits it: for example a material
+approved result, an essential decision or an authorized due follow-up. Many
+runs correctly produce no client-facing notification. Keep the private run
+receipt even when no external message is appropriate.
 
-## STEP 5 — Report back
-Tell Dennis, concisely: what moved, what you did, what's still waiting on the entity, and anything ambiguous or broken (don't guess silently — flag it). Per the standing continuous-enhancement policy: act first, then inform; never silently change things without reporting exactly what changed.
+Check thread, audience, duplicate effects, facts and actual send/post authority.
+An explicit draft request remains a draft. Read back the destination after a
+write. On uncertain delivery, inspect the existing record before any retry.
 
-## NON-NEGOTIABLES
-- Never enter a password into any login form, even one the entity sent you directly.
-- Publish routine client-facing work only within recorded client authority and the run's scope, with required QA. Honor explicit draft requests and holds; seek advance review for consequential decisions or missing authority.
-- Never spam the relationship — an unnecessary update is worse than no update.
-- Every fact you report has a verifiable source (a real reply, a real page fetch) — never fabricate progress.
+## STEP 4 — Update the checkpoint and run log
 
-## Currently called by
-- `igor-ivitskiy-monthly-brand-refresh` — monthly cadence, comms_channels = Gmail thread `19929d6921b94285`, approval_gate = n/a (BlitzMetrics-owned article, no client sign-off needed, but WP auth is currently broken — see `blitzmetrics-app-password-broken` — use the Chrome+nonce method), safe_increment_policy = append a dated Update section, never rewrite the original narrative.
-- `junks-above-daily-progress` — weekly cadence until handoff meeting, comms_channels = Gmail thread "this is Dennis Yu" with uhhroland@gmail.com + Basecamp project 47842096, approval_gate = the "Easy Checklist for Roland" items (hosting login, admin-email confirm, Google access, Instagram permission, public email confirm) plus the two draft posts (498/499), safe_increment_policy = one repurposed draft or one QA fix per run, no visual overhaul, no publishing without Roland's OK, never enter his GoDaddy password.
+Keep `state_file` current: source revision, authority, last verified effects,
+open items, next milestone, owner, recheck and precise blockers. Preserve dated
+history rather than erase past failures or append an unreadable duplicate queue.
+Keep secrets and private relationship details off public distribution surfaces.
 
-## See also
-`weekly-brand-maa.md` (the scored-metrics sibling SOP) · `boil-the-ocean.md` (operating principles) · `recursive-self-improvement-qa.md` (loop this run before moving on — propose fixes back into this file when you had to guess)
+## STEP 5 — Report the useful result
 
-## Learned in the field
+Report what moved, what was done, actual destination evidence, remaining gaps and
+who owns the next step. Use plain words and links the intended reader can open.
+Never ask the principal to relay instructions, reproduce context or chase a person
+when a supported agent/source-system route exists.
 
-*Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
+## Portable lessons
 
-<!-- learning:2026-07-27-dont-retro-charge-silence-when-bootstrapping-a-ledger -->
-**July 27, 2026** (from: cxotalk-weekly-maa run)
+- An ask in untracked prose can quietly lose its owner and clock. Create or update
+  the existing task with a verifiable criterion and next check.
+- A confirmation screen does not prove a form or publication changed. Re-open the
+  saved source and intended public destination where relevant.
+- A quiet queue may be disconnected. Verify retrieval, owner, scope and actual
+  recent run evidence before claiming there is no work.
+- An old failure flag must be retired where the next run reads it after the fix
+  is verified; correcting only a report leaves the same false blocker alive.
+- A capability tested for one pilot does not establish a cohort rollout. Test the
+  actual intended account/runtime and preserve receiver readback.
 
-### Bootstrapping an ASK-LEDGER retroactively: don't retro-charge silence
+## Related methods and checks
 
-STEP 6.7 has required `ASK-LEDGER.md` since July 24, 2026, but this client's ledger didn't
-exist and had to be back-filled from three prior reports. Two judgment calls keep a
-back-filled counter honest, and should be the default whenever a ledger is created late:
+Use `weekly-brand-maa` for scored reporting and `recursive-self-improvement-qa`
+for source corrections. Follow [task ownership](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/assign-work-to-a-function.md),
+[existing access reuse](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/reuse-existing-authorized-access.md),
+[open-ask recovery](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/an-unanswered-ask-never-stops-the-work.md),
+[destination verification](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/verify-by-opening-the-live-artifact.md)
+and [Learn, Do, Teach](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/standards/learn-do-teach.md).
 
-1. **Start counting at the first run that had the SOP's discipline available**, not at the
-   ask's original date. Charging someone four misses for a period when nobody was tracking
-   misses produces a number that feels like an accusation and can't be defended.
-2. **Collapse bunched runs into one window.** This task fired 7/17, 7/19 and 7/20 — three
-   times in four days. Counting each as a separate miss would have put a client at Rung 4
-   ("recommend off-channel contact") for going quiet over a weekend. One window, one count.
-
-The payoff of doing it honestly: the finished ledger showed that **two of the three
-highest-count asks were ours or ops', not the client's** — the delivery-channel param and a
-GA4/GSC request nobody had chased. A ledger that inflates client counts hides our own drift.
-Learned July 27, 2026.
-
-<!-- learning:2026-08-01-admin-form-save-is-not-a-save -->
-**August 1, 2026** (from: igor-ivitskiy-monthly-brand-refresh)
-
-**A WordPress admin form that returns "Post updated" has not necessarily saved your fields — re-read them.**
-
-Creating a KG Entity record on blitzmetrics.com, the run set 7 ACF fields via JS, clicked
-Publish, and got a clean `Post updated.` notice with a real post ID. Every text, url and
-textarea field had silently discarded its value. Only the `true_false` toggles persisted.
-Had the run trusted the success notice, it would have reported a populated registry entry
-that was in fact blank — the same failure the other 34 records in that registry already had.
-
-Adopt as standing practice:
-
-1. **After any admin-form write, re-read the field values from the reloaded form** (or the
-   public render), never the success notice. `Post updated`, HTTP 200 and a returned post ID
-   all describe the *request*, not the *data*. Same rule as `DELETE /elementor/v1/cache`
-   returning 200 while the page still serves stale HTML.
-2. **When one field type saves and another does not, suspect the field-key contract, not
-   your input.** ACF resolves values by field key and requires keys prefixed `field_`. A
-   locally-registered group using bare names (`data-key="kgmid"`) fails `acf_update_value()`
-   for value-bearing types. Read `data-key` on `.acf-field` before blaming the form fill.
-3. **A silent write failure that predates you is a finding, not a footnote.** The empty
-   fields explained why 32 of 35 entity records were blank — a registry that had looked
-   populated because rows existed. Count the rows that carry *data*, not the rows.
-4. **Publish the defect in the meta article.** It converts a blocked task into the most
-   useful paragraph on the page, and it is how the next person finds the one-line fix.
-
-<!-- learning:2026-08-01-asks-belong-in-a-tracker-with-an-owner -->
-**August 1, 2026** (from: igor-ivitskiy-monthly-brand-refresh)
-
-**An ask staged in an email draft is a notification, not follow-up. Put it in the tracker, assign an owner, and chase it yourself.**
-
-Dennis, August 1, 2026: *"I want it so there's no follow-up on me... all the operations and
-follow-up and messaging and communication should be handled by agents."* The Igor run had done
-what these agents always did — staged a beautiful Gmail draft carrying three client asks — and
-that pattern quietly makes the principal the routing layer for every client.
-
-Rules to adopt:
-
-1. **Every ask becomes a to-do with an owner**, in the client's project. Prose in a message,
-   a bullet in a status post, or a paragraph in an email all share the same defect: no owner,
-   no state, no date. Only a to-do can be closed.
-2. **Invite the client before you write to them.** A client-visible list the client cannot
-   reach looks complete from the inside — the worst failure mode, because it reports green.
-   On Basecamp, client visibility on a message literally cannot be toggled until the project
-   has a client, so the order is: enable clients → add them → post → flip visibility.
-3. **Assign to the true owner, not the nearest human.** Rotating a password on the *client's
-   own* site is the client's job. A PHP fix is a developer's, not a VA's. Defaulting to
-   "assign it to ops" is exactly how one person becomes everyone's bottleneck — the thing
-   this rule exists to prevent.
-4. **Where routing through ops is unavoidable, ship a routing job, not a research job.** Put
-   the verb and the time cost in the title ("Route X to someone with file access — 2 min") and
-   carry the whole spec, so the receiver needs no context from anyone.
-5. **Bundle by owner, not by discovery date.** Four defects in one codebase is one trip.
-6. **Chase by checking the artifact, not the reply.** Next run, re-read every open to-do and
-   verify against reality — did the page change, did the score move — then close what is done
-   and escalate what is not, on a date written into the state file. The next run has no memory
-   of your intention; only the date survives.
-
-<!-- learning:2026-08-02-automate-for-the-cohort-not-the-pilot -->
-**August 2, 2026** (from: somba-skill-weekly-update)
-
-**August 2, 2026** (from: somba-skill-weekly-update)
-
-We had automated weekly delivery for one member out of roughly a hundred, and left the other
-ninety-nine on a hand-written page that had not been updated in two weeks.
-
-Dorine Holman was an early pilot. Building her a personal mirror folder, a personal checker
-script, a line in the propagator, and a dedicated Monday job was the right way to prove the
-idea worked. What went wrong is that it stayed that way after it worked. An audit found her
-folder holds **21 skill files, every one byte-identical** to the shared source — a full private
-copy of something everybody already receives.
-
-Meanwhile the surface all 100 members actually read carried news items typed by hand into
-`patch_news.py`, with a hard-coded date string frozen at 20 Jul. So the effort was exactly
-inverted: **automated and current for one person, manual and stale for everyone.**
-
-Dennis's question was the right one — "are we doing something special for her? We should do
-things in a central, solvable way and less one-offs." The rewrite serves everyone through the
-dashboard and Agent Library they already have. Same work, roughly a hundred times the audience.
-
-Three things to carry forward:
-
-**A pilot has an exit condition, and it should be written down when the pilot starts.** "Prove
-it with one member, then generalise" is a good plan. "Prove it with one member" alone becomes
-permanent infrastructure with an audience of one, and nobody notices because it keeps working.
-When you build for a single person to test something, write the graduation step into the job
-itself.
-
-**Count the audience of every automation you own.** If a scheduled job serves one member of a
-cohort, that is either a deliberate bespoke engagement or an un-generalised pilot. Both are
-fine; not knowing which is not. The tell here was cheap: one folder, 21 identical files.
-
-**Check the direction of the asymmetry.** The individual got the generated, always-current
-version and the group got the hand-maintained one. That is worth looking for elsewhere — the
-effort usually flows to whoever asked most recently, not to wherever it does the most good.
-
-Guard added: the rewritten job now says plainly that if something is worth telling one member it
-is worth telling all of them, and that no member-specific branch may be added to the pipeline.
-The one-off that remains — Dorine's mirror folder — is left in place on purpose, because
-deleting a real person's synced files is a decision for a human, not a cleanup. But it is
-frozen: not extended, and no second member's mirror gets created beside it.
+## Other house rules that apply to this work
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
@@ -269,8 +203,8 @@ penalty. Use the maintained shared audit run contract.
 
 - **Every task is owned by a function** — web, content, analytics, client success — and
   people sit inside functions. People join, leave and go on holiday; the function does not.
-- **Escalate to a function too.** "I told Muzamil" is not an escalation if Muzamil is
-  away; "escalated to the web function" is.
+- **Escalate to a function too.** "I told one colleague" is not an escalation if that
+  colleague is away; "escalated to the web function" is.
 - A function with exactly one person in it is still a function. Name it that way, so the
   second person changes nothing.
 - Work assigned to a named individual and nowhere else is work that silently stops when
@@ -296,12 +230,10 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
-- **A rule that lives only in an article, a chat message, a call recording, or your
-  context window is a rule the next agent will break.** That is not a prediction. The
-  black-button rule was published, illustrated, and given an enforcement plugin on
-  17 May 2026, and on 15 August 2026 an agent holding the entire skill pack in context
-  shipped a black button. The rule was never in `standards/`, so it never reached the
-  skills, so it was not there to be read.
+- **A lesson kept only in an article, chat, recording or context window may be
+  absent from the instructions the next operator loads.** Capture its reusable
+  criteria in the canonical standard, distribute the applicable source copies,
+  and test the receiving runtime before claiming adoption.
 - When anyone — the client, the account owner, an audit, or your own failure — states a
   rule that should hold next time, **your job is not to remember it. It is to write
   `standards/<slug>.md` before the session ends.** Memory does not survive a session
@@ -315,29 +247,36 @@ penalty. Use the maintained shared audit run contract.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies the rule into `AGENTS.md` and each distributed `SKILL.md`
+  whose declared scope applies. This prepares source copies; it does not update an
+  existing installation. Record the released revision, required sync action and a
+  fresh-session activation test for each account being claimed.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
-  header compiles straight into the live fleet sweep, so a violation on a published page
-  is caught by a schedule instead of by a person noticing. Every check must carry
-  passing and failing examples — a pattern that matches nothing reports a clean site
-  forever, which is worse than no check at all.
+  header is consumed by the fleet sweep when that sweep actually runs against an
+  applicable target. Every check must carry passing and failing examples. Exercise
+  a separate failing case too: a pattern that matches nothing can look healthy.
+  Record scheduling and actual firing separately; a check in source creates neither.
 - **Where a machine check would be dishonest, say so and leave `checks` out.** Judgement
-  rules are still rules; they are enforced by being read pre-flight, and pretending a
-  regex covers them hides the fact that nothing does.
+  rules still need a qualified reviewer to apply them to the actual result. Reading
+  a rule is not evidence of compliance, and a regex cannot certify judgement.
 - **Provenance is required, not decoration.** `captured_from` is how the team sees which
-  channels leak. If dozens of recorded calls have produced no standards, those calls are
-  not being captured, and that is visible at a glance instead of being a suspicion.
+  channels leak. Missing provenance is a reason to inspect the capture path; it does
+  not establish how many recordings exist or whether an undocumented process ran.
 - **When a new rule contradicts an existing one, resolve it in the file and say so
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
 - The order is Checklist → Content → Software. Write the checkable rule first, publish
   the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+  rather than hand-written beside it when the declarative check types suffice.
+  Complex checks need maintained code and tests linked from the rule. CCS means
+  Content, Checklists, Software; this checklist-first capture sequence preserves
+  that framework. An article alone leaves checks and adoption unproved.
+- **Close the learning loop with another operator.** Link the actual run, correction,
+  standard, teaching content and software check. Give a fresh operator only the
+  guide and permitted inputs; record the tested revision, result, failures and help
+  required. Fix ambiguity in the master and replay the affected steps. Saying the
+  lesson was shared does not prove another operator can use it.
 <!-- shared-rule:capture-what-you-learn:end -->
 
 <!-- shared-rule:keep-the-system-of-record-outside-the-model:start -->
@@ -379,10 +318,24 @@ penalty. Use the maintained shared audit run contract.
 
 - **Read the standard before you touch the work.** Skipping to doing produces output that
   looks right and is wrong in ways the person reviewing it has to find for you.
-- **Then do it,** all the way to a verified artifact.
-- **Then teach it** — write the run up so the next agent inherits what you learned. That
-  write-up is what turns one person's lesson into everyone's default, and it is the whole
-  reason `standards/` exists.
+- **Practice safely, then do it.** A public or synthetic rehearsal helps a new
+  operator learn the procedure. Label it as practice; it does not prove a client
+  result, production readiness, or mastery. Real Do requires an authorized task,
+  its original acceptance criteria, a checked artifact and destination evidence.
+- **Then teach it** — preserve the inputs and source revisions, steps, choices,
+  mistakes, fixes, checks and limits in a reusable guide. Keep private evidence
+  private and use only approved public examples. Update the canonical standard
+  and its Content, Checklist and Software forms instead of creating a competing SOP.
+- **Test the teaching with a fresh operator.** Another person or agent must work
+  from the guide and permitted inputs without the author filling in missing steps.
+  Record the tested revision, independent result, help required and failures. Fix
+  the guide and repeat the affected part. A replay proves only the tested scope;
+  agreement, publication, or a successful synthetic case alone does not prove mastery.
+- **Check that the checker can fail.** Run a known bad case and a clean case; where
+  practical add an independently chosen failure beyond the checker's own examples.
+  Report what software did not check, including meaning, permissions and actual
+  runtime behavior. Preserve the separate account and job evidence in the release
+  receipt rather than treating source consistency as adoption.
 - The order is not a preference. A rule taught before it is understood is repeated
   without judgement; a rule learned and then taught survives contact with a case it did
   not anticipate.
@@ -478,30 +431,24 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
 ## Basecamp updates stay in Basecamp
 
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
+- For an authorized project update, identify the exact existing thread and its
+  intended audience before writing. Use the team's approved source-system
+  connector, API or interface; the task still needs communication authority.
+- A notification is a cue to read the source record, not a destination. Do not
+  address a message to a generic notification sender or assume that changing
+  the sender identity makes a failed delivery route valid.
+- In this workflow, keep the update in its original project thread rather than
+  substituting an email route. If the approved write route is unavailable,
+  record BLOCKED with the failed step, evidence, owner and bounded next action.
+- Read the destination after the write. Verify the intended thread, expected
+  author and distinctive new content, and retain its location and observation
+  time. A successful send/save response alone does not establish delivery.
+- Ensure each participating runtime loads the current delivery policy before
+  acting, including scheduled workers. Source publication alone is not evidence
+  that those workers loaded or followed it.
+- This rule describes a reusable delivery safeguard. It names no account,
+  project, recipient, private incident or active deployment, and it grants no
+  permission to post, send or change access.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:screen-gct-before-amplification:start -->
@@ -820,8 +767,8 @@ entity-linking preflight and a live link audit.
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —
@@ -937,13 +884,13 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
@@ -1127,8 +1074,9 @@ Use these terms to choose the setup your business needs. Start with one guide an
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.
@@ -1174,72 +1122,66 @@ It supplements access and action-approval rules rather than granting new authori
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
 
-- **Route each job to the cheapest fleet lane that can actually do it.** Cost
-  order: local Qwen (free) first, then Muse, then everything else. This rule
-  picks the *seat* that runs the job. `model-judgment` still picks the *model
-  tier* inside that seat. They are two ladders, not one. There is no separate
-  skill-router skill; this file is the fleet router.
-- **Muse (Meta Muse Spark) is the default for high-volume work that does not
-  need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
-  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
-  tokens **per week**, not per month. A Muse token is Meta's own meter — do
-  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
-  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
-  put disputes, must-be-right research, or code/docs that matter on it.
+- **Route each job to the cheapest authorized lane that can actually do it.**
+  Compare the available runtimes' capabilities, cost, allowance, availability,
+  data-handling limits and required review. Lower-cost local text processing
+  may suit offline bulk work; an authorized hosted runtime may suit work that
+  needs a browser, connector or unattended availability. Verify those facts in
+  the actual account rather than assuming a product name establishes them.
+- **Choose the execution seat and model tier separately.** This rule picks the
+  runtime that owns the job. `model-judgment` picks an appropriate model tier
+  inside that runtime. A cheaper model without the required tools or reliability
+  is not a capable lane. Include retry and review costs in the comparison.
+- **Reserve stronger reasoning and independent review for demanding work.**
+  Disputes, consequential research and consequential code or documentation need
+  an appropriately capable worker. Experimental output must not be the sole
+  basis for a critical action; a qualified person or separate fresh-context
+  reviewer checks the original evidence and actual result first.
 
 | Lane | Takes | Hard stop |
 |---|---|---|
-| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
-| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
-| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
-| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
-| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+| **Offline text lane** | Authorized transcript triage, first drafts, preliminary analyses and bulk rewrites that need no external tools | No browser, login or publication unless separately supported and authorized. Confirm device availability before relying on it |
+| **Hosted volume lane** | Bounded repetitive work with tested tools, access and sufficient allowance | Do not route consequential reasoning here merely because it is cheap. Verify unattended availability rather than inferring it from hosting |
+| **Reasoning and review lane** | Hard reasoning, disputes, consequential research, code and documentation | Preserve independent review and specialist requirements. A model name alone does not establish competence |
+| **Existing recurring lane** | A recurring job whose current owner, schedule and result have actually been observed | Retain one owner while testing a replacement; an instruction or saved schedule alone does not prove a successful firing |
+| **Action or publishing lane** | Work requiring a specific authorized connector, account, destination or approval route | Stay within recorded authority. Access to one service or account does not establish access to another |
+| **Specialized lane** | Work only a particular approved runtime can reach or perform | Record the capability that justifies the cost; do not move work solely because another product is available |
 
-Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
-volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
-that is offline bulk text with no browser or login, and that can wait for a
-Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
-or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
-A fallback model inside one seat is fine — `model-judgment` requires one for
-unattended jobs — but a second lane for the same job is not.
+These are capability categories, not claims about any installed fleet. Record
+the actual runtime and tested capability in the team's private job record.
+One agent name may cover multiple execution environments; route by the environment
+the task needs. Product prices, quotas and capabilities need current verification
+for the specific plan and account. Token meters from different providers are not
+automatically comparable. This rule does not authorize another subscription.
 
-Lanes are seats, not desk names. Trenton appears twice because that desk has
-both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
-job needs.
+- **Keep one outcome owner and one active execution lane per job.** A fallback
+  model within that lane can handle an approved failure path. It must not create
+  a second independent owner or repeat an external action whose result is uncertain.
+- **Migrate through a controlled cutover.** Test the replacement in a paused,
+  dry-run or otherwise isolated state that cannot duplicate production effects.
+  Reconcile pending runs and uncertain writes, pause the old trigger, transfer
+  ownership through the authoritative task record, then enable the replacement.
+  Verify its actual result and retain the previous configuration for rollback.
+  If a safe cutover is unavailable, retain the current owner and record the blocker.
+- **Instructions do not grant authority.** Sending, publishing, spending,
+  installing, changing access and deleting require the owner's existing authority
+  and applicable approval rails. Keep passwords, tokens, account inventories and
+  private schedules out of this rule and its public copies.
 
-- **Until there are many Dots, keep dividing work across the existing
-  agents.** "Many Dots" means the models absorb the harness so humans do not
-  have to split tasks and project-manage them. Until that is true, do not
-  collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** Offline bulk text with no browser or login that can wait
-  for a Mac → Qwen first (free). Other high-volume work that does not need
-  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
-  to be right, or code/docs that matter → Astra, spot-checked while Dot is
-  new and never Dot alone on anything critical. Recurring mechanical work
-  already on a Kimi or Codex cron stays there until a Muse task is live. A
-  decision or a public post that needs a Grok desk stays on that desk, in a
-  short turn. Every other seat keeps the work already assigned to it.
-- **Never run the same job on two lanes.** When a job moves, the new lane
-  must be live before the old one is turned off.
-- This rule picks the seat. It does not grant permission to send, publish,
-  spend, or delete. Those still need the existing approval rails. Do not put
-  passwords, tokens, or account inventories in this file or in any public
-  copy of it.
+### Synthetic example — recurring media indexing
 
-### Worked example — weekly Google Photos person-albums
+This is a fictional routing exercise, not an account or schedule receipt. A
+recurring media-indexing job needs an authorized browser session and availability
+at its scheduled time. An offline text runner without those capabilities is
+unsuitable even if its marginal model cost is lower. A tested hosted volume lane
+may fit; a stronger reasoning lane is unnecessary unless the task's decisions
+require it. Check actual access and allowance, then use the controlled cutover
+above if changing an existing owner. No account connection or schedule is created
+by this example.
 
-On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
-Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
-from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
-runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
-browser. It is not an Astra/Dot job: it is high-volume album work, not hard
-reasoning.
-
-No regex can honestly decide which lane a job needs. Enforce this by reading
-the lane table before you schedule or claim a job, and by naming the live
-lane in the job's receipt.
+No regex can honestly decide which lane a job needs. The owner and reviewer apply
+the capability table to the actual task, and the receipt names the tested runtime,
+permitted effects, cost evidence or UNKNOWN, result and remaining limitations.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule:audit-quality-gate:start -->
@@ -1269,13 +1211,11 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

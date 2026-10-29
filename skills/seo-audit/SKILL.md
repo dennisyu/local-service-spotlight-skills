@@ -25,7 +25,7 @@ Use [How We Audit](https://blitzmetrics.com/how-we-audit/) to select the exam. T
 owns the seven-component **SEO & Growth** exam. Brand Authority, Website QA, proof-item
 authority, and Reputation-to-Sales Gap are separate products or measures.
 
-An SEO audit is not a crawl dump. A crawl tool produces 400 issues sorted by its own
+An SEO audit is not a crawl dump. A crawl tool can produce hundreds of issues sorted by its own
 severity guess; that is a data export, not an audit. An audit is a **judgement**: this is
 where the site stands, this is what is costing the most, this is the order to fix it, and
 here is the number so next month can be compared to this month.
@@ -34,19 +34,18 @@ here is the number so next month can be compared to this month.
 
 **Every finding names a URL, and every score component moves for a reason you can point at.**
 
-A score with no evidence under it is a vibe with a number attached. If you say Technical is
-55, you must be able to open the four things that made it 55. This is what makes the monthly
-re-audit possible at all: next month you are not re-forming an opinion, you are checking
-whether those four specific things changed.
+A score needs reviewable evidence. **Synthetic example:** if a Technical score is
+55 because of four documented defects, retain the evidence for each defect. A
+later re-audit checks those same items under the same rubric before reporting a
+change; the example is not an observed client score.
 
 ---
 
 ## The rubric — seven components, 100 points
 
-These weights are the standing Local Service Spotlight SEO & Growth score. They live **here** and
-nowhere else. Any job that needs them reads this file. (Until 2026-08-02 they existed only
-inside one scheduled task's parameter block, which meant no other audit could be compared to
-it and nobody could find the definition — the exact failure this file exists to end.)
+These are the versioned Local Service Spotlight SEO & Growth weights. This file
+owns the rubric; any job that needs it reads the pinned revision instead of copying
+weights into a private scheduled-task parameter block.
 
 **Family:** `seo-growth`. **Version:** `seo-growth/1.0 — 2026-10-02` (reconciled
 contract; the standing weights below are unchanged). Record this version, source commit,
@@ -115,7 +114,9 @@ for live engine observations and keep its results separate from this score.
    *Cloaking*, below.
 3. **Pull the numbers.** Domain Rating, organic traffic and value, keyword counts by
    position band, top pages, referring domains, and the same set for 3–6 competitors. The
-   competitor set is what turns "2,094 visits/mo" into "2,094 against a peer at 24,833."
+   competitor set gives a traffic estimate context. **Synthetic example:** compare
+   2,000 estimated visits/month with a peer's 20,000 under the same source and period;
+   these illustrative figures are not observed client metrics.
 4. **Score the seven components**, each against its own evidence list.
 5. **Delta it.** Against last month and the original baseline only when family, version,
    overlay, and coverage are comparable. Otherwise explain the changed contract.
@@ -129,29 +130,27 @@ for live engine observations and keep its results separate from this score.
 
 ---
 
-## Traps that have actually bitten us
+## Failure patterns to check
 
-Each of these produced a wrong finding in a real client audit before it became a rule.
+These reusable checks describe possible failure modes, not a report of a client run.
 
 ### Decode XML entities before fetching sitemap children
-A sitemap index returned 200 and listed five child sitemaps; all five fetched as **404, zero
-bytes**. The obvious read was that the client's sitemap fix was cosmetic. The child URLs
-contained `&amp;` — fetching the raw, un-decoded string requested a URL that does not exist.
-The sitemaps were fine. **Decode entities before you request the URL**, and treat "all N
-children failed identically" as a smell about your fetcher, not the site.
+A sitemap index can return 200 while incorrectly parsed child URLs fail. A literal
+`&amp;` in a requested URL may reflect missing XML entity decoding rather than a
+broken sitemap. **Decode entities before you request the URL** and investigate the
+fetcher when all child requests fail identically. Confirm the corrected requests
+before assigning the defect to the site.
 
 ### A parameter that names a missing data source has an expiry date
-An audit's parameters said `gsc_property: not configured`. The run believed it and wrote
-"No Google Search Console property is configured" into a client-facing report as a finding
-with an owner — while a teammate had been posting GSC data weekly in the client's own
-Basecamp thread. **Check the client's channel before you report a data source as missing.**
-Configuration facts go stale between the day a task is written and the day it runs.
+A stored parameter such as `gsc_property: not configured` may be stale. Reconcile it
+with current authorized configuration and project records before reporting that a
+source is missing. Absence from the current connector does not establish absence
+from the client's systems. Preserve any access limit as UNKNOWN.
 
 ### An empty result from a cross-origin fetch is not an empty result
-Five in-page `fetch` calls to a search endpoint returned zero results and the conclusion was
-"no history exists." They had failed silently on same-origin policy. **A search that returns
-nothing and a search that never ran look identical.** Prove the fetch can succeed at all —
-run a control query you know has hits — before you report an absence.
+A failed cross-origin `fetch` can be mistaken for an empty search if errors are
+suppressed. Keep request failures visible and run a known-hit control through the
+same supported route. A search that never succeeded cannot establish absent history.
 
 ### A client-rendered shell is not a thin page
 A plain HTTP fetch of a JS-rendered site returns a near-empty body. Score that as "no
@@ -159,12 +158,11 @@ content" and you have audited your own fetcher. If the static fetch returns a sh
 it in a browser before scoring On-Page or Content.
 
 ### Cloaking: check what Googlebot sees, every time
-On 2026-07-27, three sites on one host returned **HTTP 500 to every human and HTTP 200 with a
-spam storefront to Googlebot**, plus a fake 1,733-URL sitemap regenerated per request. From
-the human side the sites looked merely broken. This check costs one extra request and is the
-difference between "site is down" and "site is compromised and feeding spam to Google."
-Divergence between the human render and the bot render is a **security finding**, not an SEO
-finding — hand it to `security-audit.md` and do not publish anything to that site.
+A compromised site may return an error to a human request and unrelated spam to a
+crawler request, or generate an unexpected sitemap. From the human side the sites looked merely broken. Compare permitted human and crawler request variants, retaining evidence of the
+responses. Unexpected divergence is a **potential security finding** requiring
+investigation; hand it to `security-audit.md` and preserve the publication hold
+until the integrity concern is resolved.
 
 ---
 
@@ -187,244 +185,25 @@ finding — hand it to `security-audit.md` and do not publish anything to that s
 - Corrected facts update the evidence register, score rows, summary and any downstream
   full report before delivery; compare final rendered text with the accepted correction.
 
-## Learned in the field
+## Operational lessons
 
-*Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
+These portable lessons describe checks and failure modes, not a report of a
+particular account or client. Verify current vendor contracts before use.
 
-<!-- learning:2026-08-01-decode-xml-entities-before-fetching-sitemap-children -->
-**August 1, 2026** (from: wtp-monthly-seo-reaudit run (Western Trading Post, first tracked run))
+- Parse sitemap XML with an XML parser that decodes entities before fetching child URLs. A literal `&amp;` in a requested URL can create false missing-page results.
 
-### Decode XML entities before fetching sitemap child URLs — or you will report a healthy sitemap as dead
+- Revalidate data-source assumptions against the current authorized source and project record. An old parameter saying a source is unavailable may be stale; absence from your connector is not proof the source does not exist.
 
-Checking whether a client's `/sitemap.xml` fix had shipped, the index at `/xmlsitemap.php`
-returned 200 and listed five child sitemaps. Fetching each child returned **404 with zero
-bytes, all five**. The obvious read was that the sitemap fix was cosmetic — index alive,
-every child dead, zero URLs discoverable by Google. That was about to be the report's
-headline finding, and it was completely wrong.
+- Keep browser origin and request errors visible. A cross-origin `fetch` rejected before it leaves the browser is not a successful empty search. Use a supported authorized connector or same-origin method; do not suppress the error.
 
-`<loc>` values are XML-escaped. The real URL is `?type=pages&page=1`; the sitemap contains
-`?type=pages&amp;page=1`. Fetching the raw captured string sends a literal `&amp;`, the
-parameters break, and the server 404s. Decoding entities first, all five children return
-**200 with 4,516 URLs**.
+- Provide a standalone, discoverable explanation of each audit method and connect it to the topic tree. Derive the public inventory from maintained proof rather than unverified summary counts.
 
-**Rules:**
+- Inspect keywords, landing pages and integrity before crediting visibility. Spam or compromise can raise keyword totals while damaging the site; report the distinction explicitly.
 
-1. **Always entity-decode `<loc>` values before fetching them** — `&amp; &lt; &gt; &quot; &apos;`.
-   This bites hardest on sitemaps with query-string pagination, which is the norm on
-   BigCommerce, Shopify and most hosted carts.
-2. **A 100% failure rate across every child is a smell, not a finding.** Real breakage is
-   usually partial. When every single item in a set fails identically, suspect the harness
-   before the target — the same instinct that `max_crawl_pages` taught on the SERP side.
-3. **Never report an infrastructure catastrophe from a single method.** Confirm with a second
-   path (browser navigation to one child URL, or Search Console's sitemap report) before
-   telling a client their sitemap is dead. The credibility cost of a false alarm this size is
-   far higher than the minute it takes to check.
+- Preserve source revisions, actual task evidence, independent review and known limitations. A source checklist pass does not certify a live site or a business result.
 
-Same run, same discipline, two more times: a robots.txt parser that reported "zero crawlers
-blocked" was **prove-red tested against a synthetic blocking file first** (it correctly caught
-2/2) before its zero on the live file was trusted, and cross-checked against a raw count of
-bare `Disallow: /` lines. And a **+46% referring-domain jump** — exactly the shape of a
-mode/measurement artifact — was confirmed as real by pulling `refdomains-history` and seeing a
-steady 13-week climb before it was narrated as growth.
-
-**General form of all three: when a check returns the answer you were hoping for, or an answer
-too dramatic to be ordinary, make it prove itself before it reaches the client.**
-
-Learned August 1, 2026.
-
-<!-- learning:2026-08-01-read-the-channel-before-reporting-a-missing-data-source -->
-**August 1, 2026** (from: wtp-monthly-seo-reaudit run (Western Trading Post) — GSC reported as "not configured" while a teammate posted GSC data weekly in the same thread)
-
-### A task parameter that names a missing data source is a claim with an expiry date — check the client's own channel first
-
-This monthly audit's parameters said `gsc_property: not configured — Ahrefs + direct crawl only`. The run
-believed it, wrote "**No Google Search Console property is configured**" into the client-facing report as a
-finding with an owner, and listed "get GSC verified" as an action.
-
-Then the run opened the client's Basecamp thread to post — and found our own operations teammate posting
-**Search Console data in that thread every single week**: ~120K impressions, 3.5% CTR, average position 8.4,
-top queries with click and impression counts. The property existed. It had existed the whole time.
-
-Two costs, and the second is worse than the first:
-
-1. We nearly asked a client for access they had already granted — the exact move that burns an ask and makes
-   the retainer look inattentive.
-2. **We did the analysis without the best data we had.** Ahrefs estimates rankings; Search Console reports
-   what actually happened. The GSC query table turned out to contain the single most valuable finding of the
-   engagement — 4,419 monthly impressions on one dead craftsman's name, landing on a sold lot page. That
-   insight was sitting in a teammate's weekly report for six weeks and the "authoritative" monthly audit
-   never opened it.
-
-**Rules:**
-
-1. **Before reporting any data source as missing or unavailable, read the client's own channel** — the
-   Basecamp thread, the shared drive, the weekly report someone else files. A per-client agent's parameters
-   are a snapshot of what was true when the task was written; access changes and nobody edits the task.
-2. **When you find the parameters wrong, fix the parameters, not just the report.** File it as an ask against
-   *yourself* in the ledger. A correction that lives only in one month's write-up gets re-derived — and
-   re-published as a false finding — next month.
-3. **Sibling reporting is a data source, not just context.** The existing 2026-07-20 learning already says
-   "check sibling scheduled tasks' outputs before declaring a metric blocked." Extend it: check what *humans*
-   on the account are already reporting, in the channel you are about to post into. Read the channel before
-   you write to it.
-4. Corollary on credit: when you use a teammate's numbers, say whose they are. The client should see one team,
-   and the teammate should see their work being built on rather than quietly re-derived.
-
-This is the same family as the 2026-07-31 lesson that "blocked is a claim that needs evidence" — but a rung
-earlier. There, a real blocker was misdiagnosed. Here, a **non-existent** blocker was inherited from a config
-file and published without anyone testing it once.
-
-Learned August 1, 2026.
-
-<!-- learning:2026-08-02-same-origin-required-before-trusting-an-empty-search -->
-**August 2, 2026** (from: WTP auction-tracking investigation — five Basecamp searches returned zero because they ran cross-origin from a client site)
-
-### An in-page `fetch` to another origin fails silently — and an empty search result looks exactly like "no history exists"
-
-Asked to mine years of Basecamp history for prior conversations about a client's auction platform, the run
-issued five in-page `fetch` calls to Basecamp's search endpoint and got **zero results for every query**. The
-obvious conclusion was that the team had never discussed it.
-
-The tab was sitting on `auction.westerntradingpost.com`. Every one of those fetches was cross-origin and was
-rejected by the browser before it left. The catch block swallowed it. Zero results was never an answer about
-Basecamp; it was an answer about CORS.
-
-Run properly, the same searches returned 11 hits, and the history contained the single most valuable fact of
-the whole investigation: the client's tag stack was **already installed** on the auction platform, and a
-9-month-old access request had dissolved into an unrecorded phone call.
-
-**Rules:**
-
-1. **Check `location.host` before trusting any in-page `fetch` result.** If you are not on the origin you are
-   querying, the result is meaningless. Navigate first, then query.
-2. **A search that returns zero needs a positive control before you report "nothing exists."** Run a query you
-   *know* has hits through the identical code path. If the control also returns zero, the harness is broken,
-   not the archive. This is the same prove-red discipline used for the robots.txt parser — extend it to every
-   negative finding, because a negative finding is the easiest kind to fake.
-3. **A second failure mode stacked on the first here:** even same-origin, Basecamp's search results are
-   client-rendered, so `fetch` + `DOMParser` returned a shell with zero result anchors while the live page
-   showed 53. When a fetch of a modern web app returns structurally empty results, read the **rendered DOM**
-   after navigation instead. Two different mechanisms, one identical symptom: a confident, wrong "nothing
-   found."
-4. **"No prior discussion" is a claim about an archive, and archives are exactly where an agent's memory
-   advantage lives.** Getting it wrong does not just lose a fact — it wastes the institutional knowledge the
-   client already paid for, and re-asks colleagues questions they answered months ago.
-
-Learned August 2, 2026.
-
-<!-- learning:2026-08-03-a-capability-with-no-skill-file-cannot-propagate -->
-**August 3, 2026** (from: SEO-audit discoverability + security-audit generalization build — 49 published SEO audits with no hub, a rubric that lived inside one task's parameters, and a jammed harvest queue that turned out to be the same problem)
-
-### A capability with no skill file cannot propagate, cannot be taught, and cannot absorb its own lessons
-
-Dennis asked to be "clearly known for doing SEO audits." The assumption going in was that
-this was a marketing problem — write something, publish it. It was not. An inventory of our
-own properties found **49 published SEO audits** already live, plus 341 audit-family URLs
-across three domains. The work existed. What did not exist was any way to see it as a body
-of work: **no hub page, 38 of the 49 with zero inbound links from any sibling audit, 35 with
-zero outbound links.** Forty-nine deliverables, each an island.
-
-The root cause was one level deeper than the missing page. There was **no `seo-audit` skill
-file.** The seven-component SEO & Growth rubric — the thing that makes two audits
-comparable — existed only inside the parameter block of a single scheduled task
-(`wtp-monthly-seo-reaudit`). One job could score a site. Nothing else could, because there
-was nowhere else to read the definition from.
-
-And that had a visible symptom nobody had connected to it: **three learning notes had been
-jammed in the harvest inbox since the previous day, all naming `seo-audit`**, all
-unresolvable, aging toward the stale-queue gate. The morning run reported them as a queue
-defect. They were not a queue defect. They were the loop correctly reporting that a skill
-our own runs believed in did not exist. **A jammed learning note is a missing-capability
-alarm, not a filing error.** Creating the skill cleared all three on the next run.
-
-Same shape on the security side: seven real checks, a 116-assertion test suite, and a
-track record of caught compromises — all of it existing only as one client site's
-`monitor.py`. Nothing generalized to the network because there was no file to generalize
-*into*.
-
-**The rule:** when you find yourself doing something well and repeatedly, check whether it
-has a canonical skill file. If it does not, that is the deliverable — before the landing
-page, before the marketing. The file is what lets the capability propagate to every pack,
-teach itself to the next agent, and accumulate lessons. Publishing a page about a
-capability with no skill file behind it produces a claim; publishing the skill produces a
-system.
-
-**Second-order effect worth expecting:** adding two mandated skills tripped every coverage
-gate that had been built in the preceding days — the SOMBA orphan check, the numbering
-lists, the count derivations. All of them fired correctly and named exactly what to edit.
-Ten registration points across three builders, caught by gates rather than by users. That
-is what those gates are for, and a day where several fire at once is a good day, not a
-messy one.
-
-### Corollary — measure your own work before describing it
-
-Before writing a word of the hub page, the 49 audits were fetched anonymously and measured:
-status, transfer size, time to last byte, inbound and outbound sibling links, `h1`, meta
-description, JSON-LD. That is our own `seo-audit` skill run against our own SEO audits, and
-it produced the specific numbers the page and this note are built on — including one page
-taking **9.9 seconds** to load and three returning **403 to every programmatic client**
-(browser-verified fine, so: invisible to AI crawlers, visible to humans).
-
-Running the skill on yourself first is not a nice touch. It is how you find out whether the
-claim you are about to publish is true.
-
-<!-- learning:2026-08-03-a-compromised-site-must-not-outscore-a-clean-one -->
-**August 3, 2026** (from: weekly-fleet-hub-audit v2, fleet-wide proof enrichment)
-
-### Rankings are evidence about *someone's* work — check whose before you score them
-
-The fleet scoreboard rates every site on PROVE: Domain Rating, organic traffic, and the
-breadth of keywords it ranks for. On August 3, 2026 the two sites whose keyword breadth
-looked strongest were **philmershon.com (15 ranking keywords)** and
-**theathletespotlight.com (5)**. Both readings were the attacker's, not the client's.
-
-Pulling the keywords themselves rather than the count showed philmershon.com — a speaker
-coach — ranking for `hollymoviehd`, `borat thong`, `nintendo store`, `jupiter 125 black
-colour`, `silver aranjanam for baby boy`. Fourteen of its fifteen keywords were junk. On
-theathletespotlight.com it was five of five: `activa 6g best colour`, `bici decathlon`,
-`charola de unicel`. Selecting `best_position_url` alongside the keyword named the cause —
-every junk term ranked on an injected path:
-
-    /product-similar-image/?<digits>
-    /product/category/<digits>
-    /shop/manufacturer-site?&transition=top<digits>
-
-with a per-site numeric suffix (`…1310` on one, `…1760` on the other): one kit, two of our
-sites. Uncorrected, philmershon.com scored **impact 40**; netting the injected rankings out
-drops it to **21** — an eight-point BIS swing. A compromised site was being rewarded for
-being compromised, and would have been reported as a fleet-best performer.
-
-**Rules:**
-
-1. **Never score a ranking you have not attributed to a URL.** `org_keywords` is a count of
-   things Google associates with the domain, not a count of the client's wins. Select
-   `best_position_url` and read the paths before any keyword number reaches a score or a
-   report.
-2. **Net hostile rankings out of the score and raise them as an action instead.** Traffic
-   attributed to injected URLs gets discounted in the same proportion. Infection is a
-   dispatch item, never a credit.
-3. **Judge the keywords by fit with the person, not by how spammy they look.** `nintendo
-   store` is a fine keyword — for a games retailer. The tell is a *speaker coach* ranking
-   for it. The GCT already states who each site is for; compare against that.
-4. **A clean sitemap and a clean REST API do not mean a clean site.** Both sites' sitemaps
-   and post lists were entirely legitimate, and their real content is real. The injection
-   lives beside WordPress, in URL space the CMS never enumerates — so any check that walks
-   the sitemap or `/wp-json/wp/v2/posts` is structurally unable to find it. What Google has
-   indexed is a separate source of truth from what the CMS will admit to.
-5. **404 today does not mean clean.** These URLs now return 404 to human and Googlebot
-   alike from a datacenter IP, while still ranking. That is consistent with cleaned-but-
-   still-indexed *and* with a cloak keyed to something the probe can't reproduce. Say which
-   of those you have ruled out; removal still has to be requested in Search Console either
-   way, because the junk keeps ranking after the files are gone.
-
-Companion to the same day's `classify-the-metric-dont-just-count-it` (referring domains,
-same disease one metric over): fleet median referring domains is 368 against a median of
-**26 dofollow**, because a `.shop`/`.store` link-spam blast hits every site daily. Report
-`refdomains_dofollow`; `refdomains` is noise. billybatt.com reads as 324 referring domains
-and is actually **2 dofollow, both of them ours** — the authority problem the number
-appears to have solved is entirely intact. Ahrefs exposes an `is_spam` flag; use it.
-
-Learned August 3, 2026.
+Apply the maintained [Learn, Do, Teach method](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/agent-setup/LEARN-DO-TEACH.md)
+and [acceptance checks](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md).
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
@@ -506,8 +285,8 @@ penalty. Use the maintained shared audit run contract.
 
 - **Every task is owned by a function** — web, content, analytics, client success — and
   people sit inside functions. People join, leave and go on holiday; the function does not.
-- **Escalate to a function too.** "I told Muzamil" is not an escalation if Muzamil is
-  away; "escalated to the web function" is.
+- **Escalate to a function too.** "I told one colleague" is not an escalation if that
+  colleague is away; "escalated to the web function" is.
 - A function with exactly one person in it is still a function. Name it that way, so the
   second person changes nothing.
 - Work assigned to a named individual and nowhere else is work that silently stops when
@@ -548,12 +327,10 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
-- **A rule that lives only in an article, a chat message, a call recording, or your
-  context window is a rule the next agent will break.** That is not a prediction. The
-  black-button rule was published, illustrated, and given an enforcement plugin on
-  17 May 2026, and on 15 August 2026 an agent holding the entire skill pack in context
-  shipped a black button. The rule was never in `standards/`, so it never reached the
-  skills, so it was not there to be read.
+- **A lesson kept only in an article, chat, recording or context window may be
+  absent from the instructions the next operator loads.** Capture its reusable
+  criteria in the canonical standard, distribute the applicable source copies,
+  and test the receiving runtime before claiming adoption.
 - When anyone — the client, the account owner, an audit, or your own failure — states a
   rule that should hold next time, **your job is not to remember it. It is to write
   `standards/<slug>.md` before the session ends.** Memory does not survive a session
@@ -567,29 +344,36 @@ penalty. Use the maintained shared audit run contract.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies the rule into `AGENTS.md` and each distributed `SKILL.md`
+  whose declared scope applies. This prepares source copies; it does not update an
+  existing installation. Record the released revision, required sync action and a
+  fresh-session activation test for each account being claimed.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
-  header compiles straight into the live fleet sweep, so a violation on a published page
-  is caught by a schedule instead of by a person noticing. Every check must carry
-  passing and failing examples — a pattern that matches nothing reports a clean site
-  forever, which is worse than no check at all.
+  header is consumed by the fleet sweep when that sweep actually runs against an
+  applicable target. Every check must carry passing and failing examples. Exercise
+  a separate failing case too: a pattern that matches nothing can look healthy.
+  Record scheduling and actual firing separately; a check in source creates neither.
 - **Where a machine check would be dishonest, say so and leave `checks` out.** Judgement
-  rules are still rules; they are enforced by being read pre-flight, and pretending a
-  regex covers them hides the fact that nothing does.
+  rules still need a qualified reviewer to apply them to the actual result. Reading
+  a rule is not evidence of compliance, and a regex cannot certify judgement.
 - **Provenance is required, not decoration.** `captured_from` is how the team sees which
-  channels leak. If dozens of recorded calls have produced no standards, those calls are
-  not being captured, and that is visible at a glance instead of being a suspicion.
+  channels leak. Missing provenance is a reason to inspect the capture path; it does
+  not establish how many recordings exist or whether an undocumented process ran.
 - **When a new rule contradicts an existing one, resolve it in the file and say so
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
 - The order is Checklist → Content → Software. Write the checkable rule first, publish
   the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+  rather than hand-written beside it when the declarative check types suffice.
+  Complex checks need maintained code and tests linked from the rule. CCS means
+  Content, Checklists, Software; this checklist-first capture sequence preserves
+  that framework. An article alone leaves checks and adoption unproved.
+- **Close the learning loop with another operator.** Link the actual run, correction,
+  standard, teaching content and software check. Give a fresh operator only the
+  guide and permitted inputs; record the tested revision, result, failures and help
+  required. Fix ambiguity in the master and replay the affected steps. Saying the
+  lesson was shared does not prove another operator can use it.
 <!-- shared-rule:capture-what-you-learn:end -->
 
 <!-- shared-rule:every-article-has-pictures:start -->
@@ -695,10 +479,24 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 
 - **Read the standard before you touch the work.** Skipping to doing produces output that
   looks right and is wrong in ways the person reviewing it has to find for you.
-- **Then do it,** all the way to a verified artifact.
-- **Then teach it** — write the run up so the next agent inherits what you learned. That
-  write-up is what turns one person's lesson into everyone's default, and it is the whole
-  reason `standards/` exists.
+- **Practice safely, then do it.** A public or synthetic rehearsal helps a new
+  operator learn the procedure. Label it as practice; it does not prove a client
+  result, production readiness, or mastery. Real Do requires an authorized task,
+  its original acceptance criteria, a checked artifact and destination evidence.
+- **Then teach it** — preserve the inputs and source revisions, steps, choices,
+  mistakes, fixes, checks and limits in a reusable guide. Keep private evidence
+  private and use only approved public examples. Update the canonical standard
+  and its Content, Checklist and Software forms instead of creating a competing SOP.
+- **Test the teaching with a fresh operator.** Another person or agent must work
+  from the guide and permitted inputs without the author filling in missing steps.
+  Record the tested revision, independent result, help required and failures. Fix
+  the guide and repeat the affected part. A replay proves only the tested scope;
+  agreement, publication, or a successful synthetic case alone does not prove mastery.
+- **Check that the checker can fail.** Run a known bad case and a clean case; where
+  practical add an independently chosen failure beyond the checker's own examples.
+  Report what software did not check, including meaning, permissions and actual
+  runtime behavior. Preserve the separate account and job evidence in the release
+  receipt rather than treating source consistency as adoption.
 - The order is not a preference. A rule taught before it is understood is repeated
   without judgement; a rule learned and then taught survives contact with a case it did
   not anticipate.
@@ -711,8 +509,8 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
   Bing and every AI answer engine "this person is that entity". Pointed at a deleted or
   wrong target, it does not merely fail — it actively teaches the wrong association.
 - **Verify every `sameAs` target returns 200 before publishing schema, and re-verify
-  quarterly.** Entities get deleted. A Wikidata item asserted on a client site was
-  deleted on 7 July 2026 and the claim stood until an audit found it five weeks later.
+  quarterly.** Targets can be deleted or change identity after publication.
+  Recheck the current destination rather than relying on a past successful read.
 - **Only anchors count.** `preconnect`, `dns-prefetch`, `canonical` and `alternate`
   hints are not links a visitor can follow, and treating them as links reports
   `googletagmanager.com` as a dead link on every site that loads analytics — noise that
@@ -782,10 +580,10 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 - **A testimonial needs a real, nameable person.** No initials-only quotes, no
   "a client in Minneapolis".
 - **The sweep only catches the obvious half, and you need to know which half.** A
-  placeholder that looks like a real number — a hero stat reading "$34K Monthly MRR" that
-  nobody can source — is indistinguishable from a true one to any regex. That exact
-  string sat live on a paying client's site. The only defence is that whoever publishes a
-  number can name its source before it goes up.
+  placeholder that looks like a real number is indistinguishable from a true one to
+  any regex. A synthetic example is a hero stat reading "$34K Monthly MRR" with no
+  source; this is a test example, not a client metric. Whoever publishes a number must
+  be able to name its source before it goes up.
 <!-- shared-rule:no-placeholder-copy:end -->
 
 <!-- shared-rule:no-popup-on-load:start -->
@@ -1055,30 +853,24 @@ merely to satisfy the older marker check.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
 ## Basecamp updates stay in Basecamp
 
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
+- For an authorized project update, identify the exact existing thread and its
+  intended audience before writing. Use the team's approved source-system
+  connector, API or interface; the task still needs communication authority.
+- A notification is a cue to read the source record, not a destination. Do not
+  address a message to a generic notification sender or assume that changing
+  the sender identity makes a failed delivery route valid.
+- In this workflow, keep the update in its original project thread rather than
+  substituting an email route. If the approved write route is unavailable,
+  record BLOCKED with the failed step, evidence, owner and bounded next action.
+- Read the destination after the write. Verify the intended thread, expected
+  author and distinctive new content, and retain its location and observation
+  time. A successful send/save response alone does not establish delivery.
+- Ensure each participating runtime loads the current delivery policy before
+  acting, including scheduled workers. Source publication alone is not evidence
+  that those workers loaded or followed it.
+- This rule describes a reusable delivery safeguard. It names no account,
+  project, recipient, private incident or active deployment, and it grants no
+  permission to post, send or change access.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:screen-gct-before-amplification:start -->
@@ -1397,8 +1189,8 @@ entity-linking preflight and a live link audit.
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —
@@ -1514,13 +1306,13 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
@@ -1891,8 +1683,9 @@ Use these terms to choose the setup your business needs. Start with one guide an
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.
@@ -1938,72 +1731,66 @@ It supplements access and action-approval rules rather than granting new authori
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
 
-- **Route each job to the cheapest fleet lane that can actually do it.** Cost
-  order: local Qwen (free) first, then Muse, then everything else. This rule
-  picks the *seat* that runs the job. `model-judgment` still picks the *model
-  tier* inside that seat. They are two ladders, not one. There is no separate
-  skill-router skill; this file is the fleet router.
-- **Muse (Meta Muse Spark) is the default for high-volume work that does not
-  need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
-  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
-  tokens **per week**, not per month. A Muse token is Meta's own meter — do
-  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
-  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
-  put disputes, must-be-right research, or code/docs that matter on it.
+- **Route each job to the cheapest authorized lane that can actually do it.**
+  Compare the available runtimes' capabilities, cost, allowance, availability,
+  data-handling limits and required review. Lower-cost local text processing
+  may suit offline bulk work; an authorized hosted runtime may suit work that
+  needs a browser, connector or unattended availability. Verify those facts in
+  the actual account rather than assuming a product name establishes them.
+- **Choose the execution seat and model tier separately.** This rule picks the
+  runtime that owns the job. `model-judgment` picks an appropriate model tier
+  inside that runtime. A cheaper model without the required tools or reliability
+  is not a capable lane. Include retry and review costs in the comparison.
+- **Reserve stronger reasoning and independent review for demanding work.**
+  Disputes, consequential research and consequential code or documentation need
+  an appropriately capable worker. Experimental output must not be the sole
+  basis for a critical action; a qualified person or separate fresh-context
+  reviewer checks the original evidence and actual result first.
 
 | Lane | Takes | Hard stop |
 |---|---|---|
-| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
-| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
-| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
-| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
-| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+| **Offline text lane** | Authorized transcript triage, first drafts, preliminary analyses and bulk rewrites that need no external tools | No browser, login or publication unless separately supported and authorized. Confirm device availability before relying on it |
+| **Hosted volume lane** | Bounded repetitive work with tested tools, access and sufficient allowance | Do not route consequential reasoning here merely because it is cheap. Verify unattended availability rather than inferring it from hosting |
+| **Reasoning and review lane** | Hard reasoning, disputes, consequential research, code and documentation | Preserve independent review and specialist requirements. A model name alone does not establish competence |
+| **Existing recurring lane** | A recurring job whose current owner, schedule and result have actually been observed | Retain one owner while testing a replacement; an instruction or saved schedule alone does not prove a successful firing |
+| **Action or publishing lane** | Work requiring a specific authorized connector, account, destination or approval route | Stay within recorded authority. Access to one service or account does not establish access to another |
+| **Specialized lane** | Work only a particular approved runtime can reach or perform | Record the capability that justifies the cost; do not move work solely because another product is available |
 
-Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
-volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
-that is offline bulk text with no browser or login, and that can wait for a
-Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
-or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
-A fallback model inside one seat is fine — `model-judgment` requires one for
-unattended jobs — but a second lane for the same job is not.
+These are capability categories, not claims about any installed fleet. Record
+the actual runtime and tested capability in the team's private job record.
+One agent name may cover multiple execution environments; route by the environment
+the task needs. Product prices, quotas and capabilities need current verification
+for the specific plan and account. Token meters from different providers are not
+automatically comparable. This rule does not authorize another subscription.
 
-Lanes are seats, not desk names. Trenton appears twice because that desk has
-both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
-job needs.
+- **Keep one outcome owner and one active execution lane per job.** A fallback
+  model within that lane can handle an approved failure path. It must not create
+  a second independent owner or repeat an external action whose result is uncertain.
+- **Migrate through a controlled cutover.** Test the replacement in a paused,
+  dry-run or otherwise isolated state that cannot duplicate production effects.
+  Reconcile pending runs and uncertain writes, pause the old trigger, transfer
+  ownership through the authoritative task record, then enable the replacement.
+  Verify its actual result and retain the previous configuration for rollback.
+  If a safe cutover is unavailable, retain the current owner and record the blocker.
+- **Instructions do not grant authority.** Sending, publishing, spending,
+  installing, changing access and deleting require the owner's existing authority
+  and applicable approval rails. Keep passwords, tokens, account inventories and
+  private schedules out of this rule and its public copies.
 
-- **Until there are many Dots, keep dividing work across the existing
-  agents.** "Many Dots" means the models absorb the harness so humans do not
-  have to split tasks and project-manage them. Until that is true, do not
-  collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** Offline bulk text with no browser or login that can wait
-  for a Mac → Qwen first (free). Other high-volume work that does not need
-  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
-  to be right, or code/docs that matter → Astra, spot-checked while Dot is
-  new and never Dot alone on anything critical. Recurring mechanical work
-  already on a Kimi or Codex cron stays there until a Muse task is live. A
-  decision or a public post that needs a Grok desk stays on that desk, in a
-  short turn. Every other seat keeps the work already assigned to it.
-- **Never run the same job on two lanes.** When a job moves, the new lane
-  must be live before the old one is turned off.
-- This rule picks the seat. It does not grant permission to send, publish,
-  spend, or delete. Those still need the existing approval rails. Do not put
-  passwords, tokens, or account inventories in this file or in any public
-  copy of it.
+### Synthetic example — recurring media indexing
 
-### Worked example — weekly Google Photos person-albums
+This is a fictional routing exercise, not an account or schedule receipt. A
+recurring media-indexing job needs an authorized browser session and availability
+at its scheduled time. An offline text runner without those capabilities is
+unsuitable even if its marginal model cost is lower. A tested hosted volume lane
+may fit; a stronger reasoning lane is unnecessary unless the task's decisions
+require it. Check actual access and allowance, then use the controlled cutover
+above if changing an existing owner. No account connection or schedule is created
+by this example.
 
-On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
-Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
-from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
-runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
-browser. It is not an Astra/Dot job: it is high-volume album work, not hard
-reasoning.
-
-No regex can honestly decide which lane a job needs. Enforce this by reading
-the lane table before you schedule or claim a job, and by naming the live
-lane in the job's receipt.
+No regex can honestly decide which lane a job needs. The owner and reviewer apply
+the capability table to the actual task, and the receipt names the tested runtime,
+permitted effects, cost evidence or UNKNOWN, result and remaining limitations.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule:audit-quality-gate:start -->
@@ -2033,13 +1820,11 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

@@ -1,17 +1,7 @@
-# NOW.md — what is active right now
+# Compatibility pointer — NOW.md
 
-Keep this short. If it is not here, it is not today's priority.
-
-## Active
-
-- (example) JOB-001 — two-agent handoff test. Owner: unassigned.
-
-## Waiting on the human
-
-- Nothing. (List only decisions only the human can make — judgment,
-  money beyond standing authority, credentials, irreversible actions.
-  Everything else belongs in JOBS.md, not here.)
-
-## Recently verified
-
-- (date) — (job) — (link to receipt)
+The maintained starter uses [status/NOW.md](status/NOW.md) for claims and
+checkpoints. This file is not another board. Read
+[COORDINATION.md](COORDINATION.md) and the
+[migration note](README.md#compatibility-and-existing-workspaces) before moving
+an existing flat workspace. Choose one authority and test all reader/writer paths.

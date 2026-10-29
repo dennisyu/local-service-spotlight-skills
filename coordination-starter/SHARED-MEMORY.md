@@ -1,12 +1,18 @@
-# SHARED-MEMORY.md — facts every agent on this team should know
+# Shared memory — durable facts, not a second task board
 
-Dated, sourced, and short. When a fact changes, edit the line and note the
-date — do not leave two versions standing.
+Keep dated, sourced facts that another authorized worker needs across sessions.
+Record the source reference, relevant scope and last verification. If a fact
+changes, update its existing entry and preserve the reason/history; do not leave
+two contradictory current versions. Keep task claims in the task record and
+[status/NOW.md](status/NOW.md), and decisions in
+[decisions/DECISIONS.md](decisions/DECISIONS.md).
 
-- (YYYY-MM-DD) Who the human is, what to call them, their timezone.
-- (YYYY-MM-DD) The businesses / projects the team works on, one line each.
-- (YYYY-MM-DD) Standing preferences (formats, tools, channels).
-- (YYYY-MM-DD) Who the other agents are and what each is best at.
+- Owner's preferred name, timezone and communication preferences.
+- Approved project scope and the authoritative source for current status.
+- Tested agent/runtime capabilities, their evidence and any known limits.
+- A reusable lesson and the canonical procedure it updates.
 
-Vendor memory (what a model remembers inside one app) is a cache.
-This file is the record.
+These are prompts for entries, not verified facts or account entitlements.
+Do not store secrets, credentials, health data or private client records here.
+Keep necessary operational context in the intended private access tier.
+Vendor memory is a cache; the team chooses one durable authority per record type.
