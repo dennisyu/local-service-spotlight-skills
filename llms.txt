@@ -7,7 +7,7 @@
 - [Portable agent setup](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/START-HERE.md): steps, starter workspace, handoff and recovery.
 - [Raw setup instructions](https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/START-HERE.md): plain Markdown for readers that cannot extract GitHub HTML.
 - [Machine index](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/agent-setup.json): local document paths, adoption states and public guide URLs.
-- [Workspace files](https://github.com/dennisyu/local-service-spotlight-skills/tree/main/templates/agent-workspace): copy into your own permitted private workspace; inspect existing records first.
+- [Workspace files](https://github.com/dennisyu/local-service-spotlight-skills/tree/main/coordination-starter): copy into your own permitted private workspace; inspect existing records first.
 
 ## Learn, execute and verify
 

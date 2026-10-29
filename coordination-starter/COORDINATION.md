@@ -4,6 +4,14 @@ Before real work the owner records the authoritative location here. During local
 practice it is this folder. After authorization it may be a private repository or
 another supported shared system. Do not maintain competing boards in two apps.
 
+## Memory and decisions
+
+Use [SHARED-MEMORY.md](SHARED-MEMORY.md) for durable sourced facts and
+[decisions/DECISIONS.md](decisions/DECISIONS.md) for actual owner decisions.
+They link to task/source evidence rather than becoming duplicate claim boards.
+A recorded decision is used only within its verified scope, limits and current
+status. Do not infer authority from an empty template, a summary or silence.
+
 ## Task and claim
 
 Use one stable task ID from request through receipt and retries. JOBS lists work

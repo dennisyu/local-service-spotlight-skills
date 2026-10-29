@@ -3,6 +3,9 @@
 This is the owner's workspace, not Dennis Yu's operating repository.
 
 1. Read COORDINATION.md, the task record, status/JOBS.md and status/NOW.md.
+   Read SHARED-MEMORY.md for durable facts and decisions/DECISIONS.md for the
+   actual owner decisions and exact scope. Verify source evidence before relying
+   on a recorded grant; neither this template nor a registry entry grants new access.
 2. Name one outcome owner, the worker and a separate reviewer. Record your actual
    app/runtime, source revision, permitted actions, acceptance test and stop rule.
 3. Claim the existing task through the authoritative record; read it back before

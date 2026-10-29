@@ -1,6 +1,6 @@
 ---
 name: social-amplification-engine
-description: Orchestrate Dennis Yu's six-phase Social Amplification Engine for an evidence-qualified, authorized client: Plumbing, Goals, Content, Targeting, Amplification, and weekly MAA optimization. Use after gct-screen and the engagement/roster gates, or to reconcile existing SAE components without creating a parallel system.
+description: "Orchestrate Dennis Yu's six-phase Social Amplification Engine for an evidence-qualified, authorized client: Plumbing, Goals, Content, Targeting, Amplification, and weekly MAA optimization. Use after gct-screen and the engagement/roster gates, or to reconcile existing SAE components without creating a parallel system."
 author: Dennis Yu — Local Service Spotlight
 references:
   - https://blitzmetrics.com/social-amplification/

@@ -13,7 +13,7 @@
     "ACCEPTANCE.md",
     "CONTRIBUTING.md"
   ],
-  "templates_dir": "templates/agent-workspace",
+  "templates_dir": "coordination-starter",
   "check_command": "python3 scripts/check_agent_setup.py",
   "adoption_states": ["Available", "Delivered", "Installed", "Enabled", "Tested", "Scheduled", "Observed"],
   "outcome_evidence": "Record business outcomes separately; source consistency is not runtime adoption.",

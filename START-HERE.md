@@ -8,7 +8,7 @@ you already have; a second subscription is not required for the first exercise.
 | You need | Start here | Proof to keep |
 |---|---|---|
 | Understand the system | [Current company guide](https://dennisyu.com/how-agents-run-the-company/) | Task owner, permissions and acceptance criteria |
-| Create your own workspace | [Starter files](templates/agent-workspace/README.md) | Your workspace location and source revision |
+| Create your own workspace | [Starter files](coordination-starter/README.md) | Your workspace location and source revision |
 | Let another agent continue | Steps 3–5 below | Receiver read of the exact artifact revision |
 | Install skills in a supported product | [Illustrated installation guide](https://localservicespotlight.com/install/) | Installed revision and fresh activation result |
 | Turn a lesson into a repeatable method | [Learn → Do → Teach](docs/agent-setup/LEARN-DO-TEACH.md) | Corrected procedure, negative test and cold replay |
@@ -18,6 +18,18 @@ skills. Dennis's operating repositories are private and are **not dependencies**
 for your setup. Create your own private workspace for your team's decisions and
 work. A public article may describe his implementation; it does not grant access
 to his clients, tools, agents or credentials.
+
+## The system on one screen
+
+| Record or method | What it carries | What it does not establish |
+|---|---|---|
+| One task record and claim board | Owner, permitted work, current state and next action | A file alone is not a lock or wake trigger |
+| Shared memory | Dated, sourced facts needed across sessions | Vendor memory is not the team's authority |
+| Decision registry | Actual owner decisions, original evidence and exact scope | A template or agent paraphrase grants no new authority |
+| Skills, LDT and CCS | Recipes, verified work, reusable teaching and honest checks | Publication alone is not installation, obedience or mastery |
+
+The [coordination starter](coordination-starter/README.md) includes all three
+record types. Keep each record private when it contains your operational context.
 
 ## 1. Give your assistant this request
 
@@ -42,7 +54,7 @@ the model name alone establishes none of these capabilities.
 
 ## 2. Prepare a workspace you control
 
-Read the [starter README](templates/agent-workspace/README.md). If you have an
+Read the [starter README](coordination-starter/README.md). If you have an
 existing team record, integrate the missing fields there instead of making a
 second board. For a new local practice workspace, a shell-capable agent can run:
 
@@ -52,7 +64,7 @@ cd local-service-spotlight-skills
 git rev-parse HEAD
 python3 scripts/check_agent_setup.py
 # mkdir fails safely if this destination already exists; choose a new destination.
-mkdir ../my-agent-workspace && cp -R templates/agent-workspace/. ../my-agent-workspace/
+mkdir ../my-agent-workspace && cp -R coordination-starter/. ../my-agent-workspace/
 python3 scripts/check_agent_setup.py --workspace ../my-agent-workspace
 ```
 
@@ -61,6 +73,12 @@ base commit **and** hashes of the actual instructions used; do not attribute
 uncommitted instructions to that commit. If cloning is unavailable, use the public file
 links or a supported repository download. Reading instructions is not installing
 a skill. Never paste tokens into a prompt or put secrets in a repository.
+
+The earlier flat starter used root `JOBS.md` and `NOW.md`. This version keeps
+those paths as compatibility pointers; its active boards are `status/JOBS.md`
+and `status/NOW.md`. If you already copied a starter, preserve its live record.
+Migrate only after reviewing a snapshot, choosing one authority and updating
+all reader/writer paths. Do not overwrite work with empty templates.
 
 After the local exercise, the owner may authorize a **private** GitHub repository
 or another supported shared record. Use least-privilege access for each actual
@@ -75,7 +93,7 @@ Allowed actions are reading this public source and writing local practice files.
 Acceptance: correctly distinguish Available, Installed, Enabled and Tested, and
 identify one thing the exercise does not prove.
 
-Copy [task-template.md](templates/agent-workspace/task-template.md) to your task's
+Copy [task-template.md](coordination-starter/task-template.md) to your task's
 record. In your workspace, add the task to `status/JOBS.md`, then claim it in
 `status/NOW.md` with one outcome owner, worker, reviewer, write scope, source
 revision and recheck time. Keep the same task ID on both views. They describe one
@@ -115,10 +133,10 @@ rather than grading the builder's summary. Record PASS, FAIL or BLOCKED with
 evidence. A separate session tests context portability; a different reviewer
 tests the result. Sessions on the same model are not cross-model consensus.
 
-Start with the [pending receipt](templates/agent-workspace/handoff.pending.json).
+Start with the [pending receipt](coordination-starter/handoff.pending.json).
 Leave `receiver_ack` null and review NOT_CHECKED until those observations exist.
-Use the [complete format example](templates/agent-workspace/handoff.example.json) and
-[field contract](templates/agent-workspace/handoff.schema.json) for a receipt:
+Use the [complete format example](coordination-starter/handoff.example.json) and
+[field contract](coordination-starter/handoff.schema.json) for a receipt:
 
 ```bash
 python3 scripts/check_agent_setup.py --receipt path/to/your-receipt.json --require-verified

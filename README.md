@@ -8,7 +8,7 @@ connector and execution capabilities must be tested in that assistant's account.
 
 | Your goal | Use |
 |---|---|
-| Coordinate your own agents | [Portable setup](START-HERE.md) and [workspace templates](templates/agent-workspace/README.md) |
+| Coordinate your own agents | [Portable setup](START-HERE.md) and [workspace templates](coordination-starter/README.md) |
 | Install a supported skills package | [Illustrated install guide](https://localservicespotlight.com/install/) and product-specific routes below |
 | Understand Learn → Do → Teach and CCS | [Worked learning loop](docs/agent-setup/LEARN-DO-TEACH.md) |
 | Let an agent navigate the source | [agent-setup.json](agent-setup.json) and [llms.txt](llms.txt) |
@@ -21,6 +21,7 @@ task, such as checking a customer claim or drafting an article. Read the steps,
 make one draft, and check the result before you share it.
 
 This is the maintained source for the Local Service Spotlight Claude marketplace.
+
 Its current package list and skill counts come from `.claude-plugin/marketplace.json`.
 
 ## Install skills, or read the instructions directly

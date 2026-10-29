@@ -17,11 +17,16 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_FILES = (
+    "README.md",
     "AGENTS.md",
     "COORDINATION.md",
+    "SHARED-MEMORY.md",
+    "decisions/DECISIONS.md",
     "status/JOBS.md",
     "status/NOW.md",
     "agent-notes/README.md",
+    "task-template.md",
+    "handoff.pending.json",
     "handoff.example.json",
     "handoff.schema.json",
 )

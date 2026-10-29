@@ -207,6 +207,38 @@ class SourceChecks(unittest.TestCase):
             path.write_text(json.dumps(good_receipt()), encoding="utf-8")
             self.assertEqual(main(["--receipt", str(path), "--require-verified"]), 0)
 
+    def test_required_starter_records_cannot_be_omitted(self):
+        required_records = (
+            "README.md", "SHARED-MEMORY.md", "decisions/DECISIONS.md",
+            "task-template.md", "handoff.pending.json",
+        )
+        for relative in required_records:
+            with self.subTest(file=relative), tempfile.TemporaryDirectory() as name:
+                root = Path(name)
+                self.make_source(root)
+                templates = root / "templates/agent-workspace"
+                (templates / relative).unlink()
+                self.assertIn(f"workspace is missing {relative}", validate_workspace(templates))
+
+    def test_legacy_seven_file_workspace_is_not_complete(self):
+        legacy_files = (
+            "AGENTS.md", "COORDINATION.md", "status/JOBS.md", "status/NOW.md",
+            "agent-notes/README.md", "handoff.example.json", "handoff.schema.json",
+        )
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            for relative in legacy_files:
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("{}" if path.suffix == ".json" else "# Legacy starter\n")
+            self.assertEqual(set(validate_workspace(root)), {
+                "workspace is missing README.md",
+                "workspace is missing SHARED-MEMORY.md",
+                "workspace is missing decisions/DECISIONS.md",
+                "workspace is missing task-template.md",
+                "workspace is missing handoff.pending.json",
+            })
+
 
 if __name__ == "__main__":
     unittest.main()

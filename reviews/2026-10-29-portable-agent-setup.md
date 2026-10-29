@@ -56,7 +56,7 @@ installation, account activation or a client/business outcome.
 
 ## Checks and deliberate failures
 
-The reviewed candidate passed **228 Python tests**, including **23 new setup
+The reviewed candidate passed **230 Python tests**, including **25 new setup
 validator tests**, plus source/navigation validation, generated-rule sync,
 marketplace validation, scope congruency and declared fleet-check self-tests.
 Reviewers also ran the documented synthetic unmuted-video exercise without
@@ -67,8 +67,8 @@ Reproduce the main checks from the source root:
 
 ```bash
 python3 scripts/check_agent_setup.py
-python3 scripts/check_agent_setup.py --receipt templates/agent-workspace/handoff.pending.json
-python3 scripts/check_agent_setup.py --receipt templates/agent-workspace/handoff.pending.json --require-verified
+python3 scripts/check_agent_setup.py --receipt coordination-starter/handoff.pending.json
+python3 scripts/check_agent_setup.py --receipt coordination-starter/handoff.pending.json --require-verified
 ```
 
 The third command must **fail**: a pending receipt is not verified completion.
@@ -94,3 +94,27 @@ Prepared patches are not live publication. Confirm each ordinary public URL
 after the established publisher releases its exact reviewed candidate. Broader
 cross-product and cross-model review requires the actual receiver's response;
 this source review does not invent that consensus.
+
+## Reconcile one starter and all references
+
+A concurrent public starter release added shared memory and a decision registry
+at `coordination-starter/`. Reconciliation preserves that established public path
+and combines those records with the tested task and receipt formats. The earlier
+flat board paths remain compatibility pointers; new work uses one active board
+layout. Existing workspaces preserve their live records until an intentional,
+verified migration rather than copying a second empty board alongside them.
+
+An independent reconciliation review found that the old copied-workspace check
+could pass with required memory, decisions and task/receipt scaffolds missing.
+The current check requires those records; omission cases and the incomplete
+legacy seven-file copy are regression fixtures. Rehearsal copies the maintained
+starter through the documented guarded command, validates its pending receipt,
+rejects a false verified-completion claim, and preserves an existing workspace.
+
+An independent reviewer in another runtime also found stale numbered-state
+references and product aliases in prepared article updates after structural and
+asset checks passed. The correction is procedural: when vocabulary changes,
+search diagrams **and all prose references and aliases**, fix the canonical
+source, then have a fresh runtime recheck the exact amended revision. Structural
+checks do not certify semantic consistency. Live article publication and final
+acceptance remain separate, unverified results until their actual receipts exist.
