@@ -1,158 +1,107 @@
 # How knowledge propagates here
 
-*Written for anyone — no code required. If you only read one page in this
-repository, read this one.*
+If you want your agents to inherit a useful lesson, capture it once, distribute a
+versioned update, and test it in the receiving runtime. This guide explains that
+loop. For your first coordinated setup, begin at [START-HERE.md](START-HERE.md).
 
----
+## The loop we are trying to prove
 
-## The goal
+**A lesson is reusable when another operator can apply it without the author
+filling in missing steps.** Publishing instructions is one step toward that result.
 
-**Something learned once should become something every agent checks
-automatically, forever, without anyone having to remember it.**
+| Stage | What to do | Evidence to keep |
+|---|---|---|
+| Learn | Read the current method, its sources and limits | Method revision and relevant source references |
+| Practice | Rehearse with safe public or synthetic inputs | Labeled practice result, failures and corrections |
+| Do | Finish an authorized real task against its original criteria | Actual artifact, destination readback and independent check |
+| Teach | Explain the successful method, including decisions and failures | Updated canonical guide and a fresh operator's replay |
+| Improve | Use a failed check or replay to correct the method | Source change, regression check and tested update receipt |
 
-That is the whole objective. Not "write it down." Not "tell the team." Those
-both depend on a human remembering at the exact moment it matters, and that
-human is usually mid-task, three hours in, with the rule nowhere in sight.
+Learn → Do → Teach (LDT) supplies the learning cycle. Content, Checklists,
+Software (CCS) supplies the reusable forms: an explanation, a checkable procedure,
+and honest automation. Practice helps learning; a synthetic success does not
+establish a production outcome or mastery. The detailed replay method is in
+[Learn, Do, Teach in practice](docs/agent-setup/LEARN-DO-TEACH.md).
 
-The test of whether we have achieved it is simple:
+## Why capture comes first
 
-> A rule is stated on Monday. On Friday, an agent nobody briefed — working for
-> someone we have never met, on a site we have never seen — declines to break it.
+The original August 16, 2026 account in this repository describes a useful
+failure: the black-button rule had been published on May 17, but an agent still
+shipped a black button on August 15. The rule had not entered `standards/`, so it
+was missing from the generated skill instructions. That historical incident is
+the reason for the capture rule; it is not a current audit of anyone's website.
 
-If that happens without a person in the loop, the machinery works. If it does
-not, the machinery is decoration.
+A durable loop has four parts:
 
----
-
-## The four steps, and the one that was missing
-
-Getting from "Dennis said something" to "every agent obeys it" takes four steps.
-Skip any one and the chain breaks silently.
-
-| | Step | What it means | Was it working? |
-|---|---|---|---|
-| 1 | **Capture** | The lesson gets written down once, in the one place that counts | **No** |
-| 2 | **Distribute** | That writing physically reaches every place an agent reads | Only for one rule |
-| 3 | **Enforce** | An agent or a page that ignores it gets caught | Partly |
-| 4 | **Feed back** | A violation found in the wild sharpens the rule | No |
-
-Step 2 is the part that already existed and was excellent — the design was
-right, it was just wired to a single file. Step 1 is the part that was missing
-entirely, and step 1 is where knowledge actually leaks.
-
-Here is the proof, and it is not hypothetical:
-
-> The black-button rule was published on **17 May 2026**, with an article, an
-> illustrated explanation, and a WordPress plugin to enforce it. On
-> **15 August 2026** — ninety days later — an agent with the *entire skill pack
-> loaded* shipped a black button onto a paying client's site.
-
-Nothing was broken. Nobody was careless. The rule simply never entered the one
-directory that agents actually read, so from the agent's point of view the rule
-did not exist. **A rule that lives only in an article is a rule the next agent
-will break.**
-
----
+| Part | Repository mechanism | What still requires evidence |
+|---|---|---|
+| Capture | One source file in `standards/`, with provenance and scope | The lesson is correct and the source is permitted for reuse |
+| Distribute | Generate applicable copies in `AGENTS.md` and distributed skills | Release, receiver access, account update and fresh activation |
+| Check | Run declared software checks and independent review | Actual target coverage, failure cases and unverified judgments |
+| Feed back | Correct the master, test and release a new revision | A fresh operator can use the correction in the claimed scope |
 
 ## The mechanics, in plain language
 
-Think of it as a stamp and a stack of envelopes.
+**One rule has one maintained source.** Put it in `standards/<slug>.md`. Its
+header records origin, date, scope and any supported machine checks. Its body
+states what to do, why and how to review it. Amend that master instead of editing
+copies inside each skill.
 
-**One rule lives in one file.** It goes in a folder called `standards/`. One
-file, one rule, plain English — the black-button rule is a page of text saying
-what to do, why, and how to check. That file is the *only* place the rule is
-written down. There is no second copy anyone maintains.
+**Skills carry generated copies.** Marketplace packages can contain standalone
+skill folders without this repository's `standards/` directory. A rule that only
+links to a missing local directory may be unusable there. The sync command embeds
+the rule into `AGENTS.md` and the skills whose declared scope applies:
 
-**Skills are the envelopes.** The pack contains a catalog of skills — content factory, SEO
-audit, weekly brand MAA, and so on. Each one is a self-contained folder. When
-someone installs the pack from a QR code at a conference, what lands on their
-machine is those folders. **They do not get the `standards/` directory. They do
-not get this repository.** So a rule that merely *links* to the standards folder
-would ride along until it reached them and then evaporate.
-
-**So we stamp the rule into every envelope.** One command —
-`python3 scripts/sync_shared_rules.py` — reads every file in `standards/` and
-copies its text, word for word, into `AGENTS.md` and into every skill whose declared
-scope matches the rule. Agent-behavior rules reach every skill in the manifest. It
-marks each copy with an invisible tag so it knows which text it owns:
-
+```bash
+python3 scripts/sync_shared_rules.py
 ```
+
+Agent-behavior rules apply to every skill in the manifest. Publishing and design
+rules apply only to matching skills. Generated blocks have markers such as:
+
+```html
 <!-- shared-rule:no-black-buttons:start -->
-   … the rule, exactly as written in standards/no-black-buttons.md …
+<!-- The source rule body appears between these markers. -->
 <!-- shared-rule:no-black-buttons:end -->
 ```
 
-Nobody types those copies and nobody edits them. The command writes the
-scope-derived copies, all generated and all identical to their source. The
-validator derives the expected set from the current standards and skills instead
-of relying on a narrative count that can drift.
+**Validation detects source drift.** The sync check compares the expected blocks
+with the copies in the candidate checkout. A stale copy makes that check fail.
+Whether a failure blocks a merge depends on the repository's enforced merge
+controls. These checks do not inspect every installed package or prove an agent
+obeyed an instruction at runtime.
 
-**The build refuses to let a copy go stale.** Every time a change is proposed,
-an automatic check re-runs the stamp and compares. If one copy differs from the
-source by a single character, the check fails and the change cannot be merged.
-Drift is not caught late; it is impossible.
-
-**The result:** adding a house rule to the entire fleet — and to every person who
-ever installed the pack — is *dropping one markdown file into `standards/` and
-running one command.* No code change. No hand-editing generated copies. Nothing to
-remember.
-
----
+**A merge makes the correction available.** Existing installations still need a
+supported update, activation and canary check. A downloaded ZIP remains a dated
+snapshot. Do not promise automatic updates to every past installer. Follow the
+[update contract](skills/skill-registry/references/update-contract.md) and retain
+the previous accepted revision for recovery.
 
 ## What one file produces
 
-This is the part worth understanding, because it is what makes the system
-recursive rather than merely tidy. **A single standard file generates three
-different things**, which is exactly Content · Checklist · Software:
+| CCS form | How the standard is used | Limit |
+|---|---|---|
+| Content | Its explanation is embedded in applicable skill instructions; an article teaches the method and examples | Generated text is not proof it was loaded |
+| Checklists | An operator or reviewer applies its concrete criteria to the work | A checked box is not destination evidence |
+| Software | Supported `checks` declarations are consumed by `fleet_check.py` | Only declared checks, reached targets and tested cases are covered |
 
-```
-                       standards/<one-rule>.md
-                                 │
-        ┌────────────────────────┼────────────────────────┐
-        ▼                        ▼                        ▼
-   CONTENT                  CHECKLIST                 SOFTWARE
-   the rule text,           the same words,           the machine checks
-   stamped into             read by a person          when declared in
-   AGENTS.md and            before applicable         the file header,
-   scope-matched skills     work                      compiled into a sweep
-        │                        │                        │
-        ▼                        ▼                        ▼
-   each applicable          each applicable          each matching artifact
-   agent                    reviewer                 swept on a schedule
-```
+For this rule-capture workflow, write the **checklist first**, then the teaching
+content, then the software check. That order prevents the visible article from
+being mistaken for completion. CCS still names the three forms Content,
+Checklists, Software; it is not a claim that software can be generated for every
+judgment. Timing depends on the rule, tests and rollout, so there is no general
+"ten minutes" or "zero minutes" guarantee.
 
-The header of each standard carries the patterns that detect a violation in real
-HTML. `scripts/fleet_check.py` compiles those into the sweep. **The sweep is
-generated from the rule — never written next to it.** That distinction is the
-whole point: the moment the checker is a separate hand-written script, the two
-drift, and you get a checker that passes sites which break the rule, which is
-worse than having no checker, because now you trust it.
+Simple HTML checks can live in the standard's header. More complex checks may
+need maintained code, fixtures and review linked from the standard. Shared
+provenance helps prevent drift, but the check itself can still be incomplete or
+wrong.
 
----
+## Capture and release a rule
 
-## The order matters: Checklist first, then Content
-
-The instinct is to write the article first. The article is the visible artifact
-— it can be shared, it looks finished, it teaches. That instinct is exactly what
-loses rules, because once the article exists the work *feels* done, and the
-enforceable form never gets written. Ninety days of black buttons is what that
-feels like in practice.
-
-So the order is inverted:
-
-1. **Checklist** — write the checkable rule in `standards/`. Ten minutes.
-2. **Content** — write the article that teaches it, from the rule.
-3. **Software** — the sweep is generated automatically. Zero minutes.
-
-The article is downstream of the rule, not upstream. Same output, and the rule
-cannot be lost on the way.
-
----
-
-## Capturing a rule: the one command
-
-When anyone states a rule — you, a client, an audit, or an agent's own mistake —
-the response is not to remember it. It is:
+When a client, account owner, audit or failure yields a reusable lesson, first
+look for an existing canonical rule. Amend it when appropriate. To create a new
+one on a working branch:
 
 ```bash
 python3 scripts/new_standard.py "No autoplay with sound" \
@@ -160,90 +109,90 @@ python3 scripts/new_standard.py "No autoplay with sound" \
   --applies-to published-html
 ```
 
-Then write the rule in the file it creates, run the stamp, open a pull request.
-Roughly ten minutes end to end.
+This is an example scaffold command, not an instruction to create a duplicate
+of the existing [media rule](standards/nothing-plays-uninvited.md). Finish the
+body and header before release; validation rejects the scaffold's unfinished
+marker. Keep private source records private and publish only the permitted lesson.
 
-Two details that carry more weight than they look:
+Then run:
 
-**`--from` is required.** Every rule records where it was said. Not bureaucracy —
-it is how we see *which channels leak*. Look at the current set: rules captured
-from articles, from chat sessions, from agent failures. **Zero captured from a
-Zoom call**, and there are several dozen recorded. That is not a suspicion any
-more, it is visible at a glance, and it names the next thing to fix.
-
-**A half-written rule cannot be merged.** The scaffold contains a marker the
-build rejects. So a rule that was started and abandoned fails loudly instead of
-sitting in `standards/` looking enforced while enforcing nothing.
-
----
-
-## What the sweep does, and what it honestly cannot
-
-`scripts/fleet_check.py` fetches live pages and runs every machine-checkable rule
-against them. A real run, today:
-
-```
-  https://georgepaladichuk.com/       clean against all 7 applicable rule(s)
-  https://localservicespotlight.com/  [FAIL] sameAs target does not resolve
-                                             HTTP 404 — wikidata.org/wiki/Q138846724
+```bash
+python3 scripts/sync_shared_rules.py
+python3 scripts/sync_shared_rules.py --check
+python3 scripts/fleet_check.py --self-test
+python3 scripts/validate_marketplace.py
+python3 -m unittest discover -s tests -v
 ```
 
-Three design decisions keep it trustworthy:
+Open a pull request, retain required independent review and merge through the
+[contribution route](CONTRIBUTING.md). In the release notice name the exact
+source revision, changes, required receiver action, fresh-session test and
+failure route. Update only accounts and jobs within recorded authority.
 
-- **Every check must prove itself.** Each rule's header carries samples that
-  *should* trip it and samples that should *not*, and the build runs them. The
-  most common way an automated check fails is not a crash — it is a pattern that
-  matches nothing and reports every site clean forever. That cannot ship here.
-- **Rules can be scoped.** The immersive-hero rule applies to personal-brand
-  sites, not product sites, so it is tagged and does not fire on
-  blitzmetrics.com. A sweep that cries wolf gets ignored, and then the real
-  findings go unread with it.
-- **It says what it did not check.** Judgement rules — "a photograph has to earn
-  full bleed" — cannot honestly be reduced to a pattern, so they are listed at
-  the bottom of every report as *not verified by this sweep*. And a page that
-  failed to load is reported as **not swept**, never as clean. A sweep that
-  could not reach a page has not found it clean; it has found nothing.
+`captured_from` is required because provenance makes gaps inspectable. Missing
+recording sources warrant a capture audit; they do not by themselves prove how
+many calls exist or that no undocumented process ran.
 
-That last habit comes straight from `ACCEPTANCE.md`, which already says the
-thing most dashboards will not: *`Scheduled` does not mean `Observed`.*
+## Prove the check can fail
 
----
+`scripts/fleet_check.py` fetches supplied targets and applies declared checks.
+Its useful property is that it can report a violation, a skipped rule or a page
+it could not inspect. Use the supplied target format and keep the output:
 
-## Where it still leaks
+```bash
+python3 scripts/fleet_check.py --targets fleet.example.txt --json report.json
+```
 
-Written plainly, because a propagation system that hides its own gaps is the
-problem it claims to solve.
+The example target file is an example, not your private production inventory.
+An actual fleet sweep requires your approved target list and access.
 
-- **Recorded calls produce nothing.** Several dozen Zoom recordings exist. Zero
-  standards have come from them. It is the largest known reservoir of uncaptured
-  rules, and nothing currently reads it.
-- **The sweep is not yet scheduled.** The code runs and the findings are real,
-  but until it is wired into the Friday fleet audit it only runs when someone
-  types the command. *Available is not Scheduled, and Scheduled is not Observed.*
-- **Some enforcement stops at the artifact boundary.** Agent-behavior rules —
-  mute before playback, capture what you learn — reach every skill, while scoped
-  design and publishing rules reach only applicable skills. Nothing verifies
-  runtime obedience. Distribution is solved; verification is not.
-- **A rule can still be wrong.** Nothing here makes a rule correct, only
-  consistent. `no-autoplay-with-sound` narrows a published rule to reconcile it
-  with the hero standard, and it says so in the file and needs confirming.
+- **Declared samples:** every supported regex check has clean and violating
+  examples. `--self-test` exercises those examples.
+- **Independent challenge:** add a reviewer-selected failure beyond the check's
+  own samples when practical. Try missing input, a denied fetch or a changed
+  markup variant. Never inject a failure into a live customer's page.
+- **Scope:** a personal-brand rule need not apply to a product page. Record
+  skipped rules and target tags instead of calling the whole site compliant.
+- **Unknowns:** failed fetches are not swept. Judgment rules without software
+  checks remain for a qualified reviewer. Static markup checks do not prove
+  browser behavior, semantic quality, rights or business success.
 
----
+The original account included a failed `sameAs` target and a clean target from
+an August 2026 sweep. Those are historical examples, not current live findings.
+Run a new sweep before making a present-tense claim about either site.
 
-## The short version, for the stage
+## Source, account and job states are different
 
-> We keep every rule we have learned in one folder, one file per rule. A script
-> stamps each rule into every skill whose declared scope matches it; agent-
-> behavior rules reach all skills. So when you install the pack, every applicable
-> rule comes with it — you do not have to know it exists. The build refuses to
-> merge if any required copy has drifted. And the same file that states the rule
-> also contains the test for it, so the rule and the thing that checks the rule
-> can never disagree.
->
-> Adding a new rule to everyone, everywhere, is dropping one file in a folder.
+Use [ACCEPTANCE.md](ACCEPTANCE.md) for the required receipts. Record the claimed
+object, source revision, exact runtime/account, timestamp, tester, evidence and
+limitations. Do not put credentials or private client data in public receipts.
 
----
+| State | Evidence |
+|---|---|
+| Available | Exact merged source or release can be retrieved |
+| Delivered | Intended receiver opened the exact artifact revision |
+| Installed | Named runtime reports the package/version present, where installation is supported |
+| Enabled | That runtime permits use of the installed skill |
+| Tested | A fresh task loaded the expected instructions and produced a checked result |
+| Scheduled | Saved job definition, owner and next expected firing |
+| Observed | Real firing with timestamped output or failure |
 
-*See also: [`CONTRIBUTING.md`](CONTRIBUTING.md) for the pull-request route,
-[`ACCEPTANCE.md`](ACCEPTANCE.md) for what counts as proof that something
-actually happened, and [`standards/`](standards/) for the rules themselves.*
+These are scoped evidence states, not an automatic progression. A hosted agent
+may read a guide without installing a package. A one-off task need not be
+scheduled. An observed failure is evidence of a firing, not a successful outcome.
+Verify the task's business result separately.
+
+## What remains unproved without new receipts
+
+- Repository sync does not establish adoption by any named outside account.
+- A sweep command in a repository does not establish a production schedule or a
+  recent unattended firing. Inspect the actual scheduler and run receipts.
+- Having a rule in context does not prove obedience. Exercise the relevant
+  behavior and inspect the result, as the silent-playback canary does.
+- Consistency does not make a rule correct. Preserve dissent, correct the master
+  and repeat the affected tests and cold replay.
+
+A useful public report links the released correction, passing and failing
+checks, receiver test and limits. It states which claims are still unverified
+so the next operator can finish the loop instead of inheriting a success story
+without evidence.

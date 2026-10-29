@@ -4,17 +4,22 @@ Use these checks before you trust a skill to do work for your business. Show tha
 the right skill loaded, made the expected result, and used only approved access.
 Keep the proof so another person can check it.
 
+Start at [START-HERE.md](START-HERE.md) for setup and use
+[Learn, Do, Teach in practice](docs/agent-setup/LEARN-DO-TEACH.md) for the learning loop.
 Repository checks prove source consistency. They do not prove that a named
 account installed or activated a skill, or that a scheduled job ran.
 
 Record every run with:
 
 - date and time, including timezone;
-- Claude surface and plan (web, desktop, or Cowork);
+- product, surface, plan and execution environment (for example Claude web,
+  desktop or Cowork; do not infer access from the model name);
 - account or workspace tested;
 - marketplace commit SHA or displayed version;
 - result, output link, and screenshot or error text;
-- tester's name.
+- tester's name or actual agent identity;
+- practice or authorized real work, original acceptance criteria and input provenance;
+- approved effects, checks performed, limitations and recovery target when applicable.
 
 Do not record passwords, tokens, or private client data here.
 
@@ -22,7 +27,8 @@ Do not record passwords, tokens, or private client data here.
 
 1. Start with an account or workspace that does not already have this marketplace.
 2. Add `https://github.com/dennisyu/local-service-spotlight-skills` as a marketplace.
-3. Confirm all five bundles appear.
+3. Compare the displayed bundles with the tested commit's marketplace manifest;
+   record the expected and displayed names and counts.
 4. Install `lss-everything`.
 5. Compare the enabled skill list with the `lss-everything` array in the tested
    commit and record both displayed and expected counts.
@@ -70,16 +76,25 @@ A job is **Scheduled** when its definition exists. It becomes **Observed** only
 after a firing leaves a receipt. Alert when `now` is later than `next expected +
 grace period` and no new success or failure receipt exists.
 
-## D. Claude/Codex separation of duties
+## D. Independent execution and review
 
-- **Claude executes** the production workflow and writes a run receipt.
-- **Codex audits** the repository, receipts, failures, and claimed state.
-- **A human merges** marketplace changes and approves changes to production
-  schedules or credentials.
+- **Executor:** performs the authorized workflow and writes a run receipt.
+- **Reviewer:** independently retrieves the original acceptance criteria, source
+  inputs and actual destination, then tests the executor's claims and omissions.
+- **Decision owner:** resolves consequential decisions within their authority.
+  Routine authorized documentation changes follow the reviewed pull-request route
+  and selective-review rule; there is no blanket per-item Dennis merge gate.
 
-Claude must not grade its own run as healthy from prose alone. Codex must not edit
-the same production file or schedule while Claude is executing it. Use a branch,
-job lock, and stable run ID so one agent can propose and the other can verify.
+Claude as executor and Codex as reviewer is one arrangement, not a requirement
+that depends on those products. A different model alone does not prove review
+independence. Use a fresh context and the original artifacts rather than only the
+builder's summary. Record reviewer identity, tested revision, disagreements,
+checks and result. Preserve required specialist review and explicit holds.
+
+Keep one writer per task or environment. Use a branch, job claim/lock and stable
+run ID; the reviewer must not edit the same production file or schedule while
+the executor is using it. Neither a source merge nor reviewer agreement creates
+missing access, changes a production schedule or grants a new privilege.
 
 ## E. Silent media-playback canary
 
@@ -117,8 +132,10 @@ Run after adding or amending anything in `standards/`.
 4. On a canary account, sync the commit and start a fresh chat. Ask the agent to
    state the house rule without naming the file. Record the reply verbatim.
 
-Step 4 is the only one that proves distribution reached a *user*. Steps 1–3
-prove the repository is consistent, which is not the same claim.
+Step 4 establishes that a named account could retrieve the rule in that test.
+It does not prove compliance. Follow it with a fresh task that exercises the rule
+and inspect observable behavior or the actual artifact; use section E for media.
+Steps 1–3 prove source consistency only.
 
 **Enforcement — the sweep can actually fail**
 
@@ -128,12 +145,16 @@ prove the repository is consistent, which is not the same claim.
    `python3 scripts/fleet_check.py --targets <your fleet file> --json report.json`
 7. Record, per URL: findings, rules **not applied** (wrong target tag), and pages
    **not swept** (fetch failed). A page that could not be fetched is not clean.
-8. Confirm at least one known-bad fixture is caught. A sweep that has never
-   failed has not been shown to work.
+8. Confirm at least one known-bad fixture is caught. Add a reviewer-selected
+   failure beyond the checker's own examples when practical, plus an unreachable
+   target or missing-input case. Use local fixtures or approved test targets,
+   never break a live customer page. A failed fetch must be reported as not
+   swept; passing declared samples does not establish broad coverage.
 
 **Keep source propagation separate from account and job evidence.** A prepared
 rule is a source change; after merge it is **Available** in that repository or
-release. Stamping it into distributed skill files does not prove **Installed**
+release. **Delivered** requires the intended receiver to open the exact artifact
+revision. Stamping it into distributed skill files does not prove **Installed**
 or **Enabled** in an account. Record those states from the named runtime, and
 record **Tested** only after the selected skill loads and produces a checked
 fresh result. **Scheduled** means the job definition exists; **Observed** means
@@ -158,3 +179,41 @@ Check a second fresh session for reuse when persistence is claimed. Keep the
 receipt in the existing private access register with the tested source/installed
 revision and timestamp. Publish only a redacted distribution result. No schedule,
 credential migration or fleet-wide access claim is created by this check.
+
+
+## H. Cold-operator Learn, Do, Teach replay
+
+Run this after a substantive new workflow or an important correction. A replay
+may be safe public/synthetic practice or authorized real work; label which. Use
+real task evidence separately before claiming production mastery.
+
+1. Pin the guide and input revisions, task ID, permitted effects, destination,
+   acceptance criteria and stop conditions. Verify the receiver can read the
+   same references through their own supported access.
+2. Give a fresh person or agent only those materials. Do not supply the author's
+   diagnosis, unstated steps or expected solution. Keep sensitive inputs on
+   the approved private rail.
+3. Have the operator check for an existing task, claim one owner, execute the
+   procedure, run its checks and record an artifact reference. If two agents
+   try to claim it, the second must reconcile the current claim instead of
+   duplicating the work. A written claim is not an atomic lock; use supported
+   serialization or arbitration where concurrent writes are possible.
+4. The receiver opens the exact final artifact/revision and acknowledges it. A
+   producer save, issue filing, notification attempt or summary is not delivery.
+5. A separate reviewer checks the result against original criteria at the actual
+   destination. Challenge one relevant failure in a fixture: stale source,
+   duplicate task, denied access, missing receipt or incomplete output. The
+   procedure must stop or report the gap rather than mark it successful.
+6. Record any author help required, ambiguous step, unverified judgment, failed
+   check, correction and next action. Amend the master, rerun affected checks
+   and repeat the failed part with a fresh context.
+
+Pass for the tested scope only when the operator completes the criteria without
+unstated author coaching and the reviewer can inspect the result. Missing access
+is a recorded blocked test, not proof that the method succeeded. Publish a
+redacted receipt linking the source change, test method, evidence and limits; do
+not publish private account identifiers or client records.
+
+Do not manufacture all-model consensus from several agents in one runtime.
+Record which actual agents/models reviewed, what they read, their dissent and
+what was changed. Cross-runtime adoption still needs each receiver's own receipt.

@@ -1,12 +1,12 @@
 ---
 name: ai-search-visibility
-description: Control how ChatGPT, Perplexity, and Google AI Overviews describe you when a buyer, seller, or client researches you — audit the answers, trace them to sources, feed the AIs your canonical facts. Use to win the AI first impression before any deal conversation.
+description: Audit how AI answer systems describe a person or company, preserve dated answers and cited sources, identify unsupported or missing facts, and recommend source improvements. Use before a launch, deal conversation or reputation review; independently retest rather than promise rankings or inclusion.
 rule-scopes: published-html, design-review
 ---
 
 # AI Search Visibility
 
-**Use this when** you want AI to give the right answer about you — because buyers, sellers, and premium clients now ask ChatGPT before they ever reply to your email. Step 6 of the Local Service Spotlight method.
+**Use this when** you need to check what an AI answer system says about a person or company and improve the evidence available to readers. Preserve actual answers and uncertainty. Step 6 of the Local Service Spotlight method.
 
 ## Inputs
 - Your name, niche, entity home, and every profile URL.
@@ -17,35 +17,35 @@ rule-scopes: published-html, design-review
 ## The buyer's test grid (run verbatim)
 | Who's asking | What they type | What you need back |
 |---|---|---|
-| Premium client | "Who is [your name]?" | Your differentiation plus two proof points |
+| Prospective client | "Who is [your name]?" | Accurate differentiation and supported proof |
 | Seller vetting a buyer | "[your name] [company] acquisitions" | Your buy box and deal history, accurate |
-| Anyone in your niche | "Best [niche] expert for [buy box]" | You, named, your entity home cited |
+| Anyone in your niche | "Best [niche] expert for [buy box]" | Relevant candidates and sources; record whether and how the subject appears |
 | Skeptic | "Is [your name] legit?" | Third-party proof, not your own claims |
 | Podcast host | "[your name] interviews" | Your featured interview and core topics |
 
 ## Where the answers come from
-- **ChatGPT** — training data plus live browsing; your entity home and high-authority mentions feed it.
-- **Perplexity** — live retrieval with cited URLs; it quotes specific pages, so your definitive article matters most here.
-- **Google AI Overviews** — the Knowledge Graph plus top-ranked pages; everything you fixed in Step 5 compounds here.
+- **ChatGPT** — record the product, mode and whether browsing was used. Inspect any citations; do not infer a training source from the answer.
+- **Perplexity** — preserve the answer and actual cited pages for the selected mode. Verify that each citation supports the claim.
+- **Google AI Overviews** — record the query, location, date and whether an overview appeared. Preserve its actual cited sources; do not infer the ranking or generation mechanism.
 
 ## Steps
 1. Run the grid in all three engines. Paste raw answers — no cleanup, no cherry-picking.
 2. Mark every line **thin, missing, or wrong**. Wrong includes stale titles and another person's facts bleeding in — entity collision surfacing in AI.
-3. Trace each weakness to its source: the page, profile, mention, or schema field the model is reading — or can't find.
-4. Check for a **definitive article** on your topic. No canonical page means the models improvise; hand that gap to `definitive-article-writer`.
+3. Inspect cited sources for each weakness and compare them with verified facts. If a source is not disclosed, label the cause UNKNOWN; a plausible page is not proof the system read it.
+4. Check for a useful **definitive article** on your topic. If missing or weak, propose an evidence-backed canonical page through `definitive-article-writer`; its publication does not guarantee retrieval or inclusion.
 5. Produce **5 ranked actions**: a page to strengthen, a mention to earn, a fact to add to the entity home, an inconsistency to clean, an article to write.
 6. Re-test in 30 days and diff. This is MAA: metrics (the grid) → analysis (the trace) → action (the five fixes).
 
 ## Output
-- Verbatim current-state AI answers, a gap list traced to specific sources, and 5 ranked actions to make AI describe you the way you want for deals.
+- Verbatim dated AI answers, a gap list with supported source links or explicit unknowns, and 5 ranked evidence-improvement actions. Record the later retest separately.
 
 ## For DealCon — agency owners & acquirers
-**If you run an agency:** when a prospect asks AI "who should run marketing for my [industry] business" and you're the named answer, the call starts closed — inbound at premium pricing.
-**If you buy & sell companies:** sellers vet acquirers in ChatGPT now. When AI states your buy box and closed deals accurately, qualified sellers self-select toward you — off-market deal flow.
+**If you run an agency:** test the questions prospects ask about your service and verify whether the answers accurately represent your evidence and offer. Inclusion does not establish a lead, sale or premium price.
+**If you buy & sell companies:** audit how answers describe the permitted public facts about your buy box and track record. Measure actual inquiries separately from answer accuracy.
 **Your edge:** name the one question in your niche you must be the answer to, then aim all five fixes at that single question.
 
-## Run on a persistent agent (Fable 5)
-- **Loop to done:** run the full grid in all three engines, verbatim, every time — and loop until every thin, missing, or wrong line is traced to a specific source and covered by one of the 5 ranked actions.
+## Run in a supported persistent-agent runtime
+- **Bound the investigation:** run the grid in the supported engines and preserve verbatim answers or access failures. Trace disclosed citations and other observable sources. Mark undisclosed attribution UNKNOWN instead of inventing it or looping indefinitely. Finish with supported ranked actions, unresolved gaps and a bounded retest plan.
 - **Self-verify:** paste raw answers, no cherry-picking, then grade them against the differentiation sentence and proof points held in memory.
 - **Compound with memory:** store each run's verbatim answers so the 30-day re-test is a diff, not a fresh audit — the trend across runs is the real metric.
 - **Log the run:** the before/after diff is the meta-article — and the proof a client or counterparty can check.
@@ -53,287 +53,36 @@ rule-scopes: published-html, design-review
 See `boil-the-ocean.md` for the full operating principles.
 
 ## Notes — Dennis's method
-- Same engine as the Knowledge Panel: **clear entity + agreeing sources**. Fix it for Google and you largely fix it for the AIs that read Google's view of you.
-- AI quotes canonical pages. ONE definitive article per topic; thin posts orbit it and link back. Competing with your own hub is content vandalism.
-- Specificity survives the model. Zach Peyton's facts — Superior Fence & Rail, largest US fence franchise, 110+ locations, $310M+ — get repeated verbatim. Vague bios get paraphrased into mush.
-- George Paladichuk built NaiL AI so that when roofers ask AI about AI, he is the named answer. Pick your question and own it the same way.
-- Don't argue with the output — fix the sources. Models repeat what the web agrees on about you.
+- Clear identity and consistent supported facts can help people and retrieval systems interpret your public evidence. Test each answer surface separately; a Google change does not prove another system changed.
+- Maintain one useful canonical explanation per topic and link supporting material to it. Check actual citations rather than assuming a system will quote the page.
+- Use specific, source-backed proof rather than vague bios. A number belongs in the output only when its source, date and meaning have been verified; specificity does not guarantee an AI will repeat it.
+- Pick the concrete question the intended audience asks, then improve the evidence and useful source pages that answer it. Re-test rather than promising placement in an AI answer.
+- Correct verified source defects within authority, then retest. Outputs can remain wrong, vary or disclose no source; preserve that uncertainty instead of inventing an attribution.
 - Run this before every raise, listing, or launch. The answer changes as the web changes — know it before your counterparty does.
 
 ## Definitive article & pairings
 - Reference: https://blitzmetrics.com/definitive-article-guide/ · https://blitzmetrics.com/how-my-ai-agents-document-and-improve-themselves-meta-articles-definitive-articles/
 - Pairs with: → dollar-a-day-strategist → content-factory → definitive-article-writer
 
-## Learned in the field
+## Operational lessons
 
-*Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
+These portable lessons describe checks and failure modes, not a report of a
+particular account or client. Verify current vendor contracts before use.
 
-<!-- learning:2026-07-20-ahrefs-free-dr-endpoint-auth-deadline -->
-**July 20, 2026** (from: anthony-hilb-seo-tracker (weekly-brand-maa) — refiled from a stray root note by skill-pack-propagation on July 21, 2026)
+- Pin each AI answer to the engine, product surface, query, date and cited sources. Search results can vary; preserve conflicting observations instead of claiming a ranking disappeared from one pull.
 
-Ahrefs' free Domain Rating endpoint stops accepting unauthenticated calls on August 1, 2026.
-> **⚠ RESOLVED August 3, 2026 — read this first: use `site-explorer-domain-rating`, always.**
-> Everything in this section down to "Rules for any skill that pulls Ahrefs Domain Rating" is
-> the historical record of a deprecation that no longer needs tracking. Do not act on the dates.
+- Check current vendor documentation and the caller's authorized endpoint before acting on a deprecation notice. Do not assume another organization's credentials, plan allowance or pricing applies. Prefer a currently supported authenticated route when the caller has that access; verify the actual response.
 
-The `public-domain-rating-free` MCP call still returns the normal DR value today but now
-carries a deprecation warning: "Unauthenticated access to this endpoint will be removed on
-2026-08-01. Requests will require a free API key." Every weekly/monthly tracker that pulls DR
-(anthony-hilb, wtp, trenton-sandler, cxotalk, family-law, somba, and any future tracker) will
-start erroring from August if its call path is unauthenticated.
+- For paginated SERP APIs, distinguish result depth from pages crawled. Where the current API exposes `max_crawl_pages`, set and record it explicitly; a larger `depth` alone may not search additional pages. Recheck current API semantics before use.
 
-Rules for any skill that pulls Ahrefs Domain Rating:
+- Follow distributed documentation links to their final destination and update the canonical source when a route changes. Test redirect measurement with a known redirect; automatic redirect-following can hide the signal.
 
-**RESOLVED — August 3, 2026. Use `site-explorer-domain-rating`. Always.** There is no date left to
-track and no key to register. The three dated rules below are superseded, kept only as the record.
+- Before modifying a plugin-backed resource, inspect the installed version's contract: a partial-looking update may replace omitted fields. Preserve counters and source fields unless the approved change requires them.
 
-Why the free endpoint was retired from our skills rather than migrated:
+- When correcting a duplicated instruction, search all callers and copies, change the master and test the receiving runtime. A source fix does not establish that existing installations updated.
 
-- **We already hold the key.** The workspace MCP authenticates with a paid Lite key
-  (`subscription-info-limits-and-usage` returns real workspace data, so auth demonstrably works).
-  The "free API key" in Ahrefs' warning is for callers who hold no key at all. Registering a second
-  one would have added a credential to manage in exchange for nothing.
-- **Identical numbers.** Verified August 3, 2026 across two domains: anthonyhilb.com returned DR 10
-  from both endpoints, michaelkrigsman.com DR 1.0 from both.
-- **The authenticated endpoint is MORE accurate.** `public-domain-rating-free` lags the authenticated
-  series by about a day, which is exactly what put a wrong DR 11 into the anthony-hilb 2026-07-20
-  snapshot. Switching removes a known defect; it is not merely deprecation-proofing.
-- **Cost is not a constraint.** ~50 units per call against a 100,000/month Lite allowance. For many
-  domains at once, `batch-analysis` takes up to 100 targets in ONE call at ~18 units each, verified
-  to return DR values identical to the single endpoint.
-
-**The meta-lesson, which is the part worth keeping.** This block carried a hard-coded vendor date into
-six skill files, and only ONE of them ever received the July 27 correction from August 1 to August 10.
-The other five still read "Until August 1, 2026" on August 3 — a deadline that was both wrong and
-already expired, still instructing agents to prefer the dying endpoint. A conditional written around a
-vendor's date has to be re-verified in every copy, forever; an unconditional instruction needs nothing.
-**Prefer the instruction that cannot go stale over the one that is merely correct today** — and when a
-correction lands, grep for the other copies in the same breath. Same shape as the "a standing contract
-recorded in one file is not a standing contract" rule in `Skill-Learnings/README.md`.
-
-Superseded, retained as the record:
-1. ~~Until August 2026 keep using `public-domain-rating-free` first — it works and costs 0 units.~~
-2. ~~If it errors, fall back once to `site-explorer-domain-rating` and state the switch in the report.~~
-3. ~~Permanent fix: register a free API key (about a 5-minute setup).~~
-
-Learned July 20, 2026. Resolved August 3, 2026.
-
-<!-- learning:2026-07-27-serp-depth-needs-max-crawl-pages -->
-**July 27, 2026** (from: cxotalk-weekly-maa run)
-
-### DataForSEO `depth` alone does NOT go past page 1 — you need `max_crawl_pages`
-
-Checking whether michaelkrigsman.com still ranked for "michael krigsman":
-
-```
-serp_organic_live_advanced { keyword, location_name, language_code, depth: 30 }
-```
-
-returned **9 organic results** and no michaelkrigsman.com. Combined with a live Chrome
-render that also didn't show it, the obvious read was "the entity home dropped off page
-one." That would have been the report's headline — and it would have been wrong.
-
-`depth` sets how many results to *return*; `max_crawl_pages` (default **1**) sets how many
-SERP pages to *crawl*. Re-running with `max_crawl_pages: 4` returned 21 results and showed
-**four** michaelkrigsman.com URLs — homepage at rank_group 7, `/about/` 9, `/home/` 12,
-`/connect/` 14. The real story was the opposite of the false one: the site went from 1
-ranking URL to 4.
-
-**Rules:**
-
-1. Any "did we lose a ranking?" check must pass `max_crawl_pages` ≥ 3. `depth` alone is a
-   page-1 query, no matter how large you set it.
-2. Never report a disappearance from a single SERP pull. Two pulls one minute apart
-   genuinely disagreed on this keyword (one had the homepage at #7, the other didn't have
-   the domain at all). Volatility at the page-1/page-2 boundary is real — report
-   "contested foothold," with both observations, rather than a clean win or loss.
-3. A logged-in browser render is a *third* opinion, not a tiebreaker. Personalization makes
-   it systematically different from a clean datacenter pull; prior runs quoted "#8 clean /
-   #3 browser" for the same query on the same day.
-
-Severity note: this nearly reported a client's site as having fallen out of the SERP
-entirely. Learned July 27, 2026.
-
-<!-- learning:2026-07-29-a-redirect-you-ship-is-a-redirect-you-own -->
-**July 29, 2026** (from: SEO-tree link audit, July 29, 2026)
-
-### A URL you ship inside a skill pack is a URL you have to keep alive
-
-Our own published packs told every installer's agent to read
-`localservicespotlight.com/ai-agent-application-password/` for login-free publishing. That URL
-had become a **double 301** — one hop to a renamed article, a second hop to its current home.
-It still resolved, so nothing complained. It was sitting in `boil-the-ocean.md` and
-`video-repurposing-agent.md` across four public packs, in two generators, in the daily
-checklist, in the project's own CLAUDE.md, and on the trunk page of the whole system.
-
-A redirect chain is not a broken link, which is exactly why it survives: every check passes,
-every page loads, and the crawler quietly discounts the destination. Sixteen references were
-repointed at the final URL, at the source, so the next rebuild ships the fix to everyone.
-
-**Rules:**
-
-1. **Cite the URL that answers 200, never a URL that answers 301.** Follow every external link
-   you are about to write into a skill file, and record where it ends up, not where you started.
-2. **A URL inside a downloadable pack is published surface area.** It reaches people you cannot
-   email later. Treat a link in a shipped skill file with the same care as a link on a page.
-3. **Fix at the source, then let propagation do the distribution.** Editing a live page fixes
-   one copy; editing the skill file fixes every copy on the next run.
-4. **Add the dead URL to the checker, not just to your memory.** `verify_link_graph.py` now
-   fails if any node reintroduces it and if any node sits behind a redirect hop at all.
-5. **A short URL does not need a redirect plugin.** WordPress core's
-   `redirect_guess_404_permalink` 301s an unmatched path to the single post whose slug it
-   prefixes, so `/persistent` reaches `/persistent-agents/` for free. Do NOT publish a stub page
-   on the short slug to fake this — a thin page that competes with the article is the exact
-   content-vandalism the definitive-article standard exists to prevent. Assert the short URL's
-   final destination on every run, because the guess turns into a 404 the day a second matching
-   slug ships.
-
-Learned July 29, 2026.
-
-<!-- learning:2026-07-29-a-check-that-cannot-fail-is-not-a-check -->
-**July 29, 2026** (from: redirect-chain audit, July 29, 2026)
-
-### A check built on a branch that can never run reports perfect health forever
-
-Two scripts written the same day counted redirect hops like this:
-
-    try:
-        r = urllib.request.urlopen(req)      # HEAD
-        return hops, r.status
-    except urllib.error.HTTPError as e:      # <-- catch the 301 here
-        ...follow Location, hops += 1
-
-That `except` can never fire. `urlopen` installs `HTTPRedirectHandler` by default and follows
-301/302 transparently, returning the FINAL response. So the counter returned **0 hops for every
-URL on earth** — including one we had already proved by hand was a double 301. The first audit
-printed "34 rules · 0 chained" and read as good news.
-
-Fixing the counter turned that into: 6 chains on one site, 18 on another, one self-redirecting
-rule with 12,190 hits looping forever, and the busiest rule on the site (829,576 hits) throwing
-away a trailing slash and buying a second hop on every single request.
-
-**Rules:**
-
-1. **Before trusting a checker, make it fail on purpose.** Feed it a case you KNOW is bad. If it
-   passes, the checker is broken — not the world. Both scripts now call a `selftest()` that
-   fetches a URL known to redirect and aborts the whole run if it measures zero hops.
-2. **Any library call with "convenience" behaviour is a checker's enemy.** Following redirects,
-   retrying, normalising, caching: all of it hides the exact signal a verifier exists to see.
-   Measure at the lowest level that still answers the question.
-3. **A `try/except` around a network call deserves the same scrutiny as the happy path.** An
-   `except` clause that cannot be reached is dead code that looks like diligence.
-4. **Zero is a suspicious answer.** Zero orphans, zero chains, zero errors on the first run of a
-   brand-new check almost always means the check is not wired to anything. Confirm one true
-   positive exists before believing the zero.
-
-Learned July 29, 2026.
-
-<!-- learning:2026-07-29-read-the-plugin-source-before-writing-to-its-table -->
-**July 29, 2026** (from: collapsing 24 redirect chains across localservicespotlight.com + dennisyu.com, July 29, 2026)
-
-### When a plugin's REST API is undocumented, download the plugin and read it
-
-Two redirect tables needed surgical edits and neither API was documented in a way that answered
-the only question that mattered: *what happens to the fields I do not send?* Guessing against a
-live table with 34 and 192 rules on it was not acceptable, and probing by trial risked detaching
-real redirects carrying thousands of hits.
-
-So both plugins were downloaded from the wordpress.org repo at the exact installed version and
-read. Ten minutes, and it turned two unknowns into contracts:
-
-- **RankMath Redirections** has no route that LISTS redirections. The read path is
-  `status/exportSettings` (redirections ride along in the export). The write path is
-  `updateRedirection`, which is really the post-metabox save handler: it rebuilds the rule from
-  `(redirection_id, url_to, sources, header_code)`. **Omit `redirectionSources` and the source is
-  rebuilt EMPTY**, silently detaching the rule from the URL it exists to catch. It also rejects an
-  empty `objectID`, which a standalone rule does not have — pass an id matching no post, because
-  a real one makes that post's metabox claim it owns a redirect.
-- **Redirection plugin** (`redirection/v1/redirect`) sanitises the whole payload and then does a
-  full row `UPDATE`. A partial patch drops every field you left out. The payload has to be the
-  GET item echoed back with only the target changed — and `hits` / `last_access` must be OMITTED,
-  because the sanitiser maps them onto `last_count` / `last_access` and rewrites the counters.
-- Its import path is safe but useless for repairs: `set_redirections()` skips any row whose
-  source already matches an existing rule, so re-importing corrected copies changes nothing.
-
-**Rules:**
-
-1. **Read the source before the first write, not after the first surprise.** `curl` the versioned
-   zip from wordpress.org, unzip, read the sanitiser and the update method. Cheaper than one bad
-   write to a production table.
-2. **Find out whether update means PATCH or REPLACE.** If the model sanitises into a fresh array
-   and calls `$wpdb->update` with it, every field you omit is erased.
-3. **Audit every redirect engine a site has, not the first one you find.** dennisyu.com runs
-   RankMath Redirections AND the Redirection plugin at once. `X-Redirect-By` proved the plugin
-   wins; fixing the RankMath copies changed nothing a visitor could see — 2 of 13 "fixes" held
-   and the rest still measured 3-4 hops. **`X-Redirect-By` on the response is the ground truth
-   for who is actually in charge.**
-4. **Never auto-rewrite a regex rule.** Its source is a pattern, not a URL, so hops cannot be
-   measured, and its target may contain capture groups. Report it and stop.
-5. **A rule pointing at itself is a live infinite loop, not a chain.** Detect "never lands after
-   N hops" as its own class and never auto-repair it — the correct destination is an editorial
-   decision. One such rule had taken 12,190 hits.
-6. **Check the trailing slash on high-volume rules.** A target of `/$1` where WordPress canonical
-   wants `/$1/` costs an extra 301 on every request. On the busiest rule on the site that was
-   829,576 requests each paying for a hop nobody needed.
-
-Learned July 29, 2026.
-
-<!-- learning:2026-08-03-prefer-the-instruction-that-cannot-go-stale -->
-**August 3, 2026** (from: Ahrefs free-DR deprecation follow-up after the anthony-hilb-seo-tracker run)
-
-### A conditional built on a vendor's date rots in every copy except the one you corrected
-
-The anthony-hilb report flagged that Ahrefs' `public-domain-rating-free` endpoint stops accepting
-unauthenticated calls on August 10, 2026 — seven days out, and the date of the tracker's own next
-run — and recommended a "5-minute free API key registration." Chasing that down produced two
-findings, and the second is the one that generalises.
-
-**1. The registration was never necessary, and checking took one call.** The workspace MCP already
-authenticates with a paid Lite key. The "free API key" in Ahrefs' warning is aimed at callers who
-hold no key at all. `site-explorer-domain-rating` returns the identical number on the key we already
-have — verified across two domains the same day (anthonyhilb.com DR 10 from both endpoints,
-michaelkrigsman.com DR 1.0 from both) — for ~50 units against a 100,000/month allowance. It is also
-*more accurate*: the free endpoint lags the authenticated series by about a day, which is precisely
-what wrote a wrong DR 11 into the 2026-07-20 snapshot. So the "deprecation fix" was really a defect
-fix that had been available all along.
-
-**Rule: before scheduling work to satisfy a vendor's new requirement, check whether the credential
-you already hold satisfies it.** A deprecation notice describes the vendor's default caller, not
-your setup.
-
-**2. The instruction had already rotted in five of six copies.** The block telling agents to prefer
-the free endpoint lived in six skill files. On July 27 the cutoff moved from August 1 to August 10,
-and exactly ONE file — `weekly-brand-maa.md` — received the correction. On August 3 the other five
-still read *"Until August 1, 2026 keep using `public-domain-rating-free` first"*: a deadline that was
-both wrong and two days expired, still actively instructing agents toward the dying endpoint. Nobody
-noticed, because each file was individually plausible and nothing compares them.
-
-The fix was not to propagate the new date. It was to **delete the date**: the rule is now
-unconditional — *use `site-explorer-domain-rating`, always* — with the dated version struck through
-beneath it as the record, plus a pointer at the top of the section so an agent reading top-to-bottom
-cannot hit the stale narrative first.
-
-**Rules:**
-
-1. **Prefer the instruction that cannot go stale over the one that is merely correct today.** "Use X"
-   survives indefinitely. "Use X until DATE, then Y" is a maintenance obligation in every copy,
-   forever, and it fails silently and invisibly — an expired conditional reads exactly like a live one.
-2. **When a correction lands on a duplicated instruction, grep for the other copies in the same
-   breath.** This is the same shape as the standing rule in `Skill-Learnings/README.md` that "a
-   standing contract recorded in one file is not a standing contract," and the same shape as the
-   July 29→31 gap between a rebuild gate being learned and the runner being changed. Three
-   independent recurrences means the default is wrong: assume duplication until a grep proves
-   otherwise.
-3. **A date copied out of a vendor's warning is the least durable thing in a skill file.** Where one
-   must be written down, write it as "as of <Month D, YYYY> the API said X" so the staleness is
-   visible on the page — and pair it with a dateless instruction that stays correct if nobody ever
-   revisits it.
-4. **Check the whole fleet of callers, not the one that surfaced the problem.** Of 31 scheduled task
-   prompts, only two named the dying endpoint and two others were already on the authenticated one.
-   Grepping the mirrored prompt set answered in one call what would otherwise have been six file
-   reads and a guess.
-
-Learned August 3, 2026.
+Apply the maintained [Learn, Do, Teach method](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/agent-setup/LEARN-DO-TEACH.md)
+and [acceptance checks](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md).
 
 <!-- shared-rule:silent-media-playback:start -->
 ## Silent media playback
@@ -415,8 +164,8 @@ penalty. Use the maintained shared audit run contract.
 
 - **Every task is owned by a function** — web, content, analytics, client success — and
   people sit inside functions. People join, leave and go on holiday; the function does not.
-- **Escalate to a function too.** "I told Muzamil" is not an escalation if Muzamil is
-  away; "escalated to the web function" is.
+- **Escalate to a function too.** "I told one colleague" is not an escalation if that
+  colleague is away; "escalated to the web function" is.
 - A function with exactly one person in it is still a function. Name it that way, so the
   second person changes nothing.
 - Work assigned to a named individual and nowhere else is work that silently stops when
@@ -457,12 +206,10 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
-- **A rule that lives only in an article, a chat message, a call recording, or your
-  context window is a rule the next agent will break.** That is not a prediction. The
-  black-button rule was published, illustrated, and given an enforcement plugin on
-  17 May 2026, and on 15 August 2026 an agent holding the entire skill pack in context
-  shipped a black button. The rule was never in `standards/`, so it never reached the
-  skills, so it was not there to be read.
+- **A lesson kept only in an article, chat, recording or context window may be
+  absent from the instructions the next operator loads.** Capture its reusable
+  criteria in the canonical standard, distribute the applicable source copies,
+  and test the receiving runtime before claiming adoption.
 - When anyone — the client, the account owner, an audit, or your own failure — states a
   rule that should hold next time, **your job is not to remember it. It is to write
   `standards/<slug>.md` before the session ends.** Memory does not survive a session
@@ -476,29 +223,36 @@ penalty. Use the maintained shared audit run contract.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies the rule into `AGENTS.md` and each distributed `SKILL.md`
+  whose declared scope applies. This prepares source copies; it does not update an
+  existing installation. Record the released revision, required sync action and a
+  fresh-session activation test for each account being claimed.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
-  header compiles straight into the live fleet sweep, so a violation on a published page
-  is caught by a schedule instead of by a person noticing. Every check must carry
-  passing and failing examples — a pattern that matches nothing reports a clean site
-  forever, which is worse than no check at all.
+  header is consumed by the fleet sweep when that sweep actually runs against an
+  applicable target. Every check must carry passing and failing examples. Exercise
+  a separate failing case too: a pattern that matches nothing can look healthy.
+  Record scheduling and actual firing separately; a check in source creates neither.
 - **Where a machine check would be dishonest, say so and leave `checks` out.** Judgement
-  rules are still rules; they are enforced by being read pre-flight, and pretending a
-  regex covers them hides the fact that nothing does.
+  rules still need a qualified reviewer to apply them to the actual result. Reading
+  a rule is not evidence of compliance, and a regex cannot certify judgement.
 - **Provenance is required, not decoration.** `captured_from` is how the team sees which
-  channels leak. If dozens of recorded calls have produced no standards, those calls are
-  not being captured, and that is visible at a glance instead of being a suspicion.
+  channels leak. Missing provenance is a reason to inspect the capture path; it does
+  not establish how many recordings exist or whether an undocumented process ran.
 - **When a new rule contradicts an existing one, resolve it in the file and say so
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
 - The order is Checklist → Content → Software. Write the checkable rule first, publish
   the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+  rather than hand-written beside it when the declarative check types suffice.
+  Complex checks need maintained code and tests linked from the rule. CCS means
+  Content, Checklists, Software; this checklist-first capture sequence preserves
+  that framework. An article alone leaves checks and adoption unproved.
+- **Close the learning loop with another operator.** Link the actual run, correction,
+  standard, teaching content and software check. Give a fresh operator only the
+  guide and permitted inputs; record the tested revision, result, failures and help
+  required. Fix ambiguity in the master and replay the affected steps. Saying the
+  lesson was shared does not prove another operator can use it.
 <!-- shared-rule:capture-what-you-learn:end -->
 
 <!-- shared-rule:every-article-has-pictures:start -->
@@ -604,10 +358,24 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 
 - **Read the standard before you touch the work.** Skipping to doing produces output that
   looks right and is wrong in ways the person reviewing it has to find for you.
-- **Then do it,** all the way to a verified artifact.
-- **Then teach it** — write the run up so the next agent inherits what you learned. That
-  write-up is what turns one person's lesson into everyone's default, and it is the whole
-  reason `standards/` exists.
+- **Practice safely, then do it.** A public or synthetic rehearsal helps a new
+  operator learn the procedure. Label it as practice; it does not prove a client
+  result, production readiness, or mastery. Real Do requires an authorized task,
+  its original acceptance criteria, a checked artifact and destination evidence.
+- **Then teach it** — preserve the inputs and source revisions, steps, choices,
+  mistakes, fixes, checks and limits in a reusable guide. Keep private evidence
+  private and use only approved public examples. Update the canonical standard
+  and its Content, Checklist and Software forms instead of creating a competing SOP.
+- **Test the teaching with a fresh operator.** Another person or agent must work
+  from the guide and permitted inputs without the author filling in missing steps.
+  Record the tested revision, independent result, help required and failures. Fix
+  the guide and repeat the affected part. A replay proves only the tested scope;
+  agreement, publication, or a successful synthetic case alone does not prove mastery.
+- **Check that the checker can fail.** Run a known bad case and a clean case; where
+  practical add an independently chosen failure beyond the checker's own examples.
+  Report what software did not check, including meaning, permissions and actual
+  runtime behavior. Preserve the separate account and job evidence in the release
+  receipt rather than treating source consistency as adoption.
 - The order is not a preference. A rule taught before it is understood is repeated
   without judgement; a rule learned and then taught survives contact with a case it did
   not anticipate.
@@ -620,8 +388,8 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
   Bing and every AI answer engine "this person is that entity". Pointed at a deleted or
   wrong target, it does not merely fail — it actively teaches the wrong association.
 - **Verify every `sameAs` target returns 200 before publishing schema, and re-verify
-  quarterly.** Entities get deleted. A Wikidata item asserted on a client site was
-  deleted on 7 July 2026 and the claim stood until an audit found it five weeks later.
+  quarterly.** Targets can be deleted or change identity after publication.
+  Recheck the current destination rather than relying on a past successful read.
 - **Only anchors count.** `preconnect`, `dns-prefetch`, `canonical` and `alternate`
   hints are not links a visitor can follow, and treating them as links reports
   `googletagmanager.com` as a dead link on every site that loads analytics — noise that
@@ -691,10 +459,10 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
 - **A testimonial needs a real, nameable person.** No initials-only quotes, no
   "a client in Minneapolis".
 - **The sweep only catches the obvious half, and you need to know which half.** A
-  placeholder that looks like a real number — a hero stat reading "$34K Monthly MRR" that
-  nobody can source — is indistinguishable from a true one to any regex. That exact
-  string sat live on a paying client's site. The only defence is that whoever publishes a
-  number can name its source before it goes up.
+  placeholder that looks like a real number is indistinguishable from a true one to
+  any regex. A synthetic example is a hero stat reading "$34K Monthly MRR" with no
+  source; this is a test example, not a client metric. Whoever publishes a number must
+  be able to name its source before it goes up.
 <!-- shared-rule:no-placeholder-copy:end -->
 
 <!-- shared-rule:no-popup-on-load:start -->
@@ -964,30 +732,24 @@ merely to satisfy the older marker check.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
 ## Basecamp updates stay in Basecamp
 
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
+- For an authorized project update, identify the exact existing thread and its
+  intended audience before writing. Use the team's approved source-system
+  connector, API or interface; the task still needs communication authority.
+- A notification is a cue to read the source record, not a destination. Do not
+  address a message to a generic notification sender or assume that changing
+  the sender identity makes a failed delivery route valid.
+- In this workflow, keep the update in its original project thread rather than
+  substituting an email route. If the approved write route is unavailable,
+  record BLOCKED with the failed step, evidence, owner and bounded next action.
+- Read the destination after the write. Verify the intended thread, expected
+  author and distinctive new content, and retain its location and observation
+  time. A successful send/save response alone does not establish delivery.
+- Ensure each participating runtime loads the current delivery policy before
+  acting, including scheduled workers. Source publication alone is not evidence
+  that those workers loaded or followed it.
+- This rule describes a reusable delivery safeguard. It names no account,
+  project, recipient, private incident or active deployment, and it grants no
+  permission to post, send or change access.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:screen-gct-before-amplification:start -->
@@ -1306,8 +1068,8 @@ entity-linking preflight and a live link audit.
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —
@@ -1423,13 +1185,13 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
@@ -1800,8 +1562,9 @@ Use these terms to choose the setup your business needs. Start with one guide an
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.
@@ -1847,72 +1610,66 @@ It supplements access and action-approval rules rather than granting new authori
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
 
-- **Route each job to the cheapest fleet lane that can actually do it.** Cost
-  order: local Qwen (free) first, then Muse, then everything else. This rule
-  picks the *seat* that runs the job. `model-judgment` still picks the *model
-  tier* inside that seat. They are two ladders, not one. There is no separate
-  skill-router skill; this file is the fleet router.
-- **Muse (Meta Muse Spark) is the default for high-volume work that does not
-  need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
-  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
-  tokens **per week**, not per month. A Muse token is Meta's own meter — do
-  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
-  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
-  put disputes, must-be-right research, or code/docs that matter on it.
+- **Route each job to the cheapest authorized lane that can actually do it.**
+  Compare the available runtimes' capabilities, cost, allowance, availability,
+  data-handling limits and required review. Lower-cost local text processing
+  may suit offline bulk work; an authorized hosted runtime may suit work that
+  needs a browser, connector or unattended availability. Verify those facts in
+  the actual account rather than assuming a product name establishes them.
+- **Choose the execution seat and model tier separately.** This rule picks the
+  runtime that owns the job. `model-judgment` picks an appropriate model tier
+  inside that runtime. A cheaper model without the required tools or reliability
+  is not a capable lane. Include retry and review costs in the comparison.
+- **Reserve stronger reasoning and independent review for demanding work.**
+  Disputes, consequential research and consequential code or documentation need
+  an appropriately capable worker. Experimental output must not be the sole
+  basis for a critical action; a qualified person or separate fresh-context
+  reviewer checks the original evidence and actual result first.
 
 | Lane | Takes | Hard stop |
 |---|---|---|
-| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
-| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
-| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
-| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
-| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+| **Offline text lane** | Authorized transcript triage, first drafts, preliminary analyses and bulk rewrites that need no external tools | No browser, login or publication unless separately supported and authorized. Confirm device availability before relying on it |
+| **Hosted volume lane** | Bounded repetitive work with tested tools, access and sufficient allowance | Do not route consequential reasoning here merely because it is cheap. Verify unattended availability rather than inferring it from hosting |
+| **Reasoning and review lane** | Hard reasoning, disputes, consequential research, code and documentation | Preserve independent review and specialist requirements. A model name alone does not establish competence |
+| **Existing recurring lane** | A recurring job whose current owner, schedule and result have actually been observed | Retain one owner while testing a replacement; an instruction or saved schedule alone does not prove a successful firing |
+| **Action or publishing lane** | Work requiring a specific authorized connector, account, destination or approval route | Stay within recorded authority. Access to one service or account does not establish access to another |
+| **Specialized lane** | Work only a particular approved runtime can reach or perform | Record the capability that justifies the cost; do not move work solely because another product is available |
 
-Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
-volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
-that is offline bulk text with no browser or login, and that can wait for a
-Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
-or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
-A fallback model inside one seat is fine — `model-judgment` requires one for
-unattended jobs — but a second lane for the same job is not.
+These are capability categories, not claims about any installed fleet. Record
+the actual runtime and tested capability in the team's private job record.
+One agent name may cover multiple execution environments; route by the environment
+the task needs. Product prices, quotas and capabilities need current verification
+for the specific plan and account. Token meters from different providers are not
+automatically comparable. This rule does not authorize another subscription.
 
-Lanes are seats, not desk names. Trenton appears twice because that desk has
-both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
-job needs.
+- **Keep one outcome owner and one active execution lane per job.** A fallback
+  model within that lane can handle an approved failure path. It must not create
+  a second independent owner or repeat an external action whose result is uncertain.
+- **Migrate through a controlled cutover.** Test the replacement in a paused,
+  dry-run or otherwise isolated state that cannot duplicate production effects.
+  Reconcile pending runs and uncertain writes, pause the old trigger, transfer
+  ownership through the authoritative task record, then enable the replacement.
+  Verify its actual result and retain the previous configuration for rollback.
+  If a safe cutover is unavailable, retain the current owner and record the blocker.
+- **Instructions do not grant authority.** Sending, publishing, spending,
+  installing, changing access and deleting require the owner's existing authority
+  and applicable approval rails. Keep passwords, tokens, account inventories and
+  private schedules out of this rule and its public copies.
 
-- **Until there are many Dots, keep dividing work across the existing
-  agents.** "Many Dots" means the models absorb the harness so humans do not
-  have to split tasks and project-manage them. Until that is true, do not
-  collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** Offline bulk text with no browser or login that can wait
-  for a Mac → Qwen first (free). Other high-volume work that does not need
-  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
-  to be right, or code/docs that matter → Astra, spot-checked while Dot is
-  new and never Dot alone on anything critical. Recurring mechanical work
-  already on a Kimi or Codex cron stays there until a Muse task is live. A
-  decision or a public post that needs a Grok desk stays on that desk, in a
-  short turn. Every other seat keeps the work already assigned to it.
-- **Never run the same job on two lanes.** When a job moves, the new lane
-  must be live before the old one is turned off.
-- This rule picks the seat. It does not grant permission to send, publish,
-  spend, or delete. Those still need the existing approval rails. Do not put
-  passwords, tokens, or account inventories in this file or in any public
-  copy of it.
+### Synthetic example — recurring media indexing
 
-### Worked example — weekly Google Photos person-albums
+This is a fictional routing exercise, not an account or schedule receipt. A
+recurring media-indexing job needs an authorized browser session and availability
+at its scheduled time. An offline text runner without those capabilities is
+unsuitable even if its marginal model cost is lower. A tested hosted volume lane
+may fit; a stronger reasoning lane is unnecessary unless the task's decisions
+require it. Check actual access and allowance, then use the controlled cutover
+above if changing an existing owner. No account connection or schedule is created
+by this example.
 
-On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
-Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
-from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
-runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
-browser. It is not an Astra/Dot job: it is high-volume album work, not hard
-reasoning.
-
-No regex can honestly decide which lane a job needs. Enforce this by reading
-the lane table before you schedule or claim a job, and by naming the live
-lane in the job's receipt.
+No regex can honestly decide which lane a job needs. The owner and reviewer apply
+the capability table to the actual task, and the receipt names the tested runtime,
+permitted effects, cost evidence or UNKNOWN, result and remaining limitations.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule:audit-quality-gate:start -->
@@ -1942,13 +1699,11 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

@@ -1,6 +1,8 @@
 # Contributing safely
 
-This repository is the canonical source for the Local Service Spotlight Claude marketplace.
+This repository is the canonical public source for Local Service Spotlight's
+reusable instructions and Claude marketplace packaging. The portable setup is
+[START-HERE.md](START-HERE.md); machine navigation is [agent-setup.json](agent-setup.json).
 A green-looking agent report is not proof that a change reached a user or ran on
 schedule. Changes therefore move through a branch, automated checks, review, and
 an acceptance receipt.
@@ -69,6 +71,7 @@ walkthrough: [HOW-KNOWLEDGE-PROPAGATES.md](HOW-KNOWLEDGE-PROPAGATES.md).
 python3 scripts/sync_shared_rules.py --check
 python3 scripts/fleet_check.py --self-test
 python3 scripts/validate_marketplace.py
+python3 scripts/check_agent_setup.py
 python3 -m unittest discover -s tests -v
 npx -y @anthropic-ai/claude-code@latest plugin validate .
 ```
@@ -86,14 +89,17 @@ it reports every site clean forever and looks exactly like a working check.
 ## What status words mean
 
 - **Available:** present in the merged marketplace.
-- **Installed:** visible in the named Claude account or workspace.
-- **Enabled:** Claude is allowed to use it there.
+- **Delivered:** the intended receiver read the exact source/artifact revision.
+- **Installed:** present through a supported install route in the named account.
+- **Enabled:** the runtime is permitted and configured to use it there.
 - **Tested:** a fresh chat activated it and produced expected evidence.
 - **Scheduled:** a job definition exists.
 - **Observed:** a scheduled firing produced a timestamped output or failure.
 
 Never substitute one state for another. In particular, `Scheduled` does not mean
 `Observed`, and `Available` does not mean `Installed`.
+Business outcomes are recorded separately. A public-reference exercise can be
+useful without an installation; label its scope accurately.
 
 ## Release notes for members
 

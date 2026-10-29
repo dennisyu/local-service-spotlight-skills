@@ -1,0 +1,21 @@
+# Dennis Yu: agent setup and reusable methods
+
+> Public instructions for setting up your own agent workspace. These files do not grant access to Dennis's private operations, install tools or wake other assistants.
+
+## Start
+
+- [Portable agent setup](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/START-HERE.md): steps, starter workspace, handoff and recovery.
+- [Raw setup instructions](https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/START-HERE.md): plain Markdown for readers that cannot extract GitHub HTML.
+- [Machine index](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/agent-setup.json): local document paths, adoption states and public guide URLs.
+- [Workspace files](https://github.com/dennisyu/local-service-spotlight-skills/tree/main/templates/agent-workspace): copy into your own permitted private workspace; inspect existing records first.
+
+## Learn, execute and verify
+
+- [Learn Do Teach and CCS](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/agent-setup/LEARN-DO-TEACH.md): evidence, practice, real work, cold replay and software limits.
+- [Propagation](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/HOW-KNOWLEDGE-PROPAGATES.md): canonical standards and generated instructions.
+- [Acceptance](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/ACCEPTANCE.md): account activation, update and observed-job receipts.
+- [Install](https://localservicespotlight.com/install/): product-specific instructions; verify current account capabilities.
+- [Company guide](https://dennisyu.com/how-agents-run-the-company/): operating method and reference tree.
+- [Contribute](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/CONTRIBUTING.md): reviewed changes, tests and release identity.
+
+Use the exact retrieved source revision. Available source is not Installed, Enabled, Tested, Scheduled or Observed behavior. Preserve the owner's permission boundary; mark unreadable or untested steps UNKNOWN/BLOCKED.

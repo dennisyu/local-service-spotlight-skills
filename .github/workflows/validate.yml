@@ -22,6 +22,8 @@ jobs:
         run: python3 scripts/fleet_check.py --self-test
       - name: Validate repository structure and references
         run: python3 scripts/validate_marketplace.py
+      - name: Validate portable agent setup and local navigation
+        run: python3 scripts/check_agent_setup.py
       - name: Run converter tests
         run: |
           python3 -m pip install -r scripts/requirements-audit-qa.txt

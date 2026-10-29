@@ -1,4 +1,20 @@
-# Local Service Spotlight Skills for Claude
+# Dennis Yu's agent setup and Local Service Spotlight skills
+
+**Setting up agents to work together? Start with
+[START-HERE.md](START-HERE.md).** It includes a copyable workspace, one practice
+task, a fresh-session handoff, failure recovery and evidence checks. It works as
+a public instruction route for any assistant that can read it; actual file,
+connector and execution capabilities must be tested in that assistant's account.
+
+| Your goal | Use |
+|---|---|
+| Coordinate your own agents | [Portable setup](START-HERE.md) and [workspace templates](templates/agent-workspace/README.md) |
+| Install a supported skills package | [Illustrated install guide](https://localservicespotlight.com/install/) and product-specific routes below |
+| Understand Learn → Do → Teach and CCS | [Worked learning loop](docs/agent-setup/LEARN-DO-TEACH.md) |
+| Let an agent navigate the source | [agent-setup.json](agent-setup.json) and [llms.txt](llms.txt) |
+
+This is the **public reusable source**. Dennis's private operational repositories
+are implementation examples, not prerequisites or credentials for your team.
 
 Use these guides to turn your business's proof into work you can check. Pick a
 task, such as checking a customer claim or drafting an article. Read the steps,
@@ -7,7 +23,13 @@ make one draft, and check the result before you share it.
 This is the maintained source for the Local Service Spotlight Claude marketplace.
 Its current package list and skill counts come from `.claude-plugin/marketplace.json`.
 
-## Install
+## Install skills, or read the instructions directly
+
+Claude marketplace packaging is one distribution route. ChatGPT/Codex, Muse,
+Grok Bot and other assistants should begin with the portable setup and use only
+their actually supported file/connector/instruction route. Reading a skill is not
+installing it. Grok **Build** below is a different product surface from Grok Bot;
+one surface's plugin command does not configure the other.
 
 Members should start with the illustrated guide:
 [localservicespotlight.com/install](https://localservicespotlight.com/install/).
@@ -131,7 +153,7 @@ publication alone does not install tools or grant access.
 
 ## Skills, agents, and scheduled jobs
 
-- A **skill** is a written recipe Claude can use when asked.
+- A **skill** is a written recipe an assistant can load through a supported route.
 - An **agent** carries out a multi-step assignment using skills and tools.
 - A **scheduled job** tells an agent when to run.
 - A **receipt** is timestamped evidence that a run succeeded or failed.
@@ -161,12 +183,13 @@ python3 scripts/fleet_check.py --self-test          # prove the checks bite
 python3 scripts/fleet_check.py --targets fleet.example.txt
 ```
 
-One file therefore produces the agent instruction, the human checklist, and the
-automated check — Content · Checklist · Software from a single source, so the
-rule and the thing that enforces it cannot disagree.
+One file supplies the agent instruction and human checklist. For rules with an
+honest machine check, it also supplies test definitions — Content · Checklist ·
+Software. Tests establish only their declared scope; judgment, live execution
+and installed-account adoption still require separate evidence.
 
-**Adding a house rule to the whole fleet is dropping one markdown file into
-`standards/`.** How and why, in plain language:
+**Adding a house rule begins with one markdown file in `standards/`, then review,
+source checks and a tested consumer update.** How and why, in plain language:
 [HOW-KNOWLEDGE-PROPAGATES.md](HOW-KNOWLEDGE-PROPAGATES.md).
 
 ## For maintainers

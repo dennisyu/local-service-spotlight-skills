@@ -3,7 +3,7 @@
   "title": "Visual and interactive content sits above the fold",
   "severity": "warn",
   "captured": "2026-09-04",
-  "captured_from": "Dennis Yu, Cowork session, 2026-09-04: 'I think it's a general problem we have with articles written by AI where there's a ton of text, and the photos, the visual stuff, and the interactive bits are below the fold, so they don't get seen. Can we make this a global rule?' Traced to dennisyu.com/the-unwritable-part/, where the calculator sat at 20% scroll depth behind four screens of prose. Extended by Dennis Yu, Codex GPT-6 continuation, 2026-09-05: 'Every page should have a diagram or a picture or an embedded video above the fold' across the entire fleet.",
+  "captured_from": "Dennis Yu / Local Service Spotlight public standard: Visual and interactive content sits above the fold. Original capture date is retained in captured. Public-safety clarification authorized by the owner on 2026-10-29; this reusable copy omits private conversation, personnel, account and incident details.",
   "source": "https://dennisyu.com/the-unwritable-part/",
   "applies_to": [
     "published-html",
@@ -70,8 +70,8 @@
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —

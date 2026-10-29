@@ -43,7 +43,7 @@ Same evidence → same flags, same structure. The fixed procedure collapses evid
 3. Trigger expansions only by the **decision tables** — numeric conditions, not vibes.
 4. Consult `references/integration-behaviors.md` BEFORE diagnosing any tool/integration behavior (call tracking, booking tools, form events, source buckets). This is where confident-wrong errors live.
 5. Pass the **QA gate** (`references/grading-rubric.md`) before delivering. A report that fails a criterion gets revised once, then delivered with the failure flagged.
-6. Run the **fold-in pulls (Q9–Q11 in `references/query-recipes.md`) in-line** whenever their triggers fire — never defer them to a human second pass. This week's Opaque reports each needed a manual follow-up (subdomain sales, event-onset date, out-of-area behavior); folding them in removes that pass.
+6. Run the **fold-in pulls (Q9–Q11 in `references/query-recipes.md`) in-line** whenever their triggers fire — never defer them to a human second pass. Use these pulls to investigate subdomain sales, event-onset dates and out-of-area behavior during the current analysis. Record which trigger fired and the observed result; their inclusion does not guarantee that every ambiguity is resolved.
 
 Hard boundary, stated internally always: GA4 measures the **online conversion action** (a form submit, a call click, a `purchase` event, a signup), not the fulfilled outcome (a booked job, a shipped order, settled revenue net of refunds, a retained member). Report the online conversion and say so; never imply GA4 proves revenue collected or jobs completed. Read-only: every tracking fix is written as an action for a human.
 
@@ -77,10 +77,10 @@ If there is **no locked-config**, you cannot be in Recurring mode — run First-
 | No live same-brand property anywhere accessible | Not implemented / access gap | **Stop.** Escalate — and distinguish the two cases in the escalation: **(a) GA4 exists but wasn't shared with us** → ask for user access; **(b) GA4 was never implemented** → propose setup as step one. If you can't tell, ask which it is. Do NOT fabricate an analysis. Automatic F if you report "business is dead" without this check. |
 
 **Pre-flight edge cases (name them, don't force the table):**
-- **Configured but never fired (dead tag — a THIRD state, distinct from "not shared" and "never implemented").** The property exists AND has setup artifacts (a Google Ads link, custom dimensions, a stream) proving implementation happened, yet has no usable current data. Two shapes: (a) ~zero sessions across its entire lifetime and no lead event ever; (b) **fired for real at launch, then went dark** (a burst of sessions when created, then months-to-years of near-silence — Summit Bands: 407 sessions in a 2-month 2023 launch window, then ~zero for 2.5 years). Both are the same verdict. This is not an access gap (queries return valid *empty* results, not permission errors) and not "never implemented" (setup clearly occurred). Verdict: the live tag isn't firing (broken deploy, consent-tool blocking, migration, wrong stream). **Escalate as a fixable tracking gap, not a business verdict** — do a lifetime-sessions check to confirm, then produce the escalation report shape below. Do NOT fabricate an analysis; do NOT say "the business is dead." (Ironwood Fence: property + Ads link + 2 custom dims, but 2 lifetime sessions and 0 lead events ever.)
+- **Configured but never fired (dead tag — a THIRD state, distinct from "not shared" and "never implemented").** The property exists AND has setup artifacts (a Google Ads link, custom dimensions, a stream) proving implementation happened, yet has no usable current data. Two shapes: (a) ~zero sessions across its entire lifetime and no lead event ever; (b) **fired for real at launch, then went dark** (a launch burst followed by prolonged near-silence). Both are the same verdict. This is not an access gap (queries return valid *empty* results, not permission errors) and not "never implemented" (setup clearly occurred). Verdict: the live tag isn't firing (broken deploy, consent-tool blocking, migration, wrong stream). **Escalate as a fixable tracking gap, not a business verdict** — do a lifetime-sessions check to confirm, then produce the escalation report shape below. Do NOT fabricate an analysis; do NOT say "the business is dead." Inspect setup artifacts and lifetime event history before selecting the remedy.
 - **When Phase 0 stops the run (any no-data escalation), use the escalation report shape**, not the 5-section numbers report: a short plain-English diagnostic memo — what we checked, what we found (no usable data + the setup artifacts that prove it's a tracking gap), what it means (fixable, not a traffic verdict), and the one next step (get the tag firing / confirm the right property). Phases 1–7 and their lint checks are N/A for a zero-data run — note them N/A, don't force them. Seed the locked-config as `mode_ready: escalated` with empty lead_events/baselines and the open questions (see `locked-config.md`).
-- **Adjacent-brand or barely-live sibling.** A same-account property with a *different brand name* and only a single-day/near-zero traffic blip (not sustained) is neither a same-brand sibling nor the target — pick the sustained-live property and note the other as an inactive/adjacent sub-brand. (Brightline Painting: "The Coat Crew" had one 93-session day, else zero → not the target.)
-- **Main-site + funnel-subdomain split.** Two live same-brand properties that are a primary site + a funnel/consultation subdomain are NOT the "two regional peers" case — use the primary, flag the subdomain for the team to scope before enabling Recurring. (Wexford Legal: `consultation.wexfordlegal.example`.) **But when the subdomain/sibling plausibly carries the primary conversion** (an e-commerce checkout or auction/booking subdomain heavier than the main site, or an off-domain checkout), run **Q9** in-line to pull its event inventory + revenue *before* deferring; only flag for the team if Q9 can't resolve where conversions live. (Cascade Trading Post: the auction subdomain `100200303` carries the transactions the main-site `$0` hides.)
+- **Adjacent-brand or barely-live sibling.** A same-account property with a *different brand name* and only a single-day/near-zero traffic blip (not sustained) is neither a same-brand sibling nor the target — pick the sustained-live property and note the other as an inactive/adjacent sub-brand. Confirm sustained relevant traffic instead of selecting a sibling from one isolated blip.
+- **Main-site + funnel-subdomain split.** Two live same-brand properties that are a primary site + a funnel/consultation subdomain are NOT the "two regional peers" case — use the primary, flag the subdomain for the team to scope before enabling Recurring. **But when the subdomain/sibling plausibly carries the primary conversion** (an e-commerce checkout or auction/booking subdomain heavier than the main site, or an off-domain checkout), run **Q9** in-line to pull its event inventory + revenue *before* deferring; only flag for the team if Q9 can't resolve where conversions live. A primary-site revenue value of zero does not establish zero sales when checkout occurs elsewhere.
 - **Timezone/geo mismatch.** From `get_property_details`, if the property timezone doesn't match the client's actual region (e.g. America/Chicago for an Eastern-time firm), note it — it skews any day-of-week/hour analysis. Don't silently trust the TZ.
 
 ## Phase 1 — Standard Pull (fixed, every run)
@@ -107,22 +107,22 @@ Never trust the key-event flag alone. What counts as the **primary conversion de
    Locked definition in the config wins over the pattern table. An existing-customer or repeat action (`repeat_phone_call`, a returning-member login) is not a *new* conversion. **Name-vs-flag conflicts** (event named like a conversion but not flagged as a key event, or vice versa): the pattern table classifies, the GA4 flag is a tiebreaker only; note every conflict rather than silently picking.
 3. **`form_submit` is a candidate, not a lock**: GA4's auto-captured `form_submit` can fire on invalid/incomplete submissions and can't distinguish which form fired. On first touch, verify against a known count (thank-you page views, CRM, or the client's own tally) before locking it as a case lead; until verified, mark it proposed.
 4. **Reconcile both directions**: reconstructed case-leads vs GA4's key-event count. Gap > 1.5× in either direction (under-count or dilution) = a finding with a cause. State whether the gap is **explained** (a visible config cause you can point to, e.g. unregistered key events) or **unexplained** (no visible cause) — only unexplained gaps >2× push toward Opaque.
-   - **Ordering matters and is fixed: SCREEN FIRST, then reconcile.** Reconcile the **post-spam-screen real case-lead count** against GA4's flagged key events — not the raw pre-screen reconstruction. (Reconcile-then-screen vs screen-then-reconcile can change the Opaque grade: Brightline Painting pre-screen-vs-flagged = 10.5× but post-screen-vs-flagged = 3.4×.) When the pre- and post-screen numbers differ materially, record all three internally (GA4-flagged, raw reconstruction, screened-real) and reconcile on screened-real.
+   - **Ordering matters and is fixed: SCREEN FIRST, then reconcile.** Reconcile the **post-spam-screen real case-lead count** against GA4's flagged key events — not the raw pre-screen reconstruction. Screening can change the comparison and its grade, so use the same basis on both sides. When the pre- and post-screen numbers differ materially, record all three internally (GA4-flagged, raw reconstruction, screened-real) and reconcile on screened-real.
 5. **Spam-screen — with the out-of-area intent branch** (Q6): out-of-area leads are NOT automatically spam. Decide per the locked-config `out_of_area_leads` flag:
-   - **Business sells beyond the service area** (franchise sales, national coaching, authors, e-com): out-of-area inquiries are plausibly real leads of a *different type*. Reclassify them (e.g. "franchise inquiry") and either keep them in the headline with a note or break them onto their own line — do **not** screen them as spam. (RDR sells franchises; its out-of-state singles are franchise interest, and the Grade-A exemplar keeps them.)
-   - **Local-only business, no out-of-area reason** (e.g. a painter): out-of-area case leads are contamination — screen them out of the headline and note. (Brightline Painting: Tehran was the #1 "lead" city.)
-   - **Tie-breaker for "is this spam?":** foreign/datacenter city clusters with ~0 engagement and no conversions are junk traffic regardless of business type, and this test applies even to national / no-service-area businesses (it is a general data-quality check, not only a service-area screen). Known hyperscaler/datacenter cities that recur as bot origins: Ashburn VA, Boardman OR, Prineville OR, The Dalles OR, Council Bluffs IA, Des Moines IA, Moses Lake WA, San Jose CA, Singapore, Dublin, Lanzhou, Urumqi. A cluster in these at near-zero engagement is a data-quality note, never leads. On a national business with no city W&O, surface it as a one-line "suspected bot/datacenter traffic" note under "what it means."
-   - **Calls vs forms get different screens.** Bot spam floods *forms* (a script POSTs from Tehran); an **on-site click-to-call is genuine on-device engagement** and is low spam-risk. Screen an out-of-area *call* out of the headline only when it's clearly outside the service area AND part of a junk pattern — don't geo-screen real calls as aggressively as forms, or you'll delete real leads. Note the judgment either way.
-   - **Out-of-area but normally-engaged → confirm behaviorally (Q11), don't guess.** When an out-of-area cluster engages *normally* (not the ~0-engagement datacenter signature), run **Q11** before deciding. Real-customer pattern (mixed devices, normal duration, service/quote landings, spread across cities) = legitimate leads of a *different type* — flag to the client, don't screen. Single-device / ~0-duration / one-landing / datacenter-concentrated = screen. (Kestrel Air: ~20% out-of-area but engaged normally — Q11 resolves it instead of a manual log-check.)
+   - **Business sells beyond the service area** (franchise sales, national coaching, authors, e-com): out-of-area inquiries are plausibly real leads of a *different type*. Reclassify them (e.g. "franchise inquiry") and either keep them in the headline with a note or break them onto their own line — do **not** screen them as spam.
+   - **Local-only business, no out-of-area reason** (e.g. a painter): out-of-area case leads are contamination — screen them out of the headline and note.
+   - **Data-quality check for possible spam:** a concentrated cluster with near-zero engagement and no conversions is a signal to investigate across all business models. Verify behavior and available network/source evidence; geography or a datacenter-associated city alone does not prove automation. Report unresolved cases as "suspected bot/datacenter traffic" with the observed evidence, and retain raw and screened counts separately.
+   - **Calls vs forms get separate checks.** Form submissions and on-site click-to-call events have different instrumentation and abuse paths; neither alone proves a qualified lead or connected call. Screen an out-of-area call only with supported junk-pattern evidence, preserve the reason and avoid excluding plausible real inquiries from geography alone.
+   - **Out-of-area but normally-engaged → confirm behaviorally (Q11), don't guess.** When an out-of-area cluster engages *normally* (not the ~0-engagement datacenter signature), run **Q11** before deciding. Real-customer pattern (mixed devices, normal duration, service/quote landings, spread across cities) = legitimate leads of a *different type* — flag to the client, don't screen. Single-device / ~0-duration / one-landing / datacenter-concentrated = screen.
    If spam is found in the current window, pull Q6 for the prior window too, so the comparison is screened on both sides.
 6. **`form_start` special rule**: if `form_start` fires but no `form_submit`/completion event exists, form leads are **untracked** — flag "verify the form submits and that submission is tracked." Never infer form volume from starts. The same click-without-completion logic applies to scheduler/booking links (Calendly-type): a click event is not a booking.
 7. **Call event type — on-site click vs. call-tracker (prevents a confident-wrong attribution hunt)**: classify the call event's *type* from the locked-config. An **on-site click-to-call event** (e.g. `call_clicks`, `click_to_call` fired by the site) has a website touchpoint by definition — it is attributed by the session that fired it, so the off-site/`(not set)` touchpoint apparatus and the CallRail custom-dimension recovery do **NOT** apply, and empty custom dims are irrelevant, not a problem. Only a **call-tracker vendor event** (CallRail/WhatConverts/FirmPilot dynamic-number events) invokes the touchpoint rule and the "segment `(not set)` calls into a GBP/Ads bucket" logic. Never hunt for missing call attribution on an on-site click event.
 
 ## Phase 2.6 — Swing decomposition (whenever the headline moves materially — never narrate a swing you haven't decomposed)
 
-A material lead swing (≥ ~20% PoP, and always any swing beyond the ±35% surface threshold) will alarm the owner, so the report MUST explain *what drove it* — and the driver must be **pulled from data, not guessed**. A plausible-but-wrong driver is the failure mode here: a v1 Wexford Legal draft passed every mechanical lint check and still blamed "the giveaway ending" when 76% of the drop was off-website calls the giveaway never drove. Required before writing the "what drove it" sentence:
+A material lead swing (≥ ~20% PoP, and always any swing beyond the ±35% surface threshold) will alarm the owner, so the report MUST explain *what drove it* — and the driver must be **pulled from data, not guessed**. A plausible explanation can still be wrong: mechanical checks do not establish which source actually drove a change. Required before writing the "what drove it" sentence:
 
-1. **Comparison integrity first.** Confirm both sides of the comparison are computed on the **same basis** — same classification, same spam-screen, same dilution-separation applied to *both* windows. Never compare a clean current number to a raw or differently-counted prior. Recompute the prior on the current basis if needed and say so. (Wexford Legal 355 was already clean; Target's prior 44 had to be re-screened, not carried over raw at 95.)
+1. **Comparison integrity first.** Confirm both sides of the comparison are computed on the **same basis** — same classification, same spam-screen, same dilution-separation applied to *both* windows. Never compare a clean current number to a raw or differently-counted prior. Recompute the prior on the current basis if needed and say so.
 2. **Decompose the swing by type × source × touchpoint.** Pull prior-window leads by type (calls/forms/bookings/texts) and by source (Q4 prior window), and split calls into off-site vs web-touch, both windows. Lay prior beside current. Identify the **largest mover** — that, not a narrative hunch, is the driver.
 3. **Verify the named driver IS the largest mover.** If your explanation names a bucket that isn't the biggest contributor to the change, it's wrong — fix it. (Blaming paid/giveaway for a drop that lives in off-site GBP calls is the canonical error.)
 4. **Respect the off-site attribution limit.** When the dominant lead type carries no source (off-site calls in `(not set)`), GA4 cannot tell you *why* those moved — emit a verification action ("pull the call-tracker + GBP call logs for the two months") instead of asserting a cause. Say what you can prove and route the rest to a check.
@@ -137,13 +137,13 @@ Evaluate every row. Each triggered condition is a flag; flags roll into the grad
 |---|---|---|---|---|
 | C1 | Direct share | Q2 | 20–25% watch · >25% elevated · >40% alarm (industry consensus: healthy 5–20%) | Attribution fog |
 | C2 | Direct surge | Q2+Q8 | Direct sessions +50% PoP AND engagement rate falling AND ≥90% new users | Bot/untagged flood (verify via Q8, not assumption) |
-| C3 | Unassigned share | Q2 | >10% of sessions | **Decompose the bucket before diagnosing — it holds two unrelated things at once:** (a) mistagged traffic (non-standard UTM medium → C4, a "fix the tags" defect) and (b) off-site conversions with no source (off-touchpoint calls in `(not set)` → C5, which is CORRECT, not broken). Split Unassigned into these before reporting; never treat the whole bucket as one problem or double-count the calls as mistagged. (Wexford Legal: 532 mistagged the regional-TV buy CTV sessions + 137 correct off-site calls in the same Unassigned group.) |
+| C3 | Unassigned share | Q2 | >10% of sessions | **Decompose the bucket before diagnosing — it holds two unrelated things at once:** (a) mistagged traffic (non-standard UTM medium → C4, a "fix the tags" defect) and (b) off-site conversions with no source (off-touchpoint calls in `(not set)` → C5, which is CORRECT, not broken). Split Unassigned into these before reporting; never treat the whole bucket as one problem or double-count the calls as mistagged. |
 | C4 | Non-standard UTM medium | Q3 | custom `medium` that maps to no channel (e.g. `Live Sports`) | UTM fix action |
 | C5 | Attribution coverage of case leads | Q4 | apply the **calls touchpoint rule** (integration-behaviors § calls) BEFORE flagging. Off-site calls in `(not set)` are CORRECT — segment into their own bucket (GBP + Ads), don't call them broken. Unattributed **forms** = real tracking problem. Web-touch calls unattributed = real problem. | Possibly invalidates channel analysis |
 | C6 | Clean vs raw coverage | Q4 | clean = paid + organic + real referral/social only. Direct = absence of source; booking-tool referral = wrong source. Never report "X% tracked" by counting Direct. | Report both numbers internally |
-| C7 | Conversion dilution | Q1 | one non-case event >50% of key events | Separate from case leads; **headline it if >70% in EITHER comparison window, OR if it is the single largest counted conversion.** (Wexford Legal: giveaway 71.3% prior / 61.6% current — the >70%-current-only reading would wrongly demote the account's defining data-trust story in the very window that made it the dilution anchor.) |
-| C7b | Tagged junk flood | Q2+Q3+Q8 | a NON-Direct labeled channel (Paid Social, Referral, a specific source) sends a large session block with engagement <½ site norm and ≈0 leads, verified new/low-quality via Q8 | Junk-quality traffic on a tagged channel — screen from the "traffic up" read, flag "under review," never celebrate. (C2 is Direct-only and misses these: Brightline Painting's 526-session Paid Social flood, 6.8% engagement, 0 leads.) |
-| C8 | Booking-tool / self referral | Q3+Q4 | booking/checkout/CRM domain (`app.*`, `*.bookflow.io`, `force.com`, `infusionsoft`…) carries ≥10% of **leads** | Source overwrite — headline finding + referral-exclusion action (RDR: 27%) |
+| C7 | Conversion dilution | Q1 | one non-case event >50% of key events | Separate from case leads; **headline it if >70% in EITHER comparison window, OR if it is the single largest counted conversion.** A synthetic 75%-prior / 65%-current example still crosses the either-window threshold. |
+| C7b | Tagged junk flood | Q2+Q3+Q8 | a NON-Direct labeled channel (Paid Social, Referral, a specific source) sends a large session block with engagement <½ site norm and ≈0 leads, verified new/low-quality via Q8 | Junk-quality traffic on a tagged channel — screen from the "traffic up" read, flag "under review," never celebrate. C2 is Direct-only, so this separate check covers poor-quality traffic assigned to a named channel. |
+| C8 | Booking-tool / self referral | Q3+Q4 | booking/checkout/CRM domain (`app.*`, `*.bookflow.io`, `force.com`, `infusionsoft`…) carries ≥10% of **leads** | Source overwrite — headline finding + referral-exclusion action |
 | C9 | Capture gaps | Q5 | `(not set)` landing pages, `(data not available)`, sampling | Note; elevate if material |
 
 **Grade (internal only, never shown to client):**
@@ -151,11 +151,11 @@ Evaluate every row. Each triggered condition is a flag; flags roll into the grad
 - 🟡 **Hazy** — any elevated flag, but case-lead count is trustworthy after classification. → Answer with caveats, lead with the fix.
 - 🟢 **Clear** — no elevated flags. → Answer straight.
 
-**Near-threshold rule:** any check landing within 20% of its trigger (either side) is a **watch item** — reported softly internally and carried in the Narrative, never silently passed or silently escalated. (Westerville: expected leads 1.6 vs guard 2 → watch, not omit.)
+**Near-threshold rule:** any check landing within 20% of its trigger (either side) is a **watch item** — reported softly internally and carried in the Narrative, never silently passed or silently escalated.
 
 ## Phase 3.5 — Tripwire gate (Recurring mode only)
 
-After Data Clarity, before writing an owner-facing report, evaluate `references/tripwires.md` against the locked-config. Any tripwire that fires **routes this week to the team**: finish the analysis, write the internal draft, and emit a one-line banner — "This week needs Local Service Spotlight review before it reaches the owner: <reason(s)>" — instead of delivering. A material business swing (large PoP lead change) is **surfaced prominently in the owner report**, not escalated; escalation is reserved for **data-trust breaks** (new lead event, property switch/ghost, Opaque grade, reconciliation break, a newly-appearing spam/contamination cluster, or a previously-applied fix that regressed). First-Run mode uses the independent QA and selective-review gate defined above; unresolved data-trust breaks remain held for the appropriate reviewer.
+After Data Clarity, before writing an owner-facing report, evaluate `references/tripwires.md` against the locked-config. Any tripwire that fires **routes this week to the team**: finish the analysis, write the internal draft, and emit a one-line banner — "This week needs the designated reviewer before it reaches the owner: <reason(s)>" — instead of delivering. A material business swing (large PoP lead change) is **surfaced prominently in the owner report**, not escalated; escalation is reserved for **data-trust breaks** (new lead event, property switch/ghost, Opaque grade, reconciliation break, a newly-appearing spam/contamination cluster, or a previously-applied fix that regressed). First-Run mode uses the independent QA and selective-review gate defined above; unresolved data-trust breaks remain held for the appropriate reviewer.
 
 ## Phase 4 — Conditional expansions (rule-triggered only)
 
@@ -185,31 +185,31 @@ Structure and voice per `references/report-format.md`; match `references/exempla
 - **Every number gets a comparison + % change.** No baseline → not reported.
 - **Data shown as Winners & Opportunities** (see report-format § Winners & Opportunities), in the **model's lens order** (business-models.md): lead-gen (local) → channels → pages → cities; e-commerce → channels → products → checkout funnel; audience → channels → top content → signup sources; membership → channels → offer pages → enrollment funnel; donation → channels → campaigns → top content. Each is a top-5 "what's producing" list paired with a guarded "worth a look" list using the expected-vs-actual line ("enough traffic for ~4 at your normal rate; produced 0"). The 13-week trend of the primary conversion gives momentum context. Cities/GBP appear only for local businesses. Full tables stay internal, never in the client text. Charts derive from the report's own numbers only.
 - **Hedge fixes**: a change *should* resolve an issue, never *will*.
-- **Grounded prescriptions only.** Every recommended fix, named product/feature, and causal mechanism must come from (a) integration-behaviors.md, (b) your own pulled data, or (c) an explicit "we'll confirm the right approach" hedge. Never invent a product ("Google-provided call tracking" does not exist), never prescribe a real feature for a problem it can't solve (a GBP link does NOT surface data in this report's pipeline), never infer setup status from absence of tagged traffic. Render-time danger signs: "which likely means…", "should give us visibility into…" — if a causal connective bridges a gap the reference doesn't cover, cut it or hedge it.
-- **Number integrity.** Every client-facing number is either a pulled number or clearly framed as our reconstruction — never present your own derived/reclassified count as something "GA4 shows" (Northside Fitness: told the client GA4 shows 44 when the dashboard shows 64). Tables must sum to their headline; a known small mismatch gets a footnote, not silence.
+- **Grounded prescriptions only.** Every recommended fix, named product/feature, and causal mechanism must come from (a) integration-behaviors.md, (b) your own pulled data, or (c) an explicit "we'll confirm the right approach" hedge. Verify that every named product and feature currently exists and is supported in the intended account. Test that it supplies the required data to this report's pipeline; a saved integration link alone does not prove ingestion. Never infer setup status from absence of tagged traffic. Render-time danger signs: "which likely means…", "should give us visibility into…" — if a causal connective bridges a gap the reference doesn't cover, cut it or hedge it.
+- **Number integrity.** Every client-facing number is either a pulled number or clearly framed as our reconstruction — never present your own derived/reclassified count as something "GA4 shows". Tables must sum to their headline; a known small mismatch gets a footnote, not silence.
 - Sections: 1 Business pulse · 2 The numbers, shown (trend, then the model's-lens W&O per business-models.md) · 3 What it means (includes the decomposed driver of any material swing, per Phase 2.6) · 4 **What to do next** — 2–3 decisive next-step *recommendations*, not a recap of internal work-in-progress (✅ our-side commitment vs named client-side ask; a ✅ is a forward step we're committing to, never completed-work) · 5 Start here (one move, not a restatement of action #1).
 
 ## Phase 7 — QA gate, then writeback
 
-The QA gate has three layers because self-grading alone is unreliable (self-preference bias is documented and was observed in testing: self-grades ran A- while external grades ran B to C-).
+The QA gate has three layers because self-grading alone is unreliable (self-preference bias can make a builder overlook its own errors).
 
 1. **Mechanical lint (deterministic — do these as literal checks, not judgment):**
    - Grep the client text for banned vocabulary: Clear/Hazy/Opaque, reconciliation, attribution, coverage, conformance, key events, case leads, touchpoint, C-flag references, thread names. Zero hits required.
    - Every client-facing number has a comparison (see report-format § Comparison scope for the pages/cities carve-out); word count within ~1.5× of the exemplar (~530 words, prose only — markdown table syntax doesn't count toward the limit). **Carve-out:** Phase-0 escalation (no-data/dead-tag) reports may run ~150 words over, since honestly explaining the tracking gap costs words the standard report doesn't spend.
-   - **Sums-to-headline (literal check — tables AND prose lists).** Add the rows of every client table — or the items of any prose/list lead breakdown ("34 calls, 14 bookings, 1 form") — and confirm it equals the headline it sits under, or carry an explicit "other / minor sources — N" line so it visibly sums. A silent residual fails. (RDR miss: leads-by-source table showed 17+13+11+6=47 under a 49 headline — the 2 minor-source leads must appear.)
-   - **Numeric-band containment (literal check).** Any stated range/band ("leads held in a 12–25/week band") must contain **every** in-window value from the source query; recompute min/max from Q7 and correct the band, and never cite a week as evidence of a floor/ceiling it violates. (RDR miss: "12–25" band while W19=8 and W28=9.)
-   - **Row-level count adjectives (literal check).** Any word asserting a per-row count — "singles," "one each," "a handful" — is verified against the actual Q6/Q5 counts. (RDR miss: called Blacklick/Lewis Center/Canal Winchester/Grandview "singles" when each had 2 leads.)
-   - **Loss/gain attribution check.** If the report says where a change concentrated ("most of the lost leads sit in X"), the named bucket must be the largest mover in the source decomposition. (RDR miss: named paid −12 as "most," but the booking-tool/referral bucket dropped −15.)
+   - **Sums-to-headline (literal check — tables AND prose lists).** Add the rows of every client table — or the items of any prose/list lead breakdown ("34 calls, 14 bookings, 1 form") — and confirm it equals the headline it sits under, or carry an explicit "other / minor sources — N" line so it visibly sums. A silent residual fails. Synthetic fixture: 10+8+6=24 under a 25-lead headline needs an explicit one-lead remainder.
+   - **Numeric-band containment (literal check).** Any stated range/band ("leads held in a 12–25/week band") must contain **every** in-window value from the source query; recompute min/max from Q7 and correct the band, and never cite a week as evidence of a floor/ceiling it violates. Synthetic fixture: a stated 10–20 band fails if any in-window week contains 7.
+   - **Row-level count adjectives (literal check).** Any word asserting a per-row count — "singles," "one each," "a handful" — is verified against the actual Q6/Q5 counts. A synthetic two-lead row cannot be described as “one.”
+   - **Loss/gain attribution check.** If the report says where a change concentrated ("most of the lost leads sit in X"), the named bucket must be the largest mover in the source decomposition. Synthetic fixture: a 9-lead paid decline is not the largest mover when referral declined by 12.
    - Action block: every bullet is future-tense work; no ✅ on completed diagnostics.
    - **AI-writing-tell check (literal).** Count em-dashes (`—`) in the client text; rewrite each as a period, comma, colon, or parentheses, leaving at most one. Flag other tells (the "it's not just X, it's Y" construction, "fast-paced world," reflexive "leverage/utilize/delve," three-adjective triads). A report that reads as machine-written fails the voice bar even if every number is right.
    - **Recurring mode:** confirm the Phase 3.5 tripwire gate ran; if any tripwire fired, the output carries the team-review banner and is NOT formatted as owner-delivered.
 2. **Self-grade** against all 8 criteria + the prescription audit in `references/grading-rubric.md` (criterion 9). Any fail → revise once. Check the four auto-penalties explicitly (machinery leak, unsupported number, dead-property claim, missing comparison).
 3. **External grade when the harness allows it** (subagent or separate session, fresh context, no generation history): give the grader only the report, the data log, and the rubric. Record its grade beside the self-grade; a disagreement is itself a finding. Required independent QA remains. Advance human review is selective: consequential decisions, missing authority or unresolved material facts go to the appropriate decision owner; a routine verified report has no blanket human gate.
 2. **Writeback** (per Narrative pattern):
-   - Report → `02-Clients/{client}/MAAs-GA4/YYYY-MM-DD.md`
+   - Report → the configured private report destination, such as `{client_vault}/{client}/MAAs-GA4/YYYY-MM-DD.md`
    - Narrative: dated Weekly Log entry (leads, findings, actions, start-here, open questions); update Running Themes; update Account Context if setup changed; carry open questions forward. Corrections are noted in place, never deleted.
    - **Locked-config:** append this run to `run_history` (date, mode, headline leads, clarity, escalated?); update `fix_status`/`last_checked` where a fix was verified this run; refresh `baselines` only on a team-reviewed First-Run. If a tripwire fired, set next cycle to First-Run. Locked fields never change on a Recurring run.
-   - System-level gap (would change how EVERY client is analyzed, not just this one) → `05-Decisions-Log/YYYY-MM-DD_GA4-{title}.md` (trigger, gap, fix, landed-in) and flag this skill for the change. Client-specific findings go in the Narrative, not the log.
+   - System-level gap (would change how EVERY client is analyzed, not just this one) → the configured private decision log (trigger, gap, fix, landed-in) and flag this skill for the change. Client-specific findings go in the Narrative, not the log.
 3. **Selective review.** Post routine verified findings on the configured authorized rail after required QA. Honor an explicit draft request. Hold consequential decisions or missing authority for the appropriate decision owner; do not require a human for every factual report.
 
 <!-- shared-rule:agents-draft-humans-send:start -->
@@ -269,8 +269,8 @@ penalty. Use the maintained shared audit run contract.
 
 - **Every task is owned by a function** — web, content, analytics, client success — and
   people sit inside functions. People join, leave and go on holiday; the function does not.
-- **Escalate to a function too.** "I told Muzamil" is not an escalation if Muzamil is
-  away; "escalated to the web function" is.
+- **Escalate to a function too.** "I told one colleague" is not an escalation if that
+  colleague is away; "escalated to the web function" is.
 - A function with exactly one person in it is still a function. Name it that way, so the
   second person changes nothing.
 - Work assigned to a named individual and nowhere else is work that silently stops when
@@ -280,30 +280,24 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
 ## Basecamp updates stay in Basecamp
 
-- Never use Gmail Reply, Reply All, Forward, Send, or Draft to
-  `notifications@app.basecamp.com` or `notifications@3.basecamp.com`. Those
-  visible From addresses are notification infrastructure, not destinations.
-- Post the update in the exact existing Basecamp thread through an authorized
-  Basecamp connector, API, or the Basecamp UI. The company delivery rail is
-  Basecamp itself, so do not substitute a per-message
-  `*@replies.app.basecamp.com` email token even when one is present.
-- Before any Gmail mutation, inspect the resolved To and Cc fields. If either
-  contains a generic Basecamp notifications address, stop without creating or
-  sending the message.
-- Changing the Gmail From identity does not repair this failure. In the
-  incident that produced this rule, the connector resolved the visible From
-  address as the recipient and discarded Basecamp's unique Reply-To route; the
-  result was an `Email Received in Error` bounce and no Basecamp comment.
-- A Basecamp update is complete only after readback proves the live thread URL
-  or recording ID, the expected author, and a unique phrase from the comment.
-  A Gmail SENT item is not proof. If no Basecamp write path exists, report the
-  blocker and put the intended update in the run result; do not fall back to
-  email.
-- Embed this rail directly in every scheduled or cloud task that may touch
-  Basecamp. Such runs may not load repository instructions before using an
-  already-authorized Gmail tool.
-- This rule controls the delivery path; it does not grant permission to post or
-  weaken any existing human approval requirement.
+- For an authorized project update, identify the exact existing thread and its
+  intended audience before writing. Use the team's approved source-system
+  connector, API or interface; the task still needs communication authority.
+- A notification is a cue to read the source record, not a destination. Do not
+  address a message to a generic notification sender or assume that changing
+  the sender identity makes a failed delivery route valid.
+- In this workflow, keep the update in its original project thread rather than
+  substituting an email route. If the approved write route is unavailable,
+  record BLOCKED with the failed step, evidence, owner and bounded next action.
+- Read the destination after the write. Verify the intended thread, expected
+  author and distinctive new content, and retain its location and observation
+  time. A successful send/save response alone does not establish delivery.
+- Ensure each participating runtime loads the current delivery policy before
+  acting, including scheduled workers. Source publication alone is not evidence
+  that those workers loaded or followed it.
+- This rule describes a reusable delivery safeguard. It names no account,
+  project, recipient, private incident or active deployment, and it grants no
+  permission to post, send or change access.
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:end -->
 
 <!-- shared-rule:be-proactive-see-it-through:start -->
@@ -325,12 +319,10 @@ penalty. Use the maintained shared audit run contract.
 <!-- shared-rule:capture-what-you-learn:start -->
 ## Capture what you learn as a standard, in the same session
 
-- **A rule that lives only in an article, a chat message, a call recording, or your
-  context window is a rule the next agent will break.** That is not a prediction. The
-  black-button rule was published, illustrated, and given an enforcement plugin on
-  17 May 2026, and on 15 August 2026 an agent holding the entire skill pack in context
-  shipped a black button. The rule was never in `standards/`, so it never reached the
-  skills, so it was not there to be read.
+- **A lesson kept only in an article, chat, recording or context window may be
+  absent from the instructions the next operator loads.** Capture its reusable
+  criteria in the canonical standard, distribute the applicable source copies,
+  and test the receiving runtime before claiming adoption.
 - When anyone — the client, the account owner, an audit, or your own failure — states a
   rule that should hold next time, **your job is not to remember it. It is to write
   `standards/<slug>.md` before the session ends.** Memory does not survive a session
@@ -344,29 +336,36 @@ penalty. Use the maintained shared audit run contract.
   ```
 
 - Then write the rule, run `python3 scripts/sync_shared_rules.py`, and open the pull
-  request. The sync copies the rule into `AGENTS.md` and every distributed `SKILL.md`,
-  so it reaches every agent and every member who installed the pack. Nobody has to be
-  told about it.
+  request. The sync copies the rule into `AGENTS.md` and each distributed `SKILL.md`
+  whose declared scope applies. This prepares source copies; it does not update an
+  existing installation. Record the released revision, required sync action and a
+  fresh-session activation test for each account being claimed.
 - **Give the rule a machine check whenever one is honest.** A `checks` block in the
-  header compiles straight into the live fleet sweep, so a violation on a published page
-  is caught by a schedule instead of by a person noticing. Every check must carry
-  passing and failing examples — a pattern that matches nothing reports a clean site
-  forever, which is worse than no check at all.
+  header is consumed by the fleet sweep when that sweep actually runs against an
+  applicable target. Every check must carry passing and failing examples. Exercise
+  a separate failing case too: a pattern that matches nothing can look healthy.
+  Record scheduling and actual firing separately; a check in source creates neither.
 - **Where a machine check would be dishonest, say so and leave `checks` out.** Judgement
-  rules are still rules; they are enforced by being read pre-flight, and pretending a
-  regex covers them hides the fact that nothing does.
+  rules still need a qualified reviewer to apply them to the actual result. Reading
+  a rule is not evidence of compliance, and a regex cannot certify judgement.
 - **Provenance is required, not decoration.** `captured_from` is how the team sees which
-  channels leak. If dozens of recorded calls have produced no standards, those calls are
-  not being captured, and that is visible at a glance instead of being a suspicion.
+  channels leak. Missing provenance is a reason to inspect the capture path; it does
+  not establish how many recordings exist or whether an undocumented process ran.
 - **When a new rule contradicts an existing one, resolve it in the file and say so
   out loud.** Two standards that disagree are worse than one that is wrong, because
   every agent that reads both will pick whichever it happened to see last. Write the
   reconciliation into the newer rule and flag it to the account owner for confirmation.
 - The order is Checklist → Content → Software. Write the checkable rule first, publish
   the article that teaches it second, and let the sweep be generated from the rule
-  rather than hand-written beside it. Writing the article first is how rules get lost:
-  the article is the artifact everyone can see, so it feels finished, and the
-  enforceable form never gets written.
+  rather than hand-written beside it when the declarative check types suffice.
+  Complex checks need maintained code and tests linked from the rule. CCS means
+  Content, Checklists, Software; this checklist-first capture sequence preserves
+  that framework. An article alone leaves checks and adoption unproved.
+- **Close the learning loop with another operator.** Link the actual run, correction,
+  standard, teaching content and software check. Give a fresh operator only the
+  guide and permitted inputs; record the tested revision, result, failures and help
+  required. Fix ambiguity in the master and replay the affected steps. Saying the
+  lesson was shared does not prove another operator can use it.
 <!-- shared-rule:capture-what-you-learn:end -->
 
 <!-- shared-rule:content-factory-four-stages:start -->
@@ -560,10 +559,24 @@ bidirectional-link verifier and rendered desktop/mobile review.
 
 - **Read the standard before you touch the work.** Skipping to doing produces output that
   looks right and is wrong in ways the person reviewing it has to find for you.
-- **Then do it,** all the way to a verified artifact.
-- **Then teach it** — write the run up so the next agent inherits what you learned. That
-  write-up is what turns one person's lesson into everyone's default, and it is the whole
-  reason `standards/` exists.
+- **Practice safely, then do it.** A public or synthetic rehearsal helps a new
+  operator learn the procedure. Label it as practice; it does not prove a client
+  result, production readiness, or mastery. Real Do requires an authorized task,
+  its original acceptance criteria, a checked artifact and destination evidence.
+- **Then teach it** — preserve the inputs and source revisions, steps, choices,
+  mistakes, fixes, checks and limits in a reusable guide. Keep private evidence
+  private and use only approved public examples. Update the canonical standard
+  and its Content, Checklist and Software forms instead of creating a competing SOP.
+- **Test the teaching with a fresh operator.** Another person or agent must work
+  from the guide and permitted inputs without the author filling in missing steps.
+  Record the tested revision, independent result, help required and failures. Fix
+  the guide and repeat the affected part. A replay proves only the tested scope;
+  agreement, publication, or a successful synthetic case alone does not prove mastery.
+- **Check that the checker can fail.** Run a known bad case and a clean case; where
+  practical add an independently chosen failure beyond the checker's own examples.
+  Report what software did not check, including meaning, permissions and actual
+  runtime behavior. Preserve the separate account and job evidence in the release
+  receipt rather than treating source consistency as adoption.
 - The order is not a preference. A rule taught before it is understood is repeated
   without judgement; a rule learned and then taught survives contact with a case it did
   not anticipate.
@@ -845,13 +858,13 @@ entity-linking preflight and a live link audit.
   aimed at an individual who is away is not a rescue.
 - **A parked ask carries a date or it is not parked, it is dropped.** Any status row that
   says "waiting on", "blocked on" or "pending <person>" must also say when someone
-  comes back to it. In the agent runtime this is failure mode `F10 Silence as a status`
-  and `tools/lint_unanswered_ask.py` fails the build on a row without a date. The first
-  run of that linter found two real ones: one five days old, one thirteen days old and
-  not actually blocked on anybody.
-- Canonical public statement, indexable and pulled at runtime by every scheduled agent:
-  https://dennisyu.com/unanswered-ask/ — linked from https://dennisyu.com/agent-disclosure/
-  and from the new-agent bootstrap box. Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
+  comes back to it. A team can check this with a linter that rejects a pending row
+  without a timezone-aware recheck date and an accountable next owner. Test a row
+  with those fields and one without them before trusting the check. Record actual
+  runtime loading and scheduled execution separately; a written rule proves neither.
+- Canonical public statement: https://dennisyu.com/unanswered-ask/.
+  Public disclosure guide: https://dennisyu.com/agent-disclosure/.
+  Marker `UNANSWERED-ASK-RESCUE-2026-09-04`.
 <!-- shared-rule:an-unanswered-ask-never-stops-the-work:end -->
 
 <!-- shared-rule:every-article-and-project-starts-with-specific-gct:start -->
@@ -1048,8 +1061,8 @@ Use these terms to choose the setup your business needs. Start with one guide an
   callout or list breaking it.
 - **Why:** `every-article-has-pictures` only asks whether an image exists. A page
   can satisfy it and still bury the picture four screens down, where nobody
-  scrolls. That is the exact failure this rule closes, and it shipped on
-  dennisyu.com before anyone noticed.
+  scrolls. Check the rendered first screen so an image count cannot hide that
+  failure.
 - **Server-render the initial state of any interactive block.** WP Rocket and
   similar optimisers delay inline JavaScript until the visitor's first
   interaction, so a block that builds its own DOM paints as an empty shell —
@@ -1137,8 +1150,9 @@ valid while unsampled URLs, Not Active stops or per-site holds are omitted.
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.
@@ -1184,72 +1198,66 @@ It supplements access and action-approval rules rather than granting new authori
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:start -->
 ## Pick the cheapest capable fleet lane
 
-- **Route each job to the cheapest fleet lane that can actually do it.** Cost
-  order: local Qwen (free) first, then Muse, then everything else. This rule
-  picks the *seat* that runs the job. `model-judgment` still picks the *model
-  tier* inside that seat. They are two ladders, not one. There is no separate
-  skill-router skill; this file is the fleet router.
-- **Muse (Meta Muse Spark) is the default for high-volume work that does not
-  need frontier intelligence.** Inbox, calendar, bookings, errands,
-  watch-and-ping monitoring, volume monitoring, and Google/Meta chores go
-  here. It is heavily subsidized: the Maximum plan is about 3 billion Muse
-  tokens **per week**, not per month. A Muse token is Meta's own meter — do
-  not equate it to an OpenAI token. Do not buy more Muse capacity; fit the
-  volume work inside the weekly allowance. Treat Muse as non-frontier: do not
-  put disputes, must-be-right research, or code/docs that matter on it.
+- **Route each job to the cheapest authorized lane that can actually do it.**
+  Compare the available runtimes' capabilities, cost, allowance, availability,
+  data-handling limits and required review. Lower-cost local text processing
+  may suit offline bulk work; an authorized hosted runtime may suit work that
+  needs a browser, connector or unattended availability. Verify those facts in
+  the actual account rather than assuming a product name establishes them.
+- **Choose the execution seat and model tier separately.** This rule picks the
+  runtime that owns the job. `model-judgment` picks an appropriate model tier
+  inside that runtime. A cheaper model without the required tools or reliability
+  is not a capable lane. Include retry and review costs in the comparison.
+- **Reserve stronger reasoning and independent review for demanding work.**
+  Disputes, consequential research and consequential code or documentation need
+  an appropriately capable worker. Experimental output must not be the sole
+  basis for a critical action; a qualified person or separate fresh-context
+  reviewer checks the original evidence and actual result first.
 
 | Lane | Takes | Hard stop |
 |---|---|---|
-| **Local Qwen** (Trenton on Dennis's Macs) | Offline bulk text only: transcript triage, Content Factory first drafts, MAA and GCT first passes, bulk rewrites. Cheapest seat — free | No browser, no logins, no publishing. Runs only while a Mac is awake |
-| **Muse (Meta Muse Spark) / Happy** | High-volume work that does not need frontier intelligence: inbox, calendar, bookings, errands, Google (Photos, Docs, Gmail), Meta, watch-and-ping monitoring, volume monitoring | Hard reasoning, disputes, research that has to be right, or code/docs that matter. Do not buy more Muse capacity |
-| **Astra** (Dot, and specific ChatGPT tasks) | Hard reasoning, disputes, research that has to be right, and code/docs that matter. Fewer tokens than Muse, so spend them on work that has to be right | Dot is experimental (about a day old on 2026-10-01). Spot-check its routine output. Never the sole owner of anything critical: a human or a separate ChatGPT task started fresh reviews Dot's output before anyone acts on it (`qa-from-a-different-context-window`). This holds until this file says otherwise |
-| **Kimi and Codex crons** | Cheap recurring scheduled jobs that are already live here, or that Muse cannot own | Do not keep a job here after a fitter lane is live. Do not default new high-volume work here |
-| **Grok desks** (Grok Bot agents such as Q, Tanner, Austin, Trenton, Alex) | Judgment calls, publishing, and routing only | Keep turns short. Not the high-volume default |
-| **Any other seat** (Cursor, Claude, and the rest) | Work already assigned to it, and new work that only that seat can reach | Sits in "everything else" in the cost order. Do not move Muse- or Qwen-capable volume onto it |
+| **Offline text lane** | Authorized transcript triage, first drafts, preliminary analyses and bulk rewrites that need no external tools | No browser, login or publication unless separately supported and authorized. Confirm device availability before relying on it |
+| **Hosted volume lane** | Bounded repetitive work with tested tools, access and sufficient allowance | Do not route consequential reasoning here merely because it is cheap. Verify unattended availability rather than inferring it from hosting |
+| **Reasoning and review lane** | Hard reasoning, disputes, consequential research, code and documentation | Preserve independent review and specialist requirements. A model name alone does not establish competence |
+| **Existing recurring lane** | A recurring job whose current owner, schedule and result have actually been observed | Retain one owner while testing a replacement; an instruction or saved schedule alone does not prove a successful firing |
+| **Action or publishing lane** | Work requiring a specific authorized connector, account, destination or approval route | Stay within recorded authority. Access to one service or account does not establish access to another |
+| **Specialized lane** | Work only a particular approved runtime can reach or perform | Record the capability that justifies the cost; do not move work solely because another product is available |
 
-Qwen is cheaper than Muse, yet Muse is the *default* for volume because most
-volume needs a browser or a login, which Qwen cannot do. Tie-break: a job
-that is offline bulk text with no browser or login, and that can wait for a
-Mac to be awake, goes to Qwen first. A job that needs a browser or a login,
-or that must fire on a schedule whether or not a Mac is awake, goes to Muse.
-A fallback model inside one seat is fine — `model-judgment` requires one for
-unattended jobs — but a second lane for the same job is not.
+These are capability categories, not claims about any installed fleet. Record
+the actual runtime and tested capability in the team's private job record.
+One agent name may cover multiple execution environments; route by the environment
+the task needs. Product prices, quotas and capabilities need current verification
+for the specific plan and account. Token meters from different providers are not
+automatically comparable. This rule does not authorize another subscription.
 
-Lanes are seats, not desk names. Trenton appears twice because that desk has
-both a local-Qwen seat on the Macs and a Grok Bot seat; route by the seat the
-job needs.
+- **Keep one outcome owner and one active execution lane per job.** A fallback
+  model within that lane can handle an approved failure path. It must not create
+  a second independent owner or repeat an external action whose result is uncertain.
+- **Migrate through a controlled cutover.** Test the replacement in a paused,
+  dry-run or otherwise isolated state that cannot duplicate production effects.
+  Reconcile pending runs and uncertain writes, pause the old trigger, transfer
+  ownership through the authoritative task record, then enable the replacement.
+  Verify its actual result and retain the previous configuration for rollback.
+  If a safe cutover is unavailable, retain the current owner and record the blocker.
+- **Instructions do not grant authority.** Sending, publishing, spending,
+  installing, changing access and deleting require the owner's existing authority
+  and applicable approval rails. Keep passwords, tokens, account inventories and
+  private schedules out of this rule and its public copies.
 
-- **Until there are many Dots, keep dividing work across the existing
-  agents.** "Many Dots" means the models absorb the harness so humans do not
-  have to split tasks and project-manage them. Until that is true, do not
-  collapse the fleet onto Dot or Astra. Use the split in this table.
-- **Rule of thumb.** Offline bulk text with no browser or login that can wait
-  for a Mac → Qwen first (free). Other high-volume work that does not need
-  frontier intelligence → Muse. Hard reasoning, a dispute, research that has
-  to be right, or code/docs that matter → Astra, spot-checked while Dot is
-  new and never Dot alone on anything critical. Recurring mechanical work
-  already on a Kimi or Codex cron stays there until a Muse task is live. A
-  decision or a public post that needs a Grok desk stays on that desk, in a
-  short turn. Every other seat keeps the work already assigned to it.
-- **Never run the same job on two lanes.** When a job moves, the new lane
-  must be live before the old one is turned off.
-- This rule picks the seat. It does not grant permission to send, publish,
-  spend, or delete. Those still need the existing approval rails. Do not put
-  passwords, tokens, or account inventories in this file or in any public
-  copy of it.
+### Synthetic example — recurring media indexing
 
-### Worked example — weekly Google Photos person-albums
+This is a fictional routing exercise, not an account or schedule receipt. A
+recurring media-indexing job needs an authorized browser session and availability
+at its scheduled time. An offline text runner without those capabilities is
+unsuitable even if its marginal model cost is lower. A tested hosted volume lane
+may fit; a stronger reasoning lane is unnecessary unless the task's decisions
+require it. Check actual access and allowance, then use the controlled cutover
+above if changing an existing owner. No account connection or schedule is created
+by this example.
 
-On 2026-10-01 the weekly Google Photos person-albums job was on an enabled
-Kimi cron. It stays there until Happy creates the Monday 9:17 AM PT Muse task
-from the Happy/Muse runbook. Then the Kimi cron is turned off so the job never
-runs twice. It is not a Qwen/Trenton job: it needs a Google Photos login and a
-browser. It is not an Astra/Dot job: it is high-volume album work, not hard
-reasoning.
-
-No regex can honestly decide which lane a job needs. Enforce this by reading
-the lane table before you schedule or claim a job, and by naming the live
-lane in the job's receipt.
+No regex can honestly decide which lane a job needs. The owner and reviewer apply
+the capability table to the actual task, and the receipt names the tested runtime,
+permitted effects, cost evidence or UNKNOWN, result and remaining limitations.
 <!-- shared-rule:pick-the-cheapest-capable-fleet-lane:end -->
 
 <!-- shared-rule:audit-quality-gate:start -->
@@ -1279,13 +1287,11 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 - This extends `named-entities-link-to-the-most-helpful-canonical-destination` (one
   topic, one owner in the SEO Tree) from links to whole runs, and generalises the
   in-place rule `positive-mentions-harvester` already applies to mentions inventories.
-- **Why:** on 2026-10-09 an agent asked to find Dennis's podcast appearances checked only
-  a 44-item list pasted into its prompt and shipped "56 new finds" as a new file. The
-  canonical hub already held 619 credits across 353 shows; at least 22 of the "new" ones
-  were already on it, and the YouTube pass that was actually requested was skipped.
-  Every silo like that is a second count that drifts — the hub itself records that the
-  network once carried more than twenty different podcast numbers. A silo also splits
-  the SEO Tree: two pages competing for one topic are weaker than one page that owns it.
+- **Why:** a partial list pasted into a prompt may omit items already in the
+  maintained inventory. Treating it as the master can produce duplicate “new”
+  findings, conflicting counts and a skipped part of the original request.
+  Reconcile the actual master and requested scope before adding a second list.
+  Supporting pages should strengthen the same topic owner rather than compete.
 
 ### Pre-flight, every run, before the first search or the first draft
 

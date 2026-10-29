@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "exercise": "practice",
+  "task_id": "replace-with-your-existing-task-id",
+  "source_revision": "UNKNOWN",
+  "scope": "Read public source and write local practice files only; replace with exact approved scope.",
+  "acceptance": "Replace with the original checkable acceptance criteria.",
+  "producer": {"agent": "replace-with-actual-builder", "runtime": "replace-with-actual-runtime"},
+  "receiver": {"agent": "replace-with-intended-receiver", "runtime": "UNKNOWN"},
+  "artifact": {"ref": "replace-with-actual-result-location", "revision": "UNKNOWN"},
+  "receiver_ack": null,
+  "verification": {"reviewer": "replace-with-designated-reviewer", "result": "NOT_CHECKED", "evidence": "", "observed_at": null},
+  "status": "NOT_DELIVERED"
+}

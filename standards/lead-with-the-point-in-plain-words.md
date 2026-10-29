@@ -3,7 +3,7 @@
   "title": "Lead with the point, in plain words",
   "severity": "error",
   "captured": "2026-09-07",
-  "captured_from": "Dennis Yu, 2026-09-07, about the mail his own scheduled jobs send him: 'A lot of them are so technically dense with details that it's hard for me to figure out what's actually important. Can you set a rule across all the stuff we do to make sure that you talk to me like a fifth grader, so it's easy to understand, and that the most important points you put in the beginning in bold?' Captured after that morning's SOMBA daily scoring mail opened with file mtimes and exit codes, and buried the only two facts that mattered — two new members scored, nothing needed him.",
+  "captured_from": "Dennis Yu / Local Service Spotlight public standard: Lead with the point, in plain words. Original capture date is retained in captured. Public-safety clarification authorized by the owner on 2026-10-29; this reusable copy omits private conversation, personnel, account and incident details.",
   "source": "https://dennisyu.com/agent-disclosure/",
   "applies_to": [
     "agent-behaviour"
@@ -17,8 +17,9 @@
   covers every surface a human reads: email, Basecamp comments, texts, briefs, run
   summaries, client updates.
 - **The subject line is the outcome**, not the job name, and it says whether the reader
-  has to do anything. `2 new members scored and live — nothing needs you` beats
-  `Daily scoring — ops QA: 2026-09-07`.
+  has to do anything. In a synthetic message example, `Two draft checks passed — nothing
+  needs you` beats `Daily checks — ops QA: <date>`. This is a format example, not a
+  report of an actual run.
 - **The first line is one bold sentence**: what happened, then `Nothing needs you` or
   `Needs you: <the one thing>`. Then at most three bold bullets — money, risk, or a
   decision only the reader can make. Say what it means, not what ran.

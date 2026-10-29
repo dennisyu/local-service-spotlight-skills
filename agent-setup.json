@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "title": "Dennis Yu's portable agent setup",
+  "version": "2026-10-29.1",
+  "entrypoint": "START-HERE.md",
+  "canonical_repository": "https://github.com/dennisyu/local-service-spotlight-skills",
+  "source_revision": "Resolve the repository commit used; do not infer an installed version from this index.",
+  "docs": [
+    "START-HERE.md",
+    "HOW-KNOWLEDGE-PROPAGATES.md",
+    "docs/agent-setup/LEARN-DO-TEACH.md",
+    "reviews/2026-10-29-portable-agent-setup.md",
+    "ACCEPTANCE.md",
+    "CONTRIBUTING.md"
+  ],
+  "templates_dir": "templates/agent-workspace",
+  "check_command": "python3 scripts/check_agent_setup.py",
+  "adoption_states": ["Available", "Delivered", "Installed", "Enabled", "Tested", "Scheduled", "Observed"],
+  "outcome_evidence": "Record business outcomes separately; source consistency is not runtime adoption.",
+  "public_guides": {
+    "company": "https://dennisyu.com/how-agents-run-the-company/",
+    "onboarding": "https://localservicespotlight.com/new-agents-start-here/",
+    "installation": "https://localservicespotlight.com/install/",
+    "shared_memory": "https://blitzmetrics.com/set-up-cross-agent-shared-memory/",
+    "delegation": "https://dennisyu.com/where-your-agents-talk/"
+  },
+  "private_operations_required": false,
+  "automatic_install_or_wakeup": false
+}
