@@ -8,13 +8,21 @@ content, not by folder name.
     python3 scripts/check_installed_parity.py --installed <installed skills dir>
     python3 scripts/check_installed_parity.py --installed <dir> --json report.json
 
+Run it from a checkout, or copy the whole scripts/ folder: it imports
+validate_marketplace.py, which imports standards_lib.py. --repository may point
+at any checkout or export of this repository (for example a `git archive` of
+main), so a runtime that may not clone can still compare against main.
+
 Per skill it reports one state:
 
-    identical          every file matches byte for byte
+    identical          every file matches byte for byte, or differs only in
+                       Windows (CRLF) line endings, which the record notes
     frontmatter-only   SKILL.md differs only in how its YAML frontmatter is
-                       written (quotes, list indent); the values and body match
-    drift              the SKILL.md body or another file differs, or a file is
-                       missing from the install
+                       written (quotes, list indent, folded lines); the values
+                       match and the body matches exactly
+    drift              the SKILL.md body (even only its leading or trailing
+                       whitespace, which the reason says) or another file
+                       differs, or a file is missing from the install
     missing            in this repository, not installed
     extra              installed, not in this repository (reported, never
                        failed: a local skill may be deliberate)
@@ -57,6 +65,11 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _lf_bytes(path: Path) -> bytes:
+    """File bytes with Windows (CRLF) line endings read as plain LF."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 _IGNORED_DIR_NAMES = frozenset({"__pycache__"})
 _IGNORED_SUFFIXES = (".pyc", ".pyo", ".pyd")
 
@@ -82,7 +95,8 @@ def _skill_names(skills_dir: Path) -> list[str]:
 
 
 def split_frontmatter(text: str) -> tuple[str | None, str]:
-    """Return (frontmatter text or None, body)."""
+    """Return (frontmatter text or None, body). CRLF line endings are read as LF."""
+    text = text.replace("\r\n", "\n")
     if not text.startswith("---\n"):
         return None, text
     end = text.find("\n---", 4)
@@ -177,15 +191,31 @@ def frontmatter_values(frontmatter: str) -> dict[str, object]:
 def compare_skill(repo_dir: Path, installed_dir: Path) -> dict[str, object]:
     repo_files = _files(repo_dir)
     installed_files = _files(installed_dir)
-    differing = sorted(
-        name
-        for name in set(repo_files) | set(installed_files)
-        if name not in repo_files
-        or name not in installed_files
-        or _sha256(repo_files[name]) != _sha256(installed_files[name])
+    differing: list[str] = []
+    line_endings_only: list[str] = []
+    for name in sorted(set(repo_files) | set(installed_files)):
+        if name not in repo_files or name not in installed_files:
+            differing.append(name)
+        elif _sha256(repo_files[name]) == _sha256(installed_files[name]):
+            continue
+        elif _lf_bytes(repo_files[name]) == _lf_bytes(installed_files[name]):
+            line_endings_only.append(name)
+        else:
+            differing.append(name)
+    notes = (
+        [f"line endings differ (CRLF vs LF), text identical: {', '.join(line_endings_only)}"]
+        if line_endings_only
+        else []
     )
+
+    def record(state: str, **extra: object) -> dict[str, object]:
+        result: dict[str, object] = {"state": state, "files": len(repo_files), **extra}
+        if notes:
+            result["notes"] = notes
+        return result
+
     if not differing:
-        return {"state": "identical", "files": len(repo_files)}
+        return record("identical")
 
     reasons: list[str] = []
     for name in differing:
@@ -198,19 +228,21 @@ def compare_skill(repo_dir: Path, installed_dir: Path) -> dict[str, object]:
         if name != "SKILL.md":
             reasons.append(f"{name}: content differs")
             continue
-        repo_fm, repo_body = split_frontmatter(repo_files[name].read_text(encoding="utf-8"))
-        inst_fm, inst_body = split_frontmatter(installed_files[name].read_text(encoding="utf-8"))
-        if repo_body.strip() != inst_body.strip():
-            reasons.append("SKILL.md: body differs")
+        repo_fm, repo_body = split_frontmatter(_lf_bytes(repo_files[name]).decode("utf-8"))
+        inst_fm, inst_body = split_frontmatter(_lf_bytes(installed_files[name]).decode("utf-8"))
+        if repo_body != inst_body:
+            if repo_body.strip() == inst_body.strip():
+                reasons.append("SKILL.md: body differs only in leading or trailing whitespace")
+            else:
+                reasons.append("SKILL.md: body differs")
         elif repo_fm is None or inst_fm is None:
             reasons.append("SKILL.md: frontmatter missing on one side")
         elif frontmatter_values(repo_fm) != frontmatter_values(inst_fm):
             reasons.append("SKILL.md: frontmatter values differ")
 
-    only_skill_md_formatting = differing == ["SKILL.md"] and not reasons
-    if only_skill_md_formatting:
-        return {"state": "frontmatter-only", "files": len(repo_files)}
-    return {"state": "drift", "files": len(repo_files), "reasons": reasons}
+    if differing == ["SKILL.md"] and not reasons:
+        return record("frontmatter-only")
+    return record("drift", reasons=reasons)
 
 
 def check(installed: Path, repository: Path = REPOSITORY) -> dict[str, object]:

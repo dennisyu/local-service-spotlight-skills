@@ -200,7 +200,40 @@ class MarketplaceValidatorTests(unittest.TestCase):
         self.assertTrue(problems("description: *starts with an alias"))
         self.assertTrue(problems("description: - starts like a list"))
         self.assertTrue(problems('description: "never closed'))
+        self.assertEqual(problems('description: "x" # a comment after the quote'), [])
+        self.assertEqual(problems("description: 'it''s fine' # c"), [])
+        self.assertEqual(problems('description: "a quoted value that\n  continues on the next line"'), [])
+        self.assertTrue(problems('description: "x" then more text'))
         self.assertEqual(frontmatter_yaml_problems("---\nname: x\nno closing fence\n"), ["is not closed with ---"])
+        self.assertTrue(
+            frontmatter_yaml_problems("---\r\nname: x\r\ndescription: Use when: broken\r\n---\r\nbody\r\n")
+        )
+
+    @unittest.skipIf(yaml is None, "PyYAML not installed; the dependency-free cases above still run")
+    def test_detector_agrees_with_a_strict_parser(self):
+        samples = {
+            'description: "Use when: quoted, so fine."': "Use when: quoted, so fine.",
+            'description: "x" # a comment after the quote': "x",
+            "description: 'it''s fine' # c": "it's fine",
+            'description: "a quoted value that\n  continues on the next line"': "a quoted value that continues on the next line",
+            "description: Plain words, no colon space.": "Plain words, no colon space.",
+            "description: Use when: this breaks strict YAML": "Use when: this breaks strict YAML",
+            "description: Ends with a colon:": "Ends with a colon:",
+            "description: Has a comment # marker": "Has a comment # marker",
+            'description: "x" then more text': 'x" then more text',
+            'description: "never closed': '"never closed',
+            "description: *starts with an alias": "*starts with an alias",
+            "description: - starts like a list": "- starts like a list",
+        }
+        for line, meant in samples.items():
+            with self.subTest(line=line):
+                try:
+                    loaded = yaml.safe_load(f"name: x\n{line}\n")
+                    strict_problem = loaded.get("description") != meant
+                except yaml.YAMLError:
+                    strict_problem = True
+                detector_problem = bool(frontmatter_yaml_problems(f"---\nname: x\n{line}\n---\nbody\n"))
+                self.assertEqual(detector_problem, strict_problem)
 
     @unittest.skipIf(yaml is None, "PyYAML not installed; the dependency-free check above still runs")
     def test_every_skill_frontmatter_loads_with_a_strict_parser(self):

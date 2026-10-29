@@ -76,31 +76,70 @@ _RESERVED_PLAIN_START = {
 }
 
 
+def _closing_quote(text: str, quote: str) -> int:
+    """Index of the quote that closes the scalar opened by ``text[0]``, or -1.
+
+    Double-quoted scalars escape with a backslash; single-quoted ones write a
+    literal quote as two quotes. The scan may cross line breaks, because a quoted
+    scalar can continue on the next (indented) line.
+    """
+    index = 1
+    while index < len(text):
+        char = text[index]
+        if quote == '"' and char == "\\":
+            index += 2
+            continue
+        if char == quote:
+            if quote == "'" and text[index + 1 : index + 2] == "'":
+                index += 2
+                continue
+            return index
+        index += 1
+    return -1
+
+
 def frontmatter_yaml_problems(text: str) -> list[str]:
     """Simple ``key: value`` frontmatter lines a strict YAML parser rejects or misreads.
 
     The lenient reader above accepts them, and Claude's installer re-quotes them on
     install, so the skill still loads there. A runtime with a strict loader (PyYAML's
     safe_load and most others) does not, and may skip the skill without a word.
-    Quoted values, block scalars (``|`` and ``>``), flow collections and list items
-    are left alone. Found 2026-10-29: three SKILL.md descriptions carried an
-    unquoted ``": "``.
+    A quoted value must close (it may continue on following lines) and may be
+    followed only by a comment. Block scalars (``|`` and ``>``), flow collections
+    and list items are left alone. Windows line endings are read as plain ones.
+    Found 2026-10-29: three SKILL.md descriptions carried an unquoted ``": "``.
     """
+    text = text.replace("\r\n", "\n")
     if not text.startswith("---\n"):
         return []
     end = text.find("\n---", 4)
     if end == -1:
         return ["is not closed with ---"]
     problems: list[str] = []
-    for number, line in enumerate(text[4:end].splitlines(), start=2):
+    lines = text[4:end].splitlines()
+    continued_until = -1
+    for offset, line in enumerate(lines):
+        if offset <= continued_until:
+            continue
+        number = offset + 2
         match = re.match(r"^([A-Za-z0-9_-]+):[ \t]+(\S.*?)\s*$", line)
         if not match:
             continue
         key, value = match.groups()
         first = value[0]
         if first in "\"'":
-            if len(value) < 2 or value[-1] != first:
+            rest = "\n".join([value] + lines[offset + 1 :])
+            close = _closing_quote(rest, first)
+            if close == -1:
                 problems.append(f"line {number}: {key} opens a quote it never closes")
+                continue
+            continued_until = offset + rest.count("\n", 0, close)
+            tail = rest[close + 1 :].split("\n", 1)[0]
+            if tail.strip() and not tail.lstrip().startswith("#"):
+                problems.append(
+                    f"line {number}: {key} has text after its closing quote, which "
+                    "strict YAML parsers reject"
+                )
             continue
         if first in "|>[{":
             continue

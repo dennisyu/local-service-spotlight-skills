@@ -126,6 +126,28 @@ class InstalledParityTests(unittest.TestCase):
         self.assertEqual(report["counts"], {"identical": 2})
         self.assertNotIn("__pycache__", report["skills"])
 
+    def test_windows_line_endings_alone_are_not_drift(self):
+        for path in (self.installed / "alpha").rglob("*"):
+            if path.is_file():
+                path.write_bytes(path.read_bytes().replace(b"\n", b"\r\n"))
+        report = check(self.installed, self.repo)
+        self.assertTrue(report["ok"], report)
+        alpha = report["skills"]["alpha"]
+        self.assertEqual(alpha["state"], "identical")
+        self.assertIn("SKILL.md", alpha["notes"][0])
+        self.assertIn("references/notes.md", alpha["notes"][0])
+
+    def test_body_whitespace_edit_is_drift_and_says_so(self):
+        skill = self.installed / "beta" / "SKILL.md"
+        skill.write_text(skill.read_text(encoding="utf-8") + "\n\n", encoding="utf-8")
+        report = check(self.installed, self.repo)
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["skills"]["beta"]["state"], "drift")
+        self.assertEqual(
+            report["skills"]["beta"]["reasons"],
+            ["SKILL.md: body differs only in leading or trailing whitespace"],
+        )
+
     def test_repository_frontmatter_a_strict_parser_rejects_is_listed(self):
         skill = self.repo / "skills" / "alpha" / "SKILL.md"
         skill.write_text(
