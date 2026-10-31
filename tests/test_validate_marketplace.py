@@ -126,6 +126,19 @@ class MarketplaceValidatorTests(unittest.TestCase):
                 errors,
             )
 
+    def test_nbsp_inside_embedded_rule_still_matches(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = self.copy_repository(temp_name)
+            skill = copied / "skills" / "seo-audit" / "SKILL.md"
+            text = skill.read_text(encoding="utf-8")
+            marker = "<!-- shared-rule:silent-media-playback:start -->"
+            start = text.index(marker)
+            space = text.find(" ", start)
+            self.assertGreater(space, start)
+            skill.write_text(text[:space] + "\u00a0" + text[space + 1 :], encoding="utf-8")
+
+            self.assertEqual(validate(copied), [])
+
     def test_canonical_inventory_count_must_match_manifest(self):
         with tempfile.TemporaryDirectory() as temp_name:
             copied = self.copy_repository(temp_name)
