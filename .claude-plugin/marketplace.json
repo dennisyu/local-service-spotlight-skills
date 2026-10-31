@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install \u2014 all 38 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 39 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -35,6 +35,7 @@
         "./skills/knowledge-panel-entity-seo",
         "./skills/measurement-analytics",
         "./skills/model-judgment",
+        "./skills/network-wikidata-kp-audit",
         "./skills/nine-triangles",
         "./skills/one-session-client-onboarding",
         "./skills/outbound-action-closeout",
@@ -57,7 +58,7 @@
     },
     {
       "name": "authority-and-reputation",
-      "description": "Personal-brand audit intake plus authority, reputation, and honest relationship-path diagnosis. Install lss-everything for the full workflow. (9 skills)",
+      "description": "Personal-brand audit intake plus authority, reputation, and honest relationship-path diagnosis. Install lss-everything for the full workflow. (10 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -67,6 +68,7 @@
         "./skills/second-ring-network-mapper",
         "./skills/reputation-gap-analyzer",
         "./skills/knowledge-panel-entity-seo",
+        "./skills/network-wikidata-kp-audit",
         "./skills/ai-search-visibility",
         "./skills/grokipedia-authority",
         "./skills/geo-visibility-audit"

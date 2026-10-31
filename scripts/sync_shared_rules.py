@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from standards_lib import (  # noqa: E402
     StandardError,
+    fold_nbsp,
     load_standards,
     markers,
     skill_scopes,
@@ -157,7 +158,7 @@ def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tup
         if block:
             expected = expected.rstrip() + "\n\n" + block + "\n"
 
-        if current == expected:
+        if fold_nbsp(current) == fold_nbsp(expected):
             continue
         changed.append(path)
         if not check:
