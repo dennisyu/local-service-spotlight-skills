@@ -26,10 +26,11 @@ to his clients, tools, agents or credentials.
 | One task record and claim board | Owner, permitted work, current state and next action | A file alone is not a lock or wake trigger |
 | Shared memory | Dated, sourced facts needed across sessions | Vendor memory is not the team's authority |
 | Decision registry | Actual owner decisions, original evidence and exact scope | A template or agent paraphrase grants no new authority |
-| Skills, LDT and CCS | Recipes, verified work, reusable teaching and honest checks | Publication alone is not installation, obedience or mastery |
+| Skills, LDT (Learn, Do, Teach) and CCS (Content · Checklist · Software) | Recipes, verified work, reusable teaching and honest checks | Publication alone is not installation, obedience or mastery |
 
 The [coordination starter](coordination-starter/README.md) includes all three
-record types. Keep each record private when it contains your operational context.
+record types. Its `COORDINATION.md` carries record authority and the handoff
+route — read it before your first claim. Keep each record private when it contains your operational context.
 
 ## 1. Give your assistant this request
 
@@ -68,6 +69,13 @@ mkdir ../my-agent-workspace && cp -R coordination-starter/. ../my-agent-workspac
 python3 scripts/check_agent_setup.py --workspace ../my-agent-workspace
 ```
 
+What the checker does: it verifies the starter files are present, that a
+handoff receipt matches its schema, and that recorded fields are consistent.
+Passing prints a summary with no errors; it does not prove any agent read or
+obeyed anything. No shell? On the repository page, **Code → Download ZIP**
+gives you the same files — unzip it and copy `coordination-starter/` the
+same way.
+
 Keep the printed source revision. If the checkout has local changes, record the
 base commit **and** hashes of the actual instructions used; do not attribute
 uncommitted instructions to that commit. If cloning is unavailable, use the public file
@@ -90,7 +98,9 @@ copy, not a safe home for private operational records.
 Use task ID `practice-001`: write `practice-result.md` explaining the difference
 between a source update and a tested installation. Cite [ACCEPTANCE.md](ACCEPTANCE.md).
 Allowed actions are reading this public source and writing local practice files.
-Acceptance: correctly distinguish Available, Installed, Enabled and Tested, and
+Acceptance: correctly place the exercise on the adoption ladder in §6
+(Available → Delivered → Installed → Enabled → Tested → Scheduled → Observed) —
+at minimum distinguishing Available, Installed, Enabled and Tested — and
 identify one thing the exercise does not prove.
 
 Copy [task-template.md](coordination-starter/task-template.md) to your task's
@@ -102,8 +112,13 @@ task; they are not two independent queues.
 Before shared work, read the current authoritative record. Submit the claim
 through that record's serialized or version-checked write route and read it back
 before acting. If a competing claim or revision conflict appears, stop and
-coordinate. Markdown tables alone are not an atomic lock. An expired recheck
-time is a reason to reconcile ownership, not permission to repeat an external action.
+coordinate. Markdown tables alone are not an atomic lock. If your record is a
+plain markdown repository, the concrete version of the claim step is: edit the
+claim row, commit and push *before* you start work; if the push is rejected,
+pull, re-read `status/NOW.md`, and if the task is now claimed, stop and
+coordinate — the first pushed claim wins. The **recheck time** on a claim is
+when it expires unless the owner refreshes it. An expired recheck time is a
+reason to reconcile ownership, not permission to repeat an external action.
 
 ## 4. Make the result and hand it off
 
