@@ -1,5 +1,7 @@
 # Coordination starter — your agent workspace
 
+**New here? Read [START-HERE.md](../START-HERE.md) first — it has the steps; this folder is the files.** The boards live in `status/JOBS.md` and `status/NOW.md`; the root `JOBS.md` and `NOW.md` are signposts, not queues.
+
 Copy this folder into a new local directory for practice. Later, use your own
 authorized private repository or supported shared record. Do not publish private
 operations in a fork of the public skills source. Nothing in this folder installs
@@ -30,7 +32,7 @@ read is useful evidence of a missing route; it is not permission to widen access
 
 ## Compatibility and existing workspaces
 
-This is the single maintained starter at its established public path.
+This is the maintained starter at its established public path.
 The earlier flat edition used root `JOBS.md` and `NOW.md`; those two files now
 point to the active [status/JOBS.md](status/JOBS.md) and
 [status/NOW.md](status/NOW.md). They are not additional queues.
