@@ -26,6 +26,6 @@ This is the owner's workspace, not Dennis Yu's operating repository.
     Update the existing procedure and test a cold reader. Label practice as
     practice; never invent another model's agreement or a business outcome.
 
-Keep all media testing muted with volume zero. Keep private context private.
+Keep private context private.
 Ask the owner only for missing authority or a decision reserved for them; use
 supported agent channels for handoffs instead of making the owner a courier.
