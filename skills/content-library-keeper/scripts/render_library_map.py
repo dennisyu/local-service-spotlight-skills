@@ -32,6 +32,7 @@ import sys
 HEADER_FIRST_CELL = "#"
 # Columns shown in the Markdown copy: (header text in the sheet, label in the copy, required).
 # A header matches exactly or with a parenthesised suffix, e.g. "Freshness (checked 2026-11-04)".
+# A tuple of header texts accepts any of them (the first is the current wording, the others older ones).
 # A label of None means "use the sheet's own header text".
 WANTED = [
     ("#", "#", True),
@@ -41,7 +42,7 @@ WANTED = [
     ("Where it lives", "Master lives in", True),
     ("If two places disagree, this wins", "If two places disagree, this wins", True),
     ("Rows now (live count)", "Rows now", True),
-    ("Owner: function → who today", "Owner (function → who today)", True),
+    (("Owner: agent function → who today", "Owner: function → who today"), "Owner (agent function → who today)", True),
     ("Factory stage · Triangle", "Factory stage · Triangle", False),
     ("Freshness", None, False),
     ("Next action", "Next action", True),
@@ -94,11 +95,12 @@ def render(rows, date, by, sheet_id="", title="the library sheet"):
     h = find_header(rows)
     header = [str(c).strip() for c in rows[h]]
     columns = []  # (index in the row, label)
-    for name, label, required in WANTED:
-        i = find_column(header, name)
+    for names, label, required in WANTED:
+        names = (names,) if isinstance(names, str) else names
+        i = next((j for j in (find_column(header, n) for n in names) if j is not None), None)
         if i is None:
             if required:
-                raise SystemExit("render_library_map: column %r missing from header %r" % (name, header))
+                raise SystemExit("render_library_map: column %r missing from header %r" % (names[0], header))
             continue
         columns.append((i, label or header[i]))
     body = [r for r in rows[h + 1:] if r and str(r[0]).strip()]

@@ -1,19 +1,25 @@
 ---
 name: content-library-keeper
-description: Build and run a content library that agents keep current — one Library Map naming the single master for every kind of knowledge (recordings, published pages, people, proof, speaking, photos, methods), inventories generated from the live source instead of typed by hand, worklists people act on, and a hub-and-spoke protocol so another team's agents can coordinate with yours. Use when someone says "organize my content library", "inventory everything we've published", "what have we made and where is it", "our library is a mess", "who have we never written about", "keep the library current", "connect our agents to yours", or asks to reconcile recordings, articles or people lists across tools.
+description: Build and run a content library that agents keep current — one Library Map naming the single master for every kind of knowledge (recordings, published pages, people, proof, speaking, photos, methods), inventories generated from the live source instead of typed by hand, lists the agents work themselves (people see the counts and decide only what cannot be undone), and a hub-and-spoke protocol so another team's agents can coordinate with yours. Use when someone says "organize my content library", "inventory everything we've published", "what have we made and where is it", "our library is a mess", "who have we never written about", "keep the library current", "connect our agents to yours", or asks to reconcile recordings, articles or people lists across tools.
 ---
 
 # Content library keeper
 
-**You cannot reuse what you cannot find.** This skill gathers years of videos, calls, pages, people and proof into one place. An agent keeps that place up to date. It makes a map that names the one master for each kind of thing you know. It builds the lists from the live sites instead of by hand. It writes short to-do lists that tell people what to fix, write or boost next. Local Service Spotlight runs its own library this way. The public walkthrough is [the content library guide](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md).
+**You cannot reuse what you cannot find.** This skill gathers years of videos, calls, pages, people and proof into one place. An agent keeps that place up to date. It makes a map that names the one master for each kind of thing you know. It builds the lists from the live sites instead of by hand, and agents work those lists: renames, people with no page, broken addresses. People see one screen of counts and are asked only for access or for a decision that cannot be undone. Local Service Spotlight runs its own library this way. The public walkthrough is [the content library guide](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md), and the plain-words version is [Content Library](https://blitzmetrics.com/content-library/).
 
 ## The rules that make it work
 
-1. **One master per kind of knowledge.** Every collection has exactly one place you update. Everything else is a **lens** (generated from the master; never typed in), **legacy** (frozen history) or a pointer to an **external master**. If two places disagree, the master wins.
-2. **Derive the list, don't maintain it.** A hand-kept list of published pages is wrong within weeks. Build it from each site's sitemap. Build people coverage from the relationship registry. Recount every master with a formula, not a typed number.
-3. **Fix the source, not the copy.** A wrong row in a lens means the page, the registry or the recording is wrong. Fix that, then regenerate.
-4. **Owners are functions.** Each row names a function ("Proof & reputation") and who holds it today. When a person leaves, the function stays and the row gets a new name. A recurring step owned only by one person is a gap: assign it.
-5. **Private stays private.** Never publish a recording, title or quote marked private, a one-on-one session, client data without consent, or any credential. Name the store, never the value.
+Each rule is borrowed from a method that already runs large operations; the guide links the source of each.
+
+1. **One master per kind of knowledge.** Every collection has exactly one place you update. Everything else is a **lens** (generated from the master; never typed in), **legacy** (frozen history) or a pointer to an **external master**. If two places disagree, the master wins. (Single source of truth.)
+2. **Derive the list; never keep it by hand.** A hand-kept list of published pages is wrong within weeks. Build it from each site's sitemap. Build people coverage from the relationship registry. Recount every master with a formula, not a typed number. Do not fill a gap in an old hand-kept list: freeze it as legacy and derive the new one. (Lean: extra inventory is waste.)
+3. **A list earns its place only if someone works it, and if an agent can work it, the agent does.** Before you add a list, name who works it. No one? Do not make the list. (Google SRE: eliminate toil.)
+4. **People see exceptions, not lists.** The tab people read holds counts and one line per list naming the agent that works it. The rows stay in the repository. Report only when something changed or needs a person. (Management by exception.)
+5. **One owner per list, named by its function.** Write the function first and who does it today second ("Library agent (Claude)"), so a list never dies when a person leaves. A recurring step only one person runs is a gap: give it to an agent. A person is named only for access or a one-way decision. (Single-threaded ownership.)
+6. **Mechanisms, not good intentions.** A schedule, guards that stop the run on bad data, a read-back of every write, and tests for every rule. (Amazon mechanisms: a tool, its adoption, inspection.)
+7. **Agents decide two-way doors; people decide one-way doors.** A title rename can be undone: the agent does it and saves the old title first. Deleting a page, publishing a private story or spending money cannot: a person decides. (Bezos's one-way and two-way doors.)
+8. **Fix the source, not the copy.** A wrong row in a lens means the page, the registry or the recording is wrong. Fix that, then regenerate.
+9. **Private stays private.** Never publish a recording, title or quote marked private, a one-on-one session, client data without consent, or any credential. Name the store, never the value.
 
 ## Build a library (first run)
 
@@ -29,13 +35,13 @@ description: Build and run a content library that agents keep current — one Li
    ```
 
    It reads each site's `sitemap_index.xml`, counts each page once (a post with a video is listed twice by some SEO plugins), takes titles and dates from the WordPress REST API when it is open and from the page HTML when it is not, and writes:
-   `published-inventory.csv` (every page; its `status` is the HTTP status for each page it opened, and `published (REST API; not opened)` for a page whose facts came from the REST API, so no row claims a 200 nobody saw), `library-rows-not-in-sitemap.csv` (old rows whose address is in no sitemap, with what each address does today: loads, redirects or is not found; a row the old list marks Private is expected to be gone and is labelled retire, never restore), `library-old-urls.csv` (old addresses of pages that moved, and whether each still leads to the page), a rename worklist for a retired name, `people-coverage.csv` (who is named in no title), and `inventory-stats.json`. It never writes to a site.
+   `published-inventory.csv` (every page; its `status` is the HTTP status for each page it opened, and `published (REST API; not opened)` for a page whose facts came from the REST API, so no row claims a 200 nobody saw), `library-rows-not-in-sitemap.csv` (old rows whose address is in no sitemap, with what each address does today: loads, redirects or is not found; a row the old list marks Private is expected to be gone and is labelled retire, never restore), `library-old-urls.csv` (old addresses of pages that moved, and whether each still leads to the page), a rename list for a retired name (`rename_pattern`; `rename_keep_pattern` and `rename_keep_urls` keep the titles that use the name on purpose, such as the domain, history posts or an app registered under it), `people-coverage.csv` (who is named in no title), and `inventory-stats.json`. It never writes to a site.
 
    It stops with exit code 2 and writes nothing when the data looks incomplete: a child sitemap or a REST page fails after retries, more than 2% of page fetches get no answer, a site lists more than 5% (and more than 20) fewer URLs than the last run, or a site's titles switch between the REST API and the page HTML. Check the site; if the drop is real, rerun with `--allow-drop` (or `--allow-source-change`). Unchanged outputs are not rewritten, and the stats file keeps its timestamp when nothing else changed, so a quiet day leaves nothing to commit.
-5. **Put the summary where people look.** In the sheet, keep the counts per site and the short worklists (renames, people with no page, old rows in no sitemap, sitemap defects). Build that grid with `scripts/build_summary.py --inventory library --config inventory-config.json --out summary-tab.json`. It returns the values, the header rows to bold, the rows that may be merged (`merge_rows`; a header row with column labels must never be merged, or the labels are deleted) and a hash that ignores the dated first row. When you rewrite the tab, remove every old merge before you write the new values: when rows shift, a value written into a cell that an old merge still covers is dropped without an error. When the grid did not change, it leaves the file alone and prints `"changed": false`, so the tab is rewritten only when something changed. Name each worklist's owner function with `summary.section_owners` in the config. Keep the full row-per-page list in a repository, not in the sheet: thousands of rows in a sheet become another list someone types into.
+5. **Put one screen where people look.** In the sheet, keep only the counts per site, the topics, one line per list (its count, the agent that works it, and where its rows live) and the sitemap defects, one row per kind. Build that grid with `scripts/build_summary.py --inventory library --config inventory-config.json --out summary-tab.json`. It returns the values, the header rows to bold, the rows that may be merged (`merge_rows`; a header row with column labels must never be merged, or the labels are deleted) and a hash that ignores the dated first row. When you rewrite the tab, remove every old merge before you write the new values: when rows shift, a value written into a cell that an old merge still covers is dropped without an error. When the grid did not change, it leaves the file alone and prints `"changed": false`, so the tab is rewritten only when something changed. Name the agent that works each list with `summary.worklist_owners` in the config (keys `rename`, `people`, `old_addresses`, `sitemap`). Keep every list's rows in a repository, not in the sheet: thousands of rows in a sheet become another list someone types into.
 6. **Snapshot the map for agents without sheet access.** Export the *Library Map* tab as a values JSON and run `scripts/render_library_map.py export.json --out LIBRARY-MAP.md --sheet-id <id>`.
-7. **Write the rules page.** A sheet tab *Agent Start Here* in plain words: find, check, claim, produce, process, post, promote, record, fix. Name the owner function for each kind of work.
-8. **Tell the team in its project thread.** What changed, the numbers, the worklists, who owns what, and any decision that only a person can make.
+7. **Write the rules page.** A sheet tab *Agent Start Here* in plain words: find, check, claim, produce, process, post, promote, record, fix. Name the agent function for each kind of work; name a person only for access or a decision that cannot be undone.
+8. **Tell the team in its project thread.** What changed, the numbers, which agent works each list, and any decision that only a person can make.
 
 ## The daily loop (what the library agent does)
 
@@ -44,22 +50,23 @@ description: Build and run a content library that agents keep current — one Li
 3. Compare with yesterday: new pages, pages gone, new people pages, renames done.
 4. Rebuild the summary grid with `build_summary.py`. Only when it prints `"changed": true`, clear the tab, write the grid and re-bold the header rows. Re-render `LIBRARY-MAP.md` from a fresh export of the map; it is left alone when only its date would change.
 5. Read every master's newest row date. A master that stopped growing while its source kept producing is the most important finding of the day (for example, recordings made but never backed up).
-6. Commit the generated files that changed, with a message that says what changed. A day with nothing new leaves nothing to commit.
-7. Post in the project thread **only when something changed or needs a person**. Lead with the plain-English result; put file paths and counts below.
-8. Verify: re-read what you wrote at its destination before you say it is done.
+6. Work the lists: fix what you can edit (save the old value first, so the change can be undone), hand the rest to the agent that can reach it through your job board, and ask a person only for access or a one-way decision.
+7. Commit the generated files that changed, with a message that says what changed. A day with nothing new leaves nothing to commit.
+8. Post in the project thread **only when something changed or needs a person**. Lead with the plain-English result; put file paths and counts below.
+9. Verify: re-read what you wrote at its destination before you say it is done.
 
 After changing the topic or triangle rules, use `--retag-only` to recompute tags from the existing CSVs without re-reading every site.
 
 ## How it honors the Nine Triangles and the Content Factory
 
 - **Content Factory (Produce → Process → Post → Promote):** the map's *Factory stage* column says where each collection sits. Plumbing (access, tracking) comes before the factory and Perform (MAA) after it; neither is a factory stage.
-- **GCT:** every worklist names the goal (what it changes), the content (the pages or people) and the targeting (who acts).
-- **MAA:** the daily loop is the metric, the comparison with yesterday is the analysis, the worklist is the action.
+- **GCT:** every list names the goal (what it changes), the content (the pages or people) and the targeting (which agent works it).
+- **MAA:** the daily loop is the metric, the comparison with yesterday is the analysis, the agent's fix is the action.
 - **SBP and relationships:** people coverage lists the real relationships with no page, so the people who helped you get honored next.
 - **CCS:** the public guide is the content, *Agent Start Here* is the checklist, the scripts are the software.
-- **DDD:** delete duplicate lists by freezing them as legacy; delegate each collection to a function; do the rest daily by agent.
-- **CID:** communicate in the project thread, iterate the map, delegate progressively as owners change.
-- **LDT:** a new agent or teammate learns from the map, does one worklist, then teaches by updating the rules page.
+- **DDD:** every list passes all three: an agent does it, hands it to the agent that can, or the list is deleted. Hand-kept copies are frozen as legacy, not maintained.
+- **CID:** communicate after acting, in the project thread; iterate the map; delegate progressively, so ownership moves to agents and people keep access and judgment.
+- **LDT:** a new agent or teammate learns from the map, works one list, then teaches by updating the rules page.
 
 The accepted names and order of the triangles live in the [accepted Nine Triangles reference](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/nine-triangles/references/canonical-framework.md); the inventory script tags pages with exactly those names.
 
@@ -72,7 +79,7 @@ Use [references/hub-and-spoke.md](references/hub-and-spoke.md): each team keeps 
 - The map has one row per kind of knowledge and every row has an owner function.
 - Every *Rows now* cell is a formula or the word `external`, never a typed number.
 - The published inventory was regenerated from live sitemaps in this session and its counts match `inventory-stats.json`.
-- Each worklist names its owner function and lives where people look.
+- Each list names the agent that works it; the tab people read holds counts and owners, and the rows stay in the repository.
 - The team thread has the update, re-read after posting.
 
 <!-- shared-rule:agents-draft-humans-send:start -->

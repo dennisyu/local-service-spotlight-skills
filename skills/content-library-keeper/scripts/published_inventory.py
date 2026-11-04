@@ -10,7 +10,7 @@ from the page's own HTML where it does not. Optional extras:
   does today: loads, redirects, or is not found, and whether each old address
   of a page that moved still leads to the page);
 * find which people in a relationship registry are named in no page title;
-* flag titles that still use a retired name (a rename worklist).
+* flag titles that still use a retired name (a rename list the agents work).
 
 The sitemap is the source of truth for "what is published". The outputs are a
 generated copy: never edit them by hand; fix the page on the site and run again.
@@ -33,7 +33,9 @@ Usage:
 Config (JSON; every key optional except "sites"):
   {"sites": ["example.com"],
    "brand_suffixes": ["Example Co"],          # stripped from the end of titles
-   "rename_pattern": "oldname",               # regex; titles that match go to the rename worklist
+   "rename_pattern": "oldname",               # regex; titles that match go to the rename list
+   "rename_keep_pattern": "oldname\\.com",    # regex; a match that is only this (a domain, an email) needs no rename
+   "rename_keep_urls": ["https://..."],        # pages that keep the old name on purpose (history, a registered app name)
    "rename_file": "rename-worklist.csv",
    "user_agent": "...",                       # sent with every request
    "check_rows_not_in_sitemap": true,         # GET each old-list row that is in no sitemap
@@ -62,6 +64,7 @@ DEFAULT_UA = ("Mozilla/5.0 (compatible; ContentLibraryInventory/1.0; "
               "+https://github.com/dennisyu/local-service-spotlight-skills)")
 DEFAULT_GUARD = {"max_drop_fraction": 0.05, "max_drop_pages": 20, "max_fetch_failures": 0.02}
 CONFIG = {"sites": [], "brand_suffixes": [], "rename_pattern": "", "rename_file": "rename-worklist.csv",
+          "rename_keep_pattern": "", "rename_keep_urls": [],
           "user_agent": DEFAULT_UA, "check_rows_not_in_sitemap": True, "check_old_urls": True,
           "guard": dict(DEFAULT_GUARD),
           "people": {"owner_entity_id": "", "real_sources": [], "exclude_entity_ids": []}}
@@ -261,8 +264,8 @@ def check_source(site, prev_source, new_source):
 def apply_config(cfg):
     """Merge a config dict into CONFIG and the rule tables. Returns CONFIG."""
     global TOPICS, STAGES
-    for k in ("sites", "brand_suffixes", "rename_pattern", "rename_file", "user_agent", "check_rows_not_in_sitemap",
-              "check_old_urls"):
+    for k in ("sites", "brand_suffixes", "rename_pattern", "rename_file", "rename_keep_pattern", "rename_keep_urls",
+              "user_agent", "check_rows_not_in_sitemap", "check_old_urls"):
         if k in cfg:
             CONFIG[k] = cfg[k]
     if "people" in cfg:
@@ -562,7 +565,9 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
                        "missing_from_library": sum(1 for r in rows if not r["library_tab"]),
                        "non_200": sum(1 for r in rows if r["status"] not in ("200", "in sitemap", STATUS_FROM_REST)),
                        "noindex": sum("noindex" in r["notes"] for r in rows),
-                       "rename_hits": sum(1 for r in rows if rename_rx and rename_rx.search(r["title"])),
+                       "rename_hits": sum(1 for r in rows if needs_rename(r, rename_rx)),
+                       "rename_kept": sum(1 for r in rows if rename_rx and rename_rx.search(r["title"])
+                                          and not needs_rename(r, rename_rx)),
                        "library_old_url": sum("library has old URL" in r["notes"] for r in rows)}
     if lib_not_live and CONFIG.get("check_rows_not_in_sitemap", True):
         listed = {norm(r["url"]) for r in inv}
@@ -635,6 +640,21 @@ def stable_stats(old, new):
         return {**new, "generated_utc": old.get("generated_utc", new.get("generated_utc"))}
     return new
 
+def needs_rename(row, rename_rx):
+    """True when a title still uses the retired name in a way a person would change.
+
+    A title can match the pattern and still be right: a domain or an email address ("oldname.com"), or a
+    page that keeps the name on purpose (a history post, an app registered under that name). Those are
+    counted as kept, so the list holds only titles an agent should change."""
+    if not rename_rx or not rename_rx.search(row["title"]):
+        return False
+    if norm(row["url"]) in {norm(u) for u in CONFIG.get("rename_keep_urls") or []}:
+        return False
+    keep = CONFIG.get("rename_keep_pattern")
+    title = re.sub(keep, "", row["title"], flags=re.I) if keep else row["title"]
+    return bool(rename_rx.search(title))
+
+
 def write_outputs(out_dir, inv, lib_not_live, people, stats, rename_rx, old_urls=None):
     """Write every output that changed. Returns the names of the files written."""
     os.makedirs(out_dir, exist_ok=True)
@@ -648,7 +668,7 @@ def write_outputs(out_dir, inv, lib_not_live, people, stats, rename_rx, old_urls
     if old_urls is not None:
         files[OLD_URLS_FILE] = csv_text(OLD_URL_FIELDS, sorted(old_urls, key=lambda x: (x["site"], x["old_url"])))
     if rename_rx:
-        files[CONFIG["rename_file"]] = csv_text(FIELDS, [r for r in inv if rename_rx.search(r["title"])])
+        files[CONFIG["rename_file"]] = csv_text(FIELDS, [r for r in inv if needs_rename(r, rename_rx)])
     if people:
         cov = defaultdict(list)
         for r in inv:

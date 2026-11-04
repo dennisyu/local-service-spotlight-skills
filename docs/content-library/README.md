@@ -4,9 +4,12 @@
 
 ```mermaid
 flowchart LR
-  AGENT(["Library agent<br/>daily refresh"]) -->|"rebuilds lenses,<br/>recounts, writes worklists"| MAP
-  MAP["<b>Library Map</b><br/>one master per kind of knowledge<br/><br/>Recordings registry · Produce<br/>Processing Ledger · Process<br/>Published pages, rebuilt from sitemaps · Post<br/>Proof: mentions & testimonials · Promote<br/>People, speaking, methods · external masters"]
-  MAP -->|"worklists: rename,<br/>write about, link, boost"| TEAM(["People,<br/>by function"])
+  MAP["<b>Library Map</b><br/>one master per kind of knowledge"] --- SRC
+  SRC["<b>Masters</b><br/>site sitemaps · recordings registry<br/>people registry · mentions"] --> AGENT(["<b>Library agent</b><br/>every morning: read, check,<br/>fix what it can, rebuild"])
+  AGENT --> LISTS["Full lists in the repository<br/>agents work them"]
+  AGENT --> SUM["One-screen summary<br/>counts + which agent works each list"]
+  AGENT -->|"only access and<br/>one-way decisions"| PEOPLE(["People"])
+  LISTS -. "a mistake is fixed at its source" .-> SRC
   SPOKE["Your library<br/>(same template)"] <-->|"one EXTERNAL MASTER<br/>row each way"| MAP
 ```
 
@@ -14,12 +17,26 @@ flowchart LR
 
 Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of the 6,201 pages listed in the four sites' sitemaps, the hand-kept tabs listed only 44%. Another 235 rows pointed at addresses that were in no sitemap at all. When we opened each one, about half still loaded, mostly through a redirect to a newer page, and the rest were gone. Of the 540 people our records show a real relationship with, 347 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
 
-None of that was anyone's fault. It is what happens to any list that people type into. So the library now follows four rules:
+None of that was anyone's fault. It is what happens to any list that people type into. We did not fill in the missing 56%: a hand-kept copy of a sitemap is double work that goes stale the next day. We froze the old tabs as history and let an agent read the sitemaps instead. The library now runs on seven rules, and none of them is ours. Each one comes from a method that already runs large operations:
 
-1. **One master per kind of knowledge.** Everything else is a copy that a program makes, a frozen piece of history, or a pointer to a master somewhere else.
-2. **Derive the list, don't maintain it.** The list of published pages is rebuilt from each site's sitemap on every refresh. The list of people comes from the relationship registry. Counts are formulas, not typed numbers.
-3. **Fix the source, not the copy.** If a row is wrong, the page, the recording or the registry is wrong. Fix it there; the next run corrects the row.
-4. **Every collection has an owner function.** "Proof & reputation" owns testimonials; whoever holds that function today does the work. People change roles; functions stay.
+| # | Rule | Borrowed from |
+|---|---|---|
+| 1 | **One master per kind of knowledge.** Everything else is a copy a program makes, a frozen piece of history, or a pointer to a master somewhere else. | The [single source of truth](https://en.wikipedia.org/wiki/Single_source_of_truth) in data management |
+| 2 | **Derive the list; never keep it by hand.** Pages come from each site's sitemap, people from the relationship registry, counts from formulas. | Lean thinking: extra inventory and extra processing are [waste](https://en.wikipedia.org/wiki/Muda_(Japanese_term)) |
+| 3 | **A list earns its place only if someone works it, and if an agent can work it, the agent does.** | Google SRE: [eliminate toil](https://sre.google/sre-book/eliminating-toil/), the manual, repetitive work a machine could do |
+| 4 | **People see exceptions, not lists.** The tab people read holds counts and one line per list naming the agent that works it. The rows stay in the repository. The team hears from the agent only when something changed or needs a person. | [Management by exception](https://www.accountingtools.com/articles/what-is-management-by-exception.html) |
+| 5 | **One owner per list, named by its function.** Who does it today sits beside the function, so a list never dies when a person leaves. | Amazon's [single-threaded ownership](https://aws.amazon.com/executive-insights/content/amazon-two-pizza-team/) |
+| 6 | **Mechanisms, not good intentions.** A schedule, guards that stop the run on bad data, a read-back of every write, and tests for every rule. | Amazon's [mechanisms](https://docs.aws.amazon.com/wellarchitected/latest/operational-readiness-reviews/building-mechanisms.html): a tool, its adoption, and inspection |
+| 7 | **Agents decide two-way doors; people decide one-way doors.** A title rename can be undone, so the agent does it and saves the old title. Deleting a page or publishing a private story cannot, so a person decides. | Jeff Bezos's [one-way and two-way doors](https://blog.kindel.com/2019/06/27/one-way-and-two-way-doors/) |
+
+And one rule that follows from all seven: **fix the source, not the copy.** If a row is wrong, the page, the recording or the registry is wrong. Fix it there; the next run corrects the row.
+
+### What we stopped doing
+
+- Keeping page lists by hand. The sitemap is the list.
+- Handing people long worklists. The summary tab shows counts and owners; the rows stay with the agents.
+- Chores on rows in frozen tabs, such as "restore or retire". History stays history.
+- The 2021 checklist in which an assistant copied a template and searched five social networks by hand. Its page now redirects to the [public article](https://blitzmetrics.com/content-library/).
 
 ## The Library Map
 
@@ -32,14 +49,14 @@ The front door is a sheet tab called *Library Map*. Each row is one kind of know
 | Where it lives | The exact tab, folder, repository file or site. |
 | If two places disagree, this wins | The tiebreaker, written down before anyone needs it. |
 | Rows now | A live count (a formula), so a stalled master is visible. |
-| Owner: function → who today | Who does the work, by role first and name second. |
+| Owner: agent function → who today | Which agent does the work: its function first, who does it today second. A person appears only for access or a decision that cannot be undone. |
 | Factory stage · Triangle | Where it sits in the Content Factory and which Nine Triangles principle it serves. |
 | Freshness | When it was last checked and what was found. |
 | Next action | The one thing to do next. |
 
 Ours has 33 rows: the map itself, the rules page, published pages, recordings, the processing ledger, transcripts, phone video, Descript projects, articles on other sites, the publications Dennis wrote for, people, proof, brand assets, photos, methods, sites, clients, audits and the legacy tabs each of those replaced. A starter map with the same columns is in the [content-library-keeper skill](../../skills/content-library-keeper/references/library-map-template.json).
 
-Next to the map sit two working tabs: **Agent Start Here** (the rules, in plain words) and **Published Summary & Worklists** (counts per site and the short lists people act on: titles to rename, people we have never written about, old rows whose address is in no sitemap, with what each one does today, and sitemap defects). The full list of every page lives in a private repository as a CSV, because a sheet with thousands of rows turns into one more list that somebody types into.
+Next to the map sit two working tabs: **Agent Start Here** (the rules, in plain words, and who does what) and **Published Summary** (one screen: pages per site, topics, one line per list with its count and the agent that works it, and the sitemap defects). The rows of every list live in a private repository as CSV files, where the agents read and work them, because a sheet with thousands of rows turns into one more list that somebody types into.
 
 ## How work moves through it
 
@@ -52,7 +69,7 @@ The library follows the Content Factory's four locked stages, with setup before 
 | **Process** | Transcribe, edit, clip, write | The Processing Ledger: what is done for each recording and who holds it |
 | **Post** | Publish the article, the video, the page | The published inventory, rebuilt from each site's sitemap |
 | **Promote** | Boost what works, a dollar a day at a time | Proof, speaking and the pages worth amplifying |
-| Perform (after) | Metrics, analysis, action | Each refresh's comparison and the worklists |
+| Perform (after) | Metrics, analysis, action | Each refresh's comparison, and the fixes the agents made |
 
 ## Where the Nine Triangles show up
 
@@ -60,11 +77,11 @@ The library follows the Content Factory's four locked stages, with setup before 
 |---|---|
 | **SBP** Specialist · Business · Partner | People coverage lists the real relationships nobody has written about yet, so the people who helped us are honored next. |
 | **AEC** Audience · Engagement · Conversion | Pages are tagged by topic so the right page can be put in front of the right audience. |
-| **GCT** Goals · Content · Targeting | Every worklist says what it changes, which pages or people it covers, and who acts. |
-| **MAA** Metrics · Analysis · Action | Each refresh is the metric, the comparison with the last one is the analysis, the worklist is the action. |
-| **DDD** Do · Delegate · Delete | Duplicate lists are frozen as legacy, collections are delegated to functions, and an agent does the checking. |
-| **CID** Communicate · Iterate · Delegate | Changes are reported in the project thread; the map is iterated; ownership moves progressively. |
-| **LDT** Learn · Do · Teach | A new agent learns from the map, does one worklist, then teaches by improving the rules page. |
+| **GCT** Goals · Content · Targeting | Every list says what it changes, which pages or people it covers, and which agent works it. |
+| **MAA** Metrics · Analysis · Action | Each refresh is the metric, the comparison with the last one is the analysis, the agent's fix is the action. |
+| **DDD** Do · Delegate · Delete | Every list passes all three: an agent does it, hands it to the agent that can, or the list is deleted. Hand-kept copies are frozen as history, not maintained. |
+| **CID** Communicate · Iterate · Delegate | Changes are reported in the project thread after the agent acts; the map is iterated; ownership moves to agents, and a person keeps only access and judgment. |
+| **LDT** Learn · Do · Teach | A new agent learns from the map, works one list, then teaches by improving the rules page. |
 | **CCS** Content · Checklist · Software | This guide is the content, *Agent Start Here* is the checklist, the inventory scripts are the software. |
 | **MOF** Marketing · Operations · Finance | Each owner function sits in one of the three, so no collection belongs to "everyone". |
 
@@ -79,7 +96,8 @@ The refresh is designed to run every morning as a scheduled task.
 3. Compares with yesterday: new pages, pages gone, people newly written about, renames done.
 4. Refreshes the summary tab, the map's counts and the map snapshot in the repository, but only what changed. A day with nothing new writes nothing.
 5. Checks each master's newest date. A master that stopped growing while its source kept producing is the most important finding of the day.
-6. Commits the generated files, then posts in the team's project thread only when something changed or needs a person. Plain English first; file paths and counts underneath.
+6. Works its own lists: renames the titles it can edit (saving each old title), hands the rest to the agent that can reach that site, and asks a person only for access or a one-way decision.
+7. Commits the generated files, then posts in the team's project thread only when something changed or needs a person. Plain English first; file paths and counts underneath.
 
 ## Connect your agents to ours
 
@@ -92,11 +110,11 @@ We are the hub; your library can be a spoke. You keep your own map in the same s
 3. Give each kind of knowledge one row, one master and one owner function.
 4. Rename the lists you are replacing with `(legacy)` instead of deleting them, and check any formula that names them.
 5. Run the [inventory script](../../skills/content-library-keeper/scripts/published_inventory.py) against your sites' sitemaps.
-6. Put the counts and the short worklists where people look; keep the full list in a repository.
+6. Put only the counts, and one line per list naming the agent that works it, where people look. Keep the rows in a repository, where agents read and work them.
 7. Write an *Agent Start Here* tab in plain words.
 8. Install the [content-library-keeper skill](../../skills/content-library-keeper/SKILL.md) so any agent you use can run the daily loop.
-9. Assign each recurring step to a function, not a person.
-10. Tell your team where the map is, and post the first worklist.
+9. Assign each recurring step to a function, not a person, and give every routine one to an agent. People keep access and judgment.
+10. Tell your team where the map is. After that, the agent posts only when something changed or needs a person.
 
 ## Related
 
@@ -106,4 +124,5 @@ We are the hub; your library can be a spoke. You keep your own map in the same s
 - Skill: [second-ring-network-mapper](../../skills/second-ring-network-mapper/SKILL.md) (relationships, from an owner-authorized export)
 - Standard: [update the canonical master, never start a silo](../../standards/update-the-canonical-master-never-start-a-silo.md)
 - Registry of public masters: [canonical-masters.json](../canonical-masters.json)
-- Framework: [Content Factory](https://blitzmetrics.com/content-factory/) and [Nine Triangles](https://blitzmetrics.com/nine-triangles/)
+- Public article: [Content Library: how agents keep one list of everything you have made](https://blitzmetrics.com/content-library/) (this method in plain words, with the diagram)
+- Framework: [Content Factory](https://blitzmetrics.com/content-factory/) and [Nine Triangles](https://blitzmetrics.com/ntf/)

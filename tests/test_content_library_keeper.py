@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -284,32 +285,29 @@ class Summary(unittest.TestCase):
             w.writerow(["a.com", "Sheet link", "https://docs.google.com/spreadsheets/d/x/edit", "", ""])
         return d
 
-    def test_sections_counts_and_order(self):
+    def test_counts_and_one_line_per_agent_list(self):
         d = self.make()
         cfg = {"sites": ["a.com"], "summary": {"withhold_titles": [{"url_contains": "legal-thing", "label": "(withheld)"}]}}
         out = summ.build(d, cfg, "2026-11-04")
         g = out["values"]
-        self.assertEqual(len(out["section_header_rows"]), 6)
-        self.assertEqual(g[out["total_row"] - 1][1], 3)
         flat = [" | ".join(str(c) for c in r) for r in g]
+        self.assertEqual([g[i - 1][0][:2] for i in out["section_header_rows"]], ["A.", "B.", "C.", "D."])
+        self.assertEqual(g[out["total_row"] - 1][1], 3)
+        self.assertIn("URLs in sitemaps", g[3])
+        self.assertNotIn("Missing from old tabs", g[3])  # the frozen old tabs are not a to-do
+        self.assertIn("agent", g[1][0])
         self.assertTrue(any(r.startswith("SEO & AI search | 2") for r in flat))
         self.assertTrue(any(r.startswith("(no topic matched yet) | 1") for r in flat))
-        people = [r[0] for r in g if r and r[0] in ("Al One", "Bea Two", "Cy Three", "Zed Four")]
-        self.assertEqual(people, ["Al One", "Bea Two"])  # real, no page, strongest evidence first
-        self.assertIn("(withheld)", " ".join(flat))
-        self.assertNotIn("Secret matter", " ".join(flat))
-        self.assertNotIn("legal-thing", " ".join(flat))  # the address is withheld too, not just the title
-        self.assertIn(summ.LINK_WITHHELD, " ".join(flat))
-        self.assertIn(summ.SHEET_LINK_NOTE, " ".join(flat))
-        self.assertTrue(any("HTTP 404" in r for r in flat))
+        lists = {r[0].split(" (")[0]: r[1] for r in g if len(r) == 4 and isinstance(r[1], int)}
+        self.assertEqual(lists["Titles that still use the retired name"], 1)
+        self.assertEqual(lists["People we know with no page naming them"], 2)  # real, no page
+        self.assertEqual(lists["Old dated addresses that return 404 instead of redirecting to the page"], 0)
+        self.assertEqual(lists["Sitemap defects"], 2)  # the 404 and the page listed twice
+        # The rows themselves stay in the repository files: no person, title or old row is listed here.
+        for word in ("Al One", "Bea Two", "Old Name tips", "Secret matter", "legal-thing"):
+            self.assertNotIn(word, " ".join(flat))
+        self.assertTrue(any("HTTP 404" in r and "https://a.com/gone/" in r for r in flat))
         self.assertTrue(any("listed more than once" in r and "(2x)" in r for r in flat))
-        self.assertIn("URLs in sitemaps", g[3])
-        self.assertIn("pages listed in the sitemaps", g[1][0])
-
-    def test_tidy_titles(self):
-        self.assertEqual(summ.tidy("???????? Attention, Kosovo!  Jobs ????????"), "Attention, Kosovo! Jobs")
-        self.assertEqual(summ.tidy("America by 2026\u2033"), "America by 2026")
-        self.assertEqual(summ.tidy("What? Really?"), "What? Really?")
 
     def test_hash_is_stable(self):
         d = self.make()
@@ -336,49 +334,23 @@ class Summary(unittest.TestCase):
         self.assertFalse(json.loads(second.getvalue())["changed"])
         self.assertEqual(Path(out).read_text(encoding="utf-8"), before)
 
-    def test_rows_in_no_sitemap_grouped_by_what_they_do_today(self):
+    def test_live_page_missing_from_the_sitemap_is_a_defect(self):
         d = self.make()
         with open(os.path.join(d, "library-rows-not-in-sitemap.csv"), "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
             w.writerow(inv.NOT_IN_SITEMAP_FIELDS)
             w.writerow(["a.com", "Gone page", "https://a.com/gone-1/", "", "Published", "404", "", "not found"])
-            w.writerow(["a.com", "Moved page", "https://a.com/moved/", "", "Published", "200", "https://a.com/new/",
-                        "redirects to a page in the sitemap"])
             w.writerow(["a.com", "Hidden page", "https://a.com/hidden/", "", "Published", "200", "",
                         "loads, but is missing from the sitemap"])
-            w.writerow(["a.com", "Secret matter", "https://a.com/legal-thing/", "", "Published", "200",
-                        "https://a.com/legal-thing-2/", "redirects to a page not in the sitemap"])
+            w.writerow(["a.com", "Secret matter", "https://a.com/legal-thing/", "", "Published", "200", "",
+                        "loads, but is missing from the sitemap"])
         cfg = {"sites": ["a.com"], "summary": {"withhold_titles": [{"url_contains": "legal-thing", "label": "(withheld)"}]}}
         out = summ.build(d, cfg, "2026-11-04")
-        e = [r for r in out["values"] if len(r) == 5 and r[0] == "a.com"]
-        self.assertEqual([r[1] for r in e], ["Hidden page", "Moved page", "(withheld)", "Gone page"])
-        self.assertEqual(e[1][3], "redirects to a page in the sitemap: https://a.com/new/")
-        self.assertNotIn("legal-thing", json.dumps(out["values"]))
         flat = [" | ".join(str(c) for c in r) for r in out["values"]]
-        self.assertTrue(any("missing from the sitemap" in r and "https://a.com/hidden/" in r and r.startswith("a.com | Page loads")
-                            for r in flat))
-
-    def test_rows_marked_private_are_retired_not_restored(self):
-        d = self.make()
-        with open(os.path.join(d, "library-rows-not-in-sitemap.csv"), "w", newline="", encoding="utf-8") as fh:
-            w = csv.writer(fh)
-            w.writerow(inv.NOT_IN_SITEMAP_FIELDS)
-            w.writerow(["a.com", "Unpublished on purpose", "https://a.com/1900/01/25/x/", "", "Private", "404", "", "not found"])
-            w.writerow(["a.com", "Gone page", "https://a.com/gone-1/", "", "Published", "404", "", "not found"])
-            w.writerow(["a.com", "Draft gone", "https://a.com/draft/", "", " Draft ", "404", "", "not found"])
-            w.writerow(["a.com", "Gone too", "https://a.com/gone-2/", "", "publish", "404", "", "not found"])
-        out = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")
-        e = [r for r in out["values"] if len(r) == 5 and r[0] == "a.com"]
-        # The rows to act on come first; the rows meant to be gone follow, each in file order.
-        self.assertEqual([r[1] for r in e], ["Gone page", "Gone too", "Unpublished on purpose", "Draft gone"])
-        self.assertEqual([r[3] for r in e[:2]], ["not found", "not found"])
-        self.assertEqual(e[2][3], summ.EXPECTED_GONE.format(status="Private"))
-        self.assertEqual(e[3][3], summ.EXPECTED_GONE.format(status="Draft"))
-        self.assertIn("do not restore", e[2][3])
-        head = [out["values"][i - 1][0] for i in out["section_header_rows"] if out["values"][i - 1][0].startswith("E.")][0]
-        self.assertIn("never restore it", head)
-        self.assertFalse(summ.expected_gone({"today": "redirects to the home page", "status_in_library": "Private"}))
-        self.assertFalse(summ.expected_gone({"today": "not found", "status_in_library": ""}))
+        self.assertTrue(any(r.startswith("a.com | Page loads but is missing from the sitemap.") and
+                            r.endswith("| 1 | https://a.com/hidden/") for r in flat))
+        self.assertNotIn("legal-thing", json.dumps(out["values"]))
+        self.assertNotIn("gone-1", json.dumps(out["values"]))  # an old row that is gone is history, not a task
 
     def test_rows_from_the_rest_api_are_not_sitemap_defects(self):
         d = self.make()
@@ -392,24 +364,62 @@ class Summary(unittest.TestCase):
         self.assertTrue(any("returns HTTP 404" in r and "https://a.com/gone/" in r for r in flat))
         self.assertFalse(any("https://a.com/fine/" in r for r in flat))
 
+    def test_defects_of_one_kind_share_one_row(self):
+        d = self.make()
+        rows = [{"site": "a.com", "type": "page", "title": f"Gone {i}", "url": f"https://a.com/gone-{i}/", "published": "",
+                 "status": "404", "topics_v1": "", "notes": ""} for i in range(5)]
+        rows.append({"site": "a.com", "type": "page", "title": "Private", "url": "https://a.com/legal-thing/",
+                     "published": "", "status": "404", "topics_v1": "", "notes": ""})
+        with open(os.path.join(d, "published-inventory.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=inv.FIELDS, extrasaction="ignore"); w.writeheader(); w.writerows(rows)
+        cfg = {"sites": ["a.com"], "summary": {"withhold_titles": [{"url_contains": "legal-thing", "label": "(withheld)"}]}}
+        g = summ.build(d, cfg, "2026-11-04")["values"]
+        hits = [r for r in g if len(r) == 4 and str(r[1]).startswith("Listed in sitemap but returns HTTP 404")]
+        self.assertEqual(len(hits), 1)  # five 404s are one row with a count, not five rows
+        self.assertEqual(hits[0][2], 6)
+        self.assertEqual(hits[0][3], "https://a.com/gone-0/, https://a.com/gone-1/")  # two examples at most
+        self.assertNotIn("legal-thing", json.dumps(g))
+
     def test_only_single_cell_rows_are_merged(self):
         out = summ.build(self.make(), {"sites": ["a.com"]}, "2026-11-04")
         g = out["values"]
         self.assertEqual(out["merge_rows"][:2], [1, 2])
         for r in out["merge_rows"]:
             self.assertEqual(len(g[r - 1]), 1, f"row {r} has column labels a merge would delete")
-        a_header, b_header = out["section_header_rows"][:2]
-        self.assertNotIn(a_header, out["merge_rows"])  # A. BY SITE carries column labels
-        self.assertNotIn(b_header, out["merge_rows"])  # B. TOPICS carries the "Pages" label
+        a, b, c, d = out["section_header_rows"]
+        for h in (a, b, c):  # A, B and C carry column labels in their header row
+            self.assertNotIn(h, out["merge_rows"])
+        self.assertIn(d, out["merge_rows"])
 
-    def test_owners_named_in_section_headers(self):
+    def test_each_list_names_the_agent_that_works_it(self):
         d = self.make()
-        cfg = {"sites": ["a.com"], "summary": {"section_owners": {"D": "Liana (relationships)", "F": "website desk"}}}
+        cfg = {"sites": ["a.com"], "summary": {"worklist_owners": {"people": "content agent", "sitemap": "website agent"},
+                                               "section_owners": {"C": "library agent"}}}
         out = summ.build(d, cfg, "2026-11-04")
-        heads = [out["values"][i - 1][0] for i in out["section_header_rows"]]
-        self.assertTrue(any(h.startswith("D.") and h.endswith("Owner: Liana (relationships).") for h in heads))
-        self.assertTrue(any(h.startswith("F.") and h.endswith("Owner: website desk.") for h in heads))
-        self.assertFalse(any(h.startswith("E.") and "Owner:" in h for h in heads))
+        g = out["values"]
+        owner_of = {r[0].split(" (")[0]: r[2] for r in g if len(r) == 4 and isinstance(r[1], int)}
+        self.assertEqual(owner_of["People we know with no page naming them"], "content agent")
+        self.assertEqual(owner_of["Titles that still use the retired name"], "library agent")  # old key still read
+        self.assertTrue(g[out["section_header_rows"][3] - 1][0].endswith("Worked by: website agent."))
+
+
+class Renames(unittest.TestCase):
+    def setUp(self):
+        self.saved = dict(inv.CONFIG)
+
+    def tearDown(self):
+        inv.CONFIG.clear(); inv.CONFIG.update(self.saved)
+
+    def test_domain_mentions_and_kept_pages_are_not_renames(self):
+        inv.CONFIG.update({"rename_keep_pattern": r"oldco\.com", "rename_keep_urls": ["https://a.com/history/"]})
+        rx = re.compile("oldco", re.I)
+        row = lambda title, url="https://a.com/x/": {"title": title, "url": url}
+        self.assertTrue(inv.needs_rename(row("Join OldCo Academy"), rx))
+        self.assertFalse(inv.needs_rename(row("How We Fixed 404s on oldco.com"), rx))  # the domain is fine to name
+        self.assertTrue(inv.needs_rename(row("OldCo tips for oldco.com"), rx))  # the company name is still there
+        self.assertFalse(inv.needs_rename(row("OldCo in 2009", "https://a.com/history"), rx))  # kept on purpose
+        self.assertFalse(inv.needs_rename(row("Nothing to see"), rx))
+        self.assertFalse(inv.needs_rename(row("Join OldCo Academy"), None))
 
 
 class FakeNet:
@@ -587,8 +597,9 @@ class AddressToday(unittest.TestCase):
                         "redirects to the current page"])
         flat = [" | ".join(str(c) for c in r) for r in summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["values"]]
         rows = [r for r in flat if "return 404 instead of redirecting" in r]
-        self.assertEqual(len(rows), 1)
-        self.assertIn("| 1 | https://a.com/2020/04/12/post/ → https://a.com/post/", rows[0])
+        self.assertEqual(len(rows), 1)  # one line in the agents' lists: a count and where the full map is
+        self.assertIn("| 1 |", rows[0])
+        self.assertIn("library/library-old-urls.csv", rows[0])
         self.assertFalse(any("2021/01/01/ok" in r for r in flat))
 
 
