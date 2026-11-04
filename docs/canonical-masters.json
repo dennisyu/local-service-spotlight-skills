@@ -239,6 +239,108 @@
         "by": "Codex, entity content maintenance",
         "what": "Read the accepted operational reference and its acceptance receipt in this repository. Confirmed the current concept locator remains /nine-triangles/ rather than assigning its role to the long article URL cited in August. Direct anonymous fetch of both URLs returned HTTP 403; live semantics, definitive certification and downstream adoption remain unverified."
       }
+    },
+    {
+      "topic": "content-library",
+      "subject": "Your Content Factory Library",
+      "entity_type": "inventory",
+      "owner_function": "Content operations (library upkeep)",
+      "source_of_truth": {
+        "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit#gid=2026110401",
+        "note": "The Library Map tab names the one master for each kind of knowledge (recordings, published pages, people, proof, speaking, photos, methods) and its owner function. Private sheet in the company shared drive. Counts live in each master, never in this registry."
+      },
+      "master_sheet": {
+        "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit",
+        "title": "Your Content Factory Library (master index)"
+      },
+      "hub": {
+        "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md",
+        "role": "Public method: how the library is organized, the daily agent loop, and the hub-and-spoke protocol for other teams' agents."
+      },
+      "method": {
+        "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/content-library-keeper/SKILL.md",
+        "role": "Runnable skill with the inventory and map-snapshot scripts."
+      },
+      "skins": [
+        {
+          "url": "https://github.com/Local-Service-Spotlight/dennis-os/tree/master/library",
+          "role": "Private repository copy: the generated published inventory, worklists and a dated snapshot of the Library Map. Generated, never edited by hand (on the library branch until its pull request merges)."
+        }
+      ],
+      "owning_skill": {
+        "name": "content-library-keeper",
+        "in_this_repo": true
+      },
+      "cadence": "Daily refresh by the library agent; it posts to the team's project thread only when something changed or needs a person.",
+      "claim_id_pattern": "master:content-library:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-04",
+        "by": "Claude, content library",
+        "what": "Built the Library Map from live reads of the sheet, the recordings backup folders, the people registry and four live sitemaps; every Rows-now cell is a formula or 'external'."
+      }
+    },
+    {
+      "topic": "published-pages",
+      "subject": "Pages published on the company's own sites",
+      "entity_type": "inventory",
+      "owner_function": "Content operations (library upkeep)",
+      "source_of_truth": {
+        "url": null,
+        "note": "Each site's own sitemap (https://<site>/sitemap_index.xml) is the source of truth for what is published; there is no single URL. The library agent rebuilds the copy daily with content-library-keeper's published_inventory.py, counting each page once."
+      },
+      "hub": {
+        "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit#gid=2026110402",
+        "role": "Private summary tab: counts per site and the worklists people act on (renames, people with no page, old rows no longer live, sitemap defects)."
+      },
+      "skins": [
+        {
+          "url": "https://github.com/Local-Service-Spotlight/dennis-os/blob/master/library/published-inventory.csv",
+          "role": "Private generated copy, one row per live page. Path is on the library branch until its pull request merges."
+        }
+      ],
+      "competing_copies": [
+        {
+          "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit",
+          "found": "2026-11-04",
+          "disposition": "Five hand-kept per-site article tabs in the library sheet were frozen and renamed with a (legacy) suffix on 2026-11-04; they stay for drafts, private posts and history, not as a count of what is live."
+        }
+      ],
+      "owning_skill": {
+        "name": "content-library-keeper",
+        "in_this_repo": true
+      },
+      "cadence": "Daily; a site whose sitemap fails keeps the previous rows and is reported, never replaced by a partial count.",
+      "claim_id_pattern": "master:published-pages:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-04",
+        "by": "Claude, content library",
+        "what": "Read the sitemap index and child sitemaps of dennisyu.com, blitzmetrics.com, localservicespotlight.com and yourcontentfactory.com; WordPress REST was open on two of them and page HTML was read on the other two."
+      }
+    },
+    {
+      "topic": "people-registry",
+      "subject": "People and companies Dennis Yu works with",
+      "entity_type": "registry",
+      "owner_function": "Relationships",
+      "source_of_truth": {
+        "url": "https://github.com/Local-Service-Spotlight/dennis-os/blob/master/registry/registry.json",
+        "note": "Private repository. One row per unique entity with provenance; registry/CENSUS.md records every merge and every pair deliberately left unmerged. The Obsidian vault is a reading lens over it."
+      },
+      "hub": {
+        "url": null,
+        "gap": "No public hub by design: relationship data stays private. Public pages about a person are supporting pages for that person's own entity, not copies of the registry."
+      },
+      "owning_skill": {
+        "name": "content-library-keeper",
+        "in_this_repo": true
+      },
+      "cadence": "Updated when a relationship is confirmed from a source; the library agent reports people with no page in the daily worklist.",
+      "claim_id_pattern": "master:people-registry:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-04",
+        "by": "Claude, content library",
+        "what": "Read registry.json and matched every person against the titles of the live published pages."
+      }
     }
   ]
 }
