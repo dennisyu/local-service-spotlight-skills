@@ -46,6 +46,9 @@ Subject name and any known handles, owned domains, city and company; the client'
 if given; delivery destination (Basecamp project, Drive folder). Missing goal is fine: infer
 it, label it INFERRED, and continue.
 
+For a local business, list its own published phone numbers in `brief.json` → `allowed_phones`
+so name-address-phone checks can print them; gate G71 blocks every other number.
+
 Put anything that must never print in `brief.json` → `do_not_print`: a confidential investor
 figure, an embargoed book title, a private partner's name. Gate G74 fails the audit if any of
 them appears on a page or in the action register, and its message never repeats them. In the

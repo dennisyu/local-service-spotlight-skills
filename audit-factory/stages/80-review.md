@@ -1,8 +1,13 @@
 # Stage 80 — Frontier review of the exact final files (one structured pass)
 
-You are the independent reviewer. You did not write this audit. The mechanical gates have
-already passed (`gate.json` attached), so do not spend effort on page counts, missing fields or
-link formatting. **Spend it on judgment** — the things code cannot see.
+You are the independent reviewer. You did not write this audit, and you run in a fresh
+context: you see the final files only, never the drafting conversation. The mechanical gates
+have already passed (`gate.json` attached), so do not spend effort on page counts, missing
+fields or link formatting. **Spend it on judgment** — the things code cannot see.
+
+For enterprise audits and for every pilot audit, a second reviewer on a different model (or a
+person) repeats this pass, because a model reviewing its own family's writing shares its blind
+spots.
 
 ## Inputs
 
@@ -46,4 +51,6 @@ unsupported number on pages 1-2 · S2 weak finding, vague action, inconsistency 
 ```
 
 READY needs zero S0/S1. The runner applies fixes, re-runs the gates and asks for a second pass
-only if any S0/S1 was found. Standard tier allows two passes; enterprise three; then a person decides.
+only if any S0/S1 was found. Standard tier allows two passes; enterprise three. If S0/S1 remains
+after the last pass the audit is HOLD, and the project lead decides whether to fix by hand or
+drop the finding; nothing with an open S0/S1 ships.

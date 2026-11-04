@@ -7,7 +7,8 @@
   pack     <ledger.json> [--blind]                     compact evidence pack for a model prompt
   basecamp <audit.json> --ledger L --out todos.json    to-dos with agent briefs (+ .md preview)
   card     <stage>                                     print a stage card for a manual session
-  run      <run-dir> --tier T [--fake F] [--no-render] identity -> score -> synthesis -> pages -> actions -> gates -> PDF
+  run      <run-dir> --tier T [--fake F] [--no-render] [--no-review]
+                                                       stages 30-70 -> gates -> PDF -> up to 3 fix rounds -> fresh-context review
 """
 from __future__ import annotations
 
@@ -33,8 +34,9 @@ def cmd_gate(a) -> int:
     audit = render.expand(model.load(a.audit), Ledger.load(a.ledger) if a.ledger else None)
     led = Ledger.load(a.ledger) if a.ledger else None
     brief = pathlib.Path(a.brief) if a.brief else pathlib.Path(a.audit).with_name("brief.json")
-    dnp = json.loads(brief.read_text()).get("do_not_print", []) if brief.exists() else []
-    rep = gates.gate_audit(audit, led, a.tier, do_not_print=dnp).summary()
+    b = json.loads(brief.read_text()) if brief.exists() else {}
+    rep = gates.gate_audit(audit, led, a.tier, do_not_print=b.get("do_not_print", []),
+                           allowed_phones=b.get("allowed_phones", [])).summary()
     if a.json:
         pathlib.Path(a.json).write_text(json.dumps(rep, indent=1))
     _print_report(rep, "Content gates")
@@ -73,9 +75,9 @@ def cmd_cost(a) -> int:
             print(f"  {s['stage']:10s} {s['model']:22s} in {s['in']:>9,} out {s['out']:>7,}  ${s['usd']:.3f}")
         if a.per_month:
             print(f"  x {a.per_month}/month = ${cost.monthly(t, a.per_month, cfg, a.batch):,.2f}")
-    for share in (0.97, 0.90):
-        ref = cost.reference_cost(cfg, share)
-        print(f"\nreference all-Claude run (cache reads {share:.0%}): ${ref['total_usd']:,.2f}")
+    ref = cost.reference_cost(cfg)
+    print(f"\nreference all-Claude run, Oct 23 (measured tokens at list price, {ref['cache_read_share']:.1%} cache reads): "
+          f"${ref['audit_usd']:,.2f} for the audit, ${ref['total_usd']:,.2f} with its website package")
     return 0
 
 
@@ -93,6 +95,9 @@ def cmd_basecamp(a) -> int:
     pathlib.Path(a.out).write_text(json.dumps(payload, indent=1, ensure_ascii=False))
     pathlib.Path(a.out).with_suffix(".md").write_text(basecamp.markdown(payload))
     print(f"{len(payload['todos'])} to-dos → {a.out} ({payload['counts']})")
+    if payload["unassigned"]:
+        print(f"UNASSIGNED (no running agent for their function in config/agents.json): {payload['unassigned']}")
+        return 2
     return 0
 
 
@@ -107,9 +112,9 @@ def cmd_run(a) -> int:
     if a.fake:
         from .testing import fake_from_fixture
         fake = fake_from_fixture(a.fake)
-    res = pipeline.run(a.run_dir, a.tier, fake=fake, render_pdf=not a.no_render)
+    res = pipeline.run(a.run_dir, a.tier, fake=fake, render_pdf=not a.no_render, review=not a.no_review)
     print(json.dumps(res, indent=1))
-    return 0 if res.get("verdict") == "REVIEW_READY" else 2
+    return 0 if res.get("verdict") in ("READY", "REVIEW_READY") else 2
 
 
 def main(argv=None) -> int:
@@ -127,6 +132,7 @@ def main(argv=None) -> int:
     rn = sp.add_parser("run"); rn.add_argument("run_dir"); rn.add_argument("--tier", default="standard")
     rn.add_argument("--fake", help="fixture audit.json to replay instead of calling models (tests)")
     rn.add_argument("--no-render", action="store_true")
+    rn.add_argument("--no-review", action="store_true", help="stop after gates and render (no frontier review)")
     a = ap.parse_args(argv)
     return {"gate": cmd_gate, "render": cmd_render, "measure": cmd_measure, "cost": cmd_cost, "pack": cmd_pack,
             "basecamp": cmd_basecamp, "card": cmd_card, "run": cmd_run}[a.cmd](a)

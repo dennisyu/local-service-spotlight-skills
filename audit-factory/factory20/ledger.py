@@ -41,6 +41,11 @@ def polarity(raw: dict) -> str:
     text = f"{raw.get('claim', '')} {raw.get('value', '')}"
     return "negative" if NEGATIVE.search(text) else "positive"
 STRIP_FOR_BLIND_TEST = ("insights", "lane_insights_raw", "load_bearing")
+# Judgment that rides inside rows: how a conflict "must" be presented, and editor notes added
+# after research. Both leaked into the first blind test (2026-11-04), and the drafting model
+# copied them verbatim, so a blind copy removes them too.
+GUIDANCE_KEYS = ("how_audit_must_present", "how_to_present", "presentation", "recommendation", "audit_note")
+EDITOR_NOTE = re.compile(r"\s*\[editor\][^\[]*")
 
 
 def _norm_item(raw: dict, kind: str = "evidence") -> dict:
@@ -170,5 +175,17 @@ class Ledger:
 
 
 def blind_copy(data: dict) -> dict:
-    """Ledger JSON with prior synthesis removed — for testing a model's own synthesis."""
-    return {k: v for k, v in data.items() if k not in STRIP_FOR_BLIND_TEST}
+    """Ledger JSON with every trace of prior synthesis removed — for testing a model's own
+    synthesis: written insights, lane notes, conflict-presentation guidance and editor notes."""
+    out = {k: v for k, v in data.items() if k not in STRIP_FOR_BLIND_TEST}
+    out["conflicts"] = [{k: v for k, v in c.items() if k not in GUIDANCE_KEYS}
+                        for c in data.get("conflicts", []) if isinstance(c, dict)]
+    for key in ("items", "ambiguous"):
+        rows = []
+        for r in data.get(key, []):
+            r = dict(r)
+            if isinstance(r.get("notes"), str):
+                r["notes"] = EDITOR_NOTE.sub("", r["notes"]).strip()
+            rows.append(r)
+        out[key] = rows
+    return out

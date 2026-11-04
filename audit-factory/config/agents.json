@@ -1,0 +1,17 @@
+{
+  "note": "Which running agent picks up each function's to-dos, and who chases them. A to-do assigned to a function with no running agent is how the October cheap-lane pipeline stalled, so every AGENT and AGENT_AFTER_APPROVAL to-do names an agent from this file. Edit it to match the fleet you actually run; agencies replace these names with their own.",
+  "default_agent": "Claude Fleet",
+  "functions": {
+    "Web": "Claude Fleet",
+    "Content": "Claude Fleet",
+    "Search & entity": "Claude Fleet",
+    "Reputation": "Claude Fleet",
+    "Outreach": "Claude Fleet",
+    "Analytics": "Claude Fleet",
+    "Paid media": "Claude Fleet",
+    "Social": "Claude Fleet",
+    "Engineering": "Codex"
+  },
+  "human_owner": "the client, through the project lead",
+  "chaser": "Happy"
+}

@@ -19,9 +19,22 @@ def split_fixture(audit: dict) -> dict:
     }
 
 
-def fake_from_fixture(path: str):
+READY_REVIEW = {"verdict": "READY", "findings": [], "score_adjustments": [],
+                "strongest": ["page 2 findings", "the dated action register", "evidence on every page"]}
+
+
+def fake_from_fixture(path: str, review: dict | None = None):
+    """Replay a fixture: each stage returns its slice; a fix returns one page; review is READY
+    unless a review object is given (a list of them is consumed one per review pass)."""
     outs = split_fixture(json.loads(pathlib.Path(path).read_text(encoding="utf-8")))
+    reviews = list(review) if isinstance(review, list) else [review or READY_REVIEW]
 
     def fake(stage, model, system, user):
-        return "```json\n" + json.dumps(outs[stage], ensure_ascii=False) + "\n```"
+        if stage == "fix":
+            obj = {"pages": outs["pages"]["pages"][:1]}
+        elif stage == "review":
+            obj = reviews.pop(0) if len(reviews) > 1 else reviews[0]
+        else:
+            obj = outs[stage]
+        return "```json\n" + json.dumps(obj, ensure_ascii=False) + "\n```"
     return fake

@@ -84,8 +84,15 @@ def _is_date(s: str) -> bool:
         return False
 
 
+INTERNAL_DEST = re.compile(r"basecamp|action register|agent audit library|\bdrive\b|internal|\breport\b|team thread", re.I)
+
+
+def _digits(s: str) -> str:
+    return re.sub(r"\D", "", s)[-10:]
+
+
 def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard",
-               do_not_print: list[str] | None = None) -> Report:
+               do_not_print: list[str] | None = None, allowed_phones: list[str] | None = None) -> Report:
     T = TIERS[tier]
     R = Report()
     pages = audit.get("pages", [])
@@ -292,13 +299,24 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     windows = {str(a.get("window")) for a in actions}
     R.add("G64", "Plan covers 7, 30, 60 and 90 days", "actions", {"7", "30", "60", "90"} <= windows,
           f"windows present {sorted(windows)}; include first-seven-day moves and 30/60/90", hard=False)
+    # Changing anything the client owns or anything public about them needs the client's yes
+    # on record. Only internal work (reports, the register, our own threads) runs with no gate.
+    ungated = [a.get("id") for a in actions if a.get("executor") == "AGENT" and not a.get("pre_approved")
+               and a.get("destination") and not INTERNAL_DEST.search(str(a.get("destination")))]
+    R.add("G65", "Client-facing changes wait for the client's approval", "actions", not ungated,
+          f"{ungated[:10]} change a client-facing property with no approval gate; make each AGENT_AFTER_APPROVAL "
+          "and name who approves in human_gate, or set pre_approved to the recorded approval")
 
     # ---------- G70 privacy and claims ----------
     emails = sorted({e for e in EMAIL.findall(text) if e.lower() not in ALLOWED_EMAILS})
     R.add("G70", "No personal email addresses in the client edition", "privacy", not emails,
           f"remove {emails}")
-    phones = PHONE.findall(text)
-    R.add("G71", "No phone numbers in the client edition", "privacy", not phones, f"remove {phones[:5]}")
+    # A local business's own listed numbers are fair game (name-address-phone checks need them);
+    # list them in brief.allowed_phones. Any other number is a private one.
+    ok_phones = {_digits(p) for p in (allowed_phones or [])}
+    phones = [p for p in PHONE.findall(text) if _digits(p) not in ok_phones]
+    R.add("G71", "No phone numbers except the business's own listed numbers", "privacy", not phones,
+          f"remove {phones[:5]}, or add the business's own listed numbers to brief.allowed_phones")
     sec = sorted(set(m.lower() for m in SECRETS.findall(text)))
     R.add("G72", "No credentials or internal agent receipts", "privacy", not sec, f"remove {sec}")
     # The brief's do-not-print list: confidential numbers, embargoed titles, private names.

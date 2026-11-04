@@ -67,6 +67,18 @@ class LedgerTests(unittest.TestCase):
         self.assertNotIn("insights", blind_copy(data))
         self.assertIn("items", blind_copy(data))
 
+    def test_blind_copy_strips_guidance_inside_rows(self):
+        # the first blind test leaked both of these and the drafting model copied them verbatim
+        data = json.loads((DEMO / "ledger.json").read_text())
+        data["conflicts"] = [{"id": "V-C01", "metric": "roofs", "value_a": {"value": "3,500"},
+                              "how_audit_must_present": "Lead with 3,500 as 'Vega says'."}]
+        data["items"][0]["notes"] = "[lane #4] Counted 386 reviews. [editor] Frame this as the hero claim."
+        b = blind_copy(data)
+        self.assertNotIn("how_audit_must_present", b["conflicts"][0])
+        self.assertEqual(b["conflicts"][0]["value_a"]["value"], "3,500")
+        self.assertEqual(b["items"][0]["notes"], "[lane #4] Counted 386 reviews.")
+        self.assertNotIn("[editor]", json.dumps(b))
+
     def test_csv_ledger(self):
         with tempfile.TemporaryDirectory() as d:
             p = pathlib.Path(d) / "l.csv"
@@ -243,6 +255,21 @@ class GateNegativeTests(unittest.TestCase):
         self.assertIn("cut about 52 words", ch["R02"]["msg"])
         self.assertIn("card 4", ch["R02"]["msg"])
 
+    def test_G65_client_change_without_approval(self):
+        self.mutate(lambda a: a["actions"][0].update(executor="AGENT"), "G65")   # A1 changes the client's site
+
+    def test_G65_internal_report_needs_no_gate(self):
+        self.assertEqual(status(gate(copy.deepcopy(AUDIT)), "G65"), "PASS")      # A16 posts to our own thread
+
+    def test_G71_business_phone_allowed_when_listed(self):
+        a = copy.deepcopy(AUDIT)
+        self.page(a, 4)["blocks"][-1]["text"].append("The profile lists 918-555-0142 as the main line.")
+        full = render.expand(a, LEDGER)
+        listed = {c["id"]: c for c in gates.gate_audit(full, LEDGER, "standard", allowed_phones=["(918) 555-0142"]).checks}
+        self.assertEqual(listed["G71"]["status"], "PASS")
+        unlisted = {c["id"]: c for c in gates.gate_audit(full, LEDGER, "standard").checks}
+        self.assertEqual(unlisted["G71"]["status"], "FAIL")
+
     def test_G80_missing_qr_without_expansion(self):
         self.mutate(lambda a: None, "G80", expand=False)
 
@@ -304,10 +331,12 @@ class CostTests(unittest.TestCase):
         self.assertLess(t["standard"], t["enterprise"])
         self.assertLess(t["standard"], 10)
 
-    def test_reference_run_is_two_orders_more(self):
-        ref = cost.reference_cost(cost.load_routing(), 0.97)["total_usd"]
-        self.assertGreater(ref, 300)
-        self.assertGreater(ref / cost.audit_cost("standard")["total_usd"], 40)
+    def test_reference_run_is_priced_from_measured_tokens(self):
+        ref = cost.reference_cost(cost.load_routing())
+        self.assertAlmostEqual(ref["cache_read_share"], 0.983)
+        self.assertTrue(275 < ref["audit_usd"] < 290, ref)           # audit only
+        self.assertTrue(295 < ref["total_usd"] < 310, ref)           # with the website package
+        self.assertGreater(ref["audit_usd"] / cost.audit_cost("standard")["total_usd"], 40)
 
     def test_muse_tier_keeps_the_frontier_slice(self):
         cfg = cost.load_routing()
@@ -320,6 +349,11 @@ class CostTests(unittest.TestCase):
 
 
 class RouterTests(unittest.TestCase):
+    def test_safe_model_climbs_past_flagged_models(self):
+        cfg = cost.load_routing()
+        self.assertEqual(router.safe_model(cfg, "deepseek-v4.1-flash", False), "deepseek-v4.1-flash")
+        self.assertEqual(router.safe_model(cfg, "deepseek-v4.1-flash", True), "claude-haiku-5-5")
+
     def test_extract_json(self):
         self.assertEqual(router.extract_json('x ```json\n{"a": 1}\n``` y'), {"a": 1})
         self.assertEqual(router.extract_json('{"b": 2}'), {"b": 2})
@@ -373,6 +407,18 @@ class BasecampTests(unittest.TestCase):
     def test_heuristic_executor(self):
         self.assertEqual(basecamp.executor({"action": "Record four short videos", "human_gate": "x"}), "HUMAN")
         self.assertEqual(basecamp.executor({"action": "Add schema markup", "human_gate": "none"}), "AGENT")
+        # "None for schema; X approves" names a gate, so it is not an ungated agent task
+        self.assertEqual(basecamp.executor({"action": "Add schema markup",
+                                            "human_gate": "None for schema; Marisol updates LinkedIn"}), "AGENT_AFTER_APPROVAL")
+
+    def test_every_agent_todo_names_a_running_agent(self):
+        payload = basecamp.todos(AUDIT, LEDGER)
+        self.assertEqual(payload["unassigned"], [])
+        a1 = next(t for t in payload["todos"] if t["id"] == "A1")
+        self.assertEqual(a1["agent"], "Claude Fleet")
+        self.assertIn("Runs it:", a1["description"])
+        bare = basecamp.todos(AUDIT, LEDGER, agents={"functions": {}, "default_agent": "", "chaser": ""})
+        self.assertIn("A1", bare["unassigned"])
 
 
 class PipelineTests(unittest.TestCase):
@@ -386,12 +432,80 @@ class PipelineTests(unittest.TestCase):
                                        "prepared_by", "confidentiality", "palette", "install_url")}
             (d / "brief.json").write_text(json.dumps(brief))
             res = pipeline.run(d, "standard", fake=fake_from_fixture(str(DEMO / "audit.json")), render_pdf=False)
-            self.assertEqual(res["verdict"], "REVIEW_READY", res)
+            self.assertEqual(res["verdict"], "READY", res)
             self.assertEqual(res["gate"], "PASS")
+            self.assertEqual(res["review"], "READY")
             log = json.loads((d / "run.json").read_text())
             models = {a["stage"]: a["model"] for a in log["attempts"]}
             self.assertEqual(models["synthesis"], "claude-opus-5-5")
             self.assertEqual(models["pages"], "claude-sonnet-5-5")
+            self.assertEqual(models["review"], "claude-opus-5-5")
+
+    def _run_dir(self, d, brief_extra=None):
+        shutil.copy(DEMO / "ledger.json", d / "ledger.json")
+        shutil.copytree(DEMO / "assets", d / "assets")
+        m = AUDIT["meta"]
+        brief = {k: m[k] for k in ("subject", "subject_type", "title", "date", "plan_start", "prepared_for",
+                                   "prepared_by", "confidentiality", "palette", "install_url")}
+        brief.update(brief_extra or {})
+        (d / "brief.json").write_text(json.dumps(brief))
+
+    def test_gate_failure_gets_a_fix_round(self):
+        from factory20.testing import split_fixture
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d)
+            outs = split_fixture(AUDIT)
+            broken = copy.deepcopy(outs["pages"])
+            p12 = next(p for p in broken["pages"] if p["n"] == 12)
+            p12["blocks"] = [b for b in p12["blocks"] if b["type"] not in M.VISUAL_BLOCKS]   # G40 fails
+            for name in ("identity", "score", "synthesis", "actions"):
+                (d / f"{name}.json").write_text(json.dumps(outs[name]))
+            (d / "pages.json").write_text(json.dumps(broken))
+            good12 = next(p for p in outs["pages"]["pages"] if p["n"] == 12)
+            base = fake_from_fixture(str(DEMO / "audit.json"))
+
+            def fake(stage, model, system, user):
+                if stage == "fix":
+                    self.assertIn("G40", user)                       # the writer is told exactly what failed
+                    return json.dumps({"pages": [good12]})
+                return base(stage, model, system, user)
+            res = pipeline.run(d, "standard", fake=fake, render_pdf=False)
+            self.assertEqual(res["fix_rounds"], 1, res)
+            self.assertEqual(res["verdict"], "READY", res)
+
+    def test_review_finding_triggers_a_fix_and_second_pass(self):
+        s1 = {"verdict": "NOT_READY", "findings": [{"id": "R1-01", "severity": "S1", "page": 5, "where": "callout",
+              "problem": "Score row 4 is generous.", "fix": "Lower it to 6.", "evidence": ["V-E011"]}],
+              "score_adjustments": [], "strongest": ["page 2"]}
+        from factory20.testing import READY_REVIEW
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d)
+            res = pipeline.run(d, "standard", fake=fake_from_fixture(str(DEMO / "audit.json"), review=[s1, READY_REVIEW]),
+                               render_pdf=False)
+            self.assertEqual(res["review_passes"], 2, res)
+            self.assertEqual(res["verdict"], "READY", res)
+            stages = [a["stage"] for a in json.loads((d / "run.json").read_text())["attempts"]]
+            self.assertIn("fix", stages)
+
+    def test_serious_finding_on_the_last_pass_holds(self):
+        s1 = {"verdict": "NOT_READY", "findings": [{"id": "R1-01", "severity": "S0", "page": 4, "where": "graph",
+              "problem": "A namesake is used as proof.", "fix": "Remove it.", "evidence": ["V-A01"]}],
+              "score_adjustments": [], "strongest": []}
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d)
+            res = pipeline.run(d, "lean", fake=fake_from_fixture(str(DEMO / "audit.json"), review=s1), render_pdf=False)
+            self.assertEqual(res["verdict"], "HOLD", res)
+
+    def test_confidential_brief_never_reaches_a_flagged_model(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d, {"do_not_print": ["$14M valuation"]})
+            pipeline.run(d, "lean", fake=fake_from_fixture(str(DEMO / "audit.json")), render_pdf=False, review=False)
+            models = {a["model"] for a in json.loads((d / "run.json").read_text())["attempts"]}
+            self.assertFalse(any(m.startswith("deepseek") for m in models), models)
 
 
 class SchemaTests(unittest.TestCase):

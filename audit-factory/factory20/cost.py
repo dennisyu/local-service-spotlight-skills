@@ -59,16 +59,24 @@ def audit_cost(tier: str, cfg: dict | None = None, batch: bool = False) -> dict:
     return {"tier": tier, "stages": rows, "total_usd": total, "frontier_usd": frontier}
 
 
-def reference_cost(cfg: dict | None = None, cache_read_share: float = 0.97) -> dict:
-    """API-equivalent of the measured all-Claude Cowork run under a cache-mix assumption."""
+def _class_cost(p: dict, tok: dict) -> float:
+    return (tok.get("in", 0) * p["in"] + tok.get("cache_write", 0) * p["cache_write"]
+            + tok.get("cache_read", 0) * p["cache_read"] + tok.get("out", 0) * p["out"]) / 1e6
+
+
+def reference_cost(cfg: dict | None = None) -> dict:
+    """List-price cost of the measured all-Claude Cowork run, from its own token counts.
+
+    The run also built a website package; that part is reported separately so the audit
+    comparison is like for like. The account bill was never read, so this is list price.
+    """
     cfg = cfg or load_routing()
-    out = []
-    for ln in cfg["reference_run"]["lanes"]:
-        p = cfg["prices"][ln["model"]]
-        I, O = ln["in"], ln["out"]
-        usd = (I * cache_read_share * p["cache_read"] + I * (1 - cache_read_share) * p["cache_write"] + O * p["out"]) / 1e6
-        out.append({**ln, "usd": round(usd, 2)})
-    return {"cache_read_share": cache_read_share, "lanes": out, "total_usd": round(sum(x["usd"] for x in out), 2)}
+    ref = cfg["reference_run"]
+    parts = {}
+    for part, by_model in ref["measured"].items():
+        parts[part] = round(sum(_class_cost(cfg["prices"][m], tok) for m, tok in by_model.items()), 2)
+    return {"cache_read_share": ref.get("cache_read_share"), "audit_usd": parts.get("audit", 0.0),
+            "parts": parts, "total_usd": round(sum(parts.values()), 2)}
 
 
 def monthly(tier: str, audits_per_month: int, cfg: dict | None = None, batch: bool = False) -> float:

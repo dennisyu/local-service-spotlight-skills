@@ -25,8 +25,9 @@ without treating historical report lengths as a universal rule.
 
 ## Tiered production — the Audit Factory (read before producing at volume)
 
-Any agent can now produce this audit at frontier quality without a frontier model doing the
-heavy lifting. Use the repository's [`audit-factory/`](../../audit-factory/README.md):
+Any agent can produce this audit without a frontier model doing the heavy lifting; the pilot
+measures how close to frontier quality it lands. Use the repository's
+[`audit-factory/`](../../audit-factory/README.md):
 
 1. **One runner owns the audit end to end** (a Claude/Codex/Cursor session, Muse, ChatGPT,
    a cron job or a person). Never split stages across agents through repo notes or work
@@ -38,10 +39,14 @@ heavy lifting. Use the repository's [`audit-factory/`](../../audit-factory/READM
    structured review (stage 80). Harvest, drafting and actions run on the cheapest tier that
    passes the gates.
 4. **Gates before review:** `python -m factory20 gate` and `render` must not HOLD before any
-   reviewer reads the file. Fix every message; the reviewer judges, not counts.
+   reviewer reads the file. Fix every message; the reviewer judges, not counts, and runs in a
+   fresh context that never saw the drafting.
+5. **Client-facing changes wait for the client's yes:** an action that touches the client's
+   site, profiles, reviews, ads or public records is `AGENT_AFTER_APPROVAL` with the approver
+   named (gate G65).
 
-Standard tier costs about $5 per audit against roughly $360-650 for an all-frontier run of the
-same product (measurements: `audit-factory/docs/CALIBRATION.md`).
+The standard tier is estimated at about $5 per audit against about $280 at list price for the
+measured all-frontier run of Oct 23 (measurements: `audit-factory/docs/CALIBRATION.md`).
 
 ## Dependency preflight
 

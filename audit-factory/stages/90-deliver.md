@@ -10,7 +10,10 @@ and the first agent task has started.
 2. **Create the Basecamp to-dos:** `python -m factory20 basecamp audit.json --ledger ledger.json
    --out todos.json`, then post them as a to-do list named `Audit Execution — <subject>` in the
    client's project. Agent to-dos carry their own brief; human to-dos are only approvals,
-   decisions, recordings and sign-ins. Name the executing agent or function on each.
+   decisions, recordings and sign-ins. Every agent to-do names the running agent that picks it
+   up and who chases it, from `config/agents.json`; the export fails (exit 2) if a function has
+   no running agent, because a to-do addressed to a function nobody runs is how October stalled.
+   The house Basecamp poster files the list; the chaser follows each to-do to a `Verified:` close.
 3. **Deliver** on the existing thread for that client (Basecamp first; email with Operations
    copied when the person is not on Basecamp). Lead with the one decision they need to make.
    No agent receipt line on client-facing messages.

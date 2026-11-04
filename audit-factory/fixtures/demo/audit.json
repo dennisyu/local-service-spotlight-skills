@@ -3332,10 +3332,10 @@
       "dependency": "A8",
       "destination": "vegaroofing.example/about + LinkedIn",
       "due": "2026-12-09",
-      "human_gate": "None for schema; Marisol updates LinkedIn",
+      "human_gate": "Marisol approves the schema change and updates her own LinkedIn title",
       "acceptance_test": "Rich Results test shows Person with 5 sameAs links",
       "state": "PROPOSED",
-      "executor": "AGENT",
+      "executor": "AGENT_AFTER_APPROVAL",
       "window": "30"
     },
     {

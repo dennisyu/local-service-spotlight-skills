@@ -14,10 +14,13 @@ becomes Basecamp to-dos automatically (`python -m factory20 basecamp`).
  "state": "PROPOSED", "executor": "AGENT_AFTER_APPROVAL", "window": "30"}
 ```
 
-- `executor`: **AGENT** (no approval needed: schema, monitoring, reports) · **AGENT_AFTER_APPROVAL**
-  (agent stages it, a named person approves the exact change, then the agent ships) · **HUMAN**
-  (only a person can: choose a name, confirm a fact, record a video, sign in, approve spend,
-  ask a partner). Aim for ≥ 70% agent-executed.
+- `executor`: **AGENT** (internal work only: research, monitoring, reports to our own thread) ·
+  **AGENT_AFTER_APPROVAL** (anything that changes what the client owns or what the public sees
+  about them — their site, schema, profiles, reviews replies, ads, Wikidata — where the agent
+  stages it, the person named in `human_gate` approves the exact change, then the agent ships) ·
+  **HUMAN** (only a person can: choose a name, confirm a fact, record a video, sign in, approve
+  spend, ask a partner). Gate G65 fails an `AGENT` action whose destination is client-facing;
+  set `pre_approved` only when a recorded approval already covers it. Aim for ≥ 70% agent-executed.
 - `function`: the durable owning function (Web, Content, Search & entity, Reputation, Analytics,
   Paid media, Social, Outreach, Owner decision) — never a person's name.
 - `skill`: the exact routed skill (business-website-agent, content-factory,

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 
 from . import cost as K
 from . import gates, model as M, render, router
@@ -100,10 +101,6 @@ def prompt(stage: str, run: pathlib.Path, ledger: Ledger, extra: dict | None = N
     return "\n\n".join(parts)
 
 
-CHECKS = {"identity": check_identity, "score": check_score, "synthesis": check_synthesis,
-          "pages": check_pages, "actions": check_actions}
-
-
 # ------------------------------------------------------------------ assembly
 def assemble(run: pathlib.Path) -> dict:
     brief = json.loads((run / "brief.json").read_text())
@@ -126,33 +123,183 @@ def assemble(run: pathlib.Path) -> dict:
     return audit
 
 
-def run(run_dir: str | pathlib.Path, tier: str = "standard", fake=None, render_pdf: bool = True) -> dict:
+def check_review(obj, ledger):
+    probs = []
+    if obj.get("verdict") not in ("READY", "READY_WITH_FIXES", "NOT_READY"):
+        probs.append("verdict must be READY, READY_WITH_FIXES or NOT_READY")
+    for f in obj.get("findings", []):
+        if f.get("severity") not in ("S0", "S1", "S2", "S3"):
+            probs.append(f"finding {f.get('id')}: severity must be S0, S1, S2 or S3")
+    if obj.get("verdict") == "READY" and _serious(obj):
+        probs.append("READY needs zero S0/S1 findings")
+    return probs
+
+
+def check_fix(obj, ledger):
+    """A fix returns only the pages it changed, each a full page object for pages 3-19."""
+    pages = obj.get("pages", [])
+    if not pages:
+        return ["return the pages you changed under 'pages' (at least one)"]
+    bad = [p.get("n") for p in pages if p.get("n") not in range(3, 20)]
+    probs = [f"fix may only return pages 3-19; got {bad}"] if bad else []
+    probs += [f"unknown evidence id {x}" for x in _ids_missing(pages, ledger)][:15]
+    return probs
+
+
+CHECKS = {"identity": check_identity, "score": check_score, "synthesis": check_synthesis,
+          "pages": check_pages, "actions": check_actions}
+MAX_FIX_ROUNDS = 3
+FRONT_GATES = {"G20", "G21", "G22", "G24"}
+
+
+def _serious(review: dict | None) -> list[dict]:
+    return [f for f in (review or {}).get("findings", []) if f.get("severity") in ("S0", "S1")]
+
+
+def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None = None) -> list[dict]:
+    """Every open item, in the words a drafting model can act on."""
+    items = [{"from": "gate", "id": c["id"], "status": c["status"], "msg": c["msg"]}
+             for c in gate_rep.get("checks", []) if c["status"] != "PASS"]
+    if render_rep:
+        items += [{"from": "render", "id": c["id"], "status": c["status"], "msg": c["msg"]}
+                  for c in render_rep.get("gates", {}).get("checks", []) if c["status"] != "PASS"]
+    if review:
+        items += [{"from": "review", "id": f.get("id"), "status": "FAIL" if f.get("severity") in ("S0", "S1") else "WARN",
+                   "page": f.get("page"), "msg": f"{f.get('problem', '')} Fix: {f.get('fix', '')}"}
+                  for f in review.get("findings", []) if f.get("severity") in ("S0", "S1", "S2")]
+    return items
+
+
+def _front(item: dict) -> bool:
+    if item.get("id") in FRONT_GATES or item.get("page") in (1, 2):
+        return True
+    return bool(re.search(r"\bpages? \[?([12])\b|\bpage 2\b|\bp[12]:", item.get("msg") or ""))
+
+
+def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake, items: list[dict],
+                 review: dict | None = None) -> bool:
+    """One fix round: the synthesis model revises pages 1-2, the fix model patches pages 3-19,
+    and reviewer score adjustments go back into score.json (code re-checks them)."""
+    ok = True
+    front = [i for i in items if _front(i)]
+    rest = [i for i in items if not _front(i)]
+    if front:
+        res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
+            "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
+            "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
+            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake)
+        ok &= res["ok"]
+    if rest:
+        res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
+            "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
+                    "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block.",
+            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger), cfg=cfg, fake=fake)
+        if res["ok"]:
+            cur = json.loads((run_dir / "pages.json").read_text())
+            by_n = {p.get("n"): p for p in cur.get("pages", [])}
+            by_n.update({p.get("n"): p for p in res["obj"].get("pages", [])})
+            cur["pages"] = [by_n[n] for n in sorted(by_n)]
+            (run_dir / "pages.json").write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+        ok &= res["ok"]
+    if review and review.get("score_adjustments"):
+        sc = json.loads((run_dir / "score.json").read_text())
+        ba = sc.get("brand_authority", sc)
+        for adj in review["score_adjustments"]:
+            for row in ba.get("rows", []):
+                if row.get("n") == adj.get("row") and adj.get("to") is not None:
+                    row["score"] = adj["to"]
+                    row["why"] = f"{row.get('why', '')} (review: {adj.get('why', '')})".strip()
+        (run_dir / "score.json").write_text(json.dumps(sc, indent=1, ensure_ascii=False))
+    return ok
+
+
+def review_prompt(run_dir: pathlib.Path, ledger: Ledger, gate_rep: dict, render_rep: dict | None) -> str:
+    """Fresh context: the reviewer sees the exact final files, never the drafting history."""
+    brief = json.loads((run_dir / "brief.json").read_text())
+    brief.pop("do_not_print", None)
+    parts = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
+             f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=True)}",
+             f"# FINAL audit.json\n{(run_dir / 'audit.json').read_text()}",
+             f"# gate.json\n{json.dumps(gate_rep, indent=1)}"]
+    if render_rep:
+        parts.append(f"# render report\n{json.dumps({k: v for k, v in render_rep.items() if k != 'html'}, indent=1)}")
+    parts.append("Answer with JSON only, in the output shape your card defines.")
+    return "\n\n".join(parts)
+
+
+def _check_all(run_dir: pathlib.Path, ledger: Ledger, tier: str, render_pdf: bool):
+    audit = assemble(run_dir)
+    full = render.expand(audit, ledger)
+    brief = json.loads((run_dir / "brief.json").read_text())
+    rep = gates.gate_audit(full, ledger, tier if tier in gates.TIERS else "standard",
+                           do_not_print=brief.get("do_not_print", []),
+                           allowed_phones=brief.get("allowed_phones", [])).summary()
+    (run_dir / "gate.json").write_text(json.dumps(rep, indent=1))
+    rr = None
+    if render_pdf:
+        rr = render.render(run_dir / "audit.json", run_dir / "ledger.json", run_dir / "audit.pdf")
+        rr["gates"] = gates.gate_render(rr, audit["meta"].get("install_url", render.INSTALL_URL)).summary()
+        (run_dir / "audit.pdf.render.json").write_text(json.dumps(rr, indent=1))
+    return audit, rep, rr
+
+
+def run(run_dir: str | pathlib.Path, tier: str = "standard", fake=None, render_pdf: bool = True,
+        review: bool = True) -> dict:
+    """Stages 30-70 (reusing any stage file already present), then: assemble -> gates -> render ->
+    up to three fix rounds -> one fresh-context review -> fix and re-review if it found S0/S1."""
     run_dir = pathlib.Path(run_dir)
     cfg = K.load_routing()
     ledger = Ledger.load(run_dir / "ledger.json")
+    brief = json.loads((run_dir / "brief.json").read_text())
+    confidential = bool(brief.get("do_not_print"))
     out = {"tier": tier, "stages": {}}
     for st in ("identity", "score", "synthesis", "pages", "actions"):
         if (run_dir / f"{st}.json").exists():
             out["stages"][st] = "reused"
             continue
         res = router.run_stage(st, prompt(st, run_dir, ledger), tier, run_dir,
-                               check=lambda o, s=st: CHECKS[s](o, ledger), cfg=cfg, fake=fake)
+                               check=lambda o, s=st: CHECKS[s](o, ledger), cfg=cfg, fake=fake,
+                               confidential=confidential)
         out["stages"][st] = "ok" if res["ok"] else "FAILED"
         if not res["ok"]:
             out["verdict"] = f"HOLD at {st}"
             return out
-    audit = assemble(run_dir)
-    full = render.expand(audit, ledger)
-    dnp = json.loads((run_dir / "brief.json").read_text()).get("do_not_print", [])
-    rep = gates.gate_audit(full, ledger, tier if tier in gates.TIERS else "standard", do_not_print=dnp).summary()
-    (run_dir / "gate.json").write_text(json.dumps(rep, indent=1))
+    audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
+    rounds = 0
+    while fix_list(rep, rr) and rounds < MAX_FIX_ROUNDS:
+        rounds += 1
+        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr)):
+            break
+        audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
+    out["fix_rounds"] = rounds
     out["gate"] = rep["verdict"]
-    if render_pdf:
-        rr = render.render(run_dir / "audit.json", run_dir / "ledger.json", run_dir / "audit.pdf")
-        rr["gates"] = gates.gate_render(rr, audit["meta"].get("install_url", render.INSTALL_URL)).summary()
-        (run_dir / "audit.pdf.render.json").write_text(json.dumps(rr, indent=1))
+    if rr:
         out["render"] = rr["gates"]["verdict"]
+    gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
+    rv = None
+    if review and gates_ok:
+        passes = cfg["tiers"].get(tier, {}).get("review_passes", 1)
+        for p in range(1, passes + 1):
+            res = router.run_stage("review", review_prompt(run_dir, ledger, rep, rr), tier, run_dir,
+                                   check=lambda o: check_review(o, ledger), cfg=cfg, fake=fake)
+            if not res["ok"]:
+                out["verdict"] = "HOLD at review"
+                return out
+            rv = res["obj"]
+            out["review_passes"] = p
+            if not _serious(rv) or p == passes:
+                break
+            _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr, rv), review=rv)
+            audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
+            gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
+        out["review"] = rv.get("verdict") if rv else None
+        out["gate"] = rep["verdict"]
     log = json.loads((run_dir / "run.json").read_text()) if (run_dir / "run.json").exists() else {"attempts": []}
     out["usd"] = round(sum(a.get("usd", 0) for a in log["attempts"]), 4)
-    out["verdict"] = "REVIEW_READY" if out["gate"] != "HOLD" and out.get("render", "PASS") != "HOLD" else "HOLD"
+    if not gates_ok:
+        out["verdict"] = "HOLD"
+    elif not review:
+        out["verdict"] = "REVIEW_READY"
+    else:
+        out["verdict"] = "READY" if rv and not _serious(rv) else "HOLD"
     return out

@@ -115,17 +115,33 @@ def next_rung(cfg: dict, model: str) -> str | None:
     return ladder[i + 1] if i + 1 < len(ladder) else None
 
 
+def confidential_ok(cfg: dict, model: str) -> bool:
+    """False for models flagged as unsafe with confidential briefs (the Oct 25 bake-off)."""
+    return bool(cfg["prices"].get(model, {}).get("confidential_ok", True))
+
+
+def safe_model(cfg: dict, model: str, confidential: bool) -> str:
+    """A confidential brief never goes to a flagged model: climb the ladder to the first safe one."""
+    m = model
+    while confidential and m and not confidential_ok(cfg, m):
+        m = next_rung(cfg, m)
+    if m is None:
+        raise ValueError(f"no model on the ladder above {model} is cleared for confidential briefs")
+    return m
+
+
 def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=None, cfg: dict | None = None,
-              fake=None, max_escalations: int = 1) -> dict:
+              fake=None, max_escalations: int = 1, confidential: bool = False) -> dict:
     """Run one stage: call, parse, check; retry once with the error, then escalate one rung.
 
     check(obj) -> list of problems (empty = accepted). Every attempt is logged with tokens
-    and cost to run.json so the per-audit attribution is measured, not estimated.
+    and cost to run.json so the per-audit attribution is measured, not estimated. With
+    confidential=True (the brief lists do-not-print items) flagged models are skipped.
     """
     cfg = cfg or K.load_routing()
     st = next(s for s in cfg["stages"] if s["id"] == stage_id)
     system = (STAGES_DIR / st["card"]).read_text(encoding="utf-8")
-    model = cfg["tiers"][tier]["models"][stage_id]
+    model = safe_model(cfg, cfg["tiers"][tier]["models"][stage_id], confidential)
     log_path = run_dir / "run.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {"tier": tier, "attempts": []}
     escalations, prompt = 0, user
@@ -150,6 +166,8 @@ def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=
         prompt = f"{user}\n\n# YOUR PREVIOUS ANSWER FAILED THESE CHECKS — fix every one and answer again\n{feedback}"
         if attempt % 2 == 0:  # two tries per rung, then one rung up
             up = next_rung(cfg, model)
+            if up is not None:
+                up = safe_model(cfg, up, confidential)
             if up is None or escalations >= max_escalations:
                 break
             model, escalations = up, escalations + 1

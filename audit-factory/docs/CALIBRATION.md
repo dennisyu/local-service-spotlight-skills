@@ -19,10 +19,12 @@ lives in the Agent Audit Library.
 | Factory blind test — Sonnet 5.5 on company audit B's ledger (Nov 4) | 340 | 104 | 20 / 20 | 0 | 842 | solid |
 | Factory blind test — Haiku 5.5 on the same ledger (Nov 4) | 312 | 57 | 20 / 20 | 0 | 383 | solid |
 
-Dennis's own grades agree with the measurements: he graded a Codex audit **B−** "because it
-doesn't have the detailed visuals and depths of thought" (it measured 197 words/page against
-the Claude benchmark's 570), and ruled a Muse v1 audit below the Claude bar until it was
-rebuilt to a written visual standard — after which Muse's next audit measured frontier.
+Dennis's own grades point the same way: on Oct 21 he graded a Codex audit **B−** "because it
+doesn't have the detailed visuals and depths of thought like you see in our other analyses"
+(that audit is not in this table), and ruled a Muse v1 audit below the Claude bar until it was
+rebuilt to a written visual standard — after which Muse's next audit measured frontier. Two
+rows are not 20-page audits (a 15-page and a 46-page ChatGPT build), and density is a review
+trigger, not proof of quality.
 
 ## What the numbers say
 
