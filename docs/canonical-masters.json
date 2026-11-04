@@ -68,6 +68,177 @@
         "by": "Claude, Cowork session",
         "what": "Read the hub, the directory page, the method guide and two drafts through the WordPress API; found the master sheet and its three copies in Drive by name only. Podchaser and the sheet contents not opened."
       }
+    },
+    {
+      "topic": "seo-tree",
+      "subject": "SEO Tree",
+      "entity_type": "concept",
+      "owner_function": "Content (content architecture)",
+      "source_of_truth": {
+        "url": "https://blitzmetrics.com/canonical/",
+        "note": "The Canonical Directory identifies the one public concept owner. It is a locator, not a second version of the framework."
+      },
+      "hub": {
+        "url": "https://blitzmetrics.com/seo-tree/",
+        "role": "Framework: how root, brand, topic and supporting pages relate; improve this owner instead of creating a new SEO Tree hub."
+      },
+      "method": {
+        "url": "https://blitzmetrics.com/internal-linking/",
+        "role": "Complementary task process for connecting pages; entity-linking chooses the destination."
+      },
+      "owning_skill": {
+        "name": "definitive-article-writer",
+        "in_this_repo": true
+      },
+      "cadence": "Reconcile placement when a canonical page or supporting asset changes; this is a maintenance trigger, not a scheduler receipt.",
+      "claim_id_pattern": "master:seo-tree:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-03",
+        "by": "Codex, entity content maintenance",
+        "what": "Owner URL confirmed from the maintained concept locator and web-indexed article text inspected. Direct anonymous fetch of the owner and Canonical Directory returned HTTP 403; live content and rendered QA remain unverified."
+      }
+    },
+    {
+      "topic": "article-guidelines",
+      "subject": "Article Guidelines",
+      "entity_type": "concept",
+      "owner_function": "Content (article quality)",
+      "source_of_truth": {
+        "url": "https://localservicespotlight.com/article-guidelines/",
+        "note": "The current working standard. Open it before writing or reviewing; dated downloads and the older Blog Posting page do not replace it."
+      },
+      "hub": {
+        "url": "https://localservicespotlight.com/article-guidelines/",
+        "role": "Writing and review requirements: source-backed GCT, proof, first-screen visual, entity links, SEO Tree, applicable DIY and assistance paths, recipe and run record."
+      },
+      "skins": [
+        {
+          "url": "https://blitzmetrics.com/blog-posting-guidelines/",
+          "role": "Historical archive and supporting SEO leaf; preserve it. Do not delete, noindex or use it as the current writing owner."
+        }
+      ],
+      "owning_skill": {
+        "name": "definitive-article-writer",
+        "in_this_repo": true
+      },
+      "cadence": "Read at the start of each writing/review run and again before authorized publication.",
+      "claim_id_pattern": "master:article-guidelines:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-03",
+        "by": "Codex, entity content maintenance",
+        "what": "Anonymous HTTP 200 and article body read on 2026-11-03. This confirms the source could be read; it does not certify another article or prove rendered compliance."
+      }
+    },
+    {
+      "topic": "entity-linking",
+      "subject": "Entity Linking",
+      "entity_type": "concept",
+      "owner_function": "Content (entity and link quality)",
+      "source_of_truth": {
+        "url": "https://blitzmetrics.com/entity-linking/",
+        "note": "Destination decision tree; complemented by Article Guidelines, link-building and internal-linking. Identity destinations, training, primary evidence and execution links have different roles."
+      },
+      "hub": {
+        "url": "https://blitzmetrics.com/entity-linking/",
+        "role": "Choose verified destinations for people, companies, concepts and tools/products without creating competing concept owners."
+      },
+      "related": [
+        {
+          "url": "https://blitzmetrics.com/link-building/",
+          "role": "Link-building context."
+        },
+        {
+          "url": "https://blitzmetrics.com/internal-linking/",
+          "role": "Apply the site link structure."
+        },
+        {
+          "url": "https://localservicespotlight.com/article-guidelines/",
+          "role": "Current article review requirements."
+        }
+      ],
+      "owning_skill": {
+        "name": "definitive-article-writer",
+        "in_this_repo": true,
+        "note": "Portable rule: standards/named-entities-link-to-the-most-helpful-canonical-destination.md."
+      },
+      "cadence": "Recheck the intended identity and destination during each article/link change; record unavailable sources as gaps.",
+      "claim_id_pattern": "master:entity-linking:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-03",
+        "by": "Codex, entity content maintenance",
+        "what": "Read the maintained portable entity-linking standard and current Article Guidelines. Direct anonymous fetch of the entity-linking article returned HTTP 403; its current live body and rendering were not verified."
+      }
+    },
+    {
+      "topic": "content-factory",
+      "subject": "Content Factory",
+      "entity_type": "concept",
+      "owner_function": "Content (production and distribution)",
+      "source_of_truth": {
+        "url": "https://blitzmetrics.com/content-factory/",
+        "note": "One four-stage framework owner: Produce → Process → Post → Promote. Recipes and execution records support it; plumbing and measurement do not rename the four stages."
+      },
+      "hub": {
+        "url": "https://blitzmetrics.com/content-factory/",
+        "role": "Full framework and checked stage handoffs from real source to connected articles, channel derivatives and measured feedback."
+      },
+      "competing_copies": [
+        {
+          "url": "https://localservicespotlight.com/content-factory/",
+          "found": "2026-11-03",
+          "disposition": "Full explanatory copy is reachable and differs from the web-indexed owner in writing-standard references and asset-yield wording. Preserve unique sources/examples and route reconciliation to the owning content function. No redirect, removal or consolidation has been authorized or executed by this registry entry."
+        }
+      ],
+      "owning_skill": {
+        "name": "content-factory",
+        "in_this_repo": true
+      },
+      "cadence": "Per accepted source/run, apply verified new experience to the existing entity owner and review actual results. Inspect existing schedules before adding another.",
+      "claim_id_pattern": "master:content-factory:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-03",
+        "by": "Codex, entity content maintenance",
+        "what": "Read the maintained skill and web-indexed owner. Direct owner fetch returned HTTP 403. The Local Service Spotlight copy returned anonymous HTTP 200 and its body was inspected; this is a copy comparison, not final canonical or rendered acceptance."
+      }
+    },
+    {
+      "topic": "nine-triangles",
+      "subject": "Nine Triangles",
+      "entity_type": "concept",
+      "owner_function": "Framework owner and methods maintainers",
+      "source_of_truth": {
+        "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/nine-triangles/references/canonical-framework.md",
+        "note": "Accepted operational reference version 2026-08-06, accepted by Dennis Yu on 2026-08-09. Acceptance receipt and authority order live in that file. Changes require a new reviewed pull request and acceptance receipt."
+      },
+      "hub": {
+        "url": "https://blitzmetrics.com/nine-triangles/",
+        "role": "Current public concept locator. Preserve this mapping; a readable destination or completed task list alone does not establish definitive certification. Operational names remain governed by the accepted versioned reference."
+      },
+      "skins": [
+        {
+          "url": "https://blitzmetrics.com/9-triangles-framework-scalable-home-service-businesses/",
+          "role": "Article cited by the accepted August operational reference. Its current relationship to the concept locator has not been verified; do not silently replace the current hub with this historical source URL."
+        },
+        {
+          "url": "https://blitzmetrics.com/blitzmetrics-9-triangles-checklist/",
+          "role": "Historical checklist; ACC and other legacy labels are lineage, not a silent operational rename."
+        },
+        {
+          "url": "https://blitzmetrics.com/ntf/",
+          "role": "Course/landing page; does not supersede the accepted operational reference."
+        }
+      ],
+      "owning_skill": {
+        "name": "nine-triangles",
+        "in_this_repo": true
+      },
+      "cadence": "Use the accepted version on framework-related work; propose source changes through its reviewed acceptance process.",
+      "claim_id_pattern": "master:nine-triangles:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-03",
+        "by": "Codex, entity content maintenance",
+        "what": "Read the accepted operational reference and its acceptance receipt in this repository. Confirmed the current concept locator remains /nine-triangles/ rather than assigning its role to the long article URL cited in August. Direct anonymous fetch of both URLs returned HTTP 403; live semantics, definitive certification and downstream adoption remain unverified."
+      }
     }
   ]
 }
