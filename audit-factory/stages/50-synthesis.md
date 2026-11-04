@@ -34,7 +34,7 @@ not sit together; the decision is obvious)
 | **Contrast** | two numbers that should not coexist | 1,149 episodes vs 33 reviews |
 | **Stranded authority** | proof on someone else's domain that never points home | TV segment links to a dead Facebook page |
 | **Name collision** | the bare name belongs to someone else in search, the graph or an AI answer | first six results are a realtor and an actress |
-| **Contradiction ladder** | the subject's own numbers disagree across surfaces | 3,000 / 4,000 / 4,500 / 5,000 retailers |
+| **Contradiction ladder** | the subject's own numbers disagree across surfaces | 1,200 / 1,500 / 2,000 / 2,500 roofs replaced |
 | **Dead door** | a listed URL, form, phone or buy button that fails | form emails a domain that expired |
 | **Market's word vs their word** | what customers call them vs what they call themselves | 61% of reviews say "claim"; site says "quality" |
 | **Buyer mismatch** | content speaks to buyer A, the offer sells to buyer B | podcast for owners, product for bookkeepers |

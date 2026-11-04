@@ -351,8 +351,11 @@ class CostTests(unittest.TestCase):
 class RouterTests(unittest.TestCase):
     def test_safe_model_climbs_past_flagged_models(self):
         cfg = cost.load_routing()
-        self.assertEqual(router.safe_model(cfg, "deepseek-v4.1-flash", False), "deepseek-v4.1-flash")
-        self.assertEqual(router.safe_model(cfg, "deepseek-v4.1-flash", True), "claude-haiku-5-5")
+        self.assertEqual(router.safe_model(cfg, "or:deepseek/deepseek-v4.1-flash", False), "or:deepseek/deepseek-v4.1-flash")
+        self.assertEqual(router.safe_model(cfg, "or:deepseek/deepseek-v4.1-flash", True), "claude-haiku-5-5")
+        # a one-key OpenRouter tier climbs its own ladder, so the safe model is on the same key
+        self.assertEqual(router.safe_model(cfg, "or:deepseek/deepseek-v4.1-flash", True, "openrouter-lean"),
+                         "or:anthropic/claude-haiku-5.5")
 
     def test_extract_json(self):
         self.assertEqual(router.extract_json('x ```json\n{"a": 1}\n``` y'), {"a": 1})
@@ -377,7 +380,7 @@ class RouterTests(unittest.TestCase):
     def test_retries_with_feedback_then_escalates_one_rung(self):
         res, calls, log = self._run(['{"ok": false}'], lambda o: [] if o.get("ok") else ["not ok"])
         self.assertFalse(res["ok"])
-        self.assertEqual(calls[:2], ["deepseek-v4.1-flash", "deepseek-v4.1-flash"])
+        self.assertEqual(calls[:2], ["or:deepseek/deepseek-v4.1-flash", "or:deepseek/deepseek-v4.1-flash"])
         self.assertEqual(calls[2], "claude-haiku-5-5")
         self.assertEqual(len(set(calls)), 2)  # exactly one escalation
         self.assertTrue(all(a["problems"] for a in log["attempts"]))
@@ -505,7 +508,7 @@ class PipelineTests(unittest.TestCase):
             self._run_dir(d, {"do_not_print": ["$14M valuation"]})
             pipeline.run(d, "lean", fake=fake_from_fixture(str(DEMO / "audit.json")), render_pdf=False, review=False)
             models = {a["model"] for a in json.loads((d / "run.json").read_text())["attempts"]}
-            self.assertFalse(any(m.startswith("deepseek") for m in models), models)
+            self.assertFalse(any("deepseek" in m for m in models), models)
 
 
 class SchemaTests(unittest.TestCase):

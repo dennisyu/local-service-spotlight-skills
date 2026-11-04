@@ -92,14 +92,15 @@ demand rise but not that the demand leaks to retailers). Stage 50 now names "Riv
 and "Brief vs evidence" as reasoning moves, and review check 11 asks for the brief check. Page 2
 of the clean run spent two cards on one insight (#5), which the review would flag.
 
-**Missed by every run:** the gap between about 2,100 sourced doors and the 4,500+ claim, the
-low-authority "500-store" headlines, the ad click IDs pasted into a release, a Sprouts link that
-predates the announcement, and "bonbon" being a common word that dilutes the rival's searches.
+**Missed by every run:** a retail-footprint claim about twice the sourced store count,
+low-authority press headlines repeating the bigger number, ad-tracking parameters left in a
+press release's links, a retailer link dated before its own announcement, and a rival whose name
+is a common word, which dilutes its searches.
 
-**Found by the cheaper models but not by Claude:** the Swedish "Saturday candy" story draws
-about 100 searches against 8,500 for "vegan candy"; the hero sells one product while traffic
-lands on another; the brand's own stores are missing from the local pack; and the bare name
-collides with a retailer's storage-box product in search.
+**Found by the cheaper models but not by Claude:** the heritage story the brand leads with draws
+about 1% of the searches its product category gets; the hero sells one product while traffic
+lands on another; the brand's own stores are missing from the local pack; and the bare brand
+name collides with a large retailer's product name in search.
 
 **Page 2 fits now.** Both first runs overflowed page 2 on their first render under the old
 35-70-word card spec; the clean run, under the new 30-50-word spec and the G24 budget, did not.
@@ -110,6 +111,40 @@ Whether Opus findings add enough to earn twice the price is the pilot's main que
 lean (Sonnet findings, one Opus review) against standard on the same subjects. **What it does
 not show:** research quality from a cheap harvest (the clean ledger still carries the research
 lanes' own notes, as any harvest would), or what the frontier review adds.
+
+## The OpenRouter path (2026-11-04)
+
+**What is tested.** Every call the kit makes through OpenRouter, against a local stand-in for
+OpenRouter's chat API (`tests/test_audit_factory_openrouter.py`, 20 tests, no key, no spend): the
+privacy flag on every request, zero-retention-only routing for confidential briefs, cache
+breakpoints for Claude, JSON mode for open models, retries, an empty-credit key, the spending
+cap, the four page batches, and whole runs on each one-key tier. `factory20 openrouter-check`
+found all nine configured routes on OpenRouter's live models list at the configured prices.
+
+**What testing the path found.** Two defects that replayed answers could never show:
+
+1. Pages 3-19 were one reply capped at 16,000 output tokens, but the clean blind run's pages
+   measure about 19,400. A live API run would have been cut off mid-reply and failed. Pages are
+   now four calls that share a cached prefix.
+2. A fix round ignored the confidential guard, so on the lean tier a confidential brief's fixes
+   could reach a model the bake-off flagged. Fix rounds and reviews now carry the guard; the test
+   for it fails on the old code.
+
+**What one audit costs, counted from a real audit's prompts and replies** (the clean blind run's
+own stage files; the review and fix sizes are assumptions), from an existing ledger:
+
+| Tier | Typical | Worst case |
+|---|---:|---:|
+| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.71 | $0.90 |
+| `openrouter` and `standard` (same models, one key or two) | $1.26 | $1.86 |
+| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.49 | $0.62 |
+
+Typical is one fix round and one review pass; worst case is three fix rounds, every review pass
+and 25% retries. Research (stages 10-20) is extra. **Not measured yet:** a live bill, and the
+quality of the one-key tiers. The first live run rebuilds the public demo on each one-key tier,
+then the clean blind ledger on `openrouter-lean`, scored by the same independent judge; its
+numbers replace this paragraph. The Oct 27 replay below is the evidence so far for cheap drafting
+through OpenRouter.
 
 ## Score calibration evidence
 

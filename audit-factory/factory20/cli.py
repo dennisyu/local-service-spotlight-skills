@@ -3,12 +3,16 @@
   render   <audit.json> --ledger L --out audit.pdf     render + render gates (exit 2 on HOLD)
   gate     <audit.json> --ledger L [--tier standard]   content gates (exit 2 on HOLD); reads brief.json beside it
   measure  <pdf>...                                    density/evidence metrics for any audit PDF
-  cost     [--tier T] [--per-month N] [--batch]        per-stage and per-audit cost
+  cost     [--tier T] [--per-month N] [--batch]        per-stage and per-audit cost (planning estimate,
+                                                       then the measured-profile estimate)
   pack     <ledger.json> [--blind]                     compact evidence pack for a model prompt
   basecamp <audit.json> --ledger L --out todos.json    to-dos with agent briefs (+ .md preview)
   card     <stage>                                     print a stage card for a manual session
-  run      <run-dir> --tier T [--fake F] [--no-render] [--no-review]
+  run      <run-dir> --tier T [--max-usd X] [--fake F] [--no-render] [--no-review]
                                                        stages 30-70 -> gates -> PDF -> up to 3 fix rounds -> fresh-context review
+  init     <run-dir> (--from-demo | --ledger L --brief B) [--assets DIR]
+                                                       make a run folder (the public demo needs no private data)
+  openrouter-check [--models FILE] [--write]           every OpenRouter route still listed, at the price we assume
 """
 from __future__ import annotations
 
@@ -17,7 +21,7 @@ import json
 import pathlib
 import sys
 
-from . import basecamp, cost, gates, model, pdfcheck, pipeline, render
+from . import basecamp, cost, gates, model, openrouter, pdfcheck, pipeline, render
 from .ledger import Ledger, blind_copy
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -75,6 +79,15 @@ def cmd_cost(a) -> int:
             print(f"  {s['stage']:10s} {s['model']:22s} in {s['in']:>9,} out {s['out']:>7,}  ${s['usd']:.3f}")
         if a.per_month:
             print(f"  x {a.per_month}/month = ${cost.monthly(t, a.per_month, cfg, a.batch):,.2f}")
+    print(f"\nFrom an existing ledger, measured profile ({cfg['measured_profile']['label']}):")
+    print(f"  {'tier':18s} {'typical':>8s} {'worst case':>11s}   (typical = 1 fix round, 1 review pass; "
+          "worst = 3 fix rounds, every review pass, 25% retries)")
+    for t in tiers:
+        r = cost.measured_range(t, cfg)
+        line = f"  {t:18s} ${r['typical']['total_usd']:>7.2f} ${r['worst']['total_usd']:>10.2f}"
+        if a.per_month:
+            line += f"   x {a.per_month}/month = ${r['typical']['total_usd'] * a.per_month:,.2f} typical"
+        print(line)
     ref = cost.reference_cost(cfg)
     print(f"\nreference all-Claude run, Oct 23 (measured tokens at list price, {ref['cache_read_share']:.1%} cache reads): "
           f"${ref['audit_usd']:,.2f} for the audit, ${ref['total_usd']:,.2f} with its website package")
@@ -112,9 +125,62 @@ def cmd_run(a) -> int:
     if a.fake:
         from .testing import fake_from_fixture
         fake = fake_from_fixture(a.fake)
-    res = pipeline.run(a.run_dir, a.tier, fake=fake, render_pdf=not a.no_render, review=not a.no_review)
+    res = pipeline.run(a.run_dir, a.tier, fake=fake, render_pdf=not a.no_render, review=not a.no_review,
+                       max_usd=a.max_usd)
     print(json.dumps(res, indent=1))
     return 0 if res.get("verdict") in ("READY", "REVIEW_READY") else 2
+
+
+DEMO = ROOT / "fixtures" / "demo"
+BRIEF_KEYS = ("subject", "subject_type", "title", "date", "plan_start", "prepared_for", "prepared_by",
+              "confidentiality", "palette", "install_url")
+
+
+def cmd_init(a) -> int:
+    """Make a run folder: brief.json + ledger.json (+ assets/). Never copies stage outputs."""
+    import shutil
+    run = pathlib.Path(a.run_dir)
+    if run.exists() and any(run.iterdir()):
+        print(f"{run} is not empty; pick a new folder so no earlier stage file is reused by accident")
+        return 2
+    run.mkdir(parents=True, exist_ok=True)
+    if a.from_demo:
+        meta = json.loads((DEMO / "audit.json").read_text(encoding="utf-8"))["meta"]
+        brief = {k: meta[k] for k in BRIEF_KEYS if k in meta}
+        shutil.copy(DEMO / "ledger.json", run / "ledger.json")
+        assets = DEMO / "assets"
+    else:
+        if not (a.ledger and a.brief):
+            print("give --from-demo, or both --ledger and --brief")
+            return 2
+        brief = json.loads(pathlib.Path(a.brief).read_text(encoding="utf-8"))
+        shutil.copy(a.ledger, run / "ledger.json")
+        assets = pathlib.Path(a.assets) if a.assets else None
+    (run / "brief.json").write_text(json.dumps(brief, indent=1, ensure_ascii=False), encoding="utf-8")
+    if assets and assets.exists():
+        shutil.copytree(assets, run / "assets")
+    print(f"run folder ready: {run}  (brief.json, ledger.json{', assets/' if assets and assets.exists() else ''})")
+    return 0
+
+
+def cmd_openrouter_check(a) -> int:
+    cfg = cost.load_routing()
+    models = openrouter.load_models(a.models) if a.models else openrouter.fetch_models()
+    rep = openrouter.check(cfg, models, a.tolerance)
+    print(f"OpenRouter routes in routing.json: {len(rep['rows'])} · models listed on OpenRouter: {len(models)}")
+    for r in rep["rows"]:
+        state = "MISSING" if not r["listed"] else ("DRIFT" if r["drift"] else "ok")
+        detail = "; ".join(f"{f} ${d['ours']} -> ${d['live']}" for f, d in r["drift"].items())
+        print(f"  [{state:7s}] {r['key']:34s} {detail}")
+    if a.write and rep["drifted"]:
+        changed = openrouter.write_prices(rep)
+        print(f"updated {len(changed)} price lines in config/routing.json: {', '.join(changed)}")
+        rep = openrouter.check(cost.load_routing(), models, a.tolerance)
+    if rep["missing"]:
+        print(f"routes no longer on OpenRouter: {', '.join(rep['missing'])}"
+              + (f" (used by a tier: {', '.join(rep['missing_in_use'])})" if rep["missing_in_use"] else ""))
+    print("OpenRouter check:", "PASS" if rep["ok"] else "FAIL")
+    return 0 if rep["ok"] else 1
 
 
 def main(argv=None) -> int:
@@ -133,9 +199,16 @@ def main(argv=None) -> int:
     rn.add_argument("--fake", help="fixture audit.json to replay instead of calling models (tests)")
     rn.add_argument("--no-render", action="store_true")
     rn.add_argument("--no-review", action="store_true", help="stop after gates and render (no frontier review)")
+    rn.add_argument("--max-usd", type=float, help="spending cap for this run (default: the tier's max_usd)")
+    i = sp.add_parser("init"); i.add_argument("run_dir"); i.add_argument("--from-demo", action="store_true")
+    i.add_argument("--ledger"); i.add_argument("--brief"); i.add_argument("--assets")
+    o = sp.add_parser("openrouter-check"); o.add_argument("--models", help="saved copy of OpenRouter's models list (default: fetch it)")
+    o.add_argument("--write", action="store_true", help="update drifted prices in config/routing.json")
+    o.add_argument("--tolerance", type=float, default=0.10, help="allowed price drift before the check fails (default 10%%)")
     a = ap.parse_args(argv)
     return {"gate": cmd_gate, "render": cmd_render, "measure": cmd_measure, "cost": cmd_cost, "pack": cmd_pack,
-            "basecamp": cmd_basecamp, "card": cmd_card, "run": cmd_run}[a.cmd](a)
+            "basecamp": cmd_basecamp, "card": cmd_card, "run": cmd_run, "init": cmd_init,
+            "openrouter-check": cmd_openrouter_check}[a.cmd](a)
 
 
 if __name__ == "__main__":

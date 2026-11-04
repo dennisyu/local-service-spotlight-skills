@@ -59,12 +59,12 @@ def check_synthesis(obj, ledger):
     return probs
 
 
-def check_pages(obj, ledger):
+def check_pages(obj, ledger, first: int = 3, last: int = 19):
     pages = obj.get("pages", [])
     probs = []
     ns = sorted(p.get("n") for p in pages)
-    if ns != list(range(3, 20)):
-        probs.append(f"return pages 3-19 exactly; got {ns}")
+    if ns != list(range(first, last + 1)):
+        probs.append(f"return pages {first}-{last} exactly; got {ns}")
     for p in pages:
         n = p.get("n")
         if not any(b.get("type") in M.VISUAL_BLOCKS for b in p.get("blocks", [])) and p.get("type") not in ("exams", "agents", "plan"):
@@ -89,16 +89,16 @@ def check_actions(obj, ledger):
 # ------------------------------------------------------------------ prompts
 def prompt(stage: str, run: pathlib.Path, ledger: Ledger, extra: dict | None = None) -> str:
     brief = json.loads((run / "brief.json").read_text()) if (run / "brief.json").exists() else {}
-    parts = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
-             f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=stage in ('identity', 'score', 'synthesis'))}"]
-    for name in ("identity", "score", "synthesis", "pages", "actions"):
-        f = run / f"{name}.json"
-        if f.exists() and name != stage:
-            parts.append(f"# {name.upper()} (already decided — stay consistent)\n{f.read_text()}")
-    if extra:
-        parts.append("# EXTRA\n" + json.dumps(extra, ensure_ascii=False, indent=1))
-    parts.append("Answer with JSON only, in the output shape your card defines.")
-    return "\n\n".join(parts)
+    head = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
+            f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=stage in ('identity', 'score', 'synthesis'))}"]
+    decided = [f"# {name.upper()} (already decided — stay consistent)\n{(run / f'{name}.json').read_text()}"
+               for name in ("identity", "score", "synthesis", "pages", "actions")
+               if (run / f"{name}.json").exists() and name != stage]
+    tail = (["# EXTRA\n" + json.dumps(extra, ensure_ascii=False, indent=1)] if extra else [])
+    tail.append("Answer with JSON only, in the output shape your card defines.")
+    # Stable prefix first (brief + ledger, then the stage files already decided), the part
+    # that changes from call to call last, so repeated calls can reuse a cached prefix.
+    return router.CACHE_MARK.join(["\n\n".join(head)] + (["\n\n".join(decided)] if decided else []) + ["\n\n".join(tail)])
 
 
 # ------------------------------------------------------------------ assembly
@@ -150,6 +150,30 @@ CHECKS = {"identity": check_identity, "score": check_score, "synthesis": check_s
           "pages": check_pages, "actions": check_actions}
 MAX_FIX_ROUNDS = 3
 FRONT_GATES = {"G20", "G21", "G22", "G24"}
+# Pages 3-19 come back in four calls, not one. A real audit's pages run about 19,000 output
+# tokens (measured on the Nov 4 clean blind run), more than one reply may carry; four
+# batches share the same cached prefix, so the split costs little and nothing is cut off.
+PAGE_BATCHES = [(3, 6), (7, 10), (11, 14), (15, 19)]
+
+
+def run_pages(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake=None,
+              confidential: bool = False, max_usd: float | None = None) -> dict:
+    """Write pages 3-19 batch by batch; each batch sees the layouts already chosen."""
+    done: list[dict] = []
+    for first, last in PAGE_BATCHES:
+        layout = [{"n": p.get("n"), "type": p.get("type"), "blocks": [b.get("type") for b in p.get("blocks", [])]}
+                  for p in done]
+        res = router.run_stage("pages", prompt("pages", run_dir, ledger, extra={
+            "task": f"Write pages {first}-{last} only, as {{\"pages\": [...]}}. The other pages are written in "
+                    "separate calls; keep the page plan's order and vary layouts against pages_so_far.",
+            "pages_so_far": layout}), tier, run_dir,
+            check=lambda o, a=first, b=last: check_pages(o, ledger, a, b), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd, write=False)
+        if not res["ok"]:
+            return {"ok": False, "batch": f"{first}-{last}"}
+        done += sorted(res["obj"].get("pages", []), key=lambda p: p.get("n"))
+    (run_dir / "pages.json").write_text(json.dumps({"pages": done}, indent=1, ensure_ascii=False))
+    return {"ok": True}
 
 
 def _serious(review: dict | None) -> list[dict]:
@@ -177,9 +201,10 @@ def _front(item: dict) -> bool:
 
 
 def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake, items: list[dict],
-                 review: dict | None = None) -> bool:
+                 review: dict | None = None, confidential: bool = False, max_usd: float | None = None) -> bool:
     """One fix round: the synthesis model revises pages 1-2, the fix model patches pages 3-19,
-    and reviewer score adjustments go back into score.json (code re-checks them)."""
+    and reviewer score adjustments go back into score.json (code re-checks them). A fix round
+    obeys the same confidential guard and spending cap as the first draft."""
     ok = True
     front = [i for i in items if _front(i)]
     rest = [i for i in items if not _front(i)]
@@ -187,13 +212,15 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
         res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
             "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
             "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
-            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake)
+            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd)
         ok &= res["ok"]
     if rest:
         res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
             "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
                     "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block.",
-            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger), cfg=cfg, fake=fake)
+            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd)
         if res["ok"]:
             cur = json.loads((run_dir / "pages.json").read_text())
             by_n = {p.get("n"): p for p in cur.get("pages", [])}
@@ -217,14 +244,14 @@ def review_prompt(run_dir: pathlib.Path, ledger: Ledger, gate_rep: dict, render_
     """Fresh context: the reviewer sees the exact final files, never the drafting history."""
     brief = json.loads((run_dir / "brief.json").read_text())
     brief.pop("do_not_print", None)
-    parts = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
-             f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=True)}",
-             f"# FINAL audit.json\n{(run_dir / 'audit.json').read_text()}",
+    head = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
+            f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=True)}"]
+    final = [f"# FINAL audit.json\n{(run_dir / 'audit.json').read_text()}",
              f"# gate.json\n{json.dumps(gate_rep, indent=1)}"]
     if render_rep:
-        parts.append(f"# render report\n{json.dumps({k: v for k, v in render_rep.items() if k != 'html'}, indent=1)}")
-    parts.append("Answer with JSON only, in the output shape your card defines.")
-    return "\n\n".join(parts)
+        final.append(f"# render report\n{json.dumps({k: v for k, v in render_rep.items() if k != 'html'}, indent=1)}")
+    return router.CACHE_MARK.join(["\n\n".join(head), "\n\n".join(final),
+                                   "Answer with JSON only, in the output shape your card defines."])
 
 
 def _check_all(run_dir: pathlib.Path, ledger: Ledger, tier: str, render_pdf: bool):
@@ -244,31 +271,57 @@ def _check_all(run_dir: pathlib.Path, ledger: Ledger, tier: str, render_pdf: boo
 
 
 def run(run_dir: str | pathlib.Path, tier: str = "standard", fake=None, render_pdf: bool = True,
-        review: bool = True) -> dict:
+        review: bool = True, max_usd: float | None = None) -> dict:
     """Stages 30-70 (reusing any stage file already present), then: assemble -> gates -> render ->
-    up to three fix rounds -> one fresh-context review -> fix and re-review if it found S0/S1."""
+    up to three fix rounds -> one fresh-context review -> fix and re-review if it found S0/S1.
+
+    max_usd caps what the run may spend (default: the tier's max_usd). Reaching it, or a
+    provider refusing the key or the credits, ends the run as HOLD with the reason, never
+    as a half-finished audit that looks done."""
     run_dir = pathlib.Path(run_dir)
     cfg = K.load_routing()
+    if tier not in cfg["tiers"]:
+        raise ValueError(f"unknown tier {tier!r}; choose one of {sorted(cfg['tiers'])}")
+    if max_usd is None:
+        max_usd = cfg["tiers"][tier].get("max_usd")
+    out = {"tier": tier, "stages": {}, "max_usd": max_usd}
+    if cfg["tiers"][tier].get("experimental"):
+        out["warning"] = "experimental tier: its quality is not measured yet; review every page before it is shared"
+    try:
+        return _run(run_dir, tier, cfg, fake, render_pdf, review, max_usd, out)
+    except (router.BudgetExceeded, router.ProviderError) as e:
+        out["verdict"] = "HOLD"
+        out["hold_reason"] = str(e)
+        out["usd"] = router.spent(run_dir)
+        return out
+
+
+def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, review: bool,
+         max_usd: float | None, out: dict) -> dict:
     ledger = Ledger.load(run_dir / "ledger.json")
     brief = json.loads((run_dir / "brief.json").read_text())
     confidential = bool(brief.get("do_not_print"))
-    out = {"tier": tier, "stages": {}}
     for st in ("identity", "score", "synthesis", "pages", "actions"):
         if (run_dir / f"{st}.json").exists():
             out["stages"][st] = "reused"
             continue
-        res = router.run_stage(st, prompt(st, run_dir, ledger), tier, run_dir,
-                               check=lambda o, s=st: CHECKS[s](o, ledger), cfg=cfg, fake=fake,
-                               confidential=confidential)
+        if st == "pages":
+            res = run_pages(run_dir, ledger, tier, cfg, fake, confidential, max_usd)
+        else:
+            res = router.run_stage(st, prompt(st, run_dir, ledger), tier, run_dir,
+                                   check=lambda o, s=st: CHECKS[s](o, ledger), cfg=cfg, fake=fake,
+                                   confidential=confidential, max_usd=max_usd)
         out["stages"][st] = "ok" if res["ok"] else "FAILED"
         if not res["ok"]:
-            out["verdict"] = f"HOLD at {st}"
+            out["verdict"] = f"HOLD at {st}" + (f" (pages {res['batch']})" if res.get("batch") else "")
+            out["usd"] = router.spent(run_dir)
             return out
     audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
     rounds = 0
     while fix_list(rep, rr) and rounds < MAX_FIX_ROUNDS:
         rounds += 1
-        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr)):
+        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr),
+                            confidential=confidential, max_usd=max_usd):
             break
         audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
     out["fix_rounds"] = rounds
@@ -281,15 +334,18 @@ def run(run_dir: str | pathlib.Path, tier: str = "standard", fake=None, render_p
         passes = cfg["tiers"].get(tier, {}).get("review_passes", 1)
         for p in range(1, passes + 1):
             res = router.run_stage("review", review_prompt(run_dir, ledger, rep, rr), tier, run_dir,
-                                   check=lambda o: check_review(o, ledger), cfg=cfg, fake=fake)
+                                   check=lambda o: check_review(o, ledger), cfg=cfg, fake=fake,
+                                   confidential=confidential, max_usd=max_usd)
             if not res["ok"]:
                 out["verdict"] = "HOLD at review"
+                out["usd"] = router.spent(run_dir)
                 return out
             rv = res["obj"]
             out["review_passes"] = p
             if not _serious(rv) or p == passes:
                 break
-            _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr, rv), review=rv)
+            _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr, rv), review=rv,
+                         confidential=confidential, max_usd=max_usd)
             audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
             gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
         out["review"] = rv.get("verdict") if rv else None

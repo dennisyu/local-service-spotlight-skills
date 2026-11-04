@@ -45,8 +45,15 @@ measures how close to frontier quality it lands. Use the repository's
    site, profiles, reviews, ads or public records is `AGENT_AFTER_APPROVAL` with the approver
    named (gate G65).
 
-The standard tier is estimated at about $5 per audit against about $280 at list price for the
-measured all-frontier run of Oct 23 (measurements: `audit-factory/docs/CALIBRATION.md`).
+6. **One key is enough:** the `openrouter`, `openrouter-lean` and `openrouter-budget` tiers send
+   every call through one `OPENROUTER_API_KEY`, ask for providers that keep no prompts, record
+   the charge OpenRouter reports, and stop at a spending cap (`--max-usd`).
+
+The standard tier is estimated at about $5 per audit by the conservative planning budget, and at
+about $1.26 (standard) or $0.71 (`openrouter-lean`) for one pass from an existing ledger, counted
+from a real audit's prompts and replies; the all-frontier run of Oct 23 measured about $280 at
+list price. These are estimates until the first live bill (measurements:
+`audit-factory/docs/CALIBRATION.md`).
 
 ## Dependency preflight
 

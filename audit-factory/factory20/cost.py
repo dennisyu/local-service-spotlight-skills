@@ -54,9 +54,55 @@ def audit_cost(tier: str, cfg: dict | None = None, batch: bool = False) -> dict:
             r["passes"] = t.get("review_passes", 1)
         rows.append(r)
     total = round(sum(r["usd"] for r in rows), 2)
-    frontier = round(sum(r["usd"] for r in rows if cfg["prices"][r["model"]]["provider"] == "anthropic"
-                         and r["model"] in ("claude-opus-5-5", "claude-fable-5-1")), 2)
+    frontier = round(sum(r["usd"] for r in rows if is_frontier(r["model"])), 2)
     return {"tier": tier, "stages": rows, "total_usd": total, "frontier_usd": frontier}
+
+
+def is_frontier(model: str) -> bool:
+    """Opus or Fable, called directly or through OpenRouter."""
+    return any(k in model for k in ("claude-opus-5", "claude-fable-5"))
+
+
+def _call_usd(p: dict, n_in: float, n_out: float, cached: float = 0, first: bool = True) -> float:
+    """One call: `cached` prompt tokens are written to the cache on the first call and read after."""
+    fresh = max(n_in - cached, 0)
+    return (fresh * p["in"] + cached * (p["cache_write"] if first else p["cache_read"]) + n_out * p["out"]) / 1e6
+
+
+def measured_cost(tier: str, cfg: dict | None = None, fix_rounds: int = 1, review_passes: int = 1,
+                  retry_share: float = 0.0) -> dict:
+    """Cost of one audit from an existing ledger, from the measured profile (prompt and reply
+    sizes of a real 20-page audit), at this tier's models and prices.
+
+    Typical = one fix round and one review pass. Worst case = three fix rounds, the tier's
+    full review passes and a retry allowance on top. Research (stages 10-20) is not included:
+    it depends on how much there is to collect, and the planning estimate covers it."""
+    cfg = cfg or load_routing()
+    prof = cfg["measured_profile"]["stages"]
+    t = cfg["tiers"][tier]
+    rows = []
+    for sid, s in prof.items():
+        model = t["models"][sid]
+        p = cfg["prices"][model]
+        reps = {"review": review_passes, "fix": fix_rounds}.get(sid, 1)
+        n = s["calls"] * reps
+        pre = s.get("cached_prefix", 0)
+        out_per_call = s["out"] / s["calls"]
+        usd = sum(_call_usd(p, s["in"], out_per_call, pre, first=(k == 0)) for k in range(n)) if n else 0.0
+        usd *= 1 + retry_share
+        rows.append({"stage": sid, "model": model, "calls": n, "in": int(s["in"] * n), "out": int(out_per_call * n),
+                     "usd": round(usd, 4), "assumed": s.get("assumed", [])})
+    total = round(sum(r["usd"] for r in rows), 2)
+    return {"tier": tier, "stages": rows, "total_usd": total,
+            "frontier_usd": round(sum(r["usd"] for r in rows if is_frontier(r["model"])), 2)}
+
+
+def measured_range(tier: str, cfg: dict | None = None) -> dict:
+    """Typical and worst-case cost of one audit from an existing ledger."""
+    cfg = cfg or load_routing()
+    passes = cfg["tiers"][tier].get("review_passes", 1)
+    return {"typical": measured_cost(tier, cfg), "worst": measured_cost(tier, cfg, fix_rounds=3,
+                                                                        review_passes=passes, retry_share=0.25)}
 
 
 def _class_cost(p: dict, tok: dict) -> float:

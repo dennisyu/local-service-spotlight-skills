@@ -36,8 +36,9 @@ stage reads files and writes files in one run folder; no stage waits on another 
 One runner owns a whole audit end to end: a Claude Code or Cowork session, Muse (Happy), a
 ChatGPT session, a cron job or a person on a laptop. The runner calls cheaper models for
 stages 20, 60 and 70 and the frontier model for 50 and 80 (via API, or by pasting the card
-into a frontier chat when no key is available). **Never split stages across agents through
-repo notes** — the October cheap-lane pipeline stalled ten days because two of its three
+into a frontier chat when no key is available). With one OpenRouter key, an `openrouter*`
+tier routes every stage, Claude included, through that key. **Never split stages across agents
+through repo notes** — the October cheap-lane pipeline stalled ten days because two of its three
 "lanes" were not running processes.
 
 ## Inputs you need before stage 10

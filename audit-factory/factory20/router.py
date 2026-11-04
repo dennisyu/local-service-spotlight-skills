@@ -7,12 +7,19 @@ orders filed in a repo that no running process ever read.
 
 Providers
   anthropic   Messages API            ANTHROPIC_API_KEY
-  openrouter  OpenAI-compatible chat  OPENROUTER_API_KEY   (DeepSeek, Gemini, GPT via one key)
+  openrouter  OpenAI-compatible chat  OPENROUTER_API_KEY   one key for Claude, DeepSeek, GPT, Grok, Gemini
   openai      Chat Completions        OPENAI_API_KEY
   gemini      generateContent         GEMINI_API_KEY
   manual      writes prompts/<stage>.md and waits for outputs/<stage>.json — for an app
               session (Muse, ChatGPT, Claude.ai) running the factory itself
   fake        deterministic stub for tests
+
+OpenRouter calls always ask for providers that do not collect prompts
+(provider.data_collection = "deny"). A confidential brief (one with do_not_print items)
+also asks for zero-data-retention endpoints only (provider.zdr = true): if a model has
+none, the call fails and the audit holds. It never falls back to a provider that keeps
+data. The cost recorded for each call is the charge OpenRouter reports in the reply,
+not an estimate.
 """
 from __future__ import annotations
 
@@ -21,6 +28,8 @@ import os
 import pathlib
 import re
 import time
+import urllib.error
+import urllib.parse
 import urllib.request
 
 from . import cost as K
@@ -28,44 +37,168 @@ from . import cost as K
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 STAGES_DIR = ROOT / "stages"
 
+OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+APP_URL = "https://github.com/dennisyu/local-service-spotlight-skills/tree/main/audit-factory"
+APP_TITLE = "LSS Audit Factory"
+RETRY_STATUS = {408, 409, 425, 429, 500, 502, 503, 504}
+FATAL_STATUS = {401, 402, 403}      # bad key, no credits, key not allowed: no other model fixes these
+MAX_RETRIES = 4
+DEFAULT_MAX_OUT = 16000
+# Prompts mark where their stable prefix ends (brief + ledger, then earlier stage files).
+# Stages that call the same prefix more than once (page batches, fix rounds, review passes)
+# ask Claude to cache up to each mark; every other provider just gets the joined text.
+CACHE_MARK = "\n\n<!-- cache-break -->\n\n"
+_sleep = time.sleep                 # tests replace this so retries do not wait
+
+
+def _segments(user: str) -> list[str]:
+    return [s for s in user.split(CACHE_MARK) if s]
+
+
+def _flat(user: str) -> str:
+    return "\n\n".join(_segments(user))
+
+
+def _claude_user(user: str, cache: bool):
+    """User content for a Claude call: one cache breakpoint at each prefix mark when caching pays."""
+    segs = _segments(user)
+    if not cache or len(segs) < 2:
+        return _flat(user)
+    parts = [{"type": "text", "text": s} for s in segs]
+    for p in parts[:-1][:3]:            # Claude allows four breakpoints; the system card uses one
+        p["cache_control"] = {"type": "ephemeral"}
+    return parts
+
 
 class Pending(Exception):
     """A manual stage is waiting for its output file."""
 
 
-def _post(url: str, headers: dict, body: dict, timeout: int = 600) -> dict:
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={**headers, "content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+class ProviderError(Exception):
+    """A provider refused or failed the call after retries. `fatal` means stop the audit."""
+
+    def __init__(self, msg: str, status: int | None = None):
+        super().__init__(msg)
+        self.status = status
+        self.fatal = status in FATAL_STATUS
 
 
-def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = 16000, run_dir: pathlib.Path | None = None,
-         stage: str = "stage", fake=None) -> dict:
-    """Return {"text", "usage": {"in","out","cache_read","cache_write"}, "model", "provider"}."""
+class BudgetExceeded(Exception):
+    """The run reached its spending cap. The audit holds instead of spending more."""
+
+
+def _error_detail(raw: bytes) -> str:
+    try:
+        d = json.loads(raw.decode() or "{}")
+        e = d.get("error", d)
+        return str(e.get("message") or e)[:300] if isinstance(e, dict) else str(e)[:300]
+    except (ValueError, UnicodeDecodeError):
+        return raw[:300].decode(errors="replace")
+
+
+def _wait(attempt: int, retry_after: str | None) -> float:
+    try:
+        return min(float(retry_after), 60.0) if retry_after else min(2.0 ** attempt, 30.0)
+    except ValueError:
+        return min(2.0 ** attempt, 30.0)
+
+
+def _post(url: str, headers: dict, body: dict, timeout: int = 600, retries: int = MAX_RETRIES) -> dict:
+    """POST JSON. Retry rate limits, server errors and dropped connections with backoff
+    (honouring Retry-After); raise ProviderError with the provider's own message otherwise."""
+    host = urllib.parse.urlsplit(url).netloc
+    data = json.dumps(body).encode()
+    for attempt in range(retries + 1):
+        req = urllib.request.Request(url, data=data, headers={**headers, "content-type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                out = json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            detail = _error_detail(e.read())
+            if e.code in RETRY_STATUS and attempt < retries:
+                _sleep(_wait(attempt, e.headers.get("retry-after")))
+                continue
+            raise ProviderError(f"HTTP {e.code} from {host}: {detail}", e.code) from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if attempt < retries:
+                _sleep(_wait(attempt, None))
+                continue
+            raise ProviderError(f"could not reach {host}: {e}") from None
+        err = out.get("error") if isinstance(out, dict) else None
+        if err and not out.get("choices"):          # OpenRouter can report an upstream failure in a 200
+            code = err.get("code") if isinstance(err, dict) else None
+            if isinstance(code, int) and code in RETRY_STATUS and attempt < retries:
+                _sleep(_wait(attempt, None))
+                continue
+            raise ProviderError(f"{host} returned an error: {_error_detail(json.dumps(out).encode())}",
+                                code if isinstance(code, int) else None)
+        return out
+    raise ProviderError(f"no answer from {host}")    # unreachable; keeps type checkers honest
+
+
+def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, confidential: bool,
+                cache: bool = False) -> dict:
+    key = os.environ.get("OPENROUTER_API_KEY")
+    if not key:
+        raise ProviderError("OPENROUTER_API_KEY is not set. Export it from your own secret store; "
+                            "never write it into the run folder or the repo.", 401)
+    base = os.environ.get("OPENROUTER_BASE_URL", OPENROUTER_BASE).rstrip("/")
+    route = p.get("route", model)
+    if route.startswith("anthropic/"):       # Claude caches only where a breakpoint says so
+        sys_msg = {"role": "system", "content": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]}
+        user_content = _claude_user(user, cache)
+    else:                                    # other providers cache repeated prefixes on their own
+        sys_msg = {"role": "system", "content": system}
+        user_content = _flat(user)
+    body = {"model": route, "max_tokens": min(max_tokens, int(p.get("max_out", max_tokens))),
+            "messages": [sys_msg, {"role": "user", "content": user_content}],
+            "provider": {"data_collection": "deny", **({"zdr": True} if confidential else {})}}
+    if p.get("temperature") is not None:     # newer Claude and GPT models take no temperature
+        body["temperature"] = p["temperature"]
+    if p.get("json_mode"):
+        body["response_format"] = {"type": "json_object"}
+    r = _post(f"{base}/chat/completions",
+              {"authorization": f"Bearer {key}", "HTTP-Referer": APP_URL, "X-Title": APP_TITLE}, body)
+    msg = ((r.get("choices") or [{}])[0] or {}).get("message") or {}
+    u = r.get("usage") or {}
+    ptd = u.get("prompt_tokens_details") or {}
+    reported = u.get("cost")
+    return {"text": msg.get("content") or "",
+            "usage": {"in": u.get("prompt_tokens", 0) or 0, "out": u.get("completion_tokens", 0) or 0,
+                      "cache_read": ptd.get("cached_tokens", 0) or 0, "cache_write": ptd.get("cache_write_tokens", 0) or 0},
+            "model": model, "provider": "openrouter", "served_by": r.get("provider"), "served_model": r.get("model"),
+            "reported_usd": float(reported) if reported is not None else None}
+
+
+def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAULT_MAX_OUT,
+         run_dir: pathlib.Path | None = None, stage: str = "stage", fake=None, confidential: bool = False,
+         cache: bool = False) -> dict:
+    """Return {"text", "usage": {"in","out","cache_read","cache_write"}, "model", "provider"}
+    plus, for OpenRouter, "reported_usd" (the charge OpenRouter reports) and "served_by"."""
     p = cfg["prices"][model]
     prov = p["provider"]
     if fake is not None:
-        text = fake(stage, model, system, user)
-        return {"text": text, "usage": {"in": len(user) // 4, "out": len(text) // 4, "cache_read": 0, "cache_write": 0},
+        flat = _flat(user)
+        text = fake(stage, model, system, flat)
+        return {"text": text, "usage": {"in": len(flat) // 4, "out": len(text) // 4, "cache_read": 0, "cache_write": 0},
                 "model": model, "provider": "fake"}
+    if prov == "openrouter":
+        return _openrouter(p, model, system, user, max_tokens, confidential, cache)
+    user = _flat(user) if prov != "anthropic" else user
     if prov == "anthropic":
         body = {"model": model, "max_tokens": max_tokens,
                 "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-                "messages": [{"role": "user", "content": user}]}
+                "messages": [{"role": "user", "content": _claude_user(user, cache)}]}
         r = _post("https://api.anthropic.com/v1/messages",
                   {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"}, body)
         text = "".join(c.get("text", "") for c in r.get("content", []) if c.get("type") == "text")
         u = r.get("usage", {})
         usage = {"in": u.get("input_tokens", 0), "out": u.get("output_tokens", 0),
                  "cache_read": u.get("cache_read_input_tokens", 0), "cache_write": u.get("cache_creation_input_tokens", 0)}
-    elif prov in ("openrouter", "openai"):
-        url = "https://openrouter.ai/api/v1/chat/completions" if prov == "openrouter" else "https://api.openai.com/v1/chat/completions"
-        key = os.environ["OPENROUTER_API_KEY" if prov == "openrouter" else "OPENAI_API_KEY"]
+    elif prov == "openai":
         body = {"model": p.get("route", model), "temperature": 0.3, "max_tokens": max_tokens,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-        if prov == "openrouter":
-            body["provider"] = {"data_collection": "deny"}
-        r = _post(url, {"authorization": f"Bearer {key}"}, body)
+        r = _post("https://api.openai.com/v1/chat/completions", {"authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"}, body)
         text = r["choices"][0]["message"]["content"]
         u = r.get("usage", {})
         usage = {"in": u.get("prompt_tokens", 0), "out": u.get("completion_tokens", 0), "cache_read": 0, "cache_write": 0}
@@ -94,6 +227,7 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = 16000,
 
 
 def usd(cfg: dict, model: str, usage: dict) -> float:
+    """List-price cost of one call from its token counts (USD)."""
     p = cfg["prices"][model]
     fresh = max(usage["in"] - usage.get("cache_read", 0) - usage.get("cache_write", 0), 0)
     return round((fresh * p["in"] + usage.get("cache_read", 0) * p["cache_read"]
@@ -107,12 +241,17 @@ def extract_json(text: str):
     return json.loads(raw)
 
 
-def next_rung(cfg: dict, model: str) -> str | None:
-    ladder = cfg["escalation"]
-    if model not in ladder:
-        return ladder[min(2, len(ladder) - 1)]
-    i = ladder.index(model)
-    return ladder[i + 1] if i + 1 < len(ladder) else None
+def ladder(cfg: dict, tier: str | None = None) -> list[str]:
+    """The escalation ladder: the tier's own when it has one (so a one-key tier stays on one key)."""
+    return (cfg["tiers"].get(tier, {}) if tier else {}).get("escalation") or cfg["escalation"]
+
+
+def next_rung(cfg: dict, model: str, tier: str | None = None) -> str | None:
+    steps = ladder(cfg, tier)
+    if model not in steps:
+        return steps[min(2, len(steps) - 1)]
+    i = steps.index(model)
+    return steps[i + 1] if i + 1 < len(steps) else None
 
 
 def confidential_ok(cfg: dict, model: str) -> bool:
@@ -120,54 +259,88 @@ def confidential_ok(cfg: dict, model: str) -> bool:
     return bool(cfg["prices"].get(model, {}).get("confidential_ok", True))
 
 
-def safe_model(cfg: dict, model: str, confidential: bool) -> str:
+def safe_model(cfg: dict, model: str, confidential: bool, tier: str | None = None) -> str:
     """A confidential brief never goes to a flagged model: climb the ladder to the first safe one."""
     m = model
     while confidential and m and not confidential_ok(cfg, m):
-        m = next_rung(cfg, m)
+        m = next_rung(cfg, m, tier)
     if m is None:
         raise ValueError(f"no model on the ladder above {model} is cleared for confidential briefs")
     return m
 
 
+def spent(run_dir: pathlib.Path) -> float:
+    """What this run has cost so far, from its own call log."""
+    log_path = run_dir / "run.json"
+    if not log_path.exists():
+        return 0.0
+    return round(sum(a.get("usd", 0) or 0 for a in json.loads(log_path.read_text()).get("attempts", [])), 5)
+
+
 def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=None, cfg: dict | None = None,
-              fake=None, max_escalations: int = 1, confidential: bool = False) -> dict:
+              fake=None, max_escalations: int = 1, confidential: bool = False, max_usd: float | None = None,
+              write: bool = True) -> dict:
     """Run one stage: call, parse, check; retry once with the error, then escalate one rung.
 
     check(obj) -> list of problems (empty = accepted). Every attempt is logged with tokens
-    and cost to run.json so the per-audit attribution is measured, not estimated. With
+    and cost to run.json so the per-audit attribution is measured, not estimated: OpenRouter
+    attempts log the charge OpenRouter reported, the rest log list price. With
     confidential=True (the brief lists do-not-print items) flagged models are skipped.
+    max_usd is the run's spending cap: no call starts once the run has spent it.
     """
     cfg = cfg or K.load_routing()
     st = next(s for s in cfg["stages"] if s["id"] == stage_id)
     system = (STAGES_DIR / st["card"]).read_text(encoding="utf-8")
-    model = safe_model(cfg, cfg["tiers"][tier]["models"][stage_id], confidential)
+    max_tokens = int(st.get("max_out", DEFAULT_MAX_OUT))
+    model = safe_model(cfg, cfg["tiers"][tier]["models"][stage_id], confidential, tier)
     log_path = run_dir / "run.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {"tier": tier, "attempts": []}
     escalations, prompt = 0, user
     for attempt in range(1, 6):
+        so_far = round(sum(a.get("usd", 0) or 0 for a in log["attempts"]), 5)
+        if max_usd is not None and so_far >= max_usd:
+            raise BudgetExceeded(f"spending cap ${max_usd:.2f} reached (${so_far:.4f} spent) before {stage_id}")
         t0 = time.time()
-        res = call(model, system, prompt, cfg, run_dir=run_dir, stage=stage_id, fake=fake)
-        cost_usd = usd(cfg, model, res["usage"])
-        entry = {"stage": stage_id, "attempt": attempt, "model": model, "provider": res["provider"],
-                 "usage": res["usage"], "usd": cost_usd, "seconds": round(time.time() - t0, 1)}
+        entry = {"stage": stage_id, "attempt": attempt, "model": model}
         try:
-            obj = extract_json(res["text"])
-            problems = check(obj) if check else []
-        except (ValueError, json.JSONDecodeError) as e:
-            obj, problems = None, [f"reply was not valid JSON: {e}"]
-        entry["problems"] = problems[:20]
-        log["attempts"].append(entry)
-        log_path.write_text(json.dumps(log, indent=1))
-        if not problems:
-            (run_dir / f"{stage_id}.json").write_text(json.dumps(obj, indent=1, ensure_ascii=False))
-            return {"ok": True, "model": model, "obj": obj, "attempts": attempt}
-        feedback = "\n".join(f"- {p}" for p in problems[:20])
-        prompt = f"{user}\n\n# YOUR PREVIOUS ANSWER FAILED THESE CHECKS — fix every one and answer again\n{feedback}"
+            res = call(model, system, prompt, cfg, max_tokens=max_tokens, run_dir=run_dir, stage=stage_id,
+                       fake=fake, confidential=confidential, cache=bool(st.get("cache_prefix")))
+        except ProviderError as e:
+            entry.update({"provider": cfg["prices"][model]["provider"], "usage": {"in": 0, "out": 0},
+                          "usd": 0.0, "seconds": round(time.time() - t0, 1), "problems": [f"provider error: {e}"]})
+            log["attempts"].append(entry)
+            log_path.write_text(json.dumps(log, indent=1))
+            if e.fatal:
+                raise
+            res, problems = None, [f"provider error: {e}"]
+        if res is not None:
+            list_usd = usd(cfg, model, res["usage"])
+            reported = res.get("reported_usd")
+            entry.update({"provider": res["provider"], "usage": res["usage"],
+                          "usd": round(reported, 6) if reported is not None else list_usd,
+                          "usd_list": list_usd, "cost_source": "reported" if reported is not None else "list price",
+                          "seconds": round(time.time() - t0, 1)})
+            if res.get("served_by"):
+                entry["served_by"] = res["served_by"]
+            try:
+                obj = extract_json(res["text"])
+                problems = check(obj) if check else []
+            except (ValueError, json.JSONDecodeError) as e:
+                obj, problems = None, [f"reply was not valid JSON (was it cut off at {max_tokens} tokens?): {e}"]
+            entry["problems"] = problems[:20]
+            log["attempts"].append(entry)
+            log_path.write_text(json.dumps(log, indent=1))
+            if not problems:
+                if write:
+                    (run_dir / f"{stage_id}.json").write_text(json.dumps(obj, indent=1, ensure_ascii=False))
+                return {"ok": True, "model": model, "obj": obj, "attempts": attempt}
+        if res is not None:   # a provider error is not the writer's fault: resend the same prompt
+            feedback = "\n".join(f"- {p}" for p in problems[:20])
+            prompt = f"{user}\n\n# YOUR PREVIOUS ANSWER FAILED THESE CHECKS — fix every one and answer again\n{feedback}"
         if attempt % 2 == 0:  # two tries per rung, then one rung up
-            up = next_rung(cfg, model)
+            up = next_rung(cfg, model, tier)
             if up is not None:
-                up = safe_model(cfg, up, confidential)
+                up = safe_model(cfg, up, confidential, tier)
             if up is None or escalations >= max_escalations:
                 break
             model, escalations = up, escalations + 1
