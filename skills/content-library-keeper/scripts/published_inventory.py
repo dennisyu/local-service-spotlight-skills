@@ -68,6 +68,9 @@ CONFIG = {"sites": [], "brand_suffixes": [], "rename_pattern": "", "rename_file"
 NOT_IN_SITEMAP_FILE = "library-rows-not-in-sitemap.csv"
 OLD_URLS_FILE = "library-old-urls.csv"
 TRANSIENT = {429, 500, 502, 503, 504}
+# The status of a row whose facts came from the WordPress REST API. Its page was not opened, so the
+# row must not claim an HTTP 200 that nobody observed.
+STATUS_FROM_REST = "published (REST API; not opened)"
 
 
 class GuardError(RuntimeError):
@@ -345,18 +348,22 @@ def sitemap_urls(site):
 def wp_rest(site):
     """Return ({norm_url: item}, categories, tags) for posts and pages; empty dicts if REST is closed.
 
-    A REST API that answers page 1 but fails a later page raises GuardError: a partial
-    list would quietly drop titles and dates from thousands of rows.
+    "Closed" means the endpoint answers 401, 403, 404 or another client error. A REST API
+    that does not answer, answers 429 or 5xx, returns something that is not JSON, or
+    fails a later page raises GuardError: a partial list would quietly drop titles,
+    dates and categories from thousands of rows.
     """
     def pages(kind, fields):
         base = f"https://{site}/wp-json/wp/v2/{kind}?per_page=100&_fields={fields}"
         st, h, b, _ = fetch(base + "&page=1")
-        if st != 200:
+        if st is None or st == 429 or st >= 500:  # failed, not closed: a quiet fallback would blank thousands of rows
+            raise GuardError(f"{site}: REST {kind} did not answer (HTTP {st})")
+        if st != 200:  # 401/403/404: the endpoint is closed on this site
             return None
         try:
             items = json.loads(b)
         except ValueError:
-            return None
+            raise GuardError(f"{site}: REST {kind} answered HTTP 200 with something that is not JSON (a firewall page?)")
         if not isinstance(items, list):
             return None
         total = int(h.get("x-wp-totalpages") or 0)
@@ -484,10 +491,12 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
         reason = check_source(site, before.get("metadata_source"), source)
         if reason and not allow_source_change:
             raise GuardError(reason)
-        print(f"[{site}] REST {'open' if rest else 'closed → reading each page'}", flush=True)
+        print(f"[{site}] REST {'open' if rest else 'closed'}; opening {sum(1 for _, u, _, _, _ in sm if not rest or norm(u) not in rest)} pages one by one", flush=True)
+        # Open every page the REST API does not describe: all of them when REST is closed,
+        # and on a REST site the few URLs it does not list (entity pages, KML files, stray posts).
+        urls = [u for _, u, _, _, _ in sm if not rest or norm(u) not in rest]
         facts = {}
-        if not rest:
-            urls = [u for _, u, _, _, _ in sm]
+        if urls:
             with ThreadPoolExecutor(8) as ex:
                 for u, f in zip(urls, ex.map(html_facts, urls)):
                     facts[norm(u)] = f
@@ -511,7 +520,7 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
             if n in rest:
                 it = rest[n]
                 row.update(title=clean_title(it["title"]["rendered"]), published=it["date"][:10],
-                           modified=(it.get("modified") or lastmod)[:10], status="200",
+                           modified=(it.get("modified") or lastmod)[:10], status=STATUS_FROM_REST,
                            categories="; ".join(cats.get(i, str(i)) for i in it.get("categories", [])),
                            tags="; ".join(tgs.get(i, str(i)) for i in it.get("tags", [])))
             if n in facts:
@@ -545,12 +554,13 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
                                      "http_status": "", "final_url": "", "today": "not checked"})
         rows = [r for r in inv if r["site"] == site]
         stats[site] = {"pages_in_sitemaps": len(rows), "sitemap_listings": len(raw), "metadata_source": source,
+                       "pages_opened": len(urls),
                        "with_video": sum(1 for r in rows if r["has_video"]),
                        "listed_twice_or_more": sum(1 for r in rows if "x in sitemaps" in r["notes"]),
                        "by_type": dict(Counter(r["type"] for r in rows)),
                        "in_library": sum(1 for r in rows if r["library_tab"]),
                        "missing_from_library": sum(1 for r in rows if not r["library_tab"]),
-                       "non_200": sum(1 for r in rows if r["status"] not in ("200", "in sitemap")),
+                       "non_200": sum(1 for r in rows if r["status"] not in ("200", "in sitemap", STATUS_FROM_REST)),
                        "noindex": sum("noindex" in r["notes"] for r in rows),
                        "rename_hits": sum(1 for r in rows if rename_rx and rename_rx.search(r["title"])),
                        "library_old_url": sum("library has old URL" in r["notes"] for r in rows)}

@@ -1,6 +1,6 @@
 # The content library our agents run
 
-**If you have spent years making videos, articles and friends, you cannot use what you cannot find.** This guide shows how Local Service Spotlight keeps one map of everything it has made. That means recordings, web pages, people, proof, talks, photos and methods. Any agent or new teammate can find a piece, add to it and turn it into more content. You can copy the idea for your own business. It takes one sheet, a few plain files and an agent that checks them every day.
+**If you have spent years making videos, articles and friends, you cannot use what you cannot find.** This guide shows how Local Service Spotlight keeps one map of everything it has made. That means videos, calls, web pages, people, proof, talks, photos and how-to steps. Any agent or new teammate can find a piece, add to it and turn it into more content. You can copy the idea for your own business. It takes one sheet, a few plain files and an agent that keeps them up to date.
 
 ```mermaid
 flowchart LR
@@ -12,12 +12,12 @@ flowchart LR
 
 ## Why a map, and not one giant spreadsheet
 
-Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of the 6,201 pages listed in the four sites' sitemaps, the hand-kept tabs listed only 44%. Another 235 rows pointed at addresses that were in no sitemap at all. When we opened each one, about half still loaded, mostly through a redirect to a newer page, and the rest were gone. Of the 540 people our records show a real relationship with, 348 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
+Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of the 6,201 pages listed in the four sites' sitemaps, the hand-kept tabs listed only 44%. Another 235 rows pointed at addresses that were in no sitemap at all. When we opened each one, about half still loaded, mostly through a redirect to a newer page, and the rest were gone. Of the 540 people our records show a real relationship with, 347 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
 
 None of that was anyone's fault. It is what happens to any list that people type into. So the library now follows four rules:
 
 1. **One master per kind of knowledge.** Everything else is a copy that a program makes, a frozen piece of history, or a pointer to a master somewhere else.
-2. **Derive the list, don't maintain it.** The list of published pages comes from each site's sitemap every day. The list of people comes from the relationship registry. Counts are formulas, not typed numbers.
+2. **Derive the list, don't maintain it.** The list of published pages is rebuilt from each site's sitemap on every refresh. The list of people comes from the relationship registry. Counts are formulas, not typed numbers.
 3. **Fix the source, not the copy.** If a row is wrong, the page, the recording or the registry is wrong. Fix it there; the next run corrects the row.
 4. **Every collection has an owner function.** "Proof & reputation" owns testimonials; whoever holds that function today does the work. People change roles; functions stay.
 
@@ -52,7 +52,7 @@ The library follows the Content Factory's four locked stages, with setup before 
 | **Process** | Transcribe, edit, clip, write | The Processing Ledger: what is done for each recording and who holds it |
 | **Post** | Publish the article, the video, the page | The published inventory, rebuilt from each site's sitemap |
 | **Promote** | Boost what works, a dollar a day at a time | Proof, speaking and the pages worth amplifying |
-| Perform (after) | Metrics, analysis, action | The daily comparison and the worklists |
+| Perform (after) | Metrics, analysis, action | Each refresh's comparison and the worklists |
 
 ## Where the Nine Triangles show up
 
@@ -61,8 +61,8 @@ The library follows the Content Factory's four locked stages, with setup before 
 | **SBP** Specialist · Business · Partner | People coverage lists the real relationships nobody has written about yet, so the people who helped us are honored next. |
 | **AEC** Audience · Engagement · Conversion | Pages are tagged by topic so the right page can be put in front of the right audience. |
 | **GCT** Goals · Content · Targeting | Every worklist says what it changes, which pages or people it covers, and who acts. |
-| **MAA** Metrics · Analysis · Action | The daily run is the metric, the comparison with yesterday is the analysis, the worklist is the action. |
-| **DDD** Do · Delegate · Delete | Duplicate lists are frozen as legacy, collections are delegated to functions, and the agent does the daily checking. |
+| **MAA** Metrics · Analysis · Action | Each refresh is the metric, the comparison with the last one is the analysis, the worklist is the action. |
+| **DDD** Do · Delegate · Delete | Duplicate lists are frozen as legacy, collections are delegated to functions, and an agent does the checking. |
 | **CID** Communicate · Iterate · Delegate | Changes are reported in the project thread; the map is iterated; ownership moves progressively. |
 | **LDT** Learn · Do · Teach | A new agent learns from the map, does one worklist, then teaches by improving the rules page. |
 | **CCS** Content · Checklist · Software | This guide is the content, *Agent Start Here* is the checklist, the inventory scripts are the software. |
@@ -70,7 +70,9 @@ The library follows the Content Factory's four locked stages, with setup before 
 
 The names and order follow the [accepted Nine Triangles reference](../../skills/nine-triangles/references/canonical-framework.md); the inventory script tags pages with exactly those names, including the older aliases ACC and ABP.
 
-## What the agent does every day
+## What the agent does on each refresh
+
+The refresh is designed to run every morning as a scheduled task.
 
 1. Reads the map and pulls the newest repository copy.
 2. Rebuilds the published inventory from every site's sitemap. If any part of a sitemap fails, or a site suddenly lists far fewer pages, the run stops, writes nothing and reports why. A partial count never replaces a full one.

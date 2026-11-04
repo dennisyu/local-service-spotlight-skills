@@ -358,6 +358,40 @@ class Summary(unittest.TestCase):
         self.assertTrue(any("missing from the sitemap" in r and "https://a.com/hidden/" in r and r.startswith("a.com | Page loads")
                             for r in flat))
 
+    def test_rows_marked_private_are_retired_not_restored(self):
+        d = self.make()
+        with open(os.path.join(d, "library-rows-not-in-sitemap.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(inv.NOT_IN_SITEMAP_FIELDS)
+            w.writerow(["a.com", "Unpublished on purpose", "https://a.com/1900/01/25/x/", "", "Private", "404", "", "not found"])
+            w.writerow(["a.com", "Gone page", "https://a.com/gone-1/", "", "Published", "404", "", "not found"])
+            w.writerow(["a.com", "Draft gone", "https://a.com/draft/", "", " Draft ", "404", "", "not found"])
+            w.writerow(["a.com", "Gone too", "https://a.com/gone-2/", "", "publish", "404", "", "not found"])
+        out = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")
+        e = [r for r in out["values"] if len(r) == 5 and r[0] == "a.com"]
+        # The rows to act on come first; the rows meant to be gone follow, each in file order.
+        self.assertEqual([r[1] for r in e], ["Gone page", "Gone too", "Unpublished on purpose", "Draft gone"])
+        self.assertEqual([r[3] for r in e[:2]], ["not found", "not found"])
+        self.assertEqual(e[2][3], summ.EXPECTED_GONE.format(status="Private"))
+        self.assertEqual(e[3][3], summ.EXPECTED_GONE.format(status="Draft"))
+        self.assertIn("do not restore", e[2][3])
+        head = [out["values"][i - 1][0] for i in out["section_header_rows"] if out["values"][i - 1][0].startswith("E.")][0]
+        self.assertIn("never restore it", head)
+        self.assertFalse(summ.expected_gone({"today": "redirects to the home page", "status_in_library": "Private"}))
+        self.assertFalse(summ.expected_gone({"today": "not found", "status_in_library": ""}))
+
+    def test_rows_from_the_rest_api_are_not_sitemap_defects(self):
+        d = self.make()
+        rows = [{"site": "a.com", "type": "post", "title": "Fine", "url": "https://a.com/fine/", "published": "2025-01-01",
+                 "status": inv.STATUS_FROM_REST, "topics_v1": "", "notes": ""},
+                {"site": "a.com", "type": "page", "title": "Gone", "url": "https://a.com/gone/", "published": "",
+                 "status": "404", "topics_v1": "", "notes": ""}]
+        with open(os.path.join(d, "published-inventory.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=inv.FIELDS, extrasaction="ignore"); w.writeheader(); w.writerows(rows)
+        flat = [" | ".join(str(c) for c in r) for r in summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["values"]]
+        self.assertTrue(any("returns HTTP 404" in r and "https://a.com/gone/" in r for r in flat))
+        self.assertFalse(any("https://a.com/fine/" in r for r in flat))
+
     def test_only_single_cell_rows_are_merged(self):
         out = summ.build(self.make(), {"sites": ["a.com"]}, "2026-11-04")
         g = out["values"]
@@ -441,6 +475,23 @@ class Guards(unittest.TestCase):
         with self.assertRaises(inv.GuardError):
             inv.wp_rest("a.com")
 
+    def test_rest_that_does_not_answer_stops_the_run(self):
+        inv.fetch = FakeNet({self.POSTS + "&page=1": (503, {}, b"", "")})
+        with self.assertRaises(inv.GuardError):
+            inv.wp_rest("a.com")
+
+    def test_rest_answering_a_web_page_stops_the_run(self):
+        inv.fetch = FakeNet({self.POSTS + "&page=1": (200, {}, b"<html>checking your browser</html>", "")})
+        with self.assertRaises(inv.GuardError):
+            inv.wp_rest("a.com")
+
+    def test_a_failed_pages_endpoint_stops_the_run_even_when_posts_answer(self):
+        pages = "https://a.com/wp-json/wp/v2/pages?per_page=100&_fields=id,link,title,date,modified"
+        inv.fetch = FakeNet({self.POSTS + "&page=1": (200, {"x-wp-totalpages": "1"}, self.posts(3), ""),
+                             pages + "&page=1": (500, {}, b"", "")})
+        with self.assertRaises(inv.GuardError):
+            inv.wp_rest("a.com")
+
     def test_closed_rest_means_read_each_page(self):
         inv.fetch = FakeNet({})
         self.assertEqual(inv.wp_rest("a.com"), ({}, {}, {}))
@@ -450,6 +501,33 @@ class Guards(unittest.TestCase):
                              self.POSTS + "&page=2": (400, {}, b"", "")})
         out, _cats, _tags = inv.wp_rest("a.com")
         self.assertEqual(len(out), 100)
+
+    def test_rest_rows_say_their_page_was_not_opened(self):
+        index = (b'<?xml version="1.0"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                 b'<sitemap><loc>https://a.com/post-sitemap.xml</loc></sitemap></sitemapindex>')
+        urlset = (b'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                  b'<url><loc>https://a.com/p0/</loc></url><url><loc>https://a.com/entity/x/</loc></url></urlset>')
+        rest = "https://a.com/wp-json/wp/v2/{}?per_page=100&_fields={}&page=1"
+        empty = (200, {"x-wp-totalpages": "1"}, b"[]", "")
+        inv.fetch = FakeNet({
+            "https://a.com/sitemap_index.xml": (200, {}, index, ""),
+            "https://a.com/post-sitemap.xml": (200, {}, urlset, ""),
+            self.POSTS + "&page=1": (200, {"x-wp-totalpages": "1"}, self.posts(1), ""),
+            rest.format("pages", "id,link,title,date,modified"): empty,
+            rest.format("categories", "id,name"): empty,
+            rest.format("tags", "id,name"): empty,
+        })
+        d = tempfile.mkdtemp()
+        with contextlib.redirect_stdout(io.StringIO()):
+            stats, _changed = inv.build(["a.com"], d, None, None)
+        with open(os.path.join(d, "published-inventory.csv"), encoding="utf-8") as fh:
+            rows = {r["url"]: r for r in csv.DictReader(fh)}
+        self.assertEqual(rows["https://a.com/p0/"]["status"], inv.STATUS_FROM_REST)
+        self.assertNotIn("https://a.com/p0/", inv.fetch.calls)  # the REST row was never opened
+        self.assertEqual(rows["https://a.com/entity/x/"]["status"], "404")  # REST did not list it, so it was opened
+        self.assertEqual(stats["a.com"]["pages_opened"], 1)
+        self.assertEqual(stats["a.com"]["non_200"], 1)
+        self.assertEqual(stats["a.com"]["metadata_source"], "rest")
 
     def test_drop_limits(self):
         self.assertIsNone(inv.check_drop("a.com", 1000, 990))
@@ -488,6 +566,7 @@ class AddressToday(unittest.TestCase):
 
     def test_inventory_and_summary_use_the_same_words(self):
         self.assertEqual(inv.TODAY_ORDER, summ.TODAY_ORDER)
+        self.assertEqual(inv.STATUS_FROM_REST, summ.STATUS_FROM_REST)
 
     def test_old_address_of_a_moved_page(self):
         v = inv.old_url_verdict

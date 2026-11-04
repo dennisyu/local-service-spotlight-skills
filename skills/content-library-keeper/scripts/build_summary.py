@@ -49,7 +49,7 @@ DEFAULTS = {
     "title": "PUBLISHED PAGES · SUMMARY AND WORKLISTS",
     "full_list_location": "the repository file library/published-inventory.csv",
     "rename_label": "Titles matching the rename pattern",
-    "rename_note": "C. RENAME WORKLIST — live pages whose title still uses a retired name. Check each one: product names and history posts may stay.",
+    "rename_note": "C. RENAME WORKLIST — pages whose title still uses a retired name. Check each one: product names and history posts may stay.",
     "rename_site_order": [],
     "registry_label": "the people registry",
     "withhold_titles": [],
@@ -71,6 +71,9 @@ TODAY_ORDER = [
     "not checked",
 ]
 LIVE_UNLISTED = TODAY_ORDER[0]
+EXPECTED_GONE = "not found, as expected: the old tab marks it {status}. Retire the row; do not restore the page"
+PUBLISHED_WORDS = ("published", "publish")
+STATUS_FROM_REST = "published (REST API; not opened)"  # same words as published_inventory.STATUS_FROM_REST
 
 
 def read_csv(path):
@@ -86,6 +89,13 @@ def tidy(title):
     t = " ".join(str(title or "").split())
     t = re.sub(r"(^|\s)\?{2,}(?=\s|$)", " ", t).strip()
     return re.sub(r"[″]+$", "", t).strip()
+
+
+def expected_gone(r):
+    """True when an old row is not found and the old tab marks it Private, Draft or the like. The owner
+    unpublished it on purpose, so the row is retired, never restored."""
+    status = (r.get("status_in_library") or "").strip()
+    return (r.get("today") or "") == "not found" and bool(status) and status.lower() not in PUBLISHED_WORDS
 
 
 def withheld(url, rules):
@@ -183,7 +193,7 @@ def build(inv_dir, cfg, date):
 
     # D. people with no page
     headers.append(add([f"D. PEOPLE WE KNOW WITH NO PAGE NAMING THEM — real relationships in {s['registry_label']} "
-                        "whose name is in no live page title (honor them next). More sources = stronger relationship evidence."
+                        "whose name is in no page title (honor them next). More sources = stronger relationship evidence."
                         + owner("D")]))
     colheads.append(add(["Name", "Where we know them from", s["vault_label"], "In fleet memory"]))
     gaps = [p for p in people if p.get("real_relationship") == "Y" and str(p.get("pages_with_name_in_title")) == "0"]
@@ -196,16 +206,20 @@ def build(inv_dir, cfg, date):
 
     # E. old rows in no sitemap, with what each address does today
     headers.append(add(["E. OLD LIBRARY ROWS IN NO SITEMAP — what each address did when the inventory last ran. "
-                        "Redirects: point the row at the new address. Not found: restore the page or retire the row. "
+                        "Redirects: point the row at the new address. Not found: restore the page or retire the row; "
+                        "a row the old tab marks Private was unpublished on purpose, so retire it and never restore it. "
                         "Loads: the page exists but search engines may not find it (see section F)." + owner("E")]))
     colheads.append(add(["Site", "Title", "URL in old tab", "What it does today", "Status in old tab"]))
     def today_rank(r):
         t = r.get("today") or "not checked"
         return TODAY_ORDER.index(t) if t in TODAY_ORDER else len(TODAY_ORDER) - 1
-    for r in sorted(not_listed, key=today_rank):  # stable: file order within a group
+    # Stable sort: file order within a group, and rows that are meant to be gone after the ones to act on.
+    for r in sorted(not_listed, key=lambda r: (today_rank(r), expected_gone(r))):
         url = r.get("url", "")
         hidden = withheld(url, rules)
         today = r.get("today") or "not checked"
+        if expected_gone(r):
+            today = EXPECTED_GONE.format(status=r["status_in_library"].strip())
         if r.get("final_url") and today.startswith("redirects"):
             today = f"{today}: {LINK_WITHHELD if hidden else r['final_url']}"
         shown = SHEET_LINK_NOTE if "docs.google.com/spreadsheets" in url else url
@@ -214,7 +228,10 @@ def build(inv_dir, cfg, date):
     add()
 
     # F. sitemap defects
-    headers.append(add(["F. SITEMAP DEFECTS FOR THE WEBSITE DESK" + owner("F")]))
+    opened = sum(stats.get(x, {}).get("pages_opened", 0) for x in sites)
+    scope = (f" Pages opened one by one this run: {opened:,} of {total:,}; the rest came from the WordPress REST API, "
+             "so their status was not checked page by page.") if opened and opened < total else ""
+    headers.append(add(["F. SITEMAP DEFECTS FOR THE WEBSITE DESK." + scope + owner("F")]))
     colheads.append(add(["Site", "Defect", "Count", "Example"]))
     for site in sites:
         rep = [p for p in pages if p["site"] == site and "x in sitemaps" in (p.get("notes") or "")]
@@ -228,7 +245,7 @@ def build(inv_dir, cfg, date):
             add([site, "Same page listed more than once in the sitemaps. Full list: the notes column of published-inventory.csv",
                  len(rep), ", ".join(f"{LINK_WITHHELD if withheld(p['url'], rules) else p['url']} ({times(p)})" for p in ex)])
         for p in pages:
-            if p["site"] == site and p.get("status") not in ("200", "in sitemap", "", None):
+            if p["site"] == site and p.get("status") not in ("200", "in sitemap", STATUS_FROM_REST, "", None):
                 what = ("Listed in sitemap but did not answer" if p["status"] == "unreachable"
                         else f"Listed in sitemap but returns HTTP {p['status']}")
                 add([site, what, 1, LINK_WITHHELD if withheld(p["url"], rules) else p["url"]])
