@@ -46,7 +46,6 @@ import datetime as dt
 import hashlib
 import json
 import os
-import re
 import sys
 from collections import Counter
 
@@ -103,7 +102,7 @@ class SummaryError(RuntimeError):
 
 
 def site_names(cfg):
-    return [x if isinstance(x, str) else x.get("site", "") for x in (cfg.get("sites") or [])]
+    return [x for x in (cfg.get("sites") or []) if isinstance(x, str) and x]
 
 
 def build(inv_dir, cfg, date):
@@ -153,13 +152,22 @@ def build(inv_dir, cfg, date):
                 what = ("Listed in sitemap but did not answer" if p["status"] == "unreachable"
                         else f"Listed in sitemap but returns HTTP {p['status']}")
                 groups.setdefault(what + ". Full list: the status column of published-inventory.csv", []).append(p["url"])
+        private = []
         for r in not_listed:
-            if r["site"] == site and r.get("today") == LIVE_UNLISTED and not withheld(r.get("url"), rules):
+            if r["site"] != site or r.get("today") != LIVE_UNLISTED:
+                continue
+            if "private" in (r.get("status_in_library") or "").lower():
+                private.append(r["url"])  # meant to be gone, yet it loads: a privacy check, never a sitemap fix
+            elif not withheld(r.get("url"), rules):
                 groups.setdefault("Page loads but is missing from the sitemap. Full list: the today column of "
                                   "library-rows-not-in-sitemap.csv", []).append(r["url"])
         for what, urls in groups.items():
             shown = [u for u in urls if not withheld(u, rules)][:2]
             defects.append([site, what, len(urls), ", ".join(shown) if shown else LINK_WITHHELD])
+        if private:
+            defects.append([site, "A page the old list marks Private loads for anyone. Check that it is meant to be "
+                                  "public; do not add it to the sitemap. Full list: library-rows-not-in-sitemap.csv",
+                            len(private), LINK_WITHHELD])
 
     add([f"{s['title']} (generated {date} from each site's sitemap)"])
     add([f"A quick look for people: how many pages each site has, and which agent works each list. The lists themselves are in "
@@ -175,10 +183,11 @@ def build(inv_dir, cfg, date):
         st = stats.get(site, {})
         bt = st.get("by_type", {})
         vals = [count(st), bt.get("post", 0), bt.get("page", 0), st.get("with_video", 0),
-                st.get("rename_hits", 0), st.get("listed_twice_or_more", 0), st.get("non_200", 0)]
-        sums = [a + b for a, b in zip(sums, vals)]
+                st.get("rename_hits", 0) if stats.get("rename_pattern") else NOT_CHECKED,
+                st.get("listed_twice_or_more", 0), st.get("non_200", 0)]
+        sums = [a + b if isinstance(a, int) and isinstance(b, int) else NOT_CHECKED for a, b in zip(sums, vals)]
         add([site] + vals)
-    total_row = add([f"All {len(sites)} sites"] + sums)
+    total_row = add([f"All {len(sites)} sites" if len(sites) != 1 else "Total"] + sums)
     add()
 
     # B. topics
@@ -202,7 +211,7 @@ def build(inv_dir, cfg, date):
                                             if kept else "")
     gaps = (stats["people"].get("real_with_no_title_page", 0) if isinstance(stats.get("people"), dict) else NOT_CHECKED)
     old_404 = (sum(v.get("not found", 0) for v in (stats.get("library_old_urls_today") or {}).values())
-               if stats.get("library_matching") else NOT_CHECKED)
+               if stats.get("library_matching") and stats.get("library_old_urls_checked", True) else NOT_CHECKED)
     headers.append(add(["C. LISTS THE AGENTS WORK", "Items", "Worked by", f"Full list ({s['list_repo_label']})"]))
     for what, n, key, where in (
             (rename_what, renamed, "rename", f"library/{cfg.get('rename_file') or 'rename-worklist.csv'}"),
@@ -212,7 +221,7 @@ def build(inv_dir, cfg, date):
              "library/library-old-urls.csv"),
             ("Sitemap defects (listed in section D)", sum(int(r[2]) for r in defects), "sitemap",
              "library/published-inventory.csv (status and notes columns)")):
-        add([what, n, owners.get(key, ""), where])
+        add([what, n, owners.get(key, ""), where if n != NOT_CHECKED else "(not rebuilt this run)"])
     add()
 
     # D. sitemap defects: the only rows small and urgent enough to list

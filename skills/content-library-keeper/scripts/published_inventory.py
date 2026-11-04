@@ -48,7 +48,7 @@ Config (JSON; every key optional except "sites"):
    "guard": {"max_drop_fraction": 0.05,       # stop if a site lists more than 5% fewer URLs...
              "max_drop_pages": 20,            # ...and more than 20 fewer URLs than last run
              "max_fetch_failures": 0.02,      # stop if more than 2% of page fetches get no answer or are blocked
-             "max_same_title": 0.10},         # stop if more than 10% (and 10) of opened pages share one title
+             "max_same_title": 0.5},          # stop if more than half (and 10) of opened pages share one title
    "people": {"owner_entity_id": "jane-doe",  # the registry's own subject, skipped
               "real_sources": ["crm", "notes"],   # sources that mean a real relationship
               "exclude_entity_ids": ["ai-agent"]},  # records that are not people (e.g. AI agents)
@@ -68,8 +68,9 @@ from concurrent.futures import ThreadPoolExecutor
 NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 DEFAULT_UA = ("Mozilla/5.0 (compatible; ContentLibraryInventory/1.0; "
               "+https://github.com/dennisyu/local-service-spotlight-skills)")
-DEFAULT_GUARD = {"max_drop_fraction": 0.05, "max_drop_pages": 20, "max_fetch_failures": 0.02, "max_same_title": 0.10}
+DEFAULT_GUARD = {"max_drop_fraction": 0.05, "max_drop_pages": 20, "max_fetch_failures": 0.02, "max_same_title": 0.5}
 SITEMAP_PATHS = ("/sitemap_index.xml", "/sitemap-index.xml", "/sitemap.xml")
+MAX_REST_PAGES = 1000  # 100,000 posts: far more than any site here; past it, paging is broken
 BLOCKED = {"401", "403", "429"}  # statuses a firewall or a rate limit answers with; with 5xx and no answer, a failed fetch
 CONFIG = {"sites": [], "brand_suffixes": [], "rename_pattern": "", "rename_file": "rename-worklist.csv",
           "rename_keep_pattern": "", "rename_keep_urls": [],
@@ -102,11 +103,7 @@ def norm(url):
     path = re.sub(r"/+$", "", path) or "/"
     return (m.group(2).lower() + path).lower()
 
-def slug(url):
-    parts = re.sub(r"[?#].*", "", url or "").rstrip("/").split("/")
-    return parts[-1].lower() if len(parts) > 3 else "/"
-
-DATED = re.compile(r"^\d{4}/\d{1,2}/(?:\d{1,2}/)?(?=[^/]*[^\d/])")
+DATED = re.compile(r"^\d{4}/\d{1,2}/(?:\d{1,2}/)?(?=[^/]*[^\d/])(?!page/)")
 
 def undated(n):
     """A norm() address without a leading /YYYY/MM/ or /YYYY/MM/DD/ (an old date-style permalink).
@@ -127,7 +124,10 @@ def fetch_failed(status):
     return status == "unreachable" or status in BLOCKED or (status.isdigit() and int(status) >= 500)
 
 def check_same_title(site, titles, guard=None):
-    """Return a reason to stop when too many opened pages share one title (a firewall page answering 200), else None."""
+    """Return a reason to stop when most opened pages share one title, else None.
+
+    A firewall or challenge page that answers 200 for every address gives every page the same title (or
+    none). A real site rarely does: the limit is more than half of the opened pages and more than 10."""
     guard = {**DEFAULT_GUARD, **(guard or {})}
     if not titles:
         return None
@@ -135,8 +135,9 @@ def check_same_title(site, titles, guard=None):
     limit = max(10, int(guard["max_same_title"] * len(titles)))
     if n > limit:
         shown = title[:60] or "(no title)"
-        return (f"{site}: {n} of {len(titles)} opened pages have the same title \"{shown}\" (limit {limit}); "
-                "a firewall or challenge page may be answering for the site.")
+        return (f"{site}: {n} of {len(titles)} opened pages have the same title \"{shown}\" (limit {limit}). "
+                "A firewall or challenge page may be answering for the site; if the site really uses one title on most "
+                "pages, rerun with --allow-same-title.")
     return None
 
 def clean_title(t, suffixes=None):
@@ -204,9 +205,10 @@ OFF_SITE = "points at another site"
 def dedupe_sitemap(rows):
     """Collapse sitemap rows to one per URL.
 
-    SEO plugins such as Rank Math list a page that embeds a video in a video sitemap
-    as well, so a post can appear as both "post" and "video". Keep the content kind,
-    flag has_video, and count genuine repeats of the same kind (a sitemap defect).
+    SEO plugins such as Rank Math list a page again in a video, news or image sitemap,
+    so a post can appear as both "post" and "video". Keep the content kind, flag
+    has_video, and count every other listing of the same page, in the same sitemap
+    kind or in two different ones (a sitemap defect).
     Returns a list of (kind, url, lastmod, has_video, repeats) in first-seen order.
     """
     order, info = [], {}
@@ -219,6 +221,8 @@ def dedupe_sitemap(rows):
         i["seen"][kind] += 1
         if kind == "video":
             i["video"] = True
+        if secondary(kind):
+            pass
         elif i["kind"] is None:
             i["kind"], i["url"] = kind, url
         if lastmod > i["lastmod"]:
@@ -227,9 +231,13 @@ def dedupe_sitemap(rows):
     for n in order:
         i = info[n]
         kind = i["kind"] or "video"
-        repeats = sum(c for k, c in i["seen"].items() if k != "video") or i["seen"].get("video", 1)
+        repeats = sum(c for k, c in i["seen"].items() if not secondary(k)) or 1
         out.append((kind, i["url"], i["lastmod"], i["video"], repeats))
     return out
+
+def secondary(kind):
+    """True for sitemaps that list pages a second time on purpose: video, news and image sitemaps."""
+    return bool(re.search(r"video|news|image", kind or ""))
 
 def tags_for(text, rules):
     return "; ".join(name for name, rx in rules if re.search(rx, text or "", re.I))
@@ -367,18 +375,26 @@ def sitemap_urls(site):
     Reads the site's configured sitemap path, or the first of /sitemap_index.xml, /sitemap-index.xml
     and /sitemap.xml that answers with XML. A sitemap index is followed into its child sitemaps; a
     plain list of pages (a urlset) is read as it is."""
-    paths = [site_option(site, "sitemap")] if site_option(site, "sitemap") else list(SITEMAP_PATHS)
-    tried, root = [], None
+    return sitemap_urls_with_path(site)[0]
+
+def sitemap_urls_with_path(site):
+    """(rows, the sitemap path that was read). Only a 404 or 410 moves on to the next default path:
+    a sitemap that fails (no answer, 5xx, not XML) stops the run instead of quietly reading another one."""
+    configured = site_option(site, "sitemap")
+    paths = ["/" + configured.lstrip("/")] if configured else list(SITEMAP_PATHS)
+    tried, root, used = [], None, None
     for path in paths:
         st, _, body, _ = fetch(f"https://{site}{path}")
-        if st != 200:
+        if st in (404, 410):
             tried.append(f"{path} HTTP {st}")
             continue
+        if st != 200:
+            raise GuardError(f"{site}: sitemap {path} failed (HTTP {st})")
         try:
             root = ET.fromstring(body)
         except ET.ParseError as e:
-            tried.append(f"{path} not valid XML ({e})")
-            continue
+            raise GuardError(f"{site}: sitemap {path} is not valid XML ({e})")
+        used = path
         break
     if root is None:
         raise GuardError(f"{site}: no sitemap found ({'; '.join(tried)})")
@@ -386,7 +402,7 @@ def sitemap_urls(site):
         rows = [("page", u, lm) for u, lm in urlset_rows(root)]
         if not rows:
             raise GuardError(f"{site}: the sitemap lists no pages")
-        return rows
+        return rows, used
     children = [el.find("s:loc", NS).text.strip() for el in root if el.find("s:loc", NS) is not None]
     def kind_of(cu):
         return re.sub(r"\d*\.xml$", "", cu.rsplit("/", 1)[-1]).replace("-sitemap", "")
@@ -418,7 +434,7 @@ def sitemap_urls(site):
             rows += [(kind_of(cu), u, lm) for u, lm in items]
     if failures:
         raise GuardError(f"{site}: {len(failures)} of {len(children)} child sitemaps failed: " + "; ".join(failures[:5]))
-    return rows
+    return rows, used
 
 def wp_rest(site, prev_source=None):
     """Return ({norm_url: item}, categories, tags) for posts and pages; empty dicts if REST is closed.
@@ -443,14 +459,19 @@ def wp_rest(site, prev_source=None):
             items = json.loads(b)
         except ValueError:
             if prev_source == "rest":
-                raise GuardError(f"{site}: REST {kind} answered HTTP 200 with something that is not JSON (a firewall page?)")
+                raise GuardError(f"{site}: REST {kind} answered HTTP 200 with something that is not JSON (a firewall page?). "
+                                 "If the site no longer runs WordPress, set \"rest\": false for it in site_options.")
             return None  # the site answers every address with a page: no REST API here
         if not isinstance(items, list):
             return None
         total = int(h.get("x-wp-totalpages") or 0)
         p = 2
+        seen_ids = {it.get("id") for it in items if isinstance(it, dict)}
         # Some proxies drop the X-WP-TotalPages header; then keep paging until a short page.
         while (total and p <= total) or (not total and items and len(items) % 100 == 0):
+            if p > MAX_REST_PAGES:
+                raise GuardError(f"{site}: REST {kind} still had more after {MAX_REST_PAGES} pages; "
+                                 "the API may be ignoring page=. Set \"rest\": false for this site if it has no REST API.")
             s, _, b2, _ = fetch(base + f"&page={p}")
             if s == 400 and not total:  # WordPress answers 400 one page past the end
                 break
@@ -464,6 +485,11 @@ def wp_rest(site, prev_source=None):
                 raise GuardError(f"{site}: REST {kind} page {p} failed (HTTP {s})")
             if not batch:
                 break
+            new_ids = {it.get("id") for it in batch if isinstance(it, dict)} - seen_ids
+            if not new_ids:  # the server returned a page it already returned: paging does not move
+                raise GuardError(f"{site}: REST {kind} page {p} repeats earlier results, so paging does not work here. "
+                                 "Set \"rest\": false for this site if its REST API is not WordPress's.")
+            seen_ids |= new_ids
             items += batch
             p += 1
         return items
@@ -544,6 +570,22 @@ def load_people(registry_path):
                        "in_vault": e.get("in_vault", ""), "in_fleet_memory": e.get("in_fleet_memory", "")})
     return people
 
+def drop_allowed(allow_drop, site):
+    """--allow-drop alone accepts a drop on every site; --allow-drop=a.com,b.com only on those sites."""
+    if allow_drop is True or allow_drop == "*":
+        return True
+    if not allow_drop:
+        return False
+    return site in {x.strip() for x in str(allow_drop).split(",")}
+
+def previous_rows(out_dir):
+    path = os.path.join(out_dir, "published-inventory.csv")
+    try:
+        with open(path, newline="", encoding="utf-8") as fh:
+            return list(csv.DictReader(fh))
+    except OSError:
+        return []
+
 def load_previous_stats(out_dir):
     path = os.path.join(out_dir, "inventory-stats.json")
     try:
@@ -553,7 +595,7 @@ def load_previous_stats(out_dir):
         return {}
 
 # ---------- build ----------
-def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_change=False):
+def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_change=False, allow_same_title=False):
     """Read the sites and write the outputs. Returns (stats, changed_files).
 
     Raises GuardError before writing anything when the data looks incomplete.
@@ -565,18 +607,24 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
     inv, stats, lib_not_live, old_urls = [], {}, [], []
     for site in sites:
         print(f"[{site}] sitemaps…", flush=True)
-        raw = sitemap_urls(site)
+        raw, sitemap_path = sitemap_urls_with_path(site)
         sm = dedupe_sitemap(raw)
         print(f"[{site}] {len(raw)} sitemap listings → {len(sm)} unique URLs", flush=True)
         before = prev.get(site, {})
         reason = check_drop(site, before.get("pages_in_sitemaps"), len(sm), guard)
-        if reason and not allow_drop:
-            raise GuardError(reason)
+        if reason and not drop_allowed(allow_drop, site):
+            now = {norm(u) for _, u, _, _, _ in sm}
+            gone = [r["url"] for r in previous_rows(out_dir) if r.get("site") == site and norm(r.get("url")) not in now]
+            raise GuardError(reason + (" Addresses gone since last run, to spot-check: " + ", ".join(gone[:5]) if gone else "")
+                             + f" To accept it for this site only: --allow-drop={site}")
         rest, cats, tgs = wp_rest(site, before.get("metadata_source"))
         source = "rest" if rest else "html"
         reason = check_source(site, before.get("metadata_source"), source)
         if reason and not allow_source_change:
             raise GuardError(reason)
+        if before.get("sitemap_path") and before["sitemap_path"] != sitemap_path and not allow_source_change:
+            raise GuardError(f"{site}: the sitemap was read from {before['sitemap_path']} last run but {sitemap_path} now. "
+                             "Rerun with --allow-source-change if that is expected.")
         print(f"[{site}] REST {'open' if rest else 'closed'}; opening {sum(1 for _, u, _, _, _ in sm if not rest or norm(u) not in rest)} pages one by one", flush=True)
         # Open every page the REST API does not describe: all of them when REST is closed,
         # and on a REST site the few URLs it does not list (entity pages, KML files, stray posts).
@@ -587,18 +635,21 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
                 for u, f in zip(urls, ex.map(html_facts, urls)):
                     facts[norm(u)] = f
             missed = [u for u in urls if fetch_failed(facts[norm(u)]["status"])]
+            allowed = max(3, int(guard["max_fetch_failures"] * len(urls)))
+            if len(missed) > 4 * allowed:  # far over the limit: retrying page by page would only take hours
+                raise GuardError(f"{site}: {len(missed)} of {len(urls)} pages did not answer or were blocked "
+                                 f"(limit {allowed}); first: " + ", ".join(f"{u} ({facts[norm(u)]['status']})" for u in missed[:3]))
             for u in missed:  # one slow second try, so a brief outage or rate limit does not blank rows
                 time.sleep(0.5)
                 facts[norm(u)] = html_facts(u)
             missed = [u for u in missed if fetch_failed(facts[norm(u)]["status"])]
-            allowed = max(3, int(guard["max_fetch_failures"] * len(urls)))
             if len(missed) > allowed:
                 raise GuardError(f"{site}: {len(missed)} of {len(urls)} pages did not answer or were blocked "
                                  f"(no answer, HTTP 401, 403, 429 or 5xx; limit {allowed}); first: "
                                  + ", ".join(f"{u} ({facts[norm(u)]['status']})" for u in missed[:3]))
             reason = check_same_title(site, [clean_title(facts[norm(u)]["title"]) for u in urls
                                              if facts[norm(u)]["status"] == "200"], guard)
-            if reason:
+            if reason and not allow_same_title:
                 raise GuardError(reason)
         by_norm, by_undated = load_old_list(list_dir, site)
         listed_here = {norm(u) for _, u, _, _, _ in sm}
@@ -650,6 +701,7 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
                                      "http_status": "", "final_url": "", "today": "not checked"})
         rows = [r for r in inv if r["site"] == site]
         stats[site] = {"pages_in_sitemaps": len(rows), "sitemap_listings": len(raw), "metadata_source": source,
+                       "sitemap_path": sitemap_path,
                        "pages_opened": len(urls),
                        "with_video": sum(1 for r in rows if r["has_video"]),
                        "listed_twice_or_more": sum(1 for r in rows if "x in sitemaps" in r["notes"]),
@@ -665,7 +717,8 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
     if lib_not_live and CONFIG.get("check_rows_not_in_sitemap", True):
         listed = {norm(r["url"]) for r in inv}
         for x in lib_not_live:  # a row that links to another site (a video, a guest post) is not a page of this site
-            if host_of(x["url"]) != x["site"] and not ("docs.google.com/" in x["url"] or "drive.google.com/" in x["url"]):
+            if (host_of(x["url"]) != host_of(f"https://{x['site']}/")
+                    and not ("docs.google.com/" in x["url"] or "drive.google.com/" in x["url"])):
                 x["today"] = OFF_SITE
         todo = [x for x in lib_not_live if x["today"] != OFF_SITE
                 and not ("docs.google.com/" in x["url"] or "drive.google.com/" in x["url"])]
@@ -692,6 +745,7 @@ def build(sites, out_dir, list_dir, registry, allow_drop=False, allow_source_cha
                                        for site in sites if any(x["site"] == site for x in old_urls)}
     stats["generated_utc"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     stats["library_matching"] = bool(list_dir)
+    stats["library_old_urls_checked"] = bool(list_dir) and bool(CONFIG.get("check_old_urls", True))
     stats["rename_pattern"] = CONFIG.get("rename_pattern") or ""
     changed = write_outputs(out_dir, inv, lib_not_live, people, stats, rename_rx, old_urls)
     return stats, changed
@@ -841,10 +895,14 @@ def main(argv=None):
     ap.add_argument("--registry", help="people registry JSON")
     ap.add_argument("--retag-only", action="store_true",
                     help="recompute topic/triangle/stage tags in the CSVs already in --out; no network")
-    ap.add_argument("--allow-drop", action="store_true",
-                    help="accept a bigger drop in a site's URL count than the guard allows (after checking the site)")
+    ap.add_argument("--allow-drop", nargs="?", const="*", default=False, metavar="SITES",
+                    help="accept a bigger drop in URL count than the guard allows, after checking the site: alone for "
+                         "every site, or --allow-drop=a.com,b.com for those sites only")
     ap.add_argument("--allow-source-change", action="store_true",
-                    help="accept that a site's titles now come from a different source (REST closed or reopened)")
+                    help="accept that a site's titles now come from a different source (REST closed or reopened) "
+                         "or that its sitemap is read from a different path")
+    ap.add_argument("--allow-same-title", action="store_true",
+                    help="accept that most opened pages share one title (the site really is built that way)")
     a = ap.parse_args(argv)
     if a.config:
         with open(a.config, encoding="utf-8") as fh:
@@ -856,7 +914,8 @@ def main(argv=None):
     if not sites:
         ap.error("no sites: pass --sites or put \"sites\" in the config")
     try:
-        stats, changed = build(sites, a.out, a.old_lists, a.registry, a.allow_drop, a.allow_source_change)
+        stats, changed = build(sites, a.out, a.old_lists, a.registry, a.allow_drop, a.allow_source_change,
+                               a.allow_same_title)
     except GuardError as e:
         print(f"STOPPED, nothing written: {e}", file=sys.stderr)
         return 2

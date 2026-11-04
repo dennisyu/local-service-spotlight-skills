@@ -15,7 +15,7 @@ flowchart LR
 
 ## Why a map, and not one giant spreadsheet
 
-Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of the 6,201 pages listed in the four sites' sitemaps, the hand-kept tabs listed only 44%. Another 235 rows pointed at addresses that were in no sitemap at all. When we opened each one, about half still loaded, mostly through a redirect to a newer page, and the rest were gone. Of the 540 people our records show a real relationship with, 347 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
+Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of the 6,199 pages listed in the four sites' sitemaps, the hand-kept tabs listed only 44%. Another 242 rows pointed at addresses that were in no sitemap at all. When we opened each one, about half still loaded, mostly through a redirect to a newer page, and the rest were gone. Of the 540 people our records show a real relationship with, 347 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
 
 None of that was anyone's fault. It is what happens to any list that people type into. We did not fill in the missing 56%: a hand-kept copy of a sitemap is double work that goes stale the next day. We froze the old tabs as history and let an agent read the sitemaps instead. The library now runs on seven rules, and none of them is ours. Each one comes from a method that already runs large operations:
 

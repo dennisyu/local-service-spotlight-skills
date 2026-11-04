@@ -43,13 +43,22 @@ class Norm(unittest.TestCase):
         self.assertIsNone(inv.norm(""))
 
 
-class Slug(unittest.TestCase):
-    def test_old_date_permalink_matches_new_slug(self):
-        self.assertEqual(inv.slug("https://example.com/2008/08/18/when-people-take-facebook-too-seriously/"),
-                         inv.slug("https://example.com/when-people-take-facebook-too-seriously/"))
+class Undated(unittest.TestCase):
+    """An old date-style address loses its date; nothing else changes."""
 
-    def test_root(self):
-        self.assertEqual(inv.slug("https://example.com/"), "/")
+    def u(self, url):
+        return inv.undated(inv.norm(url))
+
+    def test_old_date_permalink_matches_the_moved_page(self):
+        self.assertEqual(self.u("https://example.com/2008/08/18/when-people-take-facebook-too-seriously/"),
+                         inv.norm("https://www.example.com/when-people-take-facebook-too-seriously"))
+        self.assertEqual(self.u("http://example.com/2019/7/my-post/"), "example.com/my-post")  # month without a zero
+
+    def test_everything_else_is_left_alone(self):
+        for url in ("https://example.com/", "https://example.com/blog/post/", "https://example.com/2020/04/12/",
+                    "https://example.com/2020/04/", "https://example.com/2020/04/page/2/", "https://example.com/2020/04/12/123/",
+                    "https://example.com/category/seo/"):
+            self.assertEqual(self.u(url), inv.norm(url), url)
 
 
 class Titles(unittest.TestCase):
@@ -436,6 +445,18 @@ class Summary(unittest.TestCase):
             self.assertEqual(summ.main(["--inventory", d, "--out", os.path.join(d, "x.json")]), 2)
         self.assertFalse(os.path.exists(os.path.join(d, "x.json")))
 
+    def test_a_private_page_that_loads_is_a_privacy_check_not_a_sitemap_fix(self):
+        d = self.make()
+        with open(os.path.join(d, "library-rows-not-in-sitemap.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh); w.writerow(inv.NOT_IN_SITEMAP_FIELDS)
+            w.writerow(["a.com", "Power hour notes", "https://a.com/private-call/", "", "Private", "200", "",
+                        "loads, but is missing from the sitemap"])
+        g = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["values"]
+        flat = [" | ".join(str(c) for c in r) for r in g]
+        self.assertNotIn("private-call", json.dumps(g))
+        self.assertTrue(any("marks Private loads for anyone" in r and "| 1 |" in r for r in flat))
+        self.assertFalse(any(r.startswith("a.com | Page loads but is missing from the sitemap") for r in flat))
+
     def test_old_rows_on_another_site_are_not_sitemap_defects(self):
         d = self.make()
         with open(os.path.join(d, "library-rows-not-in-sitemap.csv"), "w", newline="", encoding="utf-8") as fh:
@@ -559,6 +580,20 @@ class Guards(unittest.TestCase):
                              pages + "&page=1": (500, {}, b"", "")})
         with self.assertRaises(inv.GuardError):
             inv.wp_rest("a.com")
+
+    def test_rest_paging_that_does_not_move_stops_the_run(self):
+        same = self.posts(100)
+        inv.fetch = FakeNet({self.POSTS + "&page=1": (200, {}, same, ""), self.POSTS + "&page=2": (200, {}, same, "")})
+        with self.assertRaises(inv.GuardError) as cm:
+            inv.wp_rest("a.com")
+        self.assertIn("paging does not work", str(cm.exception))
+
+    def test_allow_drop_can_name_one_site(self):
+        self.assertTrue(inv.drop_allowed(True, "a.com"))
+        self.assertTrue(inv.drop_allowed("*", "a.com"))
+        self.assertTrue(inv.drop_allowed("a.com,b.com", "b.com"))
+        self.assertFalse(inv.drop_allowed("a.com", "b.com"))
+        self.assertFalse(inv.drop_allowed(False, "a.com"))
 
     def test_closed_rest_means_read_each_page(self):
         inv.fetch = FakeNet({})
@@ -701,6 +736,33 @@ class ReviewFixes(unittest.TestCase):
         repeats = {u: r for _k, u, _m, _v, r in rows}
         self.assertEqual(repeats["https://a.com/x/"], 2)  # listed as a post and as a page
         self.assertEqual(repeats["https://a.com/y/"], 1)  # a post with a video is listed once plus its video entry
+        news = inv.dedupe_sitemap([("post", "https://a.com/z/", ""), ("news", "https://a.com/z/", ""),
+                                   ("image", "https://a.com/z/", "")])
+        self.assertEqual(news[0][0], "post")
+        self.assertEqual(news[0][4], 1)  # news and image sitemaps list pages again on purpose
+
+    def test_a_failing_sitemap_is_not_swapped_for_another(self):
+        inv.fetch = FakeNet({"https://a.com/sitemap_index.xml": (503, {}, b"", ""),
+                             "https://a.com/sitemap.xml": (200, {}, self.URLSET % b"<url><loc>https://a.com/x/</loc></url>", "")})
+        with self.assertRaises(inv.GuardError):
+            inv.sitemap_urls("a.com")
+        inv.CONFIG["site_options"] = {"a.com": {"sitemap": "custom.xml"}}  # no leading slash
+        inv.fetch = FakeNet({"https://a.com/custom.xml": (200, {}, self.URLSET % b"<url><loc>https://a.com/y/</loc></url>", "")})
+        self.assertEqual(inv.sitemap_urls_with_path("a.com")[1], "/custom.xml")
+
+    def test_a_www_site_name_still_opens_its_own_old_rows(self):
+        old = {"values": [["1", "An old page", "https://www.a.com/gone/", "", ""]]}
+        lists = tempfile.mkdtemp()
+        json.dump(old, open(os.path.join(lists, "www.a.com.json"), "w"))
+        body = self.URLSET % b"<url><loc>https://www.a.com/x/</loc></url>"
+        inv.fetch = FakeNet({"https://www.a.com/sitemap_index.xml": (200, {}, body, ""),
+                             "https://www.a.com/x/": (200, {}, b"<title>X</title>", "https://www.a.com/x/"),
+                             "https://www.a.com/gone/": (404, {}, b"", "https://www.a.com/gone/")})
+        d = tempfile.mkdtemp()
+        with contextlib.redirect_stdout(io.StringIO()):
+            inv.build(["www.a.com"], d, lists, None)
+        gone = list(csv.DictReader(open(os.path.join(d, inv.NOT_IN_SITEMAP_FILE), encoding="utf-8")))
+        self.assertEqual(gone[0]["today"], "not found")  # opened, not mislabelled as another site
 
     def test_a_bad_rename_pattern_stops_before_the_crawl(self):
         with self.assertRaises(SystemExit):
