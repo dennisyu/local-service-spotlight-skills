@@ -2,27 +2,31 @@
 """Build the one-screen summary grid for a library sheet from published_inventory.py outputs.
 
 The grid is the tab people glance at: counts per site, topics, one line per list
-the agents work (how many items, which agent, where the full list is), and the
-sitemap defects. It is management by exception: the row-level lists stay in the
-repository files the agents read and work, and nobody is handed a list to work by
-hand. It is generated, so it is rebuilt from the inventory files, never typed into. Output is a Sheets-style values grid plus the row numbers of the
-section and column headers, so an agent can clear the tab, write the grid, and
-re-apply bold headers in one pass. "merge_rows" lists the only rows that may be
+the agents work (how many items, which agent works it, where its rows are), and
+the sitemap defects, one row per kind. It is management by exception: the rows of
+every list stay in the repository files the agents read and work, and nobody is
+handed a list to work by hand. Every count comes from inventory-stats.json, the
+record of the run that made the files, so a list the run did not check says
+"not checked this run" instead of showing an old count. The grid is generated:
+rebuild it, never type into it. Output is a Sheets-style values grid plus the row
+numbers of the section and column headers, so an agent can clear the tab, write
+the grid and format it in one pass. "merge_rows" lists the only rows that may be
 merged across the tab (their row has a single cell); merging any other header row
 would delete its column labels.
 
     python3 build_summary.py --inventory library --config inventory-config.json \
         --out summary-tab.json [--date 2026-11-04]
 
-The hash ("sha256") covers every row except the dated first row, so building the
-same data on another day gives the same hash. When --out already holds a grid with
+Row 1 carries the date of the inventory run (inventory-stats.json "generated_utc";
+--date only when the stats have none). The hash ("sha256") covers every row except
+that dated first row, so the same data gives the same hash. When --out already holds a grid with
 the same hash, the file is left untouched and the printed result says
 "changed": false: leave the sheet tab alone too.
 
 Optional config keys (same file as published_inventory.py):
   "summary": {
     "title": "PUBLISHED PAGES · COUNTS AND THE LISTS AGENTS WORK",
-    "full_list_location": "GitHub: owner/repo, file library/published-inventory.csv",
+    "full_list_location": "GitHub owner/repo, folder library/",
     "rename_label": "Titles still using the old name",
     "rename_list_label": "Titles that still use the retired name",
     "list_repo_label": "GitHub owner/repo, folder library/",
@@ -53,11 +57,11 @@ DEFAULTS = {
     "rename_list_label": "Titles that still use the retired name",
     "list_repo_label": "the repository's library folder",
     "withhold_titles": [],
-    "section_owners": {},
     "worklist_owners": {},
 }
+NOT_CHECKED = "not checked this run"
 LINK_WITHHELD = "(link withheld here: see the full list)"
-NOT_IN_SITEMAP_FILES = ("library-rows-not-in-sitemap.csv", "library-rows-not-live.csv")  # new name, then old
+NOT_IN_SITEMAP_FILE = "library-rows-not-in-sitemap.csv"
 TODAY_ORDER = [
     "loads, but is missing from the sitemap",
     "redirects to a page in the sitemap",
@@ -67,6 +71,7 @@ TODAY_ORDER = [
     "needs a login or is blocked",
     "no answer",
     "points at a Google file, not a page",
+    "points at another site",
     "not checked",
 ]
 LIVE_UNLISTED = TODAY_ORDER[0]
@@ -93,31 +98,34 @@ def grid_hash(grid):
     return hashlib.sha256(json.dumps(grid[1:], ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
 
+class SummaryError(RuntimeError):
+    """The inventory files needed for the summary are missing."""
+
+
+def site_names(cfg):
+    return [x if isinstance(x, str) else x.get("site", "") for x in (cfg.get("sites") or [])]
+
+
 def build(inv_dir, cfg, date):
     s = {**DEFAULTS, **(cfg.get("summary") or {})}
-    legacy = s.get("section_owners") or {}
-    owners = {"rename": legacy.get("C", ""), "people": legacy.get("D", ""), "sitemap": legacy.get("F", ""),
-              **(s.get("worklist_owners") or {})}
+    owners = s.get("worklist_owners") or {}
     def owner(key):
         return f" Worked by: {owners[key]}." if owners.get(key) else ""
     rules = s["withhold_titles"]
-    sites = list(cfg.get("sites") or [])
-    stats = json.load(open(os.path.join(inv_dir, "inventory-stats.json"), encoding="utf-8"))
+    stats_path = os.path.join(inv_dir, "inventory-stats.json")
+    try:
+        with open(stats_path, encoding="utf-8") as fh:
+            stats = json.load(fh)
+    except (OSError, ValueError) as e:
+        raise SummaryError(f"no readable {stats_path} ({e}); run the inventory first")
     pages = read_csv(os.path.join(inv_dir, "published-inventory.csv"))
-    if not sites:
-        sites = sorted({p["site"] for p in pages})
-    rename_rows = read_csv(os.path.join(inv_dir, cfg.get("rename_file") or "rename-worklist.csv"))
-    people = read_csv(os.path.join(inv_dir, "people-coverage.csv"))
-    not_listed = []
-    for name in NOT_IN_SITEMAP_FILES:
-        not_listed = read_csv(os.path.join(inv_dir, name))
-        if not_listed:
-            break
-    not_listed_counts = stats.get("library_rows_not_in_sitemap", stats.get("library_rows_not_live", {}))
-    old_urls = read_csv(os.path.join(inv_dir, "library-old-urls.csv"))
+    sites = site_names(cfg) or sorted({p["site"] for p in pages})
+    not_listed = read_csv(os.path.join(inv_dir, NOT_IN_SITEMAP_FILE))
     def count(st):
-        return st.get("pages_in_sitemaps", st.get("live_urls", 0))
+        return st.get("pages_in_sitemaps", 0)
     total = sum(count(stats.get(x, {})) for x in sites)
+    if stats.get("generated_utc"):
+        date = stats["generated_utc"][:10]
 
     grid, headers, colheads = [], [], []
     def add(row=None):
@@ -161,16 +169,16 @@ def build(inv_dir, cfg, date):
 
     # A. by site
     headers.append(add(["A. BY SITE", "URLs in sitemaps", "Posts", "Pages", "Pages with video", s["rename_label"],
-                        "Listed twice in sitemaps", "Not answering (pages opened one by one)"]))
+                        "Listed twice in sitemaps", "Not HTTP 200 (pages opened one by one)"]))
     sums = [0] * 7
     for site in sites:
         st = stats.get(site, {})
         bt = st.get("by_type", {})
         vals = [count(st), bt.get("post", 0), bt.get("page", 0), st.get("with_video", 0),
-                st.get("rename_hits", st.get("blitz_in_title", 0)), st.get("listed_twice_or_more", 0), st.get("non_200", 0)]
+                st.get("rename_hits", 0), st.get("listed_twice_or_more", 0), st.get("non_200", 0)]
         sums = [a + b for a, b in zip(sums, vals)]
         add([site] + vals)
-    total_row = add(["All sites" if len(sites) != 4 else "All four sites"] + sums)
+    total_row = add([f"All {len(sites)} sites"] + sums)
     add()
 
     # B. topics
@@ -186,18 +194,21 @@ def build(inv_dir, cfg, date):
     add(["(no topic matched yet)", none])
     add()
 
-    # C. the lists the agents work: a count and an owner each, never the rows themselves
-    gaps = [p for p in people if p.get("real_relationship") == "Y" and str(p.get("pages_with_name_in_title")) == "0"]
-    old_404 = [r for r in old_urls if r.get("today") == "not found"]
-    kept = sum(stats.get(x, {}).get("rename_kept", 0) for x in sites)
+    # C. the lists the agents work: a count and an owner each, never the rows themselves. Every count is
+    # read from the stats of the run that wrote the files; a list that run did not check says so.
+    renamed = sum(stats.get(x, {}).get("rename_hits", 0) for x in sites) if stats.get("rename_pattern") else NOT_CHECKED
+    kept = sum(stats.get(x, {}).get("rename_kept", 0) for x in sites) if stats.get("rename_pattern") else 0
     rename_what = s["rename_list_label"] + (f" ({kept} more keep the name on purpose: a domain, history, a registered app)"
                                             if kept else "")
+    gaps = (stats["people"].get("real_with_no_title_page", 0) if isinstance(stats.get("people"), dict) else NOT_CHECKED)
+    old_404 = (sum(v.get("not found", 0) for v in (stats.get("library_old_urls_today") or {}).values())
+               if stats.get("library_matching") else NOT_CHECKED)
     headers.append(add(["C. LISTS THE AGENTS WORK", "Items", "Worked by", f"Full list ({s['list_repo_label']})"]))
     for what, n, key, where in (
-            (rename_what, len(rename_rows), "rename", f"library/{cfg.get('rename_file') or 'rename-worklist.csv'}"),
-            ("People we know with no page naming them (strongest relationship evidence first)", len(gaps), "people",
-             "library/people-coverage.csv"),
-            ("Old dated addresses that return 404 instead of redirecting to the page", len(old_404), "old_addresses",
+            (rename_what, renamed, "rename", f"library/{cfg.get('rename_file') or 'rename-worklist.csv'}"),
+            ("People we know with no page naming them (real relationships, most relationship sources first)", gaps,
+             "people", "library/people-coverage.csv"),
+            ("Old dated addresses that return 404 instead of redirecting to the page", old_404, "old_addresses",
              "library/library-old-urls.csv"),
             ("Sitemap defects (listed in section D)", sum(int(r[2]) for r in defects), "sitemap",
              "library/published-inventory.csv (status and notes columns)")):
@@ -232,7 +243,11 @@ def main(argv=None):
     if a.config:
         with open(a.config, encoding="utf-8") as fh:
             cfg = json.load(fh)
-    out = build(a.inventory, cfg, a.date)
+    try:
+        out = build(a.inventory, cfg, a.date)
+    except SummaryError as e:
+        print(f"STOPPED, nothing written: {e}", file=sys.stderr)
+        return 2
     old = None
     if os.path.exists(a.out):
         try:

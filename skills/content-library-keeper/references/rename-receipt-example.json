@@ -1,0 +1,25 @@
+{
+ "about": "Example receipt for title changes an agent made on a site. One file per batch, written before the change. Made-up data.",
+ "site": "example.com",
+ "rule": "Titles that still use the retired name OldCo; the domain oldco.com and history posts keep it on purpose.",
+ "prepared": "2026-11-04T21:30Z",
+ "agent": "Library agent (Claude)",
+ "edit_path": "WordPress REST API with the site's application password from the team's credential store (never written here)",
+ "changes": [
+  {
+   "url": "https://example.com/oldco-pricing/",
+   "id": 1234,
+   "field": "title",
+   "old_value": "OldCo Pricing",
+   "new_value": "Our Pricing",
+   "undo": "POST /wp-json/wp/v2/pages/1234 {\"title\": \"OldCo Pricing\"}",
+   "result": "200; live title read back 2026-11-04T21:41Z: Our Pricing"
+  }
+ ],
+ "not_changed": [
+  {
+   "url": "https://example.com/history-of-oldco/",
+   "reason": "history post: keeps the name on purpose"
+  }
+ ]
+}

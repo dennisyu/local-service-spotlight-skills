@@ -27,9 +27,11 @@ None of that was anyone's fault. It is what happens to any list that people type
 | 4 | **People see exceptions, not lists.** The tab people read holds counts and one line per list naming the agent that works it. The rows stay in the repository. The team hears from the agent only when something changed or needs a person. | [Management by exception](https://www.accountingtools.com/articles/what-is-management-by-exception.html) |
 | 5 | **One owner per list, named by its function.** Who does it today sits beside the function, so a list never dies when a person leaves. | Amazon's [single-threaded ownership](https://aws.amazon.com/executive-insights/content/amazon-two-pizza-team/) |
 | 6 | **Mechanisms, not good intentions.** A schedule, guards that stop the run on bad data, a read-back of every write, and tests for every rule. | Amazon's [mechanisms](https://docs.aws.amazon.com/wellarchitected/latest/operational-readiness-reviews/building-mechanisms.html): a tool, its adoption, and inspection |
-| 7 | **Agents decide two-way doors; people decide one-way doors.** A title rename can be undone, so the agent does it and saves the old title. Deleting a page or publishing a private story cannot, so a person decides. | Jeff Bezos's [one-way and two-way doors](https://blog.kindel.com/2019/06/27/one-way-and-two-way-doors/) |
+| 7 | **Agents decide two-way doors; people decide one-way doors.** A title rename can be undone, so the agent does it and first writes a receipt with the old title. Deleting a page or publishing a private story cannot be undone, so a person decides. | Jeff Bezos's [one-way and two-way doors](https://s2.q4cdn.com/299287126/files/doc_financials/annual/2015-Letter-to-Shareholders.PDF) (Amazon's 2015 letter to shareholders) |
 
-And one rule that follows from all seven: **fix the source, not the copy.** If a row is wrong, the page, the recording or the registry is wrong. Fix it there; the next run corrects the row.
+Two house rules follow from all seven. **Fix the source, not the copy:** if a row is wrong, the page, the recording or the registry is wrong; fix it there, and the next run corrects the row. **Private stays private:** a recording, title or quote marked private, a one-on-one session, client data without consent, and every credential stay out of every list people or the public can read. Name the store, never the value.
+
+**Every change an agent makes leaves a receipt.** Before it renames a title, the agent writes a receipt file (one per batch, for example `renames/2026-11-04-titles.json`) with each page's address and ID, the old title, the new title, the date, which agent did it, and how to undo it. Then it reads the page back. The receipt is what makes the change a two-way door. The shape is in the skill's [rename receipt example](../../skills/content-library-keeper/references/rename-receipt-example.json).
 
 ### What we stopped doing
 
@@ -92,11 +94,11 @@ The names and order follow the [accepted Nine Triangles reference](../../skills/
 The refresh is designed to run every morning as a scheduled task.
 
 1. Reads the map and pulls the newest repository copy.
-2. Rebuilds the published inventory from every site's sitemap. If any part of a sitemap fails, or a site suddenly lists far fewer pages, the run stops, writes nothing and reports why. A partial count never replaces a full one.
+2. Rebuilds the published inventory from every site's sitemap. If any part of a sitemap fails, a site suddenly lists far fewer pages, or a firewall blocks the pages it opens, the run stops, writes nothing and reports why. A partial count never replaces a full one.
 3. Compares with yesterday: new pages, pages gone, people newly written about, renames done.
 4. Refreshes the summary tab, the map's counts and the map snapshot in the repository, but only what changed. A day with nothing new writes nothing.
 5. Checks each master's newest date. A master that stopped growing while its source kept producing is the most important finding of the day.
-6. Works its own lists: renames the titles it can edit (saving each old title), hands the rest to the agent that can reach that site, and asks a person only for access or a one-way decision.
+6. Works its own lists: renames the titles it can edit (writing a receipt with each old title first), hands the rest to the agent that can reach that site, and asks a person only for access or a one-way decision.
 7. Commits the generated files, then posts in the team's project thread only when something changed or needs a person. Plain English first; file paths and counts underneath.
 
 ## Connect your agents to ours

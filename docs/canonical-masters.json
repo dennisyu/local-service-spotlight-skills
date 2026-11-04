@@ -246,16 +246,12 @@
       "entity_type": "inventory",
       "owner_function": "Content operations (library upkeep)",
       "source_of_truth": {
-        "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit#gid=2026110401",
-        "note": "The Library Map tab names the one master for each kind of knowledge (recordings, published pages, people, proof, speaking, photos, methods) and its owner function. Private sheet in the company shared drive. Counts live in each master, never in this registry."
-      },
-      "master_sheet": {
-        "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit",
-        "title": "Your Content Factory Library (master index)"
+        "url": null,
+        "note": "The Library Map tab of the company's library sheet names the one master for each kind of knowledge (recordings, published pages, people, proof, speaking, photos, methods) and the agent function that owns it. Private: lives in the company's own Google Drive and repositories. Agents with access find it from the company's private agent runtime; it is not linked from this public file. Counts live in each master, never in this registry."
       },
       "hub": {
         "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md",
-        "role": "Public method: how the library is organized, the daily agent loop, and the hub-and-spoke protocol for other teams' agents."
+        "role": "Public method: how the library is organized, the seven borrowed rules, the daily agent loop, and the hub-and-spoke protocol for other teams' agents."
       },
       "method": {
         "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/content-library-keeper/SKILL.md",
@@ -263,20 +259,24 @@
       },
       "skins": [
         {
-          "url": "https://github.com/Local-Service-Spotlight/dennis-os/tree/master/library",
-          "role": "Private repository copy: the generated published inventory, worklists and a dated snapshot of the Library Map. Generated, never edited by hand (on the library branch until its pull request merges)."
+          "url": null,
+          "role": "Private generated copy in the company's repository: the published inventory, the lists the agents work and a dated snapshot of the Library Map. Generated, never edited by hand."
         }
       ],
       "owning_skill": {
         "name": "content-library-keeper",
         "in_this_repo": true
       },
-      "cadence": "Daily refresh by the library agent's scheduled task (written 2026-11-04; switched on once approved); it posts to the team's project thread only when something changed or needs a person.",
+      "cadence": "Daily at 4:41 am Pacific by the library agent's scheduled task (created 2026-11-04). It posts to the team's project thread only when something changed or needs a person; other agents work the lists it generates.",
       "claim_id_pattern": "master:content-library:<pass>:<YYYY-MM-DD>",
       "last_verified": {
         "date": "2026-11-04",
         "by": "Claude, content library",
         "what": "Built the Library Map from live reads of the sheet, the recordings backup folders, the people registry and four live sitemaps; every Rows-now cell is a formula or 'external'."
+      },
+      "public_article": {
+        "url": "https://blitzmetrics.com/content-library/",
+        "role": "The method in plain words, with its diagram and the first day's results."
       }
     },
     {
@@ -286,30 +286,30 @@
       "owner_function": "Content operations (library upkeep)",
       "source_of_truth": {
         "url": null,
-        "note": "Each site's own sitemap (https://<site>/sitemap_index.xml) is the source of truth for what is published; there is no single URL. The library agent rebuilds the copy with content-library-keeper's published_inventory.py, counting each page once (daily once its scheduled refresh is on)."
+        "note": "Each site's own sitemap is the source of truth for what is published; there is no single URL. The library agent rebuilds the copy daily with content-library-keeper's published_inventory.py, counting each page once."
       },
       "hub": {
-        "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit#gid=2026110402",
-        "role": "Private summary tab: counts per site and the worklists people act on (renames, people with no page, old rows in no sitemap with what each address does today, sitemap defects)."
+        "url": null,
+        "role": "Private summary tab: counts per site, topics, one line per list with its count and the agent that works it, and the sitemap defects. Private: lives in the company's own Google Drive and repositories. Agents with access find it from the company's private agent runtime; it is not linked from this public file."
       },
       "skins": [
         {
-          "url": "https://github.com/Local-Service-Spotlight/dennis-os/blob/master/library/published-inventory.csv",
-          "role": "Private generated copy, one row per URL listed in the sitemaps. Path is on the library branch until its pull request merges."
+          "url": null,
+          "role": "Private generated copy, one row per URL listed in the sitemaps."
         }
       ],
       "competing_copies": [
         {
-          "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit",
+          "url": null,
           "found": "2026-11-04",
-          "disposition": "Five hand-kept per-site article tabs in the library sheet were frozen and renamed with a (legacy) suffix on 2026-11-04; they stay for drafts, private posts and history, not as a count of what is live."
+          "disposition": "Five hand-kept per-site article tabs in the private library sheet were frozen and renamed with a (legacy) suffix on 2026-11-04. They stay as history; their gaps are not filled in, because the sitemap is the list."
         }
       ],
       "owning_skill": {
         "name": "content-library-keeper",
         "in_this_repo": true
       },
-      "cadence": "Daily once the scheduled refresh is on. The inventory stops and writes nothing if any part of a sitemap fails or a site's count drops sharply, so the previous rows stay and a partial count never replaces a full one.",
+      "cadence": "Daily. The inventory stops and writes nothing if any part of a sitemap fails, too many pages do not answer or are blocked, or a site's count drops sharply, so the previous rows stay and a partial count never replaces a full one.",
       "claim_id_pattern": "master:published-pages:<pass>:<YYYY-MM-DD>",
       "last_verified": {
         "date": "2026-11-04",
@@ -323,8 +323,8 @@
       "entity_type": "registry",
       "owner_function": "Relationships",
       "source_of_truth": {
-        "url": "https://github.com/Local-Service-Spotlight/dennis-os/blob/master/registry/registry.json",
-        "note": "Private repository. One row per unique entity with provenance; registry/CENSUS.md records every merge and every pair deliberately left unmerged. The Obsidian vault is a reading lens over it."
+        "url": null,
+        "note": "Private repository registry, one row per unique entity with provenance; merges are recorded beside it. Private: lives in the company's own Google Drive and repositories. Agents with access find it from the company's private agent runtime; it is not linked from this public file."
       },
       "hub": {
         "url": null,
@@ -334,7 +334,7 @@
         "name": "content-library-keeper",
         "in_this_repo": true
       },
-      "cadence": "Updated when a relationship is confirmed from a source; the library agent reports people with no page in the daily worklist.",
+      "cadence": "Updated when a relationship is confirmed from a source. The library's daily refresh counts the real relationships no page names yet; the honor-article program writes those pages.",
       "claim_id_pattern": "master:people-registry:<pass>:<YYYY-MM-DD>",
       "last_verified": {
         "date": "2026-11-04",
