@@ -1,30 +1,33 @@
 ---
 name: definitive-article-writer
-description: Write or improve the canonical recipe for a repeatable task, or the canonical hub for a topic or person. Classify the page first, prove its claims, connect it to owned training, and document the execution in a meta article.
+description: Write or improve the canonical recipe for a repeatable task, or the canonical hub for a person, company, concept or product. Classify the page first, prove its claims, connect it to owned training and relevant assistance, and document the execution in a meta article.
 rule-scopes: published-html, design-review
 ---
 
 # Definitive Article Writer
 
-**Use this when** you want to own a topic — or a person's name — in Google and in AI answers. One comprehensive canonical page beats a dozen thin blog posts, because humans and machines both cite the page that settles the question. Step 9 of the Local Service Spotlight method.
+**Use this when** a reader needs a useful, authoritative page about a person, company, concept or product. Build on real experience and keep one maintained owner for the subject. Search and AI visibility are outcomes to measure, not promises. Step 9 of the Local Service Spotlight method.
 
 ## Inputs
-- The topic or person, plus every fact you can prove: numbers, dates, names, clients, quotes, media.
+- The person, company, concept or product, plus every fact you can prove: numbers, dates, names, clients, quotes, media. Resolve namesakes before assigning a canonical URL.
 - The mined transcript from `content-factory` stage 2, if the article starts from a recording.
 - Your proof inventory from `positive-mentions-harvester` — third-party corroboration to cite.
 - Every existing page on the subject — yours and competitors' — so you know what to absorb and what to beat.
 - The specific Goals, Content, Targeting; the canonical parent topic; and the relevant owned guides for every named tool or concept.
+- The existing entity/article inventory, ownership and holds; dated firsthand experience, source links and permitted uses; and current relevant DIY and assistance destinations. Use the existing tracker, not a second entity spreadsheet.
 
 ## Steps
-1. **Audit first.** If a canonical hub already exists on your site, improve it. Never publish a second page on the same topic — that's content vandalism; you'd split your own authority.
+1. **Find the owner first.** Read `docs/canonical-masters.json`, the Canonical Directory, Task Library and available site inventories before drafting. Check across the authorized sites, not just this domain. If a hub owns the subject, improve it. Record each entity as already covered, a verified addition, a candidate needing evidence, or excluded with a reason in the existing inventory. Prioritize the business's key root and brand pages before supporting leaves; do not invent a second tracker or publish a competing hub.
 2. **Classify and outline.** A task guide is a repeatable recipe; a topic/entity/framework hub explains its subject and links to the relevant task recipes. A supporting story, opinion, tool comparison, reference or historical post does not become task-definitive because its opening was repaired. For a task recipe, outline the trigger/starting state, inputs and linked prerequisite tasks, ordered steps, measurable output/pass criteria, and downstream task/owner/handoff. Hold unsupported fields as gaps. For a hub, outline the questions its declared scope must answer.
 3. **Write facts, not fluff.** Open with 2–3 sentences at fifth-grade reading level or below: the reader's actual situation, why it matters, the useful outcome and how this article helps them get there. Earn attention with a concrete problem, consequential finding or true moment; connect it to the reader's decision immediately. Follow the shared specific-GCT opening standard. Keep the meaningful topic-specific visual with that short opening; it may come first. Verify it renders in the first screen on desktop and mobile. Every factual claim carries a number, a name, or a source link. When proof involves another person, show the true moment: scene, meaning, relevant person, human beat, then a compact source receipt. Publish nothing you couldn't defend in diligence, but do not turn the public page into the diligence memo.
 4. **Explain terms and placement.** On first mention, give the plain meaning and link the verified owned explainer, including the result, material and audience behind [Goals, Content, Targeting](https://blitzmetrics.com/gct-business-strategy/). Link the task's [Task Library record](https://local-service-spotlight.github.io/task-library/) and [Content Factory parent](https://blitzmetrics.com/content-factory/). Lower in a Content Factory task article, show its responsive context map with the true Produce → Process → Post → Promote placement, prerequisites, next task and meta feedback into the recipe. The map supplements the lead visual.
 5. **Structure for machines.** H2s phrased as the questions people actually ask. Schema markup (Person, Article, FAQ). The entity's name spelled identically everywhere. A stable URL that never changes.
-6. **Build the orbit.** Internal-link every related thin post INTO this page; link this page out to its sources and sibling hubs. Thin posts orbit the hub — they feed it, never compete with it.
-7. **Make it the target.** Every clip, social post, podcast show-note, bio, and profile points at this URL. One topic, one URL — the Task Library principle.
+6. **Build the orbit.** Give the page a verified parent in the SEO Tree. Connect useful supporting stories and proof to their hub, and the hub back to those examples and relevant sibling guides. People and companies keep their verified identity destinations under the entity-linking rule; a relationship or coappearance is not an endorsement. Record missing links or uncertain ownership as gaps instead of guessing.
+7. **Give relevant how-to pages two paths.** Teach the usable DIY method and link its current free recipe or training when one exists. When the method relates to a product or service the business currently offers, explain that optional assistance in plain words and link the exact relevant offer. Verify both destinations and current scope. Do not label paid training free, invent an offer, add an unrelated pitch, or place a sales CTA on an unrelated person's story. Record an honest not-applicable reason or a missing-offer gap.
+8. **Distribute toward the owner.** Relevant clips, social posts and show-notes link to the hub in the channel's supported format. Use a profile or bio only when it serves that profile's purpose. Carry the source, permitted claim, intended audience and appropriate next step into each derivative; a copied caption or a queued package is not a published result.
 
-8. **Verify and document this execution.** Check the declared recipe or hub scope, preserved source/media, live links and rendered desktop/mobile opening. In the existing receipt, retain the exact opening and reviewer-quoted evidence for reader/situation, reason to care, useful outcome and supporting mechanism. Confirm the body delivers its promise; a grade or word count cannot pass meaning. Write the run's meta article using the [meta guidelines](https://blitzmetrics.com/meta-article-prompt/), with the canonical task, recipe revision, execution ID, results and evidence. Propose supported improvements. Publication and source changes follow existing authorization.
+9. **Verify and document this execution.** Re-open the current [Article Guidelines](https://localservicespotlight.com/article-guidelines/) and check the declared recipe or hub scope, preserved source/media, two paths where applicable, live links and rendered desktop/mobile opening. In the existing receipt, retain the exact opening and reviewer-quoted evidence for reader/situation, reason to care, useful outcome and supporting mechanism. Confirm the body delivers its promise; a grade or word count cannot pass meaning. Write the run's meta article using the [meta guidelines](https://blitzmetrics.com/meta-article-prompt/), with the canonical task, recipe revision, execution ID, results and evidence. Retain published URLs, public readback, held derivatives and the receiving function separately. Publication and source changes follow existing authorization.
+10. **Feed new experience back into the same owner.** A new run, useful question, relationship moment or product change triggers a source-backed delta to the existing hub and inventory. Review the evidence, improve the recipe or standard when supported, propagate affected derivatives, and recheck their actual destinations. Use Metrics, Analysis, Action to choose the next useful improvement; record unavailable performance as UNKNOWN. A documented cadence does not create a scheduled worker or prove another agent adopted the method.
 
 ## Anatomy — what belongs on the page
 - Specific GCT in plain language (2–3 sentences at fifth-grade level or below).
@@ -37,6 +40,7 @@ rule-scopes: published-html, design-review
   collaborations; keep row-level caveats and permission states in the source inventory.
 - FAQ — the questions you outlined, answered directly.
 - Links out to sources, across to sibling hubs.
+- A usable DIY path and the verified relevant assistance path on applicable how-to pages.
 For a task recipe, include the trigger and starting state; inputs and linked prerequisites;
 ordered execution steps and decisions; measurable output with pass/fail checks; and the
 receiving function, next task and handoff artifact. Add the truthful Content Factory
@@ -47,7 +51,7 @@ neither is certified merely by receiving a new introduction.
 ## Why AI quotes it
 - AI engines lift the page that states facts plainly, with consistent entity spelling and sourced numbers.
 - Corroboration decides ties: your harvested mentions (step 2) and entity plumbing (step 5) confirm what this page claims.
-- A stable URL accumulates citations; a renamed one starts over. Pick the URL once.
+- Keep the canonical URL stable so existing links and citations keep reaching it. A necessary move requires the site's authorized redirect and verification process.
 
 ## Failure modes — what kills a definitive article
 - Publishing a second post on the same topic because writing fresh feels easier than improving the hub.
@@ -58,12 +62,12 @@ neither is certified merely by receiving a new introduction.
   sounds doubtful. Keep the internal gate strict; state the supported fact once.
 - Relationship inflation: a photograph or shared event is rewritten as friendship,
   partnership, mentorship, a client relationship, praise, or endorsement.
-- Changing the URL or title to chase keywords — you reset your own authority to zero.
+- Changing an established URL to chase keywords without checking incoming links, traffic and an authorized redirect plan.
 - Letting it go stale. The hub is living: every new recording, deal, or mention updates it.
 
 ## Output
-- One canonical, source-linked, schema-marked article at a stable URL — the page Google ranks and AI quotes for this subject.
-- The orbit list: existing posts to re-link into the hub, plus every clip and profile that should point here.
+- One canonical, source-linked article at a stable URL with appropriate structured data. Record actual search and AI citations separately; publication alone does not establish them.
+- A delta in the existing entity inventory and orbit list: canonical identity, parent, related proof and guides, applicable DIY/assistance destinations, publication receipts, unresolved gaps and next owning function. Keep private relationship and permission evidence out of public copy.
 
 ## For DealCon — agency owners & acquirers
 **If you run an agency:** the definitive article on your niche is what prospects read before the sales call — it pre-sells you as the documented authority, justifies premium pricing, and becomes a productized deliverable you can sell to every client.
