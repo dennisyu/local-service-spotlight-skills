@@ -81,13 +81,15 @@ particular account or client. Verify current vendor contracts before use.
 
 - Assign file-level writers and identify page generators. Edit the owning source and exercise the normal rebuild, rather than shipping a patch that the next generator will erase.
 
+- For a batch generator, preflight the whole requested batch before output writes: sources, resources, transformations, rendering and the actual destination plan. Resolve physical destinations and check expected parent and target types. An invalid planned item must stop the batch before its first output write.
+
 - Validate catalog entries, standalone explanations, package members and graph links as separate objects. A capability cannot be reliably found or taught from an internal filename alone.
 
 - Derive every visible count from its authoritative artifact. Compare summaries, menus, delivery messages and notices against that source, not against one another.
 
 - A correction becomes propagated only after the exact receiving revision is loaded and tested. A note to port it or a scheduled job definition is not an execution receipt.
 
-- Test checkers with independently selected bad and clean fixtures. Zero findings can mean no check ran; self-comparison cannot detect consistent error.
+- Test checkers with independently selected bad and clean fixtures. Zero findings can mean no check ran; self-comparison cannot detect consistent error. For a generator release, add a reviewer-chosen negative case outside the producer's suite. Preserve contrary findings, fix the cause and retest affected checks on the exact final source and output after corrections.
 
 - Preserve distinctions between absent, unsupported, unreachable, denied, failed and not checked. Separate branches and assertions must produce distinct outcomes.
 
