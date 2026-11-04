@@ -21,7 +21,7 @@ flowchart LR
 
 ## Why a map, and not one giant spreadsheet
 
-Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of 6,201 pages live across four sites, the hand-kept tabs listed only 44%. Another 235 rows pointed at pages that were no longer in their site's sitemap (deleted, moved, made private or renamed). Of the 541 people our records show a real relationship with, 349 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
+Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of 6,201 pages live across four sites, the hand-kept tabs listed only 44%. Another 235 rows pointed at pages that were no longer in their site's sitemap (deleted, moved, made private or renamed). Of the 540 people our records show a real relationship with, 348 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
 
 None of that was anyone's fault. It is what happens to any list that people type into. So the library now follows four rules:
 

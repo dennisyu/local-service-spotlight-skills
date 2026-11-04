@@ -267,6 +267,11 @@ class Summary(unittest.TestCase):
         self.assertTrue(any("HTTP 404" in r for r in flat))
         self.assertTrue(any("listed more than once" in r and "(2x)" in r for r in flat))
 
+    def test_tidy_titles(self):
+        self.assertEqual(summ.tidy("???????? Attention, Kosovo!  Jobs ????????"), "Attention, Kosovo! Jobs")
+        self.assertEqual(summ.tidy("America by 2026\u2033"), "America by 2026")
+        self.assertEqual(summ.tidy("What? Really?"), "What? Really?")
+
     def test_hash_is_stable(self):
         d = self.make()
         a = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["sha256"]

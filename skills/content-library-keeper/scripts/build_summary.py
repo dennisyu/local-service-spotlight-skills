@@ -30,6 +30,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import sys
 from collections import Counter
 
@@ -51,6 +52,14 @@ def read_csv(path):
         return []
     with open(path, newline="", encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
+
+
+def tidy(title):
+    """Clean a title for people to read: collapse spaces, drop '????' left where an old export lost emoji,
+    and a stray trailing inch mark."""
+    t = " ".join(str(title or "").split())
+    t = re.sub(r"(^|\s)\?{2,}(?=\s|$)", " ", t).strip()
+    return re.sub(r"[″]+$", "", t).strip()
 
 
 def withhold(title, url, rules):
@@ -120,7 +129,7 @@ def build(inv_dir, cfg, date):
     rank = {site: i for i, site in enumerate(order)}
     by_date = sorted(rename_rows, key=lambda r: r.get("published") or "", reverse=True)
     for r in sorted(by_date, key=lambda r: rank.get(r["site"], len(rank))):  # stable: newest first within a site
-        add([r["site"], withhold(r["title"], r["url"], s["withhold_titles"]), r["url"], r.get("published", "")])
+        add([r["site"], withhold(tidy(r["title"]), r["url"], s["withhold_titles"]), r["url"], r.get("published", "")])
     add()
 
     # D. people with no page
@@ -130,8 +139,8 @@ def build(inv_dir, cfg, date):
     gaps = [p for p in people if p.get("real_relationship") == "Y" and str(p.get("pages_with_name_in_title")) == "0"]
     def nsrc(p):
         return len([x for x in (p.get("relationship_sources") or "").split(",") if x.strip()])
-    # Strongest evidence first: more sources, then in the notes vault, then in fleet memory, then by name.
-    for p in sorted(gaps, key=lambda p: (-nsrc(p), p.get("in_vault") != "y", p.get("in_fleet_memory") != "y", p["name"])):
+    # Strongest evidence first: more sources, then already in the notes vault, then by name.
+    for p in sorted(gaps, key=lambda p: (-nsrc(p), p.get("in_vault") != "y", p["name"])):
         add([p["name"], p.get("relationship_sources", ""), p.get("in_vault", ""), p.get("in_fleet_memory", "")])
     add()
 
@@ -143,7 +152,7 @@ def build(inv_dir, cfg, date):
         url = r.get("url", "")
         if "docs.google.com/spreadsheets" in url:
             url = SHEET_LINK_NOTE
-        add([r["site"], withhold(r.get("title", ""), r.get("url", ""), s["withhold_titles"]), url,
+        add([r["site"], withhold(tidy(r.get("title", "")), r.get("url", ""), s["withhold_titles"]), url,
              r.get("status_in_library", "")])
     add()
 
