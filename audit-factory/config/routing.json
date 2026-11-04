@@ -1,0 +1,66 @@
+{
+  "version": "routing/1.0.0",
+  "checked": "2026-11-04",
+  "notes": "USD per million tokens. Claude prices verified on platform.claude.com model pages 2026-11-04. Other providers from dated third-party price tables (sources below) — re-check before quoting a client. 'manual' providers are app sessions (Muse, ChatGPT, Claude.ai) whose marginal cost is the subscription you already pay; they run inside the same agent session, never as a hand-off to another agent.",
+  "prices": {
+    "claude-fable-5-1":   {"provider": "anthropic", "in": 10.00, "out": 50.00, "cache_read": 0.25, "cache_write": 12.50, "batch": 0.5, "source": "https://platform.claude.com/docs/en/models/opus-5-5/overview", "verified": true, "note": "cache write assumed 1.25x input"},
+    "claude-opus-5-5":    {"provider": "anthropic", "in": 4.00, "out": 20.00, "cache_read": 0.20, "cache_write": 5.00, "batch": 0.5, "source": "https://platform.claude.com/docs/en/models/opus-5-5/overview", "verified": true},
+    "claude-sonnet-5-5":  {"provider": "anthropic", "in": 2.00, "out": 10.00, "cache_read": 0.10, "cache_write": 2.50, "batch": 0.5, "source": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview", "verified": true},
+    "claude-haiku-5-5":   {"provider": "anthropic", "in": 0.10, "out": 0.50, "cache_read": 0.01, "cache_write": 0.125, "batch": 0.5, "long_context": {"over": 100000, "in": 0.50, "out": 2.50, "cache_read": 0.05}, "source": "https://platform.claude.com/docs/en/models/haiku-5-5/overview", "verified": true},
+    "gpt-6-astra":        {"provider": "openai", "in": 10.00, "out": 50.00, "cache_read": 1.00, "cache_write": 10.00, "batch": 0.5, "source": "https://geotoolbox.ai/blog/ai-token-cost", "verified": false},
+    "gpt-6.1-sol":        {"provider": "openai", "in": 2.00, "out": 10.00, "cache_read": 0.20, "cache_write": 2.00, "batch": 0.5, "source": "https://geotoolbox.ai/blog/ai-token-cost", "verified": false},
+    "gpt-6.1-terra":      {"provider": "openai", "in": 1.00, "out": 5.00, "cache_read": 0.10, "cache_write": 1.00, "batch": 0.5, "source": "https://geotoolbox.ai/blog/ai-token-cost", "verified": false},
+    "gpt-6-luna":         {"provider": "openai", "in": 0.10, "out": 0.50, "cache_read": 0.01, "cache_write": 0.10, "batch": 0.5, "source": "https://geotoolbox.ai/blog/ai-token-cost", "verified": false},
+    "gemini-3.1-pro":     {"provider": "gemini", "in": 2.00, "out": 12.00, "cache_read": 0.20, "cache_write": 2.00, "batch": 0.5, "source": "https://www.morphllm.com/gemini-api-pricing", "verified": false},
+    "gemini-3.8-flash":   {"provider": "gemini", "in": 0.75, "out": 3.75, "cache_read": 0.075, "cache_write": 0.75, "batch": 0.5, "source": "https://www.morphllm.com/gemini-api-pricing", "verified": false, "note": "doubles 2027-01-01"},
+    "gemini-2.5-flash-lite": {"provider": "gemini", "in": 0.10, "out": 0.40, "cache_read": 0.01, "cache_write": 0.10, "batch": 0.5, "source": "https://www.morphllm.com/gemini-api-pricing", "verified": false},
+    "deepseek-v4.1-flash": {"provider": "openrouter", "route": "deepseek/deepseek-v4.1-flash", "in": 0.15, "out": 0.60, "cache_read": 0.015, "cache_write": 0.15, "batch": 1.0, "source": "https://geotoolbox.ai/blog/ai-token-cost", "verified": false, "note": "off-peak; peak doubles"},
+    "deepseek-v3.2":      {"provider": "openrouter", "route": "deepseek/deepseek-v3.2", "in": 0.26, "out": 0.40, "cache_read": 0.026, "cache_write": 0.26, "batch": 1.0, "source": "private agent-runtime receipt, 2026-10-27 OpenRouter replay of a Claude-researched audit", "verified": false, "note": "derived from the measured $0.018 replay"},
+    "muse-session":       {"provider": "manual", "in": 0, "out": 0, "cache_read": 0, "cache_write": 0, "batch": 1.0, "source": "Meta Muse app subscription (weekly limits)", "verified": false, "note": "zero marginal cost; rate limited; runs in Muse's own session"},
+    "chatgpt-session":    {"provider": "manual", "in": 0, "out": 0, "cache_read": 0, "cache_write": 0, "batch": 1.0, "source": "ChatGPT subscription", "verified": false, "note": "zero marginal cost; rate limited"},
+    "none":               {"provider": "none", "in": 0, "out": 0, "cache_read": 0, "cache_write": 0, "batch": 1.0, "source": "deterministic code", "verified": true}
+  },
+  "stages": [
+    {"id": "collect",   "card": "10-collect.md",   "judgment": false, "desc": "deterministic collectors: SERPs, crawl, schema, KG Explorer, backlinks, screenshots", "budget": {"in": 0, "out": 0, "cache_share": 0}, "data_usd": 0.50, "calls": 0},
+    {"id": "harvest",   "card": "20-harvest.md",   "judgment": false, "desc": "extract ledger rows from every captured source", "budget": {"in": 1800000, "out": 150000, "cache_share": 0.25}, "calls": 300},
+    {"id": "identity",  "card": "30-identity.md",  "judgment": true,  "desc": "two-attribute identity gate, namesakes, conflicts", "budget": {"in": 150000, "out": 12000, "cache_share": 0.5}, "calls": 4},
+    {"id": "score",     "card": "40-score.md",     "judgment": true,  "desc": "Brand Authority rows against anchors (code clamps afterward)", "budget": {"in": 120000, "out": 10000, "cache_share": 0.6}, "calls": 2},
+    {"id": "synthesis", "card": "50-synthesis.md", "judgment": true,  "desc": "the frontier slice: non-obvious findings, positioning, cover", "budget": {"in": 140000, "out": 30000, "cache_share": 0.6}, "calls": 3},
+    {"id": "pages",     "card": "60-pages.md",     "judgment": false, "desc": "fill the 20 page slots from ledger + synthesis", "budget": {"in": 760000, "out": 50000, "cache_share": 0.85}, "calls": 20},
+    {"id": "actions",   "card": "70-actions.md",   "judgment": false, "desc": "dated action register, agent vs human", "budget": {"in": 60000, "out": 12000, "cache_share": 0.5}, "calls": 1},
+    {"id": "review",    "card": "80-review.md",    "judgment": true,  "desc": "one structured frontier review of the exact final files", "budget": {"in": 160000, "out": 20000, "cache_share": 0.3}, "calls": 1},
+    {"id": "fix",       "card": "60-pages.md",     "judgment": false, "desc": "apply review + gate fixes, re-render", "budget": {"in": 100000, "out": 15000, "cache_share": 0.7}, "calls": 3}
+  ],
+  "tiers": {
+    "lean": {
+      "desc": "Volume tier for agencies and AI builders: frontier model only for the review.",
+      "review_passes": 1,
+      "models": {"collect": "none", "harvest": "gemini-2.5-flash-lite", "identity": "gpt-6.1-terra", "score": "gpt-6.1-terra", "synthesis": "claude-sonnet-5-5", "pages": "deepseek-v4.1-flash", "actions": "deepseek-v4.1-flash", "review": "claude-opus-5-5", "fix": "deepseek-v4.1-flash"}
+    },
+    "standard": {
+      "desc": "House default: frontier synthesis + frontier review; everything else cheap.",
+      "review_passes": 2,
+      "models": {"collect": "none", "harvest": "claude-haiku-5-5", "identity": "claude-sonnet-5-5", "score": "claude-sonnet-5-5", "synthesis": "claude-opus-5-5", "pages": "claude-sonnet-5-5", "actions": "claude-sonnet-5-5", "review": "claude-opus-5-5", "fix": "claude-haiku-5-5"}
+    },
+    "muse": {
+      "desc": "Standard quality with drafting inside Muse's own session (zero marginal cost) and Claude API for the two judgment calls.",
+      "review_passes": 2,
+      "models": {"collect": "none", "harvest": "claude-haiku-5-5", "identity": "claude-sonnet-5-5", "score": "claude-sonnet-5-5", "synthesis": "claude-opus-5-5", "pages": "muse-session", "actions": "muse-session", "review": "claude-opus-5-5", "fix": "muse-session"}
+    },
+    "enterprise": {
+      "desc": "Extra-high quality for enterprise deals: Fable synthesis and review, Opus drafting, plus a human read.",
+      "review_passes": 3,
+      "models": {"collect": "none", "harvest": "claude-sonnet-5-5", "identity": "claude-opus-5-5", "score": "claude-opus-5-5", "synthesis": "claude-fable-5-1", "pages": "claude-opus-5-5", "actions": "claude-opus-5-5", "review": "claude-fable-5-1", "fix": "claude-sonnet-5-5"}
+    }
+  },
+  "escalation": ["deepseek-v4.1-flash", "claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1"],
+  "reference_run": {
+    "label": "Claude Cowork run, Oct 23 2026 (20-page gift audit, 7 review rounds)",
+    "source": "private agent-runtime run note, 2026-10-23 gift audit (lower bound; parts unmeasured)",
+    "lanes": [
+      {"lane": "research lanes A-G", "model": "claude-sonnet-5-5", "in": 534900000, "out": 3621000},
+      {"lane": "builder", "model": "claude-opus-5-5", "in": 134200000, "out": 344000},
+      {"lane": "review rounds R1-R7", "model": "claude-opus-5-5", "in": 441700000, "out": 1530000}
+    ]
+  }
+}

@@ -23,6 +23,26 @@ rubric/version controls, weekly implementation review and batch correction gate.
 Use this skill's exact-20-page product contract; record authorized exceptions
 without treating historical report lengths as a universal rule.
 
+## Tiered production — the Audit Factory (read before producing at volume)
+
+Any agent can now produce this audit at frontier quality without a frontier model doing the
+heavy lifting. Use the repository's [`audit-factory/`](../../audit-factory/README.md):
+
+1. **One runner owns the audit end to end** (a Claude/Codex/Cursor session, Muse, ChatGPT,
+   a cron job or a person). Never split stages across agents through repo notes or work
+   orders that no running process reads.
+2. **Models write content, code draws pages.** Stages 30-70 write `audit.json` blocks by
+   following the [stage cards](../../audit-factory/stages/00-README.md); the renderer owns
+   layout, scores, the swimlane, the QR and the page-20 receipt.
+3. **Spend frontier judgment twice:** synthesis (the eight findings, stage 50) and the final
+   structured review (stage 80). Harvest, drafting and actions run on the cheapest tier that
+   passes the gates.
+4. **Gates before review:** `python -m factory20 gate` and `render` must not HOLD before any
+   reviewer reads the file. Fix every message; the reviewer judges, not counts.
+
+Standard tier costs about $5 per audit against roughly $360-650 for an all-frontier run of the
+same product (measurements: `audit-factory/docs/CALIBRATION.md`).
+
 ## Dependency preflight
 
 A complete audit requires the eight routed skills named below. The `lss-everything` bundle
