@@ -69,7 +69,7 @@ frontier synthesis and no frontier review: this isolates what the kit alone does
 |---|---|---|---|
 | Content gates / render gates | — | PASS 38/38 · PASS | PASS · HOLD (page 2 ran 4.9% long) |
 | Fix rounds | 2 rounds of fresh-context design + content review, with re-runs | 2 | 3 (the limit) |
-| Claude's 14 insights found on page 2 | 14 | 8 — Claude's first eight | 6, plus 1 Claude held back (name collision) |
+| Claude's 14 insights found on page 2 | 14 | 8 — Claude's first eight | 6, plus 1 new (a name collision) |
 | Brand Authority | older 7-part rubric, no total | 48 / 100 | 44 / 100 |
 | Actions (agent-run share) | — | 31 (81%) | 20 (70%) |
 | Tokens (deduplicated) · list price | ~1.1 billion · $364-647 | 96K out, 7.6M cache reads · ≈ $2.50 | 142K out, 4.0M cache reads · ≈ $0.70 |
