@@ -52,6 +52,7 @@ class Page(HTMLParser):
         self.links = set()
         self.text = []
         self.has_base = False
+        self.duplicate_attributes = []
 
     def excluded(self, attrs=None):
         entries = self.stack + ([("", attrs)] if attrs is not None else [])
@@ -60,6 +61,10 @@ class Page(HTMLParser):
                    "hidden" in a or a.get("aria-hidden") == "true" for t, a in entries)
 
     def handle_starttag(self, tag, attrs):
+        names = [name for name, _ in attrs]
+        duplicates = sorted({name for name in names if names.count(name) > 1})
+        if duplicates:
+            self.duplicate_attributes.append(f"{tag}: {', '.join(duplicates)}")
         attrs = dict(attrs)
         excluded = self.excluded(attrs)
         if tag == "base":
@@ -123,6 +128,8 @@ def check(root: Path, manifest: dict) -> list[str]:
             errors.append(f"{name}: page bytes changed or hash missing")
         if parsed.has_base:
             errors.append(f"{name}: base URL overrides are unsupported; use explicit local photo paths")
+        if parsed.duplicate_attributes:
+            errors.append(f"{name}: duplicate HTML attributes are unsupported: {'; '.join(parsed.duplicate_attributes)}")
         photo_ids = record.get("photo_ids")
         if not isinstance(photo_ids, list) or not photo_ids or any(not nonblank(x) for x in photo_ids):
             errors.append(f"{name}: no real photo ids")

@@ -122,6 +122,15 @@ class PagePhotoProofTests(unittest.TestCase):
         self.refresh_page_hash()
         self.assertTrue(any("srcset/picture" in x for x in self.errors()))
 
+    def test_duplicate_attributes_cannot_change_browser_selected_proof(self):
+        original = self.page.read_text()
+        for injected in ('src="https://example.com/unreviewed.png"', 'data-lss-asset-id="unreviewed"',
+                         'data-lss-real-image="unknown"', 'alt="Different identity"'):
+            with self.subTest(injected=injected):
+                self.page.write_text(original.replace('<img ', f'<img {injected} '))
+                self.refresh_page_hash()
+                self.assertTrue(any("duplicate HTML attributes" in x for x in self.errors()))
+
     def test_picture_is_unsupported(self):
         self.page.write_text(self.page.read_text().replace('<img ', '<picture><source srcset="https://example.com/unreviewed.png"><img ').replace('<figcaption>', '</picture><figcaption>'))
         self.refresh_page_hash()

@@ -18,7 +18,7 @@ private manifest. It inventories all `.html` and `.htm` files, checks page/photo
 hashes, screens raster signatures and matching marked images, checks source
 links and captions outside statically hidden/template content, and requires a
 different reviewer's exact-byte source and content review declaration. It holds
-unsupported `<base>`, qualifying `srcset` and `<picture>` markup rather than
+duplicate HTML attributes, unsupported `<base>`, qualifying `srcset` and `<picture>` markup rather than
 certifying fallback `src` bytes while a browser selects something else.
 Run it before publishing and after obtaining
 the served final HTML/assets for readback:
