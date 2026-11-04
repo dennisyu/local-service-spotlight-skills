@@ -25,7 +25,8 @@ Config (JSON; every key optional except "sites"):
    "rename_file": "rename-worklist.csv",
    "user_agent": "...",                       # sent with every request
    "people": {"owner_entity_id": "jane-doe",  # the registry's own subject, skipped
-              "real_sources": ["crm", "notes"]},  # sources that mean a real relationship
+              "real_sources": ["crm", "notes"],   # sources that mean a real relationship
+              "exclude_entity_ids": ["ai-agent"]},  # records that are not people (e.g. AI agents)
    "topics": [["Topic name", "regex"], ...],  # replaces the built-in example topics
    "stages": [["Produce", "regex"], ...]}
 
@@ -43,7 +44,7 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 DEFAULT_UA = ("Mozilla/5.0 (compatible; ContentLibraryInventory/1.0; "
               "+https://github.com/dennisyu/local-service-spotlight-skills)")
 CONFIG = {"sites": [], "brand_suffixes": [], "rename_pattern": "", "rename_file": "rename-worklist.csv",
-          "user_agent": DEFAULT_UA, "people": {"owner_entity_id": "", "real_sources": []}}
+          "user_agent": DEFAULT_UA, "people": {"owner_entity_id": "", "real_sources": [], "exclude_entity_ids": []}}
 
 # ---------- pure helpers (unit-tested) ----------
 def norm(url):
@@ -275,12 +276,14 @@ def load_people(registry_path):
         return []
     owner = CONFIG["people"].get("owner_entity_id") or ""
     real_sources = set(CONFIG["people"].get("real_sources") or [])
+    excluded = set(CONFIG["people"].get("exclude_entity_ids") or [])  # e.g. AI agent personas stored as people
     people = []
     with open(registry_path, encoding="utf-8") as fh:
         entities = json.load(fh)
     for e in entities:
         name = (e.get("name") or "").strip().strip('"')
-        if e.get("type") != "person" or len(name.split()) < 2 or len(name) < 7 or (owner and e.get("entity_id") == owner):
+        if (e.get("type") != "person" or len(name.split()) < 2 or len(name) < 7
+                or (owner and e.get("entity_id") == owner) or e.get("entity_id") in excluded):
             continue
         src = [s.strip() for s in re.split(r"[,;]", e.get("sources") or "") if s.strip()]
         names = {name} | {a.strip() for a in re.split(r"[;|]", e.get("aliases") or "") if len(a.strip().split()) >= 2}

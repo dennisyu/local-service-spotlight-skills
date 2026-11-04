@@ -23,6 +23,7 @@ def load(name):
 
 inv = load("published_inventory")
 rmap = load("render_library_map")
+summ = load("build_summary")
 
 
 class Norm(unittest.TestCase):
@@ -126,9 +127,12 @@ class Config(unittest.TestCase):
             with open(reg, "w", encoding="utf-8") as fh:
                 json.dump([{"entity_id": "me", "type": "person", "name": "Me Myself", "sources": "crm"},
                            {"entity_id": "ann", "type": "person", "name": "Ann Example", "sources": "crm"},
-                           {"entity_id": "bob", "type": "person", "name": "Bob Example", "sources": "newsletter"}], fh)
+                           {"entity_id": "bob", "type": "person", "name": "Bob Example", "sources": "newsletter"},
+                           {"entity_id": "bot-two", "type": "person", "name": "Helper Bot", "sources": "crm"}], fh)
+            inv.apply_config({"people": {"exclude_entity_ids": ["bot-two"]}})
             people = {p["entity_id"]: p for p in inv.load_people(reg)}
             self.assertNotIn("me", people)
+            self.assertNotIn("bot-two", people)
             self.assertTrue(people["ann"]["real"])
             self.assertFalse(people["bob"]["real"])
         finally:
@@ -209,6 +213,65 @@ class RenderMap(unittest.TestCase):
         tpl = ROOT / "skills" / "content-library-keeper" / "references" / "library-map-template.json"
         out = rmap.render(rmap.load_rows(tpl), "2026-11-04", "test")
         self.assertIn("collections.", out)
+
+
+class Summary(unittest.TestCase):
+    def make(self):
+        d = tempfile.mkdtemp()
+        stats = {"a.com": {"live_urls": 3, "by_type": {"post": 2, "page": 1}, "with_video": 1, "in_library": 1,
+                           "missing_from_library": 2, "rename_hits": 1, "listed_twice_or_more": 1},
+                 "library_rows_not_live": {"a.com": 2}}
+        with open(os.path.join(d, "inventory-stats.json"), "w", encoding="utf-8") as fh:
+            json.dump(stats, fh)
+        pages = [
+            {"site": "a.com", "type": "post", "title": "Old Name tips", "url": "https://a.com/old/", "published": "2024-01-01",
+             "status": "200", "topics_v1": "SEO & AI search", "notes": ""},
+            {"site": "a.com", "type": "post", "title": "People", "url": "https://a.com/people/x/", "published": "2025-01-01",
+             "status": "200", "topics_v1": "", "notes": "listed 2x in sitemaps"},
+            {"site": "a.com", "type": "page", "title": "Gone", "url": "https://a.com/gone/", "published": "",
+             "status": "404", "topics_v1": "SEO & AI search; Speaking & events", "notes": ""},
+        ]
+        with open(os.path.join(d, "published-inventory.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=inv.FIELDS, extrasaction="ignore"); w.writeheader(); w.writerows(pages)
+        with open(os.path.join(d, "rename-worklist.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=inv.FIELDS, extrasaction="ignore"); w.writeheader(); w.writerow(pages[0])
+        with open(os.path.join(d, "people-coverage.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(["entity_id", "name", "relationship_sources", "real_relationship", "in_vault", "in_fleet_memory",
+                        "pages_with_name_in_title", "sites", "example_urls"])
+            w.writerow(["b", "Bea Two", "crm", "Y", "n", "y", "0", "", ""])
+            w.writerow(["a", "Al One", "crm, notes", "Y", "y", "y", "0", "", ""])
+            w.writerow(["c", "Cy Three", "crm", "Y", "y", "n", "2", "a.com", ""])
+            w.writerow(["z", "Zed Four", "newsletter", "N", "n", "n", "0", "", ""])
+        with open(os.path.join(d, "library-rows-not-live.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh); w.writerow(["site", "title", "url", "date", "status_in_library"])
+            w.writerow(["a.com", "Secret matter", "https://a.com/legal-thing/", "", "Published"])
+            w.writerow(["a.com", "Sheet link", "https://docs.google.com/spreadsheets/d/x/edit", "", ""])
+        return d
+
+    def test_sections_counts_and_order(self):
+        d = self.make()
+        cfg = {"sites": ["a.com"], "summary": {"withhold_titles": [{"url_contains": "legal-thing", "label": "(withheld)"}]}}
+        out = summ.build(d, cfg, "2026-11-04")
+        g = out["values"]
+        self.assertEqual(len(out["section_header_rows"]), 6)
+        self.assertEqual(g[out["total_row"] - 1][1], 3)
+        flat = [" | ".join(str(c) for c in r) for r in g]
+        self.assertTrue(any(r.startswith("SEO & AI search | 2") for r in flat))
+        self.assertTrue(any(r.startswith("(no topic matched yet) | 1") for r in flat))
+        people = [r[0] for r in g if r and r[0] in ("Al One", "Bea Two", "Cy Three", "Zed Four")]
+        self.assertEqual(people, ["Al One", "Bea Two"])  # real, no page, strongest evidence first
+        self.assertIn("(withheld)", " ".join(flat))
+        self.assertNotIn("Secret matter", " ".join(flat))
+        self.assertIn(summ.SHEET_LINK_NOTE, " ".join(flat))
+        self.assertTrue(any("HTTP 404" in r for r in flat))
+        self.assertTrue(any("listed more than once" in r and "(2x)" in r for r in flat))
+
+    def test_hash_is_stable(self):
+        d = self.make()
+        a = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["sha256"]
+        b = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["sha256"]
+        self.assertEqual(a, b)
 
 
 if __name__ == "__main__":
