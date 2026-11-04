@@ -1,6 +1,8 @@
 """Offline tests for the content-library-keeper scripts (no network)."""
+import contextlib
 import csv
 import importlib.util
+import io
 import json
 import os
 import sys
@@ -213,6 +215,39 @@ class RenderMap(unittest.TestCase):
         tpl = ROOT / "skills" / "content-library-keeper" / "references" / "library-map-template.json"
         out = rmap.render(rmap.load_rows(tpl), "2026-11-04", "test")
         self.assertIn("collections.", out)
+        self.assertIn("Freshness", out)
+
+    def test_stage_and_dated_freshness_columns_kept(self):
+        header = list(self.HEADER)
+        header[9] = "Freshness (checked 2026-11-04)"
+        out = rmap.render([["TITLE"], ["legend"], ["how it fits"], header, self.row()], "2026-11-04", "test")
+        self.assertIn("| Factory stage · Triangle | Freshness (checked 2026-11-04) |", out)
+        self.assertIn("| Post | ok |", out)
+
+    def test_optional_columns_may_be_absent(self):
+        keep = [i for i, h in enumerate(self.HEADER) if h not in ("Factory stage · Triangle", "Freshness")]
+        rows = [["TITLE"], [self.HEADER[i] for i in keep], [self.row()[i] for i in keep]]
+        out = rmap.render(rows, "2026-11-04", "test")
+        self.assertNotIn("Freshness", out)
+        self.assertIn("1 collections.", out)
+
+    def test_main_leaves_a_date_only_change_alone(self):
+        d = tempfile.mkdtemp()
+        export, md = os.path.join(d, "map.json"), os.path.join(d, "LIBRARY-MAP.md")
+        with open(export, "w", encoding="utf-8") as fh:
+            json.dump({"values": self.tab(self.row())}, fh)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rmap.main([export, "--out", md, "--date", "2026-11-04"])
+        first = Path(md).read_text(encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()) as said:
+            rmap.main([export, "--out", md, "--date", "2026-11-05"])
+        self.assertEqual(Path(md).read_text(encoding="utf-8"), first)
+        self.assertIn("unchanged", said.getvalue())
+        with open(export, "w", encoding="utf-8") as fh:
+            json.dump({"values": self.tab(self.row(nxt="Something new"))}, fh)
+        with contextlib.redirect_stdout(io.StringIO()):
+            rmap.main([export, "--out", md, "--date", "2026-11-05"])
+        self.assertIn("Something new", Path(md).read_text(encoding="utf-8"))
 
 
 class Summary(unittest.TestCase):
@@ -263,9 +298,13 @@ class Summary(unittest.TestCase):
         self.assertEqual(people, ["Al One", "Bea Two"])  # real, no page, strongest evidence first
         self.assertIn("(withheld)", " ".join(flat))
         self.assertNotIn("Secret matter", " ".join(flat))
+        self.assertNotIn("legal-thing", " ".join(flat))  # the address is withheld too, not just the title
+        self.assertIn(summ.LINK_WITHHELD, " ".join(flat))
         self.assertIn(summ.SHEET_LINK_NOTE, " ".join(flat))
         self.assertTrue(any("HTTP 404" in r for r in flat))
         self.assertTrue(any("listed more than once" in r and "(2x)" in r for r in flat))
+        self.assertIn("URLs in sitemaps", g[3])
+        self.assertIn("pages listed in the sitemaps", g[1][0])
 
     def test_tidy_titles(self):
         self.assertEqual(summ.tidy("???????? Attention, Kosovo!  Jobs ????????"), "Attention, Kosovo! Jobs")
@@ -277,6 +316,226 @@ class Summary(unittest.TestCase):
         a = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["sha256"]
         b = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["sha256"]
         self.assertEqual(a, b)
+
+    def test_hash_ignores_the_build_date(self):
+        d = self.make()
+        a = summ.build(d, {"sites": ["a.com"]}, "2026-11-04")
+        b = summ.build(d, {"sites": ["a.com"]}, "2026-11-05")
+        self.assertNotEqual(a["values"][0], b["values"][0])
+        self.assertEqual(a["sha256"], b["sha256"])
+
+    def test_main_leaves_an_unchanged_grid_alone(self):
+        d = self.make()
+        out = os.path.join(d, "summary-tab.json")
+        with contextlib.redirect_stdout(io.StringIO()) as first:
+            summ.main(["--inventory", d, "--out", out, "--date", "2026-11-04"])
+        before = Path(out).read_text(encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()) as second:
+            summ.main(["--inventory", d, "--out", out, "--date", "2026-11-05"])
+        self.assertTrue(json.loads(first.getvalue())["changed"])
+        self.assertFalse(json.loads(second.getvalue())["changed"])
+        self.assertEqual(Path(out).read_text(encoding="utf-8"), before)
+
+    def test_rows_in_no_sitemap_grouped_by_what_they_do_today(self):
+        d = self.make()
+        with open(os.path.join(d, "library-rows-not-in-sitemap.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(inv.NOT_IN_SITEMAP_FIELDS)
+            w.writerow(["a.com", "Gone page", "https://a.com/gone-1/", "", "Published", "404", "", "not found"])
+            w.writerow(["a.com", "Moved page", "https://a.com/moved/", "", "Published", "200", "https://a.com/new/",
+                        "redirects to a page in the sitemap"])
+            w.writerow(["a.com", "Hidden page", "https://a.com/hidden/", "", "Published", "200", "",
+                        "loads, but is missing from the sitemap"])
+            w.writerow(["a.com", "Secret matter", "https://a.com/legal-thing/", "", "Published", "200",
+                        "https://a.com/legal-thing-2/", "redirects to a page not in the sitemap"])
+        cfg = {"sites": ["a.com"], "summary": {"withhold_titles": [{"url_contains": "legal-thing", "label": "(withheld)"}]}}
+        out = summ.build(d, cfg, "2026-11-04")
+        e = [r for r in out["values"] if len(r) == 5 and r[0] == "a.com"]
+        self.assertEqual([r[1] for r in e], ["Hidden page", "Moved page", "(withheld)", "Gone page"])
+        self.assertEqual(e[1][3], "redirects to a page in the sitemap: https://a.com/new/")
+        self.assertNotIn("legal-thing", json.dumps(out["values"]))
+        flat = [" | ".join(str(c) for c in r) for r in out["values"]]
+        self.assertTrue(any("missing from the sitemap" in r and "https://a.com/hidden/" in r and r.startswith("a.com | Page loads")
+                            for r in flat))
+
+    def test_only_single_cell_rows_are_merged(self):
+        out = summ.build(self.make(), {"sites": ["a.com"]}, "2026-11-04")
+        g = out["values"]
+        self.assertEqual(out["merge_rows"][:2], [1, 2])
+        for r in out["merge_rows"]:
+            self.assertEqual(len(g[r - 1]), 1, f"row {r} has column labels a merge would delete")
+        a_header, b_header = out["section_header_rows"][:2]
+        self.assertNotIn(a_header, out["merge_rows"])  # A. BY SITE carries column labels
+        self.assertNotIn(b_header, out["merge_rows"])  # B. TOPICS carries the "Pages" label
+
+    def test_owners_named_in_section_headers(self):
+        d = self.make()
+        cfg = {"sites": ["a.com"], "summary": {"section_owners": {"D": "Liana (relationships)", "F": "website desk"}}}
+        out = summ.build(d, cfg, "2026-11-04")
+        heads = [out["values"][i - 1][0] for i in out["section_header_rows"]]
+        self.assertTrue(any(h.startswith("D.") and h.endswith("Owner: Liana (relationships).") for h in heads))
+        self.assertTrue(any(h.startswith("F.") and h.endswith("Owner: website desk.") for h in heads))
+        self.assertFalse(any(h.startswith("E.") and "Owner:" in h for h in heads))
+
+
+class FakeNet:
+    """Stands in for published_inventory.fetch: maps a URL to a response tuple or a callable returning one."""
+
+    def __init__(self, responses):
+        self.responses, self.calls = responses, []
+
+    def __call__(self, url, tries=3, limit=None):
+        self.calls.append(url)
+        r = self.responses.get(url)
+        if callable(r):
+            r = r()
+        return r if r is not None else (404, {}, b"", url)
+
+
+class Guards(unittest.TestCase):
+    INDEX = (b'<?xml version="1.0"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+             b'<sitemap><loc>https://a.com/post-sitemap.xml</loc></sitemap>'
+             b'<sitemap><loc>https://a.com/page-sitemap.xml</loc></sitemap></sitemapindex>')
+    URLSET = (b'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+              b'<url><loc>https://a.com/x/</loc><lastmod>2026-11-01</lastmod></url></urlset>')
+    POSTS = "https://a.com/wp-json/wp/v2/posts?per_page=100&_fields=id,link,title,date,modified,categories,tags"
+
+    def setUp(self):
+        self.saved = (inv.fetch, inv.time.sleep)
+        inv.time.sleep = lambda _s: None
+
+    def tearDown(self):
+        inv.fetch, inv.time.sleep = self.saved
+
+    def posts(self, n, start=0):
+        return json.dumps([{"id": i, "link": f"https://a.com/p{i}/", "title": {"rendered": "t"},
+                            "date": "2026-01-01T00:00:00"} for i in range(start, start + n)]).encode()
+
+    def test_a_failed_child_sitemap_stops_the_run(self):
+        inv.fetch = FakeNet({"https://a.com/sitemap_index.xml": (200, {}, self.INDEX, ""),
+                             "https://a.com/post-sitemap.xml": (200, {}, self.URLSET, ""),
+                             "https://a.com/page-sitemap.xml": (500, {}, b"", "")})
+        with self.assertRaises(inv.GuardError) as cm:
+            inv.sitemap_urls("a.com")
+        self.assertIn("page-sitemap.xml", str(cm.exception))
+
+    def test_a_child_sitemap_that_recovers_is_used(self):
+        tries = {"n": 0}
+        def flaky():
+            tries["n"] += 1
+            return (503, {}, b"", "") if tries["n"] == 1 else (200, {}, self.URLSET, "")
+        inv.fetch = FakeNet({"https://a.com/sitemap_index.xml": (200, {}, self.INDEX, ""),
+                             "https://a.com/post-sitemap.xml": (200, {}, self.URLSET, ""),
+                             "https://a.com/page-sitemap.xml": flaky})
+        rows = inv.sitemap_urls("a.com")
+        self.assertEqual(sorted(k for k, _u, _m in rows), ["page", "post"])
+
+    def test_a_missing_sitemap_index_stops_the_run(self):
+        inv.fetch = FakeNet({})
+        with self.assertRaises(inv.GuardError):
+            inv.sitemap_urls("a.com")
+
+    def test_rest_that_fails_a_later_page_stops_the_run(self):
+        inv.fetch = FakeNet({self.POSTS + "&page=1": (200, {"x-wp-totalpages": "2"}, self.posts(100), ""),
+                             self.POSTS + "&page=2": (500, {}, b"", "")})
+        with self.assertRaises(inv.GuardError):
+            inv.wp_rest("a.com")
+
+    def test_closed_rest_means_read_each_page(self):
+        inv.fetch = FakeNet({})
+        self.assertEqual(inv.wp_rest("a.com"), ({}, {}, {}))
+
+    def test_rest_without_a_page_count_stops_at_wordpress_400(self):
+        inv.fetch = FakeNet({self.POSTS + "&page=1": (200, {}, self.posts(100), ""),
+                             self.POSTS + "&page=2": (400, {}, b"", "")})
+        out, _cats, _tags = inv.wp_rest("a.com")
+        self.assertEqual(len(out), 100)
+
+    def test_drop_limits(self):
+        self.assertIsNone(inv.check_drop("a.com", 1000, 990))
+        self.assertIn("--allow-drop", inv.check_drop("a.com", 1000, 900))
+        self.assertIsNone(inv.check_drop("a.com", 100, 85))  # 15 fewer: under the 20-URL floor
+        self.assertIsNotNone(inv.check_drop("a.com", 100, 75))
+        self.assertIsNone(inv.check_drop("a.com", None, 5))  # first run: nothing to compare with
+        self.assertIsNone(inv.check_drop("a.com", 1000, 900, {"max_drop_fraction": 0.2}))
+
+    def test_source_change(self):
+        self.assertIn("--allow-source-change", inv.check_source("a.com", "rest", "html"))
+        self.assertIsNone(inv.check_source("a.com", None, "html"))
+        self.assertIsNone(inv.check_source("a.com", "rest", "rest"))
+
+
+class AddressToday(unittest.TestCase):
+    LISTED = {"a.com/new"}
+
+    def test_each_outcome_in_plain_words(self):
+        c = inv.classify
+        self.assertEqual(c("https://a.com/x/", 200, "https://a.com/x/", self.LISTED, "a.com/"),
+                         "loads, but is missing from the sitemap")
+        self.assertEqual(c("https://a.com/x/", 200, "https://a.com/new/", self.LISTED, "a.com/"),
+                         "redirects to a page in the sitemap")
+        self.assertEqual(c("https://a.com/x/", 200, "https://b.com/y/", self.LISTED, "a.com/"),
+                         "redirects to a page not in the sitemap")
+        self.assertEqual(c("https://a.com/x/", 200, "https://www.a.com/", self.LISTED, "a.com/"),
+                         "redirects to the home page")
+        self.assertEqual(c("https://a.com/x/", 404, "https://a.com/x/", self.LISTED), "not found")
+        self.assertEqual(c("https://a.com/x/", 410, "", self.LISTED), "not found")
+        self.assertEqual(c("https://a.com/x/", 401, "", self.LISTED), "needs a login or is blocked")
+        self.assertEqual(c("https://a.com/x/", None, "", self.LISTED), "no answer")
+        self.assertEqual(c("https://a.com/x/", 500, "", self.LISTED), "HTTP 500")
+        self.assertEqual(c("https://docs.google.com/spreadsheets/d/1/edit", None, "", self.LISTED),
+                         "points at a Google file, not a page")
+
+    def test_inventory_and_summary_use_the_same_words(self):
+        self.assertEqual(inv.TODAY_ORDER, summ.TODAY_ORDER)
+
+    def test_old_address_of_a_moved_page(self):
+        v = inv.old_url_verdict
+        old, now = "https://a.com/2020/04/12/post/", "https://a.com/post/"
+        self.assertEqual(v(old, now, 200, "https://a.com/post/"), "redirects to the current page")
+        self.assertEqual(v(old, now, 200, old), "still loads at the old address")
+        self.assertEqual(v(old, now, 200, "https://a.com/"), "redirects somewhere else")
+        self.assertEqual(v(old, now, 404, old), "not found")
+        self.assertEqual(v(old, now, None, ""), "no answer")
+
+    def test_broken_old_addresses_listed_for_the_website_desk(self):
+        d = Summary().make()
+        with open(os.path.join(d, "library-old-urls.csv"), "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(inv.OLD_URL_FIELDS)
+            w.writerow(["a.com", "https://a.com/2020/04/12/post/", "https://a.com/post/", "404", "", "not found"])
+            w.writerow(["a.com", "https://a.com/2021/01/01/ok/", "https://a.com/ok/", "200", "https://a.com/ok/",
+                        "redirects to the current page"])
+        flat = [" | ".join(str(c) for c in r) for r in summ.build(d, {"sites": ["a.com"]}, "2026-11-04")["values"]]
+        rows = [r for r in flat if "return 404 instead of redirecting" in r]
+        self.assertEqual(len(rows), 1)
+        self.assertIn("| 1 | https://a.com/2020/04/12/post/ → https://a.com/post/", rows[0])
+        self.assertFalse(any("2021/01/01/ok" in r for r in flat))
+
+
+class QuietWrites(unittest.TestCase):
+    ROW = {"site": "a.com", "type": "post", "title": "T", "url": "https://a.com/t/", "published": "2026-01-01",
+           "modified": "", "categories": "", "tags": "", "status": "200", "has_video": "", "library_tab": "",
+           "topics_v1": "", "nine_triangles_v1": "", "factory_stage_v1": "", "people_in_title_v1": "", "notes": ""}
+
+    def run_once(self, d, pages, when):
+        stats = {"a.com": {"pages_in_sitemaps": pages}, "generated_utc": when}
+        return inv.write_outputs(d, [dict(self.ROW)], [], [], stats, None)
+
+    def stats(self, d):
+        return json.loads(Path(d, "inventory-stats.json").read_text(encoding="utf-8"))
+
+    def test_a_run_with_nothing_new_writes_nothing(self):
+        d = tempfile.mkdtemp()
+        self.assertIn("inventory-stats.json", self.run_once(d, 1, "2026-11-04T10:00Z"))
+        self.assertEqual(self.run_once(d, 1, "2026-11-05T10:00Z"), [])
+        self.assertEqual(self.stats(d)["generated_utc"], "2026-11-04T10:00Z")
+
+    def test_a_real_change_is_written_with_the_new_time(self):
+        d = tempfile.mkdtemp()
+        self.run_once(d, 1, "2026-11-04T10:00Z")
+        self.assertEqual(self.run_once(d, 2, "2026-11-05T10:00Z"), ["inventory-stats.json"])
+        self.assertEqual(self.stats(d)["generated_utc"], "2026-11-05T10:00Z")
 
 
 if __name__ == "__main__":

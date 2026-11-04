@@ -16,27 +16,37 @@ Usage:
 --sheet-id shortens links that point back into the same spreadsheet to
 "(this sheet, tab gid N)", because readers of the copy usually cannot open them.
 
+When --out already holds the same map and only the "Generated <date>" line would
+change, the file is left untouched, so a day with no map change leaves nothing
+to commit.
+
 Standard library only.
 """
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import sys
 
 HEADER_FIRST_CELL = "#"
-# Columns shown in the Markdown copy, by header text in the sheet.
+# Columns shown in the Markdown copy: (header text in the sheet, label in the copy, required).
+# A header matches exactly or with a parenthesised suffix, e.g. "Freshness (checked 2026-11-04)".
+# A label of None means "use the sheet's own header text".
 WANTED = [
-    ("#", "#"),
-    ("Kind", "Kind"),
-    ("Collection (what it holds)", "Collection"),
-    ("Status", "Status"),
-    ("Where it lives", "Master lives in"),
-    ("If two places disagree, this wins", "If two places disagree, this wins"),
-    ("Rows now (live count)", "Rows now"),
-    ("Owner: function → who today", "Owner (function → who today)"),
-    ("Next action", "Next action"),
+    ("#", "#", True),
+    ("Kind", "Kind", True),
+    ("Collection (what it holds)", "Collection", True),
+    ("Status", "Status", True),
+    ("Where it lives", "Master lives in", True),
+    ("If two places disagree, this wins", "If two places disagree, this wins", True),
+    ("Rows now (live count)", "Rows now", True),
+    ("Owner: function → who today", "Owner (function → who today)", True),
+    ("Factory stage · Triangle", "Factory stage · Triangle", False),
+    ("Freshness", None, False),
+    ("Next action", "Next action", True),
 ]
+DATE_LINE = re.compile(r"Generated \d{4}-\d{2}-\d{2} by ")
 
 
 def sheet_url_re(sheet_id):
@@ -61,6 +71,16 @@ def find_header(rows):
     raise SystemExit("render_library_map: header row starting with '#' not found")
 
 
+def find_column(header, name):
+    """Index of the header cell named `name`, allowing a parenthesised suffix; None if absent."""
+    if name in header:
+        return header.index(name)
+    for i, h in enumerate(header):
+        if h.startswith(name + " ("):
+            return i
+    return None
+
+
 def cell(text, url_re=None):
     """Make one sheet cell safe for a Markdown table cell."""
     text = str(text if text is not None else "").strip()
@@ -73,11 +93,14 @@ def cell(text, url_re=None):
 def render(rows, date, by, sheet_id="", title="the library sheet"):
     h = find_header(rows)
     header = [str(c).strip() for c in rows[h]]
-    index = {}
-    for name, _label in WANTED:
-        if name not in header:
-            raise SystemExit("render_library_map: column %r missing from header %r" % (name, header))
-        index[name] = header.index(name)
+    columns = []  # (index in the row, label)
+    for name, label, required in WANTED:
+        i = find_column(header, name)
+        if i is None:
+            if required:
+                raise SystemExit("render_library_map: column %r missing from header %r" % (name, header))
+            continue
+        columns.append((i, label or header[i]))
     body = [r for r in rows[h + 1:] if r and str(r[0]).strip()]
     url_re = sheet_url_re(sheet_id)
     lines = [
@@ -90,17 +113,18 @@ def render(rows, date, by, sheet_id="", title="the library sheet"):
         "Status words: **MASTER** = update it there · **LENS** = generated, never type in it · "
         "**LEGACY** = frozen history, read only · **EXTERNAL MASTER** = the master lives outside the sheet.",
         "",
-        "| " + " | ".join(label for _n, label in WANTED) + " |",
-        "|" + "---|" * len(WANTED),
+        "| " + " | ".join(label for _i, label in columns) + " |",
+        "|" + "---|" * len(columns),
     ]
     for r in body:
-        vals = []
-        for name, _label in WANTED:
-            i = index[name]
-            vals.append(cell(r[i] if i < len(r) else "", url_re))
-        lines.append("| " + " | ".join(vals) + " |")
+        lines.append("| " + " | ".join(cell(r[i] if i < len(r) else "", url_re) for i, _label in columns) + " |")
     lines += ["", "%d collections." % len(body), ""]
     return "\n".join(lines)
+
+
+def same_but_date(a, b):
+    """True when two renders differ at most in their "Generated <date>" line."""
+    return DATE_LINE.sub("Generated <date> by ", a) == DATE_LINE.sub("Generated <date> by ", b)
 
 
 def main(argv=None):
@@ -113,6 +137,11 @@ def main(argv=None):
     ap.add_argument("--by", default="the library agent")
     a = ap.parse_args(argv)
     text = render(load_rows(a.export), a.date, a.by, a.sheet_id, a.title)
+    if os.path.exists(a.out):
+        with open(a.out, encoding="utf-8") as fh:
+            if same_but_date(fh.read(), text):
+                print("unchanged %s" % a.out)
+                return 0
     with open(a.out, "w", encoding="utf-8") as fh:
         fh.write(text)
     print("wrote %s" % a.out)

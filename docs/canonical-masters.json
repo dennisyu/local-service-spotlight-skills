@@ -271,7 +271,7 @@
         "name": "content-library-keeper",
         "in_this_repo": true
       },
-      "cadence": "Daily refresh by the library agent; it posts to the team's project thread only when something changed or needs a person.",
+      "cadence": "Daily refresh by the library agent's scheduled task (written 2026-11-04; switched on once approved); it posts to the team's project thread only when something changed or needs a person.",
       "claim_id_pattern": "master:content-library:<pass>:<YYYY-MM-DD>",
       "last_verified": {
         "date": "2026-11-04",
@@ -286,16 +286,16 @@
       "owner_function": "Content operations (library upkeep)",
       "source_of_truth": {
         "url": null,
-        "note": "Each site's own sitemap (https://<site>/sitemap_index.xml) is the source of truth for what is published; there is no single URL. The library agent rebuilds the copy daily with content-library-keeper's published_inventory.py, counting each page once."
+        "note": "Each site's own sitemap (https://<site>/sitemap_index.xml) is the source of truth for what is published; there is no single URL. The library agent rebuilds the copy with content-library-keeper's published_inventory.py, counting each page once (daily once its scheduled refresh is on)."
       },
       "hub": {
         "url": "https://docs.google.com/spreadsheets/d/1Zl82LiKiF6-17XVWZG1pjLf_yRygcXvapAjq1LObUe8/edit#gid=2026110402",
-        "role": "Private summary tab: counts per site and the worklists people act on (renames, people with no page, old rows no longer live, sitemap defects)."
+        "role": "Private summary tab: counts per site and the worklists people act on (renames, people with no page, old rows in no sitemap with what each address does today, sitemap defects)."
       },
       "skins": [
         {
           "url": "https://github.com/Local-Service-Spotlight/dennis-os/blob/master/library/published-inventory.csv",
-          "role": "Private generated copy, one row per live page. Path is on the library branch until its pull request merges."
+          "role": "Private generated copy, one row per URL listed in the sitemaps. Path is on the library branch until its pull request merges."
         }
       ],
       "competing_copies": [
@@ -309,7 +309,7 @@
         "name": "content-library-keeper",
         "in_this_repo": true
       },
-      "cadence": "Daily; a site whose sitemap fails keeps the previous rows and is reported, never replaced by a partial count.",
+      "cadence": "Daily once the scheduled refresh is on. The inventory stops and writes nothing if any part of a sitemap fails or a site's count drops sharply, so the previous rows stay and a partial count never replaces a full one.",
       "claim_id_pattern": "master:published-pages:<pass>:<YYYY-MM-DD>",
       "last_verified": {
         "date": "2026-11-04",

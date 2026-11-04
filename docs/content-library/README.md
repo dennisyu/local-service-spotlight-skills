@@ -1,10 +1,10 @@
 # The content library our agents run
 
-**If you have spent years making videos, articles and friends, you cannot use what you cannot find.** This guide shows how Local Service Spotlight keeps one map of everything it has made, said or been part of — recordings, web pages, people, proof, talks, photos and methods — so any agent or new teammate can find it, add to it and turn it into more content without making a mess. You can copy it for your own business: it is one sheet, a few plain files and an agent that checks them every day.
+**If you have spent years making videos, articles and friends, you cannot use what you cannot find.** This guide shows how Local Service Spotlight keeps one map of everything it has made. That means recordings, web pages, people, proof, talks, photos and methods. Any agent or new teammate can find a piece, add to it and turn it into more content. You can copy the idea for your own business. It takes one sheet, a few plain files and an agent that checks them every day.
 
 ```mermaid
 flowchart LR
-  AGENT(["Library agent<br/>runs every day"]) -->|"rebuilds lenses,<br/>recounts, writes worklists"| MAP
+  AGENT(["Library agent<br/>daily refresh"]) -->|"rebuilds lenses,<br/>recounts, writes worklists"| MAP
   MAP["<b>Library Map</b><br/>one master per kind of knowledge<br/><br/>Recordings registry · Produce<br/>Processing Ledger · Process<br/>Published pages, rebuilt from sitemaps · Post<br/>Proof: mentions & testimonials · Promote<br/>People, speaking, methods · external masters"]
   MAP -->|"worklists: rename,<br/>write about, link, boost"| TEAM(["People,<br/>by function"])
   SPOKE["Your library<br/>(same template)"] <-->|"one EXTERNAL MASTER<br/>row each way"| MAP
@@ -12,7 +12,7 @@ flowchart LR
 
 ## Why a map, and not one giant spreadsheet
 
-Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of 6,201 pages live across four sites, the hand-kept tabs listed only 44%. Another 235 rows pointed at pages that were no longer in their site's sitemap (deleted, moved, made private or renamed). Of the 540 people our records show a real relationship with, 348 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
+Our library had grown into one spreadsheet with dozens of tabs that people kept by hand. When we rebuilt it on November 4, 2026, we checked it against the live websites. Of the 6,201 pages listed in the four sites' sitemaps, the hand-kept tabs listed only 44%. Another 235 rows pointed at addresses that were in no sitemap at all. When we opened each one, about half still loaded, mostly through a redirect to a newer page, and the rest were gone. Of the 540 people our records show a real relationship with, 348 had never been named in a page title. And one recurring backup step had quietly fallen weeks behind because only one person ever ran it.
 
 None of that was anyone's fault. It is what happens to any list that people type into. So the library now follows four rules:
 
@@ -37,9 +37,9 @@ The front door is a sheet tab called *Library Map*. Each row is one kind of know
 | Freshness | When it was last checked and what was found. |
 | Next action | The one thing to do next. |
 
-Ours has 32 rows: the map itself, the rules page, published pages, recordings, the processing ledger, transcripts, phone video, Descript projects, articles on other sites, people, proof, brand assets, photos, methods, sites, clients, audits and the legacy tabs each of those replaced. A starter map with the same columns is in the [content-library-keeper skill](../../skills/content-library-keeper/references/library-map-template.json).
+Ours has 33 rows: the map itself, the rules page, published pages, recordings, the processing ledger, transcripts, phone video, Descript projects, articles on other sites, the publications Dennis wrote for, people, proof, brand assets, photos, methods, sites, clients, audits and the legacy tabs each of those replaced. A starter map with the same columns is in the [content-library-keeper skill](../../skills/content-library-keeper/references/library-map-template.json).
 
-Next to the map sit two working tabs: **Agent Start Here** (the rules, in plain words) and **Published Summary & Worklists** (counts per site and the short lists people act on: titles to rename, people we have never written about, old rows whose pages are gone, sitemap defects). The full list of every page lives in a private repository as a CSV, because a sheet with thousands of rows turns into one more list that somebody types into.
+Next to the map sit two working tabs: **Agent Start Here** (the rules, in plain words) and **Published Summary & Worklists** (counts per site and the short lists people act on: titles to rename, people we have never written about, old rows whose address is in no sitemap, with what each one does today, and sitemap defects). The full list of every page lives in a private repository as a CSV, because a sheet with thousands of rows turns into one more list that somebody types into.
 
 ## How work moves through it
 
@@ -73,9 +73,9 @@ The names and order follow the [accepted Nine Triangles reference](../../skills/
 ## What the agent does every day
 
 1. Reads the map and pulls the newest repository copy.
-2. Rebuilds the published inventory from every site's sitemap. A site that fails keeps yesterday's rows and is reported; a partial count never replaces a full one.
+2. Rebuilds the published inventory from every site's sitemap. If any part of a sitemap fails, or a site suddenly lists far fewer pages, the run stops, writes nothing and reports why. A partial count never replaces a full one.
 3. Compares with yesterday: new pages, pages gone, people newly written about, renames done.
-4. Refreshes the summary tab, the map's counts and the map snapshot in the repository.
+4. Refreshes the summary tab, the map's counts and the map snapshot in the repository, but only what changed. A day with nothing new writes nothing.
 5. Checks each master's newest date. A master that stopped growing while its source kept producing is the most important finding of the day.
 6. Commits the generated files, then posts in the team's project thread only when something changed or needs a person. Plain English first; file paths and counts underneath.
 

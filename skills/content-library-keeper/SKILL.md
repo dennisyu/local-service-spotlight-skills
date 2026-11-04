@@ -5,7 +5,7 @@ description: Build and run a content library that agents keep current — one Li
 
 # Content library keeper
 
-**You cannot reuse what you cannot find.** This skill turns years of scattered recordings, pages, people and proof into one library an agent keeps current: a map that names the one master for each kind of knowledge, inventories built from the live source every day, and short worklists that tell people what to fix, write or boost next. It is how Local Service Spotlight runs its own library; the public walkthrough is [the content library guide](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md).
+**You cannot reuse what you cannot find.** This skill gathers years of scattered recordings, pages, people and proof. It puts them in one library that an agent keeps current. It makes a map that names the one master for each kind of knowledge. It builds the lists from the live sites instead of typing them. And it writes short worklists that tell people what to fix, write or boost next. Local Service Spotlight runs its own library this way. The public walkthrough is [the content library guide](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md).
 
 ## The rules that make it work
 
@@ -29,8 +29,10 @@ description: Build and run a content library that agents keep current — one Li
    ```
 
    It reads each site's `sitemap_index.xml`, counts each page once (a post with a video is listed twice by some SEO plugins), takes titles and dates from the WordPress REST API when it is open and from the page HTML when it is not, and writes:
-   `published-inventory.csv` (every page), `library-rows-not-live.csv` (old rows whose page is gone), a rename worklist for a retired name, `people-coverage.csv` (who is named in no title), and `inventory-stats.json`. It never writes to a site.
-5. **Put the summary where people look.** In the sheet, keep the counts per site and the short worklists (renames, people with no page, dead rows, sitemap defects). Build that grid with `scripts/build_summary.py --inventory library --config inventory-config.json --out summary-tab.json`; it returns the values plus the header rows to bold and a hash, so the tab is rewritten only when the grid changed. Keep the full row-per-page list in a repository, not in the sheet: thousands of rows in a sheet become another list someone types into.
+   `published-inventory.csv` (every page), `library-rows-not-in-sitemap.csv` (old rows whose address is in no sitemap, with what each address does today: loads, redirects or is not found), `library-old-urls.csv` (old addresses of pages that moved, and whether each still leads to the page), a rename worklist for a retired name, `people-coverage.csv` (who is named in no title), and `inventory-stats.json`. It never writes to a site.
+
+   It stops with exit code 2 and writes nothing when the data looks incomplete: a child sitemap or a REST page fails after retries, more than 2% of page fetches get no answer, a site lists more than 5% (and more than 20) fewer URLs than the last run, or a site's titles switch between the REST API and the page HTML. Check the site; if the drop is real, rerun with `--allow-drop` (or `--allow-source-change`). Unchanged outputs are not rewritten, and the stats file keeps its timestamp when nothing else changed, so a quiet day leaves nothing to commit.
+5. **Put the summary where people look.** In the sheet, keep the counts per site and the short worklists (renames, people with no page, dead rows, sitemap defects). Build that grid with `scripts/build_summary.py --inventory library --config inventory-config.json --out summary-tab.json`. It returns the values, the header rows to bold and a hash that ignores the dated first row. When the grid did not change, it leaves the file alone and prints `"changed": false`, so the tab is rewritten only when something changed. Name each worklist's owner function with `summary.section_owners` in the config. Keep the full row-per-page list in a repository, not in the sheet: thousands of rows in a sheet become another list someone types into.
 6. **Snapshot the map for agents without sheet access.** Export the *Library Map* tab as a values JSON and run `scripts/render_library_map.py export.json --out LIBRARY-MAP.md --sheet-id <id>`.
 7. **Write the rules page.** A sheet tab *Agent Start Here* in plain words: find, check, claim, produce, process, post, promote, record, fix. Name the owner function for each kind of work.
 8. **Tell the team in its project thread.** What changed, the numbers, the worklists, who owns what, and any decision that only a person can make.
@@ -38,11 +40,11 @@ description: Build and run a content library that agents keep current — one Li
 ## The daily loop (what the library agent does)
 
 1. Pull the newest repository copy and read the map.
-2. Run the inventory. If any site's sitemap fails, report it and keep yesterday's rows for that site; do not publish a partial count as the new total.
+2. Run the inventory. If it stops (exit code 2), it wrote nothing: report the reason and keep yesterday's files. Never publish a partial count as the new total.
 3. Compare with yesterday: new pages, pages gone, new people pages, renames done.
-4. Rebuild the summary grid with `build_summary.py`; if its hash changed, clear the tab, write the grid and re-bold the header rows. Re-render `LIBRARY-MAP.md` from a fresh export of the map.
+4. Rebuild the summary grid with `build_summary.py`. Only when it prints `"changed": true`, clear the tab, write the grid and re-bold the header rows. Re-render `LIBRARY-MAP.md` from a fresh export of the map; it is left alone when only its date would change.
 5. Read every master's newest row date. A master that stopped growing while its source kept producing is the most important finding of the day (for example, recordings made but never backed up).
-6. Commit the generated files with a message that says what changed.
+6. Commit the generated files that changed, with a message that says what changed. A day with nothing new leaves nothing to commit.
 7. Post in the project thread **only when something changed or needs a person**. Lead with the plain-English result; put file paths and counts below.
 8. Verify: re-read what you wrote at its destination before you say it is done.
 
