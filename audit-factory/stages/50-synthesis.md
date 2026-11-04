@@ -44,6 +44,11 @@ not sit together; the decision is obvious)
 | **Our own footprint** | what our team built or changed, stated plainly | our placeholder domain, our Wikidata edits |
 | **Measurement blind spot** | the goal cannot be measured from today's setup | 0 conversion events, no call tracking |
 | **Already-offered unlock** | a ready action that only needs a yes | the repurposing offer that got no reply |
+| **Rival with less** | a competitor that outranks them with fewer assets, and what it does instead | DR 49 vs 37 from fewer referring domains |
+| **Brief vs evidence** | facts the brief or work order states that the ledger does not support — say so, never print them as settled | "Target 2,000+" appears in the brief, not on any page |
+
+The last two are the calls a non-frontier model missed in the Nov 4 blind test while finding
+11 of the other 12, so look for them on purpose.
 
 At most two of the eight cards may be UNKNOWN. If more of your candidates are UNKNOWN, the
 research is unfinished — say so and send the gap back to stage 10 instead of writing around it.

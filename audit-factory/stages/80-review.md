@@ -30,7 +30,8 @@ is void for those pages.
 9. **Consent and privacy** — partner names, photos, quotes, minors, private data, security issues
    exposed publicly (route those privately, do not print them).
 10. **Actionability** — could an agent start each of the first-seven-day actions today?
-11. **Buyer and goal** — does the plan move the owner's stated goal, or a goal we invented?
+11. **Buyer and goal** — does the plan move the owner's stated goal, or a goal we invented? Does
+    any fact from the brief or work order appear without a ledger row behind it?
 12. **Voice** — fifth-grade clarity, no flattery, no AI tells, no repetition across pages.
 
 ## Severity

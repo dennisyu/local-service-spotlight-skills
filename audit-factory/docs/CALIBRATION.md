@@ -16,8 +16,9 @@ lives in the Agent Audit Library.
 | Unattributed ReportLab audit (Sep 24) | 202 | 14 | 0 / 20 | 1 | 5 | thin |
 | Unattributed WeasyPrint audit (Jun) | 228 | 8 | 0 / 20 | 8 | 1 | thin |
 | Factory demo exemplar (this repo, larger type) | 328 | 64 | 20 / 20 | 0 | 510 | solid |
-| Factory blind test — Sonnet 5.5 on company audit B's ledger (Nov 4) | 340 | 104 | 20 / 20 | 0 | 842 | solid |
-| Factory blind test — Haiku 5.5 on the same ledger (Nov 4) | 312 | 57 | 20 / 20 | 0 | 383 | solid |
+| Factory blind test, clean — Sonnet 5.5 on company audit B's ledger (Nov 4) | 343 | 79 | 20 / 20 | 0 | 603 | solid |
+| Factory first run, not fully blind — Sonnet 5.5 (Nov 4) | 340 | 104 | 20 / 20 | 0 | 842 | solid |
+| Factory first run, not fully blind — Haiku 5.5 (Nov 4) | 312 | 57 | 20 / 20 | 0 | 383 | solid |
 
 Dennis's own grades point the same way: on Oct 21 he graded a Codex audit **B−** "because it
 doesn't have the detailed visuals and depths of thought like you see in our other analyses"
@@ -59,37 +60,56 @@ trigger, not proof of quality.
 pages; **solid** ≥ 280 / 25 / 10 / ≤ 1; otherwise **thin**. These are review triggers, not
 certification: a dense page can still be wrong, which is what the frontier review is for.
 
-## Blind test — can a cheaper model find Claude's insights? (2026-11-04)
+## Blind tests — can a cheaper model find Claude's insights? (2026-11-04)
 
 **Method.** Company audit B's evidence ledger (Claude's research, Oct 26) with Claude's 14
-written insights and its research-lane notes removed (`ledger.blind_copy`). Sonnet 5.5 and
-Haiku 5.5 each ran stages 30-70 from these cards in their own session, checking their drafts
-with the gates and the renderer, with no web access and no sight of the original PDF. No
-frontier synthesis and no frontier review: this isolates what the kit alone does.
+written insights removed. Each model ran stages 30-70 from the stage cards in its own session,
+checking its drafts with the gates and the renderer, with no web access and no sight of the
+original PDF. No frontier synthesis and no frontier review: this isolates what the kit alone
+does. An independent judge (a fresh agent that built none of the audits) then scored every
+page of each audit against Claude's 14 insights: FOUND, PARTIAL or MISSING, with page and quote.
 
-| | Claude, Oct 26 (all-Claude) | Sonnet 5.5 + kit | Haiku 5.5 + kit |
-|---|---|---|---|
-| Content gates / render gates | — | PASS 38/38 · PASS | PASS · HOLD (page 2 ran 4.9% long) |
-| Fix rounds | 2 rounds of fresh-context design + content review, with re-runs | 2 | 3 (the limit) |
-| Claude's 14 insights found on page 2 | 14 | 8 — Claude's first eight | 6, plus 1 new (a name collision) |
-| Brand Authority | older 7-part rubric, no total | 48 / 100 | 44 / 100 |
-| Actions (agent-run share) | — | 31 (81%) | 20 (70%) |
-| Tokens (deduplicated) · list price | ~1.1 billion · $364-647 | 96K out, 7.6M cache reads · ≈ $2.50 | 142K out, 4.0M cache reads · ≈ $0.70 |
+**The first run was not blind.** `blind_copy` removed the insights but left each conflict's
+`how_audit_must_present` guidance and the editor notes inside rows; the judge found the first
+Sonnet run echoing at least seven of those 27 guidance texts. `blind_copy` now strips both
+(test: `test_blind_copy_strips_guidance_inside_rows`), and Sonnet was rerun on the clean copy
+with a frozen snapshot of the kit. The judge found no echoes in the clean run.
 
-**Neither found** Claude's five deeper insights: fragmented entity signals, tier-1 press that is
-broad but shallow, quotable third-party proof left unused, the head-to-head competitor that
-wins with fewer assets, and facts in the work order that the evidence does not support. Those
-are judgment calls, which is why the standard tier keeps Opus on synthesis and review.
+| | Claude, Oct 26 (all-Claude) | Sonnet 5.5 + kit, clean | Sonnet 5.5, first run (leaky) | Haiku 5.5, first run (leaky) |
+|---|---|---|---|---|
+| Claude's 14 insights, all pages (judge) | 14 | **11 found, 1 partial, 2 missing** | 11 found, 3 partial | 6 found, 7 partial, 1 missing |
+| Content / render gates | — | PASS / PASS | PASS / PASS | PASS / HOLD (page 2 ran 4.9% long) |
+| Fix rounds | 2 rounds of design + content review, with re-runs | 2 | 2 | 3 (the limit) |
+| Words · numbers per page | 462 · 99 | 343 · 79 | 340 · 104 | 312 · 57 |
+| Clickable links | 0 | 603 | 842 | 383 |
+| Brand Authority | older 7-part rubric, no total | 49 / 100 | 48 / 100 | 44 / 100 |
+| Actions (agent-run) | — | 24 (19) | 31 (25) | 20 (14) |
+| Tokens (deduplicated) · list price | 1.1 billion · $281 for the audit | 77K out, 8.0M cache reads · ≈ $2.45 | 96K out, 7.6M cache reads · ≈ $2.50 | 142K out, 4.0M cache reads · ≈ $0.70 |
 
-**Both overflowed page 2 on their first render**, because stage 50 allowed 35-70-word card
-bodies and only about 50 fit. Fixed the same day: the card now says 30-50 words, G24 checks a
-600-word page-2 budget before rendering, and R02 reports how far a page runs over and which card
-is tallest.
+**What the clean run missed:** #13, a rival that outranks the brand with fewer assets, and
+#14, facts in the work order that the evidence does not support; #5 was partial (it saw brand
+demand rise but not that the demand leaks to retailers). Stage 50 now names "Rival with less"
+and "Brief vs evidence" as reasoning moves, and review check 11 asks for the brief check. Page 2
+of the clean run spent two cards on one insight (#5), which the review would flag.
 
-**What this shows:** with a frontier-researched ledger, Sonnet on this kit reproduces most of
-the top insights at about 1/150th of the cost, and Haiku is good enough for drafting but not for
-synthesis. **What it does not show:** research quality from a cheap harvest, or how much the
-frontier review adds. The next calibration run measures both.
+**Missed by every run:** the gap between about 2,100 sourced doors and the 4,500+ claim, the
+low-authority "500-store" headlines, the ad click IDs pasted into a release, a Sprouts link that
+predates the announcement, and "bonbon" being a common word that dilutes the rival's searches.
+
+**Found by the cheaper models but not by Claude:** the Swedish "Saturday candy" story draws
+about 100 searches against 8,500 for "vegan candy"; the hero sells one product while traffic
+lands on another; the brand's own stores are missing from the local pack; and the bare name
+collides with a retailer's storage-box product in search.
+
+**Page 2 fits now.** Both first runs overflowed page 2 on their first render under the old
+35-70-word card spec; the clean run, under the new 30-50-word spec and the G24 budget, did not.
+
+**What this shows:** on a frontier-researched ledger, Sonnet with this kit finds most of what
+Claude found (11 of 14) at about 1/115th of the cost, with no frontier model in the loop.
+Whether Opus findings add enough to earn twice the price is the pilot's main question: it runs
+lean (Sonnet findings, one Opus review) against standard on the same subjects. **What it does
+not show:** research quality from a cheap harvest (the clean ledger still carries the research
+lanes' own notes, as any harvest would), or what the frontier review adds.
 
 ## Score calibration evidence
 
