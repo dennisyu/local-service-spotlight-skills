@@ -32,7 +32,8 @@
 ## Every article has pictures
 
 - **No article ships as a wall of text.** Every published piece carries images — real
-  photographs, screenshots, or diagrams that carry meaning, not decorative stock.
+  photographs that carry meaning, supported by useful screenshots and diagrams,
+  not decorative stock. A diagram alone cannot meet the real-photo requirement.
 - **A diagram beats a paragraph** wherever the point is a structure, a sequence or a
   comparison.
 - **Use recognizable service or network icons when they help readers identify a
@@ -48,6 +49,10 @@
   readable on a phone and provide an accessible text equivalent. Decorative
   duplicate icons should not repeat a label to screen readers; icon-only links
   follow `icon-only-social-controls-stay-tappable`.
-- Caption them. An uncaptioned image is decoration; a captioned one is evidence.
+- Caption them and link their source. A caption is a provenance declaration,
+  not proof by itself: verify the actual people, activity and permitted use.
+  Use the private photo manifest and exact-byte fresh-context review required
+  by `every-public-page-has-real-imagery`; an image tag, SVG or caption cannot
+  certify a relationship or make a source-free article ready to publish.
 - Images also carry the provenance required by `process-real-content-never-generate` —
   a photograph of the work actually done proves more than any sentence about it.
