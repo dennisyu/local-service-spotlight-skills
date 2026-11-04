@@ -4,19 +4,10 @@
 
 ```mermaid
 flowchart LR
-  subgraph HUB["Library Map (one sheet tab): the one master for each kind of knowledge"]
-    direction TB
-    REC["Recordings registry<br/>MASTER · Produce"]
-    LED["Processing Ledger<br/>MASTER · Process"]
-    PUB["Published pages<br/>LENS, built from sitemaps · Post"]
-    PPL["People registry<br/>EXTERNAL MASTER · repository"]
-    PRF["Proof: mentions & testimonials<br/>MASTER · Promote"]
-    SPK["Speaking appearances<br/>EXTERNAL MASTER"]
-    MTH["Methods: skills & SOPs<br/>EXTERNAL MASTER · repository"]
-  end
-  AGENT(["Library agent<br/>runs daily"]) -->|regenerates lenses, recounts, writes worklists| HUB
-  HUB -->|worklists: rename, write about, link, boost| TEAM(["People, by function"])
-  SPOKE["Your library<br/>(same template)"] <-->|one EXTERNAL MASTER row each way| HUB
+  AGENT(["Library agent<br/>runs every day"]) -->|"rebuilds lenses,<br/>recounts, writes worklists"| MAP
+  MAP["<b>Library Map</b><br/>one master per kind of knowledge<br/><br/>Recordings registry · Produce<br/>Processing Ledger · Process<br/>Published pages, rebuilt from sitemaps · Post<br/>Proof: mentions & testimonials · Promote<br/>People, speaking, methods · external masters"]
+  MAP -->|"worklists: rename,<br/>write about, link, boost"| TEAM(["People,<br/>by function"])
+  SPOKE["Your library<br/>(same template)"] <-->|"one EXTERNAL MASTER<br/>row each way"| MAP
 ```
 
 ## Why a map, and not one giant spreadsheet
