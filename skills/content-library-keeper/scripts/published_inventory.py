@@ -426,12 +426,15 @@ def sitemap_urls_with_path(site):
                 time.sleep(2 * (attempt + 1))
         return cu, None, why
     rows, failures = [], []
-    with ThreadPoolExecutor(6) as ex:
-        for cu, items, why in ex.map(one, children):
-            if items is None:
-                failures.append(f"{cu} ({why})")
-                continue
-            rows += [(kind_of(cu), u, lm) for u, lm in items]
+    # One child sitemap at a time. A WordPress sitemap plugin builds an uncached page on request and
+    # records the cache file in one shared option; parallel requests can drop each other's entries,
+    # and a cache file nobody recorded is never refreshed again. On blitzmetrics.com (2026-11-04) the
+    # post sitemaps were served from files frozen days apart: 44 posts listed twice, newer posts missing.
+    for cu, items, why in map(one, children):
+        if items is None:
+            failures.append(f"{cu} ({why})")
+            continue
+        rows += [(kind_of(cu), u, lm) for u, lm in items]
     if failures:
         raise GuardError(f"{site}: {len(failures)} of {len(children)} child sitemaps failed: " + "; ".join(failures[:5]))
     return rows, used
