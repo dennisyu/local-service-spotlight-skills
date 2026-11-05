@@ -40,7 +40,7 @@
 <p>A separate reviewer that built none of the audits scored every page of the clean run: <strong>11 insights found, 1 partly found, 2 missed</strong>. It missed a rival that outranks the brand with fewer assets, and claims in the work order that the evidence does not support. The kit's findings card now names both on purpose. The cheaper models also found four things Claude had missed, such as the brand's own stores being absent from the local map results.</p>
 
 <h2 style="border-left:6px solid #0f8b8d;padding-left:12px;">Test the cheap path before trusting it</h2>
-<p>To make many audits, the kit can send every call through one <a href="https://openrouter.ai/">OpenRouter</a> key: Claude for judgment, cheaper open models for drafting. Before spending anything, we tested that path against a stand-in for OpenRouter's API, now 30 tests. Testing found two real bugs:</p>
+<p>To make many audits, the kit can send every call through one OpenRouter key: Claude for judgment, cheaper open models for drafting. Before spending anything, we tested that path against a stand-in for OpenRouter's API, now 30 tests. Testing found two real bugs:</p>
 <ul>
   <li><strong>Pages would have been cut off.</strong> Pages 3 to 19 came back in one reply with a limit of 16,000 tokens (the units models are billed in), but a real audit's pages measure about 19,400. They are now written in four smaller calls.</li>
   <li><strong>A privacy guard had a gap.</strong> A confidential brief stayed away from flagged models on the first draft, but not during fix rounds. Now every call carries the guard, and a test proves it fails on the old code.</li>
