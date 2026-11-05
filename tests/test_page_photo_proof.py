@@ -149,6 +149,33 @@ class PagePhotoProofTests(unittest.TestCase):
         self.manifest["pages"][0]["review"].pop("asset_provenance_sha256")
         self.assertTrue(any("review digest missing" in x for x in self.errors()))
 
+    def test_explicit_reviewed_served_url_uses_retained_photo_bytes(self):
+        asset = self.manifest["assets"]["interview"]
+        asset["served_url"] = "https://example.com/wp-content/uploads/people.png"
+        self.page.write_text(self.page.read_text().replace('src="assets/people.png"',
+                             'src="' + asset["served_url"] + '"'))
+        self.refresh_page_hash()
+        self.assertTrue(any("provenance changed" in x for x in self.errors()))
+        self.manifest["pages"][0]["review"]["asset_provenance_sha256"]["interview"] = provenance_digest(asset)
+        self.assertEqual(self.errors(), [])
+        self.photo.write_bytes(self.photo.read_bytes() + b"changed")
+        self.assertTrue(any("photo bytes changed" in x for x in self.errors()))
+
+    def test_unlisted_or_unsafe_remote_image_cannot_satisfy_proof(self):
+        original = self.page.read_text()
+        for url in ("http://example.com/people.png", "https://user:password@example.com/people.png",
+                    "https://example.com/people.png#fragment"):
+            with self.subTest(url=url):
+                asset = self.manifest["assets"]["interview"]
+                asset["served_url"] = url
+                self.manifest["pages"][0]["review"]["asset_provenance_sha256"]["interview"] = provenance_digest(asset)
+                self.page.write_text(original.replace('src="assets/people.png"', 'src="' + url + '"'))
+                self.refresh_page_hash()
+                self.assertTrue(any("served_url" in x for x in self.errors()))
+        asset["served_url"] = "https://example.com/reviewed.png"
+        self.manifest["pages"][0]["review"]["asset_provenance_sha256"]["interview"] = provenance_digest(asset)
+        self.assertTrue(any("no matching marked photo" in x for x in self.errors()))
+
     def test_unknown_marked_photo_holds(self):
         self.page.write_text(self.page.read_text() + '<img src="assets/people.png" alt="Other photo" data-lss-real-image="verified" data-lss-asset-id="other">')
         self.refresh_page_hash()

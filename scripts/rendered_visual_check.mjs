@@ -391,7 +391,7 @@ async function captureMatchingObservation(page, { selector, policy, name, output
 
 export async function auditPage(browser, { url, selector, output }, policy, stabilityOptions = {}) {
   const receipt = { version: 1, requestedUrl: url, selector, observedAt: new Date().toISOString(),
-    semanticReview: 'REQUIRED', sourceReview: 'REQUIRED', playbackReview: 'NOT_TESTED', policy, observations: [] };
+    collector: 'rendered_visual_check', semanticReview: 'REQUIRED', sourceReview: 'REQUIRED', playbackReview: 'NOT_TESTED', policy, observations: [] };
   await fs.mkdir(output, { recursive: true });
   for (const viewport of policy.viewports) for (const javaScriptEnabled of [true, false]) {
     const context = await browser.newContext({ viewport, javaScriptEnabled, reducedMotion: 'reduce', serviceWorkers: 'block' });
@@ -407,8 +407,10 @@ export async function auditPage(browser, { url, selector, output }, policy, stab
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
       const readiness = await prepareStableLayout(page, selector);
       const name = `${viewport.width}x${viewport.height}-js-${javaScriptEnabled ? 'on' : 'off'}.png`;
+      const sourceCapture = await retainResponseSource(response, output, name + '.html');
       const { result, bytes, stability } = await captureMatchingObservation(page, { selector, policy, name, output }, stabilityOptions);
       receipt.observations.push({ ...result, httpStatus: response?.status() ?? null, javaScriptEnabled,
+        sourceSha256: sourceCapture.sha256, sourceCapture, sourceBinding: 'response_body',
         screenshot: bytes ? name : null, screenshotSha256: bytes ? createHash('sha256').update(bytes).digest('hex') : null,
         layoutStability: { ...stability, readiness } });
       if (response?.status() !== 200) { result.geometry = 'FAIL'; receipt.observations.at(-1).geometry = 'FAIL'; receipt.observations.at(-1).reasons.push('page did not return HTTP 200'); }
@@ -420,6 +422,17 @@ export async function auditPage(browser, { url, selector, output }, policy, stab
   receipt.compliance = receipt.geometry === 'PASS' ? 'REVIEW_REQUIRED' : 'FAIL';
   await fs.writeFile(path.join(output, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n');
   return receipt;
+}
+
+// Pure transport helper: software tests can exercise this with an inert response
+// double without opening a browser. Real runs retain the navigation response body.
+export async function retainResponseSource(response, output, name) {
+  if (!response || typeof response.body !== 'function') throw new Error('navigation response body unavailable');
+  const bytes = await response.body();
+  if (!Buffer.isBuffer(bytes) || bytes.length > 64 * 1024 * 1024) throw new Error('navigation response body exceeds capture contract');
+  if (path.basename(name) !== name || !name.endsWith('.html')) throw new Error('local source capture filename required');
+  await fs.writeFile(path.join(output, name), bytes, { flag: 'wx' });
+  return { path: name, sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
 }
 
 async function main() {

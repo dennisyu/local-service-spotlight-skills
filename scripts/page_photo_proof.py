@@ -166,6 +166,10 @@ def check(root: Path, manifest: dict) -> list[str]:
                 errors.append(f"{name}/{asset_id}: incomplete photo provenance")
             if review_provenance.get(asset_id) != provenance_digest(asset):
                 errors.append(f"{name}/{asset_id}: provenance changed or review digest missing")
+            served_url = asset.get("served_url")
+            if served_url is not None and (not public_url(served_url) or
+                    urlsplit(served_url).scheme != "https" or urlsplit(served_url).fragment):
+                errors.append(f"{name}/{asset_id}: served_url must be an explicit public HTTPS URL without a fragment")
             try:
                 photo = inside(root, asset.get("path"))
                 photo_sha = digest(photo)
@@ -183,7 +187,14 @@ def check(root: Path, manifest: dict) -> list[str]:
                 matching = []
                 for img in parsed.photos:
                     source = urlsplit(img.get("src", ""))
-                    if source.scheme or source.netloc or not source.path:
+                    if source.scheme or source.netloc:
+                        # A dynamic publisher retains the actual photo bytes locally
+                        # and binds this literal served URL into provenance review.
+                        # This never fetches or authenticates the remote endpoint.
+                        if served_url is not None and img.get("src") == served_url:
+                            matching.append(img)
+                        continue
+                    if not source.path:
                         continue
                     relative = unquote(source.path)
                     target = (root / relative.lstrip("/") if relative.startswith("/") else page_path.parent / relative).resolve()

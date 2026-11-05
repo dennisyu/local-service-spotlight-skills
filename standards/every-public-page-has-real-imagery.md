@@ -3,7 +3,7 @@
   "title": "Every public page shows real people or real work",
   "severity": "error",
   "captured": "2026-08-21",
-  "captured_from": "Dennis Yu, Codex task, 2026-08-21: 'On any page, not just the thank you page, we want to have a real image, not just a bunch of texts. Remember that is a rule across all of our websites because we want to be personal, personable, not just have text.' Reconciled with Dennis Yu's 2026-09-05 GPT-6 continuation allowing a diagram, picture or embedded video on every page. Strengthened by Dennis Yu, Codex roofing launch request, 2026-11-03: every page needs a real photo; show existing roofing relationships, original pictures/videos and founders instead of unsupported AI text.",
+  "captured_from": "Dennis Yu, Codex task, 2026-08-21: 'On any page, not just the thank you page, we want to have a real image, not just a bunch of texts. Remember that is a rule across all of our websites because we want to be personal, personable, not just have text.' Reconciled with Dennis Yu's 2026-09-05 GPT-6 continuation allowing a diagram, picture or embedded video on every page. Strengthened by Dennis Yu, Codex roofing launch request, 2026-11-03: every page needs a real photo; show existing roofing relationships, original pictures/videos and founders instead of unsupported AI text. Dennis Yu, Codex continuation, 2026-11-05: make website agents actually use the checks, verify enforcement across publishing workflows with Codex, and document proof in GitHub.",
   "applies_to": [
     "published-html",
     "design-review"
@@ -85,6 +85,19 @@
   changed bytes, omitted routes or missing independent review must HOLD.
   Also inspect the rendered desktop and mobile page;
   a hidden, broken, or contextless image does not count.
+- **A publishing route must enforce this before its content write or release.**
+  Marker `PHOTO-PROVENANCE-PUBLISH-GATE-2026-11-05`. Use the canonical
+  `scripts/publication_photo_gate.py` or an equivalent reviewed integration at
+  the actual publisher's effect boundary. The publisher supplies its exact
+  candidate HTML hashes and canonical destinations; the gate checks retained
+  photo/provenance bytes, independent review, actual response-body captures and
+  desktop/mobile JavaScript-on/off screenshot evidence. Revalidate that frozen
+  commitment immediately before dispatch. Missing evidence, a changed page,
+  asset, permission record, receipt or screenshot, an omitted route, or a stale
+  review stops dispatch. A checklist, a marker-only sweep, a pack installation,
+  or a caller's declared PASS cannot replace the publisher call. Keep held and
+  unintegrated routes visible; neither a merged gate nor one agent's successful
+  exercise proves every publisher or runtime enforced it.
 - Machine-only documents and routes that never render as visitor content—such as
   `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
   browser-rendered redirect placeholder is not exempt; replace it with a real
