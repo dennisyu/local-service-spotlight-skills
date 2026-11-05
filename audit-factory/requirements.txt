@@ -1,0 +1,8 @@
+# Audit Factory 20. Core gates, scoring, cost, router and Basecamp export are stdlib + pypdf.
+pypdf>=6.0
+# Rendering (HTML -> PDF) and the QR decode check
+playwright>=1.50
+segno>=1.6
+opencv-python-headless>=4.9
+# Optional: validate audit.json against schema/audit.schema.json
+jsonschema>=4.20

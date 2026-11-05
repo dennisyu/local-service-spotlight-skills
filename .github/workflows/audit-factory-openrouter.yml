@@ -1,0 +1,123 @@
+name: Audit Factory on OpenRouter
+
+# Two jobs:
+#   check-prices  every model the kit routes through OpenRouter is still listed, at the
+#                 price the cost model assumes (public models list: no key, no spend)
+#   demo-audit    manual only: build the public demo audit (a fictional business) through
+#                 one OpenRouter key, with a hard spending cap, and keep the PDF + receipts
+# The live job reads the key from the OPENROUTER_API_KEY repository secret. It never runs
+# on pull requests, so a fork or a branch cannot spend it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Tier (every call goes through one OpenRouter key)"
+        type: choice
+        default: openrouter-lean
+        options: [openrouter-lean, openrouter, openrouter-budget]
+      max_usd:
+        description: "Hard spending cap for the run, in US dollars"
+        type: string
+        default: "3"
+  pull_request:
+    paths:
+      - "audit-factory/config/routing.json"
+      - "audit-factory/factory20/openrouter.py"
+      - ".github/workflows/audit-factory-openrouter.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-factory-openrouter-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-prices:
+    name: Models and prices still match OpenRouter
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compare routing.json with OpenRouter's live models list
+        working-directory: audit-factory
+        run: python3 -m factory20 openrouter-check
+
+  demo-audit:
+    name: Public demo audit through OpenRouter
+    if: github.event_name == 'workflow_dispatch'
+    needs: check-prices
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      # Only whether a key exists is visible to every step; the key itself is given to the one
+      # step that spends it.
+      HAS_KEY: ${{ secrets.OPENROUTER_API_KEY != '' }}
+      TIER: ${{ inputs.tier }}
+      MAX_USD: ${{ inputs.max_usd }}
+    steps:
+      - name: Stop early without a key
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "::error::Add an OPENROUTER_API_KEY repository secret (Settings > Secrets and variables > Actions), then run this again."
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the kit, the browser that renders the PDF, and pdftoppm for the QR check
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+          python3 -m pip install -r audit-factory/requirements.txt
+          python3 -m playwright install --with-deps chromium
+      - name: Build the demo audit
+        working-directory: audit-factory
+        shell: bash            # bash -eo pipefail: a HOLD (exit 2) fails this step even through tee
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          python3 -m factory20 init run --from-demo
+          python3 -m factory20 run run --tier "$TIER" --max-usd "$MAX_USD" | tee run/result.json
+      - name: Measure the PDF and write the receipt
+        if: always()
+        working-directory: audit-factory
+        shell: bash
+        run: |
+          if [ -f run/audit.pdf ]; then python3 -m factory20 measure run/audit.pdf | tee run/measure.txt; fi
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import collections, json, pathlib
+          run = pathlib.Path("run")
+          res = json.loads((run / "result.json").read_text()) if (run / "result.json").exists() else {}
+          log = json.loads((run / "run.json").read_text())["attempts"] if (run / "run.json").exists() else []
+          by_model = collections.defaultdict(lambda: [0, 0.0])
+          for a in log:
+              by_model[a["model"]][0] += 1
+              by_model[a["model"]][1] += a.get("usd", 0) or 0
+          print(f"## Demo audit on `{res.get('tier', '?')}`: {res.get('verdict', 'no result')}")
+          print(f"Charged by OpenRouter: **${sum(v[1] for v in by_model.values()):.4f}** across {len(log)} calls"
+                f" (cap ${res.get('max_usd')})")
+          if res.get("hold_reason"):
+              print(f"\nHeld: {res['hold_reason']}")
+          if res.get("warning"):
+              print(f"\nNote: {res['warning']}")
+          print("\n| Model | Calls | Charged |\n|---|---:|---:|")
+          for m, (n, usd) in sorted(by_model.items()):
+              print(f"| {m} | {n} | ${usd:.4f} |")
+          served = sorted({a.get('served_by') for a in log if a.get('served_by')})
+          if served:
+              print(f"\nServed by: {', '.join(served)}")
+          if (run / "measure.txt").exists():
+              print("\n```\n" + (run / "measure.txt").read_text() + "```")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-audit-${{ inputs.tier }}
+          path: |
+            audit-factory/run/*.json
+            audit-factory/run/*.txt
+            audit-factory/run/audit.pdf
+          retention-days: 30

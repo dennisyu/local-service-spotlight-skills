@@ -1,0 +1,3546 @@
+{
+  "schema": "lss-audit/1.0",
+  "meta": {
+    "subject": "Marisol Vega · Vega Roofing & Restoration",
+    "subject_type": "person+company",
+    "title": "Marisol Vega — Personal & Company Brand Audit (SYNTHETIC DEMO)",
+    "date": "2026-11-04",
+    "plan_start": "2026-11-09",
+    "version": "v1.0",
+    "research_cutoff": "2026-11-02",
+    "prepared_for": "Marisol Vega (synthetic demo subject)",
+    "prepared_by": {
+      "name": "Dennis Yu",
+      "role": "Strategy · Local Service Spotlight",
+      "photo": ""
+    },
+    "confidentiality": "SYNTHETIC DEMO — every fact is invented to show the format",
+    "palette": {
+      "accent": "#E8B10A"
+    },
+    "install_url": "https://localservicespotlight.com/install/",
+    "identity": {
+      "status": "CONFIRMED",
+      "attributes": [
+        {
+          "attribute": "State roofing registration: Vega Roofing LLC, Tulsa, active",
+          "evidence": [
+            "V-E002"
+          ]
+        },
+        {
+          "attribute": "Chamber directory names Marisol Vega as owner at the same address",
+          "evidence": [
+            "V-E003"
+          ]
+        },
+        {
+          "attribute": "Qualified-name search returns her site, GBP and TV interview",
+          "evidence": [
+            "V-E010"
+          ]
+        }
+      ],
+      "namesakes": [
+        "Marisol Vega, Miami realtor",
+        "Marisol Vega, actress"
+      ]
+    },
+    "next_decision": "Marisol picks one public business name and confirms the founding year and roof count (A8, A11). Everything else on the 7-day list starts the day she answers — agents stage it before then.",
+    "producer": [
+      {
+        "stage": "exemplar",
+        "model": "claude-opus-5-5",
+        "note": "hand-built reference for the stage cards"
+      }
+    ]
+  },
+  "exams": {
+    "brand_authority": {
+      "rubric": "brand-authority@1.1",
+      "pass_line": 80,
+      "rows": [
+        {
+          "n": 1,
+          "score": 4,
+          "why": "Owned home ranks #1 for the qualified name but the bare name belongs to namesakes.",
+          "evidence": [
+            "V-E010",
+            "V-E009",
+            "V-E001"
+          ]
+        },
+        {
+          "n": 2,
+          "score": 6,
+          "why": "TV, award, podcast and expo are independent and current; none connects to the entity home.",
+          "evidence": [
+            "V-E017",
+            "V-E019",
+            "V-E021",
+            "V-E022"
+          ]
+        },
+        {
+          "n": 3,
+          "score": 5,
+          "why": "212 owned videos with five strong performers; blog stale since 2022; nothing on the site.",
+          "evidence": [
+            "V-E024",
+            "V-E025",
+            "V-E029",
+            "V-E027"
+          ]
+        },
+        {
+          "n": 4,
+          "score": 7,
+          "why": "386 reviews at 4.9, BBB A+, and 104 reviews naming her — strong and current.",
+          "evidence": [
+            "V-E011",
+            "V-E016",
+            "V-E013"
+          ]
+        },
+        {
+          "n": 5,
+          "score": 2,
+          "why": "Generic 'quality roofing' offer; financing link 404s and the form emails a dead domain.",
+          "evidence": [
+            "V-E052",
+            "V-E031",
+            "V-E032"
+          ]
+        },
+        {
+          "n": 6,
+          "score": 2,
+          "why": "Three public names, two founding years, no Person schema.",
+          "evidence": [
+            "V-E008",
+            "V-E036",
+            "V-E004",
+            "V-E005"
+          ]
+        },
+        {
+          "n": 7,
+          "score": 3,
+          "why": "194 days since the last video; Facebook silent since 2023; Instagram 3 posts in 90 days.",
+          "evidence": [
+            "V-E028",
+            "V-E049",
+            "V-E050"
+          ]
+        },
+        {
+          "n": 8,
+          "score": 3,
+          "why": "38 referring domains at DR 14, mostly directories; the TV and award pages link to Facebook.",
+          "evidence": [
+            "V-E044",
+            "V-E018",
+            "V-E020"
+          ]
+        },
+        {
+          "n": 9,
+          "score": 2,
+          "why": "Outside the top 20 for 'roof repair tulsa'; #14 only via a video; map pack at 4 of 9 points.",
+          "evidence": [
+            "V-E041",
+            "V-E042",
+            "V-E043"
+          ]
+        },
+        {
+          "n": 10,
+          "score": 4,
+          "why": "LocalBusiness object and a visible business panel; no Person object; no Wikidata.",
+          "evidence": [
+            "V-E037",
+            "V-E038",
+            "V-E040"
+          ]
+        }
+      ]
+    },
+    "separate": [
+      {
+        "name": "Website QA",
+        "value": "3 / 10 pass",
+        "note": "form, financing, tap-to-call and speed fail",
+        "evidence": [
+          "V-E031",
+          "V-E033"
+        ]
+      },
+      {
+        "name": "AI visibility",
+        "value": "1 of 3 engines",
+        "note": "named once, 4th, Perplexity",
+        "evidence": [
+          "V-E046"
+        ]
+      },
+      {
+        "name": "Local grid",
+        "value": "4 of 9 points",
+        "note": "central Tulsa only",
+        "evidence": [
+          "V-E043"
+        ]
+      },
+      {
+        "name": "SEO & Growth",
+        "value": "UNKNOWN",
+        "note": "Search Console not connected",
+        "evidence": [
+          "V-U03"
+        ]
+      }
+    ]
+  },
+  "pages": [
+    {
+      "n": 1,
+      "type": "cover",
+      "kicker": "Personal & company brand audit",
+      "headline": "**386 five-star reviews** say she is Tulsa's insurance-claim roofer. Her website says “quality roofing.”",
+      "dek": "Homeowners already chose Marisol Vega for one job: getting a hail claim paid and the roof replaced. The proof is everywhere except where buyers decide. This audit shows what a buyer's diligence finds first, scores the brand on ten checked rows, and hands agents a dated plan to turn that proof into inspection calls before spring hail season.",
+      "blocks": [
+        {
+          "type": "stat_strip",
+          "span": 12,
+          "items": [
+            {
+              "value": "4.9★",
+              "label": "386 Google reviews",
+              "sub": "BBB A+ since 2015",
+              "evidence": [
+                "V-E011",
+                "V-E016"
+              ]
+            },
+            {
+              "value": "61%",
+              "label": "of reviews mention a claim",
+              "sub": "236 of 386 say adjuster, claim or insurance",
+              "evidence": [
+                "V-E012"
+              ]
+            },
+            {
+              "value": "41,200",
+              "label": "views on her top video",
+              "sub": "0 videos on her website",
+              "evidence": [
+                "V-E025",
+                "V-E027"
+              ]
+            },
+            {
+              "value": "38/100",
+              "label": "Brand Authority",
+              "sub": "ten rows checked · pass line 80",
+              "evidence": [
+                "V-E037"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "finding_map",
+          "span": 7,
+          "items": [
+            {
+              "title": "The market's word for her is 'insurance claim', not 'quality'",
+              "proof": "61% of reviews; competitors lead with hail and claims.",
+              "evidence": [
+                "V-E012",
+                "V-E053"
+              ]
+            },
+            {
+              "title": "Two of three website doors are locked",
+              "proof": "Financing 404s; the form emails a domain that expired in 2025.",
+              "evidence": [
+                "V-E031",
+                "V-E032"
+              ]
+            },
+            {
+              "title": "Her best teaching lives only on YouTube",
+              "proof": "Top 5 videos: 88,650 views; site embeds none.",
+              "evidence": [
+                "V-E025",
+                "V-E027"
+              ]
+            },
+            {
+              "title": "The bare name belongs to a realtor and an actress",
+              "proof": "She first appears at #7; one AI engine picks the realtor.",
+              "evidence": [
+                "V-E009",
+                "V-E047"
+              ]
+            },
+            {
+              "title": "TV, award and expo proof points at a dead Facebook page",
+              "proof": "Old name 'Vega Roof Pros'; last post Feb 2023.",
+              "evidence": [
+                "V-E018",
+                "V-E020",
+                "V-E049"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "span": 5,
+          "src": "assets/mock-gbp.png",
+          "height": 170,
+          "caption": "SYNTHETIC MOCK of her Google profile: 4.9 average across 386 reviews — the strongest public proof she owns.",
+          "evidence": [
+            "V-E011"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 6,
+          "tone": "info",
+          "title": "What she asked for",
+          "body": "30% more inspection calls before spring hail season, and less dependence on door-knocking crews.",
+          "evidence": [
+            "V-E055"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 6,
+          "tone": "decision",
+          "title": "If you read only this — the first week",
+          "body": "Fix the form and tap-to-call (A1, A2) · choose one business name (A8) · install call tracking (A12) · stage the claim-guide page from the top video (A5).",
+          "actions": [
+            "A1",
+            "A2",
+            "A8",
+            "A12",
+            "A5"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "type": "summary",
+      "kicker": "Executive summary — what changes the plan",
+      "headline": "Eight things the evidence says that you would **not guess** from her profiles",
+      "dek": "Each finding pairs a checked fact with what it changes and the action that follows. Seven are observed directly; one is a measurement gap that blocks proving any result.",
+      "blocks": [
+        {
+          "type": "cards",
+          "span": 12,
+          "cols": 2,
+          "items": [
+            {
+              "badge": "OBSERVED",
+              "title": "236 of 386 reviews describe an insurance claim. The homepage never says it.",
+              "body": "Customers already decided what she is: 61% of her 4.9-star Google reviews mention an adjuster, a claim or insurance, and 104 name Marisol herself. The site leads with “Quality roofing you can trust” — a line any roofer could use — while the top three competitors lead with hail and claims.",
+              "viz": {
+                "type": "pair",
+                "a": {
+                  "label": "reviews naming a claim",
+                  "value": 236
+                },
+                "b": {
+                  "label": "homepage mentions",
+                  "value": 0
+                }
+              },
+              "so": "Rename the offer to what buyers already buy: insurance-claim roof replacement, led by Marisol.",
+              "evidence": [
+                "V-E012",
+                "V-E013",
+                "V-E052",
+                "V-E053"
+              ],
+              "actions": [
+                "A3",
+                "A4"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "Her best video has 41,200 views. Her website has 0 videos.",
+              "body": "Five storm-prep and hail-claim videos hold 88,650 views while the other 207 have a median of 160. None of the 41 site pages embeds one, and no page explains the claim process that the top video already teaches step by step.",
+              "viz": {
+                "type": "pair",
+                "a": {
+                  "label": "top video views",
+                  "value": 41200,
+                  "display": "41,200"
+                },
+                "b": {
+                  "label": "site embeds",
+                  "value": 0
+                }
+              },
+              "so": "The claim guide already exists on camera; publish it as the site's main page and let the video sell.",
+              "evidence": [
+                "V-E025",
+                "V-E026",
+                "V-E027",
+                "V-E030"
+              ],
+              "actions": [
+                "A5"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "3 of 4 ways to reach her fail: form, financing and tap-to-call.",
+              "body": "The menu links /financing on all 41 pages and it returns 404. The contact form posts to an address on a domain that expired in January 2025, so form leads since then may never have arrived. On mobile the phone number is an image and cannot be tapped.",
+              "viz": {
+                "type": "doors",
+                "items": [
+                  {
+                    "label": "Contact form",
+                    "ok": false
+                  },
+                  {
+                    "label": "Financing",
+                    "ok": false
+                  },
+                  {
+                    "label": "Tap-to-call",
+                    "ok": false
+                  },
+                  {
+                    "label": "Phone (desktop)",
+                    "ok": true
+                  }
+                ]
+              },
+              "so": "Before any spend, fix the three doors and prove each with a real test submission.",
+              "evidence": [
+                "V-E031",
+                "V-E032",
+                "V-E034"
+              ],
+              "actions": [
+                "A1",
+                "A2"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "Search her name: the first 6 results are a realtor and an actress.",
+              "body": "For the bare name a Miami realtor holds #1-#3 and an actress #4-#6; the founder appears at #7. Add “roofing” and she owns the top three. Asked “who is Marisol Vega roofing,” 1 of 3 AI engines described the realtor instead.",
+              "so": "Every page and profile should carry the qualifier “Marisol Vega, Tulsa roofer” and one Person record machines can read.",
+              "evidence": [
+                "V-E009",
+                "V-E010",
+                "V-E047",
+                "V-E036"
+              ],
+              "actions": [
+                "A7",
+                "A8"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "A TV segment, a 2025 award and an expo talk — 0 point home.",
+              "body": "Green Country News 6 (April 2024) and the 2025 Women in Roofing award both link to a Facebook page silent since February 2023, under the old name “Vega Roof Pros.” The site never mentions the segment, the award, the podcast or the talk.",
+              "so": "Ask both publishers to relink and add an “As seen on” block, so independent proof lands where buyers decide.",
+              "evidence": [
+                "V-E018",
+                "V-E020",
+                "V-E023",
+                "V-E049"
+              ],
+              "actions": [
+                "A6",
+                "A9"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "AI engines named her once in 3 answers and cited 0 of her pages.",
+              "body": "Asked for the best Tulsa roofer for hail damage, ChatGPT, Gemini and Perplexity each named 3-5 firms; Vega appeared once, fourth. Every cited source was a listicle, a BBB page or a competitor — engines cannot quote a claim guide that does not exist yet.",
+              "so": "Publish the claim guide and a dated facts page — the two pages an AI answer would quote.",
+              "evidence": [
+                "V-E046",
+                "V-E048",
+                "V-E030"
+              ],
+              "actions": [
+                "A5",
+                "A10"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "3 names, 2 founding years and 2 roof counts split her proof.",
+              "body": "Google says “Vega Roofing LLC,” the site “Vega Roofing & Restoration,” Facebook and LinkedIn “Vega Roof Pros.” The founding year is 2010 on the site and 2012 on Google; roofs are “3,500+” on the homepage and “more than 2,000” in the 2024 interview.",
+              "so": "Choose one public name and one set of dated facts, then correct every profile in the same week.",
+              "evidence": [
+                "V-E008",
+                "V-E004",
+                "V-E005",
+                "V-E006",
+                "V-E007"
+              ],
+              "actions": [
+                "A8",
+                "A11"
+              ]
+            },
+            {
+              "badge": "UNKNOWN",
+              "title": "0 conversions are tracked, so no one can say which channel books inspections.",
+              "body": "GA4 is installed with zero conversion events and there is no call-tracking number. The goal — 30% more inspection calls before spring — cannot be measured from today's setup, and lead volume and close rate by source are unknown.",
+              "so": "Install call tracking and two GA4 events this week so spring's results are counted, not guessed.",
+              "evidence": [
+                "V-E035",
+                "V-E055",
+                "V-U01"
+              ],
+              "actions": [
+                "A12"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "type": "goal",
+      "kicker": "Goal, buy box and mutual value",
+      "headline": "She wants **30% more inspection calls**; the buyer who calls is a homeowner holding a hail claim",
+      "dek": "The stated goal comes from her intake form. The buyer and the offer below are inferred from 386 reviews and three competitor homepages — confirm, edit or continue.",
+      "blocks": [
+        {
+          "type": "flow",
+          "span": 12,
+          "steps": [
+            {
+              "label": "Buyer",
+              "detail": "Tulsa homeowner after a hail storm, unsure the damage is covered",
+              "state": "INFERRED",
+              "evidence": [
+                "V-E012"
+              ]
+            },
+            {
+              "label": "Problem",
+              "detail": "Adjuster meeting, claim paperwork, fear of a denied claim or a storm-chaser",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E012",
+                "V-E025"
+              ]
+            },
+            {
+              "label": "Proof she has",
+              "detail": "386 reviews (61% claims), TV expert segment, adjuster co-presenter",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E011",
+                "V-E017",
+                "V-E056"
+              ]
+            },
+            {
+              "label": "Offer to lead with",
+              "detail": "Free hail inspection + claim help, roof replacement by the founder's crew",
+              "state": "INFERRED",
+              "evidence": [
+                "V-E053",
+                "V-E054"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "span": 7,
+          "title": "What we know versus what we inferred",
+          "columns": [
+            "Field",
+            "Value",
+            "State",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "Goal",
+              "+30% inspection calls before spring hail season",
+              "REPORTED",
+              "V-E055"
+            ],
+            [
+              "Revenue mix",
+              "~70% insurance jobs; average re-roof $14,800 (owner-reported)",
+              "REPORTED",
+              "V-E054"
+            ],
+            [
+              "Buyer",
+              "Homeowner with storm damage, mid-claim",
+              "INFERRED",
+              "V-E012"
+            ],
+            [
+              "Category word",
+              "“insurance claim” beats “quality” 236 to 0",
+              "OBSERVED",
+              "V-E012, V-E052"
+            ],
+            [
+              "Geography",
+              "Central Tulsa strong (4 of 9 grid points), suburbs weak",
+              "OBSERVED",
+              "V-E043"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 5,
+          "tone": "info",
+          "title": "Mutual value with partners",
+          "body": "Public adjuster Dana Whitfield already co-presents with her. A shared claim guide helps homeowners, sends Dana qualified claims and gives Vega the expert proof no competitor can copy. Proposed, not agreed.",
+          "evidence": [
+            "V-E056"
+          ],
+          "actions": [
+            "A14"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "Why the insurance angle and not price: the owner reports roughly 70% of revenue already comes from insurance jobs, and reviews name the claim help far more often than speed or cost. Competitors that rank 1-3 for “roof repair tulsa” lead with hail and claims, so “quality roofing” is not a differentiator in this market — it is the default. The fastest credible lift is to say plainly what customers already say about her."
+          ],
+          "evidence": [
+            "V-E054",
+            "V-E053",
+            "V-E041"
+          ]
+        },
+        {
+          "type": "cards",
+          "span": 12,
+          "cols": 3,
+          "title": "What changes if she leads with claims",
+          "items": [
+            {
+              "badge": "OBSERVED",
+              "title": "Her reviews already do the selling",
+              "body": "236 reviews describe a paid claim in the customer's own words. Moving six of them above the fold turns the most common buyer fear — a denied claim — into the first thing answered.",
+              "so": "Pin reviews by topic, not by date.",
+              "evidence": [
+                "V-E012",
+                "V-E015"
+              ],
+              "actions": [
+                "A4"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "Door-knockers become a backup, not the plan",
+              "body": "She wants less dependence on canvassing crews. A claim guide that ranks and an AI answer that names her are inbound channels that keep working after the crews go home.",
+              "so": "Measure inbound share monthly from A12 onward.",
+              "evidence": [
+                "V-E055",
+                "V-E045"
+              ],
+              "actions": [
+                "A16"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "Price stops being the first question",
+              "body": "Only 22 of 386 reviews mention price or financing; 236 mention the claim. Buyers who arrive through the claim story compare on trust, which is where her proof is strongest.",
+              "so": "Keep financing one click away, not on the hero.",
+              "evidence": [
+                "V-E012",
+                "V-E011"
+              ],
+              "actions": [
+                "A2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "type": "identity",
+      "kicker": "Identity, profiles and coverage",
+      "headline": "Two registries prove who she is; **six search results** say someone else",
+      "dek": "Identity rests on two independent records — the state registration and the chamber directory — plus the qualified-name search. Namesakes stay out of every score.",
+      "blocks": [
+        {
+          "type": "graph",
+          "span": 7,
+          "height": 270,
+          "center": {
+            "id": "mv",
+            "label": "Marisol Vega"
+          },
+          "nodes": [
+            {
+              "id": "reg",
+              "label": "State registry #80-4417",
+              "state": "OBSERVED",
+              "sub": "Vega Roofing LLC"
+            },
+            {
+              "id": "ch",
+              "label": "Chamber directory",
+              "state": "OBSERVED",
+              "sub": "owner, same address"
+            },
+            {
+              "id": "site",
+              "label": "vegaroofing.example",
+              "state": "OBSERVED",
+              "sub": "self-claim"
+            },
+            {
+              "id": "gbp",
+              "label": "Google profile",
+              "state": "OBSERVED",
+              "sub": "'Vega Roofing LLC'"
+            },
+            {
+              "id": "yt",
+              "label": "Roof Talk with Marisol",
+              "state": "OBSERVED",
+              "sub": "212 videos"
+            },
+            {
+              "id": "li",
+              "label": "LinkedIn",
+              "state": "OBSERVED",
+              "sub": "old name"
+            },
+            {
+              "id": "rl",
+              "label": "Miami realtor",
+              "state": "UNKNOWN",
+              "sub": "namesake #1-#3"
+            },
+            {
+              "id": "ac",
+              "label": "Actress",
+              "state": "UNKNOWN",
+              "sub": "namesake #4-#6"
+            }
+          ],
+          "edges": [
+            {
+              "from": "mv",
+              "to": "reg",
+              "type": "link"
+            },
+            {
+              "from": "mv",
+              "to": "ch",
+              "type": "link"
+            },
+            {
+              "from": "mv",
+              "to": "site",
+              "type": "link"
+            },
+            {
+              "from": "mv",
+              "to": "gbp",
+              "type": "link"
+            },
+            {
+              "from": "mv",
+              "to": "yt",
+              "type": "link"
+            },
+            {
+              "from": "mv",
+              "to": "li",
+              "type": "interview",
+              "label": "stale title"
+            },
+            {
+              "from": "mv",
+              "to": "rl",
+              "type": "conflict",
+              "label": "same name"
+            },
+            {
+              "from": "mv",
+              "to": "ac",
+              "type": "conflict",
+              "label": "same name"
+            }
+          ],
+          "caption": "Solid = verified surface. Red = namesake competing for the bare name. Only the green-ringed nodes count as her.",
+          "evidence": [
+            "V-E002",
+            "V-E003",
+            "V-E001",
+            "V-E008",
+            "V-E024",
+            "V-E051"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 5,
+          "title": "Namesakes kept out of every score",
+          "columns": [
+            "Namesake",
+            "Where",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "Marisol Vega, realtor",
+              "Bare-name #1-#3, Miami",
+              "V-A01"
+            ],
+            [
+              "Marisol Vega, actress",
+              "#4-#6; has a graph object",
+              "V-A02"
+            ]
+          ]
+        },
+        {
+          "type": "conflicts",
+          "span": 5,
+          "title": "Contradictions a buyer will notice",
+          "items": [
+            {
+              "metric": "Founding year",
+              "values": [
+                {
+                  "value": "since 2010",
+                  "source": "site"
+                },
+                {
+                  "value": "opened 2012",
+                  "source": "Google"
+                }
+              ],
+              "resolution": "both shown until she confirms (A11)",
+              "evidence": [
+                "V-C01"
+              ]
+            },
+            {
+              "metric": "Roofs completed",
+              "values": [
+                {
+                  "value": "3,500+",
+                  "source": "homepage"
+                },
+                {
+                  "value": "more than 2,000",
+                  "source": "2024 TV"
+                }
+              ],
+              "resolution": "neither repeated as fact",
+              "evidence": [
+                "V-C02"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "Coverage: bare and qualified name, three business names, Tulsa desktop and mobile SERPs, Knowledge Graph Explorer, three AI engines, 41 site pages, 212 videos, 386 reviews. Not covered: Search Console and any private CRM — both UNKNOWN, not zero."
+          ],
+          "evidence": [
+            "V-E009",
+            "V-E010",
+            "V-E037",
+            "V-U03"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "type": "exams",
+      "kicker": "Separate exam dashboard",
+      "headline": "Brand Authority is **38 of 100**: proof is strong, the plumbing that carries it is broken",
+      "dek": "Ten rows, each scored only after it was checked against the anchor. Social proof and media are the top two rows; positioning, consistency and non-name search are the floor. Other exams sit on their own lines and are never averaged in.",
+      "blocks": [
+        {
+          "type": "callout",
+          "span": 6,
+          "tone": "info",
+          "title": "What moves the number fastest",
+          "body": "Rows 5, 6 and 9 are fixable in 30 days with work agents can stage: a claim-led offer with working doors (+3-4), one name and Person schema (+3), and a claim guide that can rank (+2). None needs new fame — only the proof she already has, wired correctly.",
+          "evidence": [
+            "V-E052",
+            "V-E036",
+            "V-E041"
+          ],
+          "actions": [
+            "A3",
+            "A7",
+            "A5"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 6,
+          "tone": "warn",
+          "title": "What the number does not say",
+          "body": "38 is not a verdict on her work — 386 reviews at 4.9 say the work is excellent. It measures how much of that proof a stranger, a search engine and an AI model can find and trust today.",
+          "evidence": [
+            "V-E011",
+            "V-E013"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "type": "proof",
+      "kicker": "Ranked highlights and proof",
+      "headline": "Her strongest proof is **independent and current** — and almost none of it is on her site",
+      "dek": "Ranked by the 30-point authority scale: independence, recency and relevance to the buyer. The weak tail (old blog posts, hand-typed quotes) is left out on purpose.",
+      "blocks": [
+        {
+          "type": "bars",
+          "span": 7,
+          "title": "Proof strength (0-30) — what a buyer would trust first",
+          "items": [
+            {
+              "label": "386 Google reviews, 4.9",
+              "value": 27,
+              "highlight": true
+            },
+            {
+              "label": "TV expert segment, Apr 2024",
+              "value": 24
+            },
+            {
+              "label": "Women in Roofing award, 2025",
+              "value": 23
+            },
+            {
+              "label": "Manufacturer preferred tier",
+              "value": 21
+            },
+            {
+              "label": "Expo talk with an adjuster",
+              "value": 19
+            },
+            {
+              "label": "Podcast ep. 241, 52 min",
+              "value": 17
+            },
+            {
+              "label": "BBB A+ since 2015",
+              "value": 16
+            },
+            {
+              "label": "Homepage quotes (no source)",
+              "value": 4
+            }
+          ],
+          "caption": "Scores are editorial judgments from the 30-point scale; inputs are on the ledger rows.",
+          "evidence": [
+            "V-E011",
+            "V-E017",
+            "V-E019",
+            "V-E057",
+            "V-E022",
+            "V-E021",
+            "V-E016",
+            "V-E015"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 5,
+          "title": "Where each proof lives today",
+          "columns": [
+            "Proof",
+            "Lives on",
+            "On her site?"
+          ],
+          "rows": [
+            [
+              "Reviews",
+              "Google profile",
+              "3 untraceable quotes"
+            ],
+            [
+              "TV segment",
+              "News site → Facebook",
+              "No"
+            ],
+            [
+              "Award",
+              "Association → Facebook",
+              "No"
+            ],
+            [
+              "Expo talk",
+              "Expo program",
+              "No"
+            ],
+            [
+              "Podcast",
+              "Show site",
+              "No"
+            ]
+          ],
+          "evidence": [
+            "V-E015",
+            "V-E018",
+            "V-E020",
+            "V-E023"
+          ]
+        },
+        {
+          "type": "quote",
+          "span": 12,
+          "text": "Marisol met the adjuster herself and walked him through every hail hit. We were paid in full and the new roof was on in four days.",
+          "who": "Google review, 5 stars, Oct 2026 — one of 236 that mention a claim (synthetic)",
+          "evidence": [
+            "V-E012"
+          ]
+        },
+        {
+          "type": "cards",
+          "span": 12,
+          "cols": 3,
+          "title": "Move these three to the first screen",
+          "items": [
+            {
+              "badge": "OBSERVED",
+              "title": "4.9 across 386 reviews, live and dated",
+              "body": "A live feed beats three unsourced quotes: buyers and AI engines both trust a count, a date and a link over a paraphrase they cannot check.",
+              "so": "Replace the hand-typed quotes in week two.",
+              "evidence": [
+                "V-E011",
+                "V-E015"
+              ],
+              "actions": [
+                "A4"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "The News 6 expert segment, April 2024",
+              "body": "Four minutes of a local station treating her as the hail-claim expert is the strongest independent proof she has — and it currently sends viewers to a silent Facebook page.",
+              "so": "Embed the clip and ask for the relink.",
+              "evidence": [
+                "V-E017",
+                "V-E018"
+              ],
+              "actions": [
+                "A6",
+                "A9"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "Contractor of the Year, South Central, 2025",
+              "body": "An association award is dated, third-party and rare among her three nearest competitors. Today it appears on the association's page only, linked to the old business name.",
+              "so": "Show it beside the review count, with the year.",
+              "evidence": [
+                "V-E019",
+                "V-E020"
+              ],
+              "actions": [
+                "A6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "type": "connections",
+      "kicker": "Top public connections",
+      "headline": "One adjuster appears in **7 of her best moments** — the relationship worth building on",
+      "dek": "Edges show the kind of public association, not friendship. Relationship depth stays UNKNOWN unless she confirms it.",
+      "blocks": [
+        {
+          "type": "graph",
+          "span": 8,
+          "height": 320,
+          "center": {
+            "id": "mv",
+            "label": "Marisol Vega"
+          },
+          "nodes": [
+            {
+              "id": "dw",
+              "label": "Dana Whitfield, public adjuster",
+              "state": "OBSERVED",
+              "sub": "expo + 6 videos"
+            },
+            {
+              "id": "tv",
+              "label": "Green Country News 6",
+              "state": "OBSERVED",
+              "sub": "expert segment"
+            },
+            {
+              "id": "rbr",
+              "label": "Roofing Business Radio",
+              "state": "OBSERVED",
+              "sub": "ep. 241"
+            },
+            {
+              "id": "mfr",
+              "label": "Shingle manufacturer",
+              "state": "OBSERVED",
+              "sub": "preferred tier"
+            },
+            {
+              "id": "wir",
+              "label": "Women in Roofing",
+              "state": "OBSERVED",
+              "sub": "2025 award"
+            },
+            {
+              "id": "lg",
+              "label": "Youth softball league",
+              "state": "OBSERVED",
+              "sub": "sponsor 2023-26"
+            },
+            {
+              "id": "inf",
+              "label": "National roofing influencer",
+              "state": "UNKNOWN",
+              "sub": "co-presence only"
+            }
+          ],
+          "edges": [
+            {
+              "from": "mv",
+              "to": "dw",
+              "type": "repeat",
+              "label": "7 joint"
+            },
+            {
+              "from": "mv",
+              "to": "tv",
+              "type": "interview"
+            },
+            {
+              "from": "mv",
+              "to": "rbr",
+              "type": "interview"
+            },
+            {
+              "from": "mv",
+              "to": "mfr",
+              "type": "employment",
+              "label": "certified"
+            },
+            {
+              "from": "mv",
+              "to": "wir",
+              "type": "testimonial",
+              "label": "award"
+            },
+            {
+              "from": "mv",
+              "to": "lg",
+              "type": "link",
+              "label": "sponsor"
+            },
+            {
+              "from": "mv",
+              "to": "inf",
+              "type": "co-presence"
+            }
+          ],
+          "evidence": [
+            "V-E056",
+            "V-E017",
+            "V-E021",
+            "V-E057",
+            "V-E019",
+            "V-E058",
+            "V-E059"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 4,
+          "title": "Association vs depth",
+          "columns": [
+            "Who",
+            "Public tie",
+            "Depth"
+          ],
+          "rows": [
+            [
+              "Dana Whitfield",
+              "7 joint appearances",
+              "UNKNOWN — confirm"
+            ],
+            [
+              "News 6",
+              "1 segment",
+              "editorial"
+            ],
+            [
+              "Manufacturer",
+              "certification",
+              "commercial"
+            ],
+            [
+              "Influencer",
+              "1 photo",
+              "none implied"
+            ]
+          ],
+          "evidence": [
+            "V-E056",
+            "V-E059"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 12,
+          "tone": "warn",
+          "title": "Do not imply what the record does not show",
+          "body": "The expo photo with the national influencer is co-presence, not an endorsement — it must not appear as a testimonial. Dana Whitfield's 7 joint appearances support a proposed claim-guide partnership, which needs her consent before any public use of her name.",
+          "evidence": [
+            "V-E059",
+            "V-E056"
+          ],
+          "actions": [
+            "A14"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "How to use each tie, in order: Dana Whitfield first, because seven joint appearances already exist and a co-branded claim guide gives both of them something they cannot build alone. News 6 second, because one relink email turns a 2024 segment into a permanent proof link. The manufacturer third, because its locator page is where homeowners compare certified installers — and her listing has no photos. The softball league last: real community proof, low buyer relevance.",
+            "What not to do: tag the national influencer, quote him, or crop the expo photo into a testimonial. One shared photo from 2025 supports nothing beyond “both attended.”"
+          ],
+          "evidence": [
+            "V-E056",
+            "V-E018",
+            "V-E057",
+            "V-E059"
+          ],
+          "actions": [
+            "A14",
+            "A9"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "type": "assets",
+      "kicker": "Highest-value assets",
+      "headline": "**88,650 views** of claim teaching already exist — the fastest lift is reuse, not new content",
+      "dek": "Each asset is placed by value to the buyer and by how much of that value reaches her site today. Top-left is the work: high value, barely used.",
+      "blocks": [
+        {
+          "type": "matrix",
+          "span": 7,
+          "height": 330,
+          "x_label": "How much reaches her site today",
+          "y_label": "Value to a claim buyer",
+          "quadrants": [
+            "REUSE NOW",
+            "KEEP",
+            "PARK",
+            "FIX LATER"
+          ],
+          "points": [
+            {
+              "label": "Top 5 claim videos",
+              "x": 0.06,
+              "y": 0.92,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "386 reviews",
+              "x": 0.18,
+              "y": 0.88,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "TV segment",
+              "x": 0.05,
+              "y": 0.74,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "Adjuster partner",
+              "x": 0.08,
+              "y": 0.69,
+              "state": "INFERRED"
+            },
+            {
+              "label": "1,200 job photos",
+              "x": 0.12,
+              "y": 0.58,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "Award",
+              "x": 0.04,
+              "y": 0.52,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "2022 blog posts",
+              "x": 0.62,
+              "y": 0.18,
+              "state": "OBSERVED"
+            }
+          ],
+          "evidence": [
+            "V-E025",
+            "V-E011",
+            "V-E017",
+            "V-E056",
+            "V-E060",
+            "V-E019",
+            "V-E029"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 5,
+          "title": "Ranked by next use",
+          "columns": [
+            "Asset",
+            "Next use",
+            "Action"
+          ],
+          "rows": [
+            [
+              "Hail-claim video (41,200)",
+              "Claim-guide page + transcript",
+              "A5"
+            ],
+            [
+              "236 claim reviews",
+              "Live widget, 6 pinned by topic",
+              "A4"
+            ],
+            [
+              "TV + award + expo",
+              "“As seen on” block, relinks",
+              "A6, A9"
+            ],
+            [
+              "1,200 dated job photos",
+              "Before/after gallery by street",
+              "A10"
+            ],
+            [
+              "Adjuster co-host",
+              "4 short claim videos",
+              "A14"
+            ]
+          ],
+          "evidence": [
+            "V-E025",
+            "V-E012",
+            "V-E060"
+          ]
+        },
+        {
+          "type": "cards",
+          "span": 12,
+          "cols": 3,
+          "title": "Three reuse plays, cheapest first",
+          "items": [
+            {
+              "badge": "OBSERVED",
+              "title": "1 video → 1 page, 3 clips, 1 FAQ",
+              "body": "The 41,200-view hail-claim video already has the script of a ranking page. A transcript, five subheads and the embed produce the guide in a day of agent time.",
+              "so": "Ship the guide before any new recording.",
+              "evidence": [
+                "V-E025",
+                "V-E030"
+              ],
+              "actions": [
+                "A5"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "1,200 dated photos → street galleries",
+              "body": "Photos from 2019-2026 with permission let a gallery show neighbours real jobs on their own streets — proof no competitor's stock photography can match.",
+              "so": "Start with 24 jobs from central Tulsa ZIPs.",
+              "evidence": [
+                "V-E060",
+                "V-E043"
+              ],
+              "actions": [
+                "A10"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "Podcast ep. 241 → the supplements article",
+              "body": "52 minutes on insurance supplements is the detailed answer adjusters and homeowners search for after the first estimate; it becomes a second guide that links to the first.",
+              "so": "Publish after A5, link both ways.",
+              "evidence": [
+                "V-E021",
+                "V-E045"
+              ],
+              "actions": [
+                "A5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 9,
+      "type": "lighthouse",
+      "kicker": "Lighthouse and collaboration strategy",
+      "headline": "Feature the adjuster, the manufacturer and the league — **each gains something** real",
+      "dek": "Lighthouse partners are people and organizations whose success we amplify. Every exchange below is proposed and needs that partner's yes.",
+      "blocks": [
+        {
+          "type": "matrix",
+          "span": 6,
+          "height": 300,
+          "x_label": "Relevance to claim buyers",
+          "y_label": "Independent authority",
+          "quadrants": [
+            "AUTHORITY",
+            "LIGHTHOUSE",
+            "LOW",
+            "RELEVANT"
+          ],
+          "points": [
+            {
+              "label": "Dana Whitfield",
+              "x": 0.88,
+              "y": 0.62,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "Manufacturer",
+              "x": 0.64,
+              "y": 0.8,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "News 6",
+              "x": 0.55,
+              "y": 0.86,
+              "state": "OBSERVED"
+            },
+            {
+              "label": "Softball league",
+              "x": 0.22,
+              "y": 0.34,
+              "state": "OBSERVED"
+            }
+          ],
+          "evidence": [
+            "V-E056",
+            "V-E057",
+            "V-E017",
+            "V-E058"
+          ]
+        },
+        {
+          "type": "cards",
+          "span": 6,
+          "cols": 1,
+          "numbered": false,
+          "items": [
+            {
+              "badge": "INFERRED",
+              "title": "Dana Whitfield gets qualified claims",
+              "body": "A co-branded claim guide credits her expertise and routes complex claims to her firm; Vega gets the expert voice that turns the guide into proof.",
+              "so": "Ask before naming her publicly.",
+              "evidence": [
+                "V-E056"
+              ],
+              "actions": [
+                "A14"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "The manufacturer gets a showcase installer",
+              "body": "Preferred-tier contractors are its sales proof; a dated before/after gallery gives it local content and gives Vega a credential homeowners recognize.",
+              "so": "Use its locator badge on the site.",
+              "evidence": [
+                "V-E057",
+                "V-E060"
+              ],
+              "actions": [
+                "A10"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "The league gets a story, not a logo",
+              "body": "Four seasons of sponsorship sit as a logo on the league's page; a short community post with families she has roofed for turns it into local proof.",
+              "so": "Low cost, post after the core fixes.",
+              "evidence": [
+                "V-E058"
+              ],
+              "actions": [
+                "A18"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "Proposed value exchange — nothing here is agreed",
+          "columns": [
+            "Partner",
+            "What they get",
+            "What Vega gets",
+            "First step",
+            "Gate"
+          ],
+          "rows": [
+            [
+              "Dana Whitfield",
+              "Credited expertise, routed complex claims",
+              "Expert voice on the guide and 4 videos",
+              "15-min call to propose",
+              "Dana's consent"
+            ],
+            [
+              "Manufacturer",
+              "Dated local installs for its locator",
+              "Recognized credential on the site",
+              "Send 6 before/after sets",
+              "brand-use rules"
+            ],
+            [
+              "News 6",
+              "Updated link for its viewers",
+              "Permanent independent proof link",
+              "Relink email",
+              "editor's choice"
+            ],
+            [
+              "Softball league",
+              "A real community story",
+              "Local goodwill, neighbour proof",
+              "Post after core fixes",
+              "parents' photo consent"
+            ]
+          ],
+          "evidence": [
+            "V-E056",
+            "V-E057",
+            "V-E018",
+            "V-E058"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 10,
+      "type": "offer",
+      "kicker": "Offer, funnel and economics",
+      "headline": "Attention reaches her; **the funnel breaks at the website**, two steps before the inspection",
+      "dek": "The path a buyer takes, step by step, with the state of each door. Revenue per job is owner-reported; close rate is unknown until tracking exists.",
+      "blocks": [
+        {
+          "type": "flow",
+          "span": 12,
+          "steps": [
+            {
+              "label": "1 · Search / AI / TV",
+              "detail": "Finds a competitor for 'roof repair tulsa'; finds her only by name",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E041",
+                "V-E046"
+              ]
+            },
+            {
+              "label": "2 · Website",
+              "detail": "Generic offer, no claim guide, no reviews, mobile score 38",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E052",
+                "V-E033"
+              ]
+            },
+            {
+              "label": "3 · Contact",
+              "detail": "Form to dead domain; phone not tappable on mobile",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E032",
+                "V-E034"
+              ]
+            },
+            {
+              "label": "4 · Inspection",
+              "detail": "Booked by phone; count unknown",
+              "state": "UNKNOWN",
+              "evidence": [
+                "V-U01"
+              ]
+            },
+            {
+              "label": "5 · Claim + roof",
+              "detail": "~$14,800 average re-roof (reported)",
+              "state": "INFERRED",
+              "evidence": [
+                "V-E054"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "stat_strip",
+          "span": 12,
+          "items": [
+            {
+              "value": "$14,800",
+              "label": "average re-roof",
+              "sub": "owner-reported, not audited",
+              "evidence": [
+                "V-E054"
+              ]
+            },
+            {
+              "value": "~70%",
+              "label": "insurance share of revenue",
+              "sub": "owner-reported",
+              "evidence": [
+                "V-E054"
+              ]
+            },
+            {
+              "value": "UNKNOWN",
+              "label": "inspection-to-contract rate",
+              "sub": "no lead log",
+              "evidence": [
+                "V-U01"
+              ]
+            },
+            {
+              "value": "1,900/mo",
+              "label": "searches for 'roof repair tulsa'",
+              "sub": "she is outside the top 20",
+              "evidence": [
+                "V-E045",
+                "V-E041"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "Illustration only, not a forecast: if one extra inspection a week converts at the industry's typical pace, the value is large next to the cost of fixing three doors. We will not put a number on it until A12 measures her real close rate — an invented conversion figure would make the plan look better and be less true."
+          ],
+          "evidence": [
+            "V-E054",
+            "V-E035",
+            "V-U01"
+          ],
+          "actions": [
+            "A12"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "Door-by-door: what is broken, the fix, and the test that proves it",
+          "columns": [
+            "Door",
+            "Today",
+            "Fix",
+            "Test",
+            "Action"
+          ],
+          "rows": [
+            [
+              "Contact form",
+              "posts to an expired domain (Jan 2025)",
+              "route to a live inbox + auto-reply",
+              "test lead lands in 5 min",
+              "A1"
+            ],
+            [
+              "Financing",
+              "menu link returns 404 on 41 pages",
+              "restore page or remove link",
+              "HTTP 200 or no link",
+              "A2"
+            ],
+            [
+              "Mobile phone",
+              "number is an image",
+              "tel: link in header and footer",
+              "tap opens dialer",
+              "A2"
+            ],
+            [
+              "Proof",
+              "3 unsourced quotes",
+              "live review feed, 6 pinned",
+              "6 dated reviews render",
+              "A4"
+            ],
+            [
+              "Measurement",
+              "0 conversions",
+              "call tracking + 2 GA4 events",
+              "test call + form logged",
+              "A12"
+            ]
+          ],
+          "evidence": [
+            "V-E032",
+            "V-E031",
+            "V-E034",
+            "V-E015",
+            "V-E035"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 12,
+          "tone": "decision",
+          "title": "The one number to watch from day 30",
+          "body": "Inspections booked per week by source — calls and forms, tracked by A12. Today it cannot be counted; by the first monthly MAA report (A16) it can be compared with the 30% goal she set. Every other metric on this page is a means to that one.",
+          "evidence": [
+            "V-E055",
+            "V-E035",
+            "V-U01"
+          ],
+          "actions": [
+            "A12",
+            "A16"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 11,
+      "type": "dollar_a_day",
+      "kicker": "Dollar-a-Day candidates",
+      "headline": "Only proof that already earned attention gets **$1 a day** — and only after the doors work",
+      "dek": "Dollar-a-Day tests an organic winner for seven days at $1/day, reads the result, then scales the winner to $30 over 30 days. Nothing runs until A1, A2 and A12 pass and she approves the account and budget.",
+      "blocks": [
+        {
+          "type": "flow",
+          "span": 12,
+          "steps": [
+            {
+              "label": "Organic winner",
+              "detail": "Hail-claim video, 41,200 organic views",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E025"
+              ]
+            },
+            {
+              "label": "$1/day × 7",
+              "detail": "Tulsa homeowners 30-65, storm-zone ZIPs",
+              "state": "INFERRED",
+              "evidence": [
+                "V-E043"
+              ]
+            },
+            {
+              "label": "Day-7 MAA",
+              "detail": "Metric: cost per 15-sec view and calls; analysis; action",
+              "state": "INFERRED",
+              "evidence": [
+                "V-E035"
+              ]
+            },
+            {
+              "label": "$30 / 30 days",
+              "detail": "Only if day-7 beats the baseline",
+              "state": "INFERRED",
+              "evidence": [
+                "V-E025"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "Candidates — ranked by organic proof, not by guess",
+          "columns": [
+            "Video",
+            "Organic views",
+            "Why it qualifies",
+            "Gate",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "Hail claim: what the adjuster looks for",
+              "41,200",
+              "Top video; matches 61% of reviews",
+              "after A1, A2, A12",
+              "V-E025"
+            ],
+            [
+              "Storm prep checklist",
+              "18,900",
+              "Seasonal; strong before March",
+              "after A1, A2, A12",
+              "V-E025"
+            ],
+            [
+              "Is it hail or wear?",
+              "11,300",
+              "Answers the buyer's first doubt",
+              "after A5 page exists",
+              "V-E025"
+            ],
+            [
+              "Median other video",
+              "160",
+              "Not a candidate — no organic proof",
+              "—",
+              "V-E026"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 12,
+          "tone": "warn",
+          "title": "Spend gate",
+          "body": "No live spend, audience change or scaling without Marisol's approval of the exact account, budget, dates and metric. The day-7 read is a decision point, not an automatic step.",
+          "evidence": [
+            "V-E055",
+            "V-E035",
+            "V-E043"
+          ],
+          "actions": [
+            "A15"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "How to read day 7: the test passes if the paid video earns 15-second views at or below the organic channel's cost-equivalent and produces at least one tracked call. It fails if cost per 15-second view is more than double the baseline or no tracked call arrives. A pass earns $30 over 30 days; a fail sends the creative back to Process, not to a bigger budget. Every number comes from the ad account and A12's tracking — none from estimates."
+          ],
+          "evidence": [
+            "V-E025",
+            "V-E035",
+            "V-E055"
+          ],
+          "actions": [
+            "A15",
+            "A12"
+          ]
+        },
+        {
+          "type": "checklist",
+          "span": 6,
+          "title": "Before the first dollar",
+          "items": [
+            {
+              "label": "A1 form reaches a live inbox (test lead logged)",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "A2 financing returns 200 and phone is tappable",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "A12 call tracking and GA4 events fire on test",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "Account, budget and dates approved by Marisol",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "Creative is an existing organic winner, not new",
+              "state": "PASS"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 6,
+          "tone": "info",
+          "title": "Why the gate is strict",
+          "body": "Paid clicks into a form that emails an expired domain would cost money twice: once for the click and again for the lead that never arrives. Four of these five checks are cheap and fast; the fifth already passes.",
+          "evidence": [
+            "V-E032",
+            "V-E031",
+            "V-E035"
+          ],
+          "actions": [
+            "A1",
+            "A2",
+            "A12"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 12,
+      "type": "audience",
+      "kicker": "Audience, targeting and distribution",
+      "headline": "Four audiences, one message: **“we get hail claims paid”** — tailored by where they look",
+      "dek": "Goal and proven content come first; targeting comes last. Search volume shows where the demand already is.",
+      "blocks": [
+        {
+          "type": "bars",
+          "span": 6,
+          "title": "Monthly searches she could own (Oklahoma / Tulsa)",
+          "items": [
+            {
+              "label": "hail damage roof (OK)",
+              "value": 2400,
+              "display": "2,400"
+            },
+            {
+              "label": "roof repair tulsa",
+              "value": 1900,
+              "display": "1,900"
+            },
+            {
+              "label": "roof insurance claim (OK)",
+              "value": 880,
+              "display": "880"
+            },
+            {
+              "label": "her name + roofing",
+              "value": null
+            }
+          ],
+          "caption": "Volume for her name is too small to report; shown as UNKNOWN, not zero.",
+          "evidence": [
+            "V-E045"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 6,
+          "title": "Where each audience looks",
+          "columns": [
+            "Audience",
+            "Where",
+            "Proof to show"
+          ],
+          "rows": [
+            [
+              "After a storm",
+              "Google, AI answers",
+              "Claim guide + reviews"
+            ],
+            [
+              "Before season",
+              "YouTube, Facebook",
+              "Storm-prep video"
+            ],
+            [
+              "Referred by adjuster",
+              "Her site by name",
+              "Facts page + TV"
+            ],
+            [
+              "Neighbors of a job",
+              "Door hangers → site",
+              "Street gallery"
+            ]
+          ],
+          "evidence": [
+            "V-E046",
+            "V-E025",
+            "V-E043"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "Privacy boundary: no customer lists, addresses or claim details are used for targeting. Street-level galleries show only jobs where the homeowner agreed, using the 1,200 photos she supplied with permission."
+          ],
+          "evidence": [
+            "V-E060",
+            "V-E012",
+            "V-E043"
+          ]
+        },
+        {
+          "type": "cards",
+          "span": 12,
+          "cols": 2,
+          "title": "One message per audience",
+          "items": [
+            {
+              "badge": "INFERRED",
+              "title": "After a storm: “Is this covered?”",
+              "body": "Searchers for 'hail damage roof' (2,400/mo in Oklahoma) want to know whether to call an adjuster or a roofer first. The guide answers that and offers a free inspection the same week.",
+              "so": "Lead page: the hail-claim guide (A5).",
+              "evidence": [
+                "V-E045",
+                "V-E030"
+              ],
+              "actions": [
+                "A5"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "Before the season: “What should I check?”",
+              "body": "The storm-prep video's 18,900 views show demand before damage happens. A short checklist post in February reaches the same homeowners before competitors' crews knock.",
+              "so": "Schedule with A15 if the doors pass.",
+              "evidence": [
+                "V-E025",
+                "V-E043"
+              ],
+              "actions": [
+                "A15"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "Referred by an adjuster: “Who is she?”",
+              "body": "Referred buyers search her name and meet a realtor and an actress first. The qualifier and the facts page are what make a referral convert instead of stall.",
+              "so": "Qualified name everywhere (A7, A8).",
+              "evidence": [
+                "V-E009",
+                "V-E010"
+              ],
+              "actions": [
+                "A7",
+                "A8"
+              ]
+            },
+            {
+              "badge": "INFERRED",
+              "title": "Neighbours of a job: “Did she do theirs?”",
+              "body": "A gallery by street turns each finished roof into proof for the houses beside it, using photos she already owns with permission.",
+              "so": "Link the gallery from every door hanger.",
+              "evidence": [
+                "V-E060",
+                "V-E043"
+              ],
+              "actions": [
+                "A10"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 13,
+      "type": "content_factory",
+      "kicker": "Content Factory state",
+      "headline": "The factory stalls at **Process**: 212 videos produced, 0 turned into pages",
+      "dek": "Produce → Process → Post → Promote. She produces well; nothing processes the recordings into the pages and posts buyers and AI engines can find.",
+      "blocks": [
+        {
+          "type": "flow",
+          "span": 12,
+          "steps": [
+            {
+              "label": "Produce",
+              "detail": "212 videos, 1,200 job photos, podcast + TV",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E024",
+                "V-E060"
+              ]
+            },
+            {
+              "label": "Process",
+              "detail": "No transcripts, no articles, no clips",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E027",
+                "V-E029"
+              ]
+            },
+            {
+              "label": "Post",
+              "detail": "YouTube only; site and Facebook dark",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E049",
+                "V-E028"
+              ]
+            },
+            {
+              "label": "Promote",
+              "detail": "No paid tests; no tracking",
+              "state": "OBSERVED",
+              "evidence": [
+                "V-E035"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "Next 30 days from real source material",
+          "columns": [
+            "Source",
+            "Process into",
+            "Post to",
+            "Action"
+          ],
+          "rows": [
+            [
+              "Hail-claim video (41,200)",
+              "Guide page + transcript + 3 clips",
+              "Site, YouTube Shorts",
+              "A5"
+            ],
+            [
+              "Podcast ep. 241",
+              "Article: supplements explained",
+              "Site, LinkedIn",
+              "A5"
+            ],
+            [
+              "Expo talk with Dana",
+              "Checklist: the adjuster meeting",
+              "Site",
+              "A14"
+            ],
+            [
+              "1,200 job photos",
+              "Before/after gallery by street",
+              "Site, Instagram",
+              "A10"
+            ]
+          ],
+          "evidence": [
+            "V-E025",
+            "V-E021",
+            "V-E022",
+            "V-E060"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "Nothing here is generated from nothing: every page starts from a recording or photo she already owns, so it carries her voice and passes the “process real content” rule."
+          ],
+          "evidence": [
+            "V-E024",
+            "V-E060",
+            "V-E021"
+          ]
+        },
+        {
+          "type": "timeline",
+          "span": 12,
+          "height": 200,
+          "title": "The next 30 days, dated",
+          "events": [
+            {
+              "date": "Nov 9",
+              "label": "Transcribe top 3 videos",
+              "state": "OBSERVED"
+            },
+            {
+              "date": "Nov 16",
+              "label": "Doors fixed; tracking live",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Nov 23",
+              "label": "Claim guide drafted for approval",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Nov 30",
+              "label": "Guide live + 3 Shorts",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Dec 4",
+              "label": "Supplements article from ep. 241",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Dec 9",
+              "label": "Gallery: first 24 jobs",
+              "state": "INFERRED"
+            }
+          ],
+          "caption": "Dates assume Marisol answers A8 and A11 in week one.",
+          "evidence": [
+            "V-E025",
+            "V-E021",
+            "V-E060"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 14,
+      "type": "capture",
+      "kicker": "Capture and topic plan",
+      "headline": "Record **four short answers** before March — the questions her reviews already ask",
+      "dek": "Topics are weighted by how often reviews and searches raise them. Upcoming moments are dated so recording happens before demand peaks.",
+      "blocks": [
+        {
+          "type": "topic_wheel",
+          "span": 7,
+          "center_label": "386 reviews",
+          "topics": [
+            {
+              "label": "insurance / adjuster / claim",
+              "weight": 236
+            },
+            {
+              "label": "Marisol by name",
+              "weight": 104
+            },
+            {
+              "label": "speed of install",
+              "weight": 61
+            },
+            {
+              "label": "cleanup",
+              "weight": 48
+            },
+            {
+              "label": "price / financing",
+              "weight": 22
+            }
+          ],
+          "caption": "Mentions per topic across all 386 reviews; one review can mention several.",
+          "evidence": [
+            "V-E012",
+            "V-E013",
+            "V-E011"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 5,
+          "title": "Record next",
+          "columns": [
+            "Moment",
+            "When",
+            "With"
+          ],
+          "rows": [
+            [
+              "What the adjuster checks",
+              "before Feb 15",
+              "Dana (if she agrees)"
+            ],
+            [
+              "Hail or wear? 60 sec",
+              "Jan",
+              "Marisol"
+            ],
+            [
+              "Financing, plainly",
+              "after A2",
+              "Marisol"
+            ],
+            [
+              "Street before/after",
+              "each job",
+              "crew lead"
+            ]
+          ],
+          "evidence": [
+            "V-E056",
+            "V-E031"
+          ],
+          "actions": [
+            "A14"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 12,
+          "tone": "info",
+          "title": "Why these four",
+          "body": "They answer the three doubts in her reviews (is it covered, is it hail, can I afford it) and the one thing competitors cannot copy: Marisol herself walking the roof with the adjuster.",
+          "evidence": [
+            "V-E012",
+            "V-E013",
+            "V-E056"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "The questions her customers already asked — counted from 386 reviews",
+          "columns": [
+            "Question in the reviews",
+            "Mentions",
+            "Answer to record",
+            "Where it goes"
+          ],
+          "rows": [
+            [
+              "Will insurance cover it?",
+              "236",
+              "What the adjuster checks, with Dana",
+              "Guide + Shorts"
+            ],
+            [
+              "Who will I deal with?",
+              "104 name Marisol",
+              "60-sec intro: she walks every roof",
+              "About + facts page"
+            ],
+            [
+              "How fast is the install?",
+              "61",
+              "Day-by-day of a 4-day job",
+              "Gallery captions"
+            ],
+            [
+              "Will they clean up?",
+              "48",
+              "Before/after of the yard, not only the roof",
+              "Gallery"
+            ],
+            [
+              "Can I afford it?",
+              "22",
+              "Financing, plainly, after A2",
+              "Financing page"
+            ]
+          ],
+          "evidence": [
+            "V-E012",
+            "V-E013",
+            "V-E011"
+          ]
+        },
+        {
+          "type": "timeline",
+          "span": 12,
+          "height": 190,
+          "title": "Moments to record around",
+          "events": [
+            {
+              "date": "Jan 2027",
+              "label": "Hail or wear? 60-sec video",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Feb 15",
+              "label": "Adjuster videos with Dana (if she agrees)",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Mar 1",
+              "label": "Storm-prep checklist re-cut",
+              "state": "INFERRED"
+            },
+            {
+              "date": "Mar-May",
+              "label": "Peak hail season in Oklahoma",
+              "state": "OBSERVED"
+            },
+            {
+              "date": "Each job",
+              "label": "Street before/after, 6 photos",
+              "state": "OBSERVED"
+            }
+          ],
+          "caption": "Record before demand peaks; publish through the Content Factory the same week.",
+          "evidence": [
+            "V-E025",
+            "V-E056",
+            "V-E060"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 15,
+      "type": "entity",
+      "kicker": "Entity home and structured-data plan",
+      "headline": "One **Person record** and one company name would let machines stop guessing",
+      "dek": "Today the site carries one LocalBusiness block under the legal name and no Person markup. The plan below joins her, the company and her profiles into one graph. Dashed edges are proposed.",
+      "blocks": [
+        {
+          "type": "graph",
+          "span": 7,
+          "height": 310,
+          "center": {
+            "id": "p",
+            "label": "Person: Marisol Vega"
+          },
+          "nodes": [
+            {
+              "id": "org",
+              "label": "Org: Vega Roofing & Restoration",
+              "state": "OBSERVED",
+              "sub": "legal: Vega Roofing LLC"
+            },
+            {
+              "id": "about",
+              "label": "/about (entity home)",
+              "state": "INFERRED",
+              "sub": "@id #person"
+            },
+            {
+              "id": "yt",
+              "label": "YouTube channel",
+              "state": "OBSERVED",
+              "sub": "sameAs"
+            },
+            {
+              "id": "li",
+              "label": "LinkedIn (fix title)",
+              "state": "INFERRED",
+              "sub": "sameAs"
+            },
+            {
+              "id": "gbp",
+              "label": "Google profile",
+              "state": "OBSERVED",
+              "sub": "rename"
+            },
+            {
+              "id": "wd",
+              "label": "Wikidata (later)",
+              "state": "UNKNOWN",
+              "sub": "after facts settle"
+            }
+          ],
+          "edges": [
+            {
+              "from": "p",
+              "to": "org",
+              "type": "proposed",
+              "label": "founder"
+            },
+            {
+              "from": "p",
+              "to": "about",
+              "type": "proposed"
+            },
+            {
+              "from": "p",
+              "to": "yt",
+              "type": "proposed"
+            },
+            {
+              "from": "p",
+              "to": "li",
+              "type": "proposed"
+            },
+            {
+              "from": "org",
+              "to": "gbp",
+              "type": "link"
+            },
+            {
+              "from": "p",
+              "to": "wd",
+              "type": "proposed"
+            }
+          ],
+          "evidence": [
+            "V-E036",
+            "V-E037",
+            "V-E008",
+            "V-E040"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 5,
+          "title": "Fixes, in order",
+          "columns": [
+            "Fix",
+            "Where",
+            "Action"
+          ],
+          "rows": [
+            [
+              "Pick one public name",
+              "all profiles",
+              "A8"
+            ],
+            [
+              "Person + Org JSON-LD, sameAs ×5",
+              "/about",
+              "A7"
+            ],
+            [
+              "LinkedIn title + name",
+              "profile",
+              "A7"
+            ],
+            [
+              "Relink TV + award",
+              "publishers",
+              "A9"
+            ],
+            [
+              "Wikidata item",
+              "after A8, A11",
+              "A17"
+            ]
+          ],
+          "evidence": [
+            "V-E036",
+            "V-E051",
+            "V-E018"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 12,
+          "tone": "warn",
+          "title": "Boundary",
+          "body": "Better facts do not guarantee a founder panel, and claiming does not create one. The business panel is visible today; the founder panel was not visible in this check. Owner claim status stays UNKNOWN without dashboard access.",
+          "evidence": [
+            "V-E038",
+            "V-E039",
+            "V-U02"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "The plan in plain words: one Person record for Marisol on the About page with a permanent @id, one Organization record for the company with the legal name kept as an alternate, and a founder link between them. Five sameAs links point to profiles that already exist — YouTube, LinkedIn, Instagram, the Google profile and the chamber listing — so nothing new is invented. When the facts settle (A8, A11), a Wikidata item cites three independent sources: the state registration, the chamber listing and the association award."
+          ],
+          "evidence": [
+            "V-E036",
+            "V-E002",
+            "V-E003",
+            "V-E019"
+          ],
+          "actions": [
+            "A7",
+            "A17"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 16,
+      "type": "search_ai",
+      "kicker": "Knowledge Panel, search and AI visibility",
+      "headline": "Search finds her **by name only**; AI engines recommend her once in three answers",
+      "dek": "Known-item checks ask for her; discovery checks ask for the job she does. Each result is bounded to its query, engine, place and date.",
+      "blocks": [
+        {
+          "type": "bars",
+          "span": 6,
+          "title": "Discovery check: 'best roofer in Tulsa for hail damage'",
+          "items": [
+            {
+              "label": "ChatGPT — named?",
+              "value": 0,
+              "display": "not named"
+            },
+            {
+              "label": "Gemini — named?",
+              "value": 0,
+              "display": "not named"
+            },
+            {
+              "label": "Perplexity — named?",
+              "value": 1,
+              "display": "named, 4th",
+              "highlight": true
+            }
+          ],
+          "max": 1,
+          "caption": "Captured Nov 1, 2026, Tulsa, signed out. One check per engine; answers vary by day.",
+          "evidence": [
+            "V-E046"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 6,
+          "title": "Search and panel receipts",
+          "columns": [
+            "Check",
+            "Result",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "'marisol vega'",
+              "#7 (namesakes #1-#6)",
+              "V-E009"
+            ],
+            [
+              "'marisol vega roofing'",
+              "#1-#3 hers",
+              "V-E010"
+            ],
+            [
+              "'roof repair tulsa'",
+              "outside top 20",
+              "V-E041"
+            ],
+            [
+              "Business panel",
+              "VISIBLE",
+              "V-E038"
+            ],
+            [
+              "Founder panel",
+              "NOT VISIBLE IN THIS CHECK",
+              "V-E039"
+            ],
+            [
+              "Cited sources in AI answers",
+              "0 of hers",
+              "V-E048"
+            ]
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "What engines cite instead: two “best roofers” listicles, a BBB page and two competitor sites. The cheapest way into those answers is to publish the pages they quote — a claim guide with her method and a facts page with dated proof — and to get the listicles to link the right name."
+          ],
+          "evidence": [
+            "V-E048",
+            "V-E030",
+            "V-E046"
+          ],
+          "actions": [
+            "A5",
+            "A10"
+          ]
+        },
+        {
+          "type": "cards",
+          "span": 12,
+          "cols": 3,
+          "title": "Known-item versus discovery",
+          "items": [
+            {
+              "badge": "OBSERVED",
+              "title": "Known-item: 2 of 3 engines know her",
+              "body": "Asked who she is, two engines describe the Tulsa roofer correctly; one describes the Miami realtor. The fix is the same qualifier and Person record that repairs the search results.",
+              "so": "Re-check monthly after A7.",
+              "evidence": [
+                "V-E047",
+                "V-E036"
+              ],
+              "actions": [
+                "A7"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "Discovery: 1 of 3 engines recommends her",
+              "body": "For 'best roofer in Tulsa for hail damage' she appears once, fourth. Recommendation follows citation, and today nothing of hers is cited.",
+              "so": "Earn citations with the guide and facts page.",
+              "evidence": [
+                "V-E046",
+                "V-E048"
+              ],
+              "actions": [
+                "A5",
+                "A10"
+              ]
+            },
+            {
+              "badge": "OBSERVED",
+              "title": "What gets cited: listicles and BBB",
+              "body": "Two listicles, one BBB page and two competitors supply every cited answer. Her BBB A+ is already one of those sources — the listicles are the next ask.",
+              "so": "Request corrections from the two listicles.",
+              "evidence": [
+                "V-E048",
+                "V-E016"
+              ],
+              "actions": [
+                "A9"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "Who the engines cite instead — and the ask for each",
+          "columns": [
+            "Cited source",
+            "Type",
+            "Mentions Vega?",
+            "Ask",
+            "Action"
+          ],
+          "rows": [
+            [
+              "Listicle A: 'best roofers in Tulsa'",
+              "editorial list",
+              "No",
+              "correction request with dated proof",
+              "A9"
+            ],
+            [
+              "Listicle B: 'top hail damage roofers'",
+              "editorial list",
+              "No",
+              "correction request with dated proof",
+              "A9"
+            ],
+            [
+              "BBB profile",
+              "directory",
+              "Yes, A+",
+              "keep current; link from facts page",
+              "A10"
+            ],
+            [
+              "Competitor 1 and 2 sites",
+              "competitor",
+              "No",
+              "out-publish with the claim guide",
+              "A5"
+            ]
+          ],
+          "evidence": [
+            "V-E048",
+            "V-E016",
+            "V-E053"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 17,
+      "type": "agents",
+      "kicker": "Installable agent operating plan",
+      "headline": "Seven agents do the work; **Marisol approves** four kinds of decisions",
+      "dek": "Each agent has an input, an output, a cadence and a gate. Agents stage changes; nothing publishes, sends or spends past its gate without her yes.",
+      "blocks": [
+        {
+          "type": "table",
+          "span": 9,
+          "title": "Agent roster",
+          "columns": [
+            "Agent (skill)",
+            "Input",
+            "Output",
+            "Cadence",
+            "Gate"
+          ],
+          "rows": [
+            [
+              "business-website-agent",
+              "crawl + A1/A2 spec",
+              "fixed form, financing, tap-to-call",
+              "week 1",
+              "she tests the form"
+            ],
+            [
+              "content-factory",
+              "top videos, podcast",
+              "claim guide, transcripts, clips",
+              "weekly",
+              "she approves copy"
+            ],
+            [
+              "knowledge-panel-entity-seo",
+              "ledger facts",
+              "Person/Org schema, profile fixes",
+              "once + monthly",
+              "facts confirmed"
+            ],
+            [
+              "positive-mentions-harvester",
+              "386 reviews",
+              "pinned reviews, reply drafts",
+              "weekly",
+              "replies approved"
+            ],
+            [
+              "measurement-analytics",
+              "GA4, call tracking",
+              "MAA report by source",
+              "monthly",
+              "account access"
+            ],
+            [
+              "dollar-a-day-strategist",
+              "organic winners",
+              "$1/day test plan",
+              "after doors pass",
+              "budget approval"
+            ],
+            [
+              "geo-visibility-audit",
+              "3 AI engines",
+              "monthly answer check",
+              "monthly",
+              "none (read-only)"
+            ]
+          ],
+          "evidence": [
+            "V-E031",
+            "V-E025",
+            "V-E036",
+            "V-E011",
+            "V-E035",
+            "V-E046"
+          ]
+        },
+        {
+          "type": "callout",
+          "span": 12,
+          "tone": "info",
+          "title": "What only she does",
+          "body": "Choose the public name (A8), confirm two facts (A11), approve spend (A15), and record four short videos (A14). Everything else is agent work with a test that proves it is done.",
+          "actions": [
+            "A8",
+            "A11",
+            "A15",
+            "A14"
+          ],
+          "evidence": [
+            "V-E008",
+            "V-C01",
+            "V-E056"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 18,
+      "type": "plan",
+      "kicker": "Dated 30/60/90-day plan",
+      "headline": "**Week one** fixes the doors; day 30 says the claim story; day 90 measures the calls",
+      "dek": "Every bar is an action in the register, owned by a function, with a gate and a test. Dates start Monday, November 9, 2026.",
+      "blocks": [
+        {
+          "type": "table",
+          "span": 12,
+          "title": "First seven days",
+          "columns": [
+            "ID",
+            "Action",
+            "Executor",
+            "Done when"
+          ],
+          "rows": [
+            [
+              "A1",
+              "Point the form at a working inbox",
+              "Agent after approval",
+              "test lead arrives in 5 min"
+            ],
+            [
+              "A2",
+              "Fix /financing; make the phone tappable",
+              "Agent after approval",
+              "200 + tap opens dialer"
+            ],
+            [
+              "A8",
+              "Choose one public business name",
+              "Marisol",
+              "name written in the register"
+            ],
+            [
+              "A11",
+              "Confirm founding year and roof count",
+              "Marisol",
+              "two facts with proof"
+            ],
+            [
+              "A12",
+              "Call tracking + 2 GA4 events",
+              "Agent after approval",
+              "test call and form logged"
+            ]
+          ],
+          "evidence": [
+            "V-E032",
+            "V-E031",
+            "V-E008",
+            "V-C01",
+            "V-E035"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 6,
+          "title": "Days 8-30",
+          "columns": [
+            "ID",
+            "Action",
+            "Executor"
+          ],
+          "rows": [
+            [
+              "A3",
+              "Claim-led homepage hero",
+              "Agent after approval"
+            ],
+            [
+              "A4",
+              "Live reviews, 6 pinned",
+              "Agent after approval"
+            ],
+            [
+              "A5",
+              "Hail-claim guide page",
+              "Agent after approval"
+            ],
+            [
+              "A6",
+              "'As seen on' block",
+              "Agent after approval"
+            ],
+            [
+              "A7",
+              "Person + Org schema",
+              "Agent"
+            ],
+            [
+              "A9",
+              "Relink requests",
+              "Agent after approval"
+            ],
+            [
+              "A13",
+              "Review replies to 100%",
+              "Agent after approval"
+            ]
+          ],
+          "evidence": [
+            "V-E052",
+            "V-E015",
+            "V-E030",
+            "V-E023",
+            "V-E036",
+            "V-E018",
+            "V-E014"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 6,
+          "title": "Days 31-90",
+          "columns": [
+            "ID",
+            "Action",
+            "Executor"
+          ],
+          "rows": [
+            [
+              "A10",
+              "Facts page + street gallery",
+              "Agent after approval"
+            ],
+            [
+              "A14",
+              "Four claim videos with Dana",
+              "Marisol + Dana"
+            ],
+            [
+              "A15",
+              "$1/day test, 7 days",
+              "Agent after approval"
+            ],
+            [
+              "A18",
+              "Facebook: revive or retire",
+              "Agent after approval"
+            ],
+            [
+              "A16",
+              "Monthly MAA by source",
+              "Agent"
+            ],
+            [
+              "A17",
+              "Wikidata item",
+              "Agent after approval"
+            ]
+          ],
+          "evidence": [
+            "V-E060",
+            "V-E056",
+            "V-E025",
+            "V-E049",
+            "V-E040"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 19,
+      "type": "risks",
+      "kicker": "Risks, contradictions and holds",
+      "headline": "Nothing here is a scandal — **three facts** must be settled before agents repeat them",
+      "dek": "Conflicts stay visible until a source of truth resolves them. Decisions only she can make are listed with what waits on each.",
+      "blocks": [
+        {
+          "type": "conflicts",
+          "span": 6,
+          "title": "Conflict ledger",
+          "items": [
+            {
+              "metric": "Business name",
+              "values": [
+                {
+                  "value": "Vega Roofing LLC",
+                  "source": "Google"
+                },
+                {
+                  "value": "Vega Roofing & Restoration",
+                  "source": "site"
+                },
+                {
+                  "value": "Vega Roof Pros",
+                  "source": "Facebook, TV"
+                }
+              ],
+              "resolution": "she picks one (A8)",
+              "evidence": [
+                "V-C03"
+              ]
+            },
+            {
+              "metric": "Roofs completed",
+              "values": [
+                {
+                  "value": "3,500+",
+                  "source": "homepage"
+                },
+                {
+                  "value": "2,000+",
+                  "source": "2024 TV"
+                }
+              ],
+              "resolution": "proof required (A11)",
+              "evidence": [
+                "V-C02"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "checklist",
+          "span": 6,
+          "title": "Holds and decisions",
+          "items": [
+            {
+              "label": "Use Dana Whitfield's name publicly — needs her consent",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "Any paid spend — needs account, budget and dates",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "Founder panel claim — owner dashboard needed",
+              "state": "UNKNOWN"
+            },
+            {
+              "label": "Review quotes on site — customers' public reviews only",
+              "state": "PASS"
+            },
+            {
+              "label": "Job photos — permission supplied for 1,200",
+              "state": "PASS"
+            }
+          ]
+        },
+        {
+          "type": "ladder",
+          "span": 12,
+          "title": "Trajectory: where each goal stands and where 90 days can take it",
+          "markers": [
+            {
+              "label": "Findable for 'roof repair tulsa'",
+              "level": 1,
+              "target": 3
+            },
+            {
+              "label": "Claim expertise visible on site",
+              "level": 0,
+              "target": 4
+            },
+            {
+              "label": "Proof on the first screen",
+              "level": 1,
+              "target": 4
+            },
+            {
+              "label": "Inspections measured by source",
+              "level": 0,
+              "target": 3
+            }
+          ],
+          "evidence": [
+            "V-E041",
+            "V-E030",
+            "V-E015",
+            "V-E035"
+          ]
+        },
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "What could go wrong and how the plan avoids it: repeating an unproven roof count would put a false number on every new page, so no page states one until A11. Using a partner's name before consent would spend a relationship to win a page, so Dana's name stays off public pages until she agrees. Paid tests before the doors work would buy clicks that hit a dead form, so A15 waits for A1, A2 and A12."
+          ],
+          "evidence": [
+            "V-C02",
+            "V-E056",
+            "V-E032"
+          ],
+          "actions": [
+            "A11",
+            "A14",
+            "A15"
+          ]
+        },
+        {
+          "type": "table",
+          "span": 12,
+          "title": "Decisions only Marisol can make — and what waits on each",
+          "columns": [
+            "Decision",
+            "Waits on it",
+            "Default if no answer by Nov 16"
+          ],
+          "rows": [
+            [
+              "One public business name (A8)",
+              "A3, A7, A9, A17, A18",
+              "use 'Vega Roofing & Restoration', the site name"
+            ],
+            [
+              "Founding year and roof count (A11)",
+              "A10, A17",
+              "state neither number anywhere"
+            ],
+            [
+              "Spend approval (A15)",
+              "the $1/day test",
+              "no spend"
+            ],
+            [
+              "Ask Dana to co-record (A14)",
+              "four claim videos",
+              "record solo versions"
+            ]
+          ],
+          "evidence": [
+            "V-C03",
+            "V-C01",
+            "V-E056"
+          ]
+        }
+      ]
+    },
+    {
+      "n": 20,
+      "type": "receipt",
+      "kicker": "Method, sources and acceptance receipt",
+      "headline": "How this audit was built, what it can and cannot prove, and **the one decision** that moves it",
+      "dek": "Method: Local Service Spotlight 20-page personal and company audit; Brand Authority rubric 1.1; evidence ledger with OBSERVED / INFERRED / UNKNOWN states. Scores are arithmetic from checked rows; gates are run in code before any review.",
+      "blocks": [
+        {
+          "type": "prose",
+          "span": 12,
+          "text": [
+            "Sources: public pages, registries, search results, three AI engines and the Knowledge Graph Explorer, plus her intake form and photo folder (private, labelled REPORTED). Every claim on pages 1-19 cites a ledger id; ids link to their sources. This demo is synthetic: every name, number and URL is invented to show the format."
+          ],
+          "evidence": [
+            "V-E002",
+            "V-E037",
+            "V-E046",
+            "V-E055"
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "A1",
+      "action": "Point the contact form at a working inbox",
+      "finding": "Form posts to an expired domain",
+      "evidence": [
+        "V-E032"
+      ],
+      "function": "Web",
+      "skill": "business-website-agent",
+      "dependency": "Owner names the inbox",
+      "destination": "vegaroofing.example/contact",
+      "due": "2026-11-16",
+      "human_gate": "Marisol confirms the inbox",
+      "acceptance_test": "A test lead arrives in that inbox within 5 minutes",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "7"
+    },
+    {
+      "id": "A2",
+      "action": "Restore /financing and make the phone tap-to-call",
+      "finding": "Menu link 404s; phone is an image",
+      "evidence": [
+        "V-E031",
+        "V-E034"
+      ],
+      "function": "Web",
+      "skill": "business-website-agent",
+      "dependency": "Financing partner page or removal decision",
+      "destination": "vegaroofing.example (header, /financing)",
+      "due": "2026-11-16",
+      "human_gate": "Marisol approves the financing text",
+      "acceptance_test": "/financing returns 200 and tapping the number opens the dialer on a phone",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "7"
+    },
+    {
+      "id": "A3",
+      "action": "Rewrite the homepage hero around insurance-claim replacement",
+      "finding": "Generic offer vs 61% claim reviews",
+      "evidence": [
+        "V-E012",
+        "V-E052",
+        "V-E053"
+      ],
+      "function": "Content",
+      "skill": "business-brand-strategist",
+      "dependency": "A8 public name",
+      "destination": "vegaroofing.example/",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves copy",
+      "acceptance_test": "Live hero names hail claims and shows 3 dated reviews",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A4",
+      "action": "Embed a live Google review feed and pin six claim reviews",
+      "finding": "Site shows 3 untraceable quotes",
+      "evidence": [
+        "V-E015",
+        "V-E012"
+      ],
+      "function": "Reputation",
+      "skill": "positive-mentions-harvester",
+      "dependency": "A3",
+      "destination": "vegaroofing.example/ and /reviews",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves the six",
+      "acceptance_test": "Six dated, linked reviews render on the homepage",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A5",
+      "action": "Publish the hail-claim guide page from the top video with transcript",
+      "finding": "41,200-view video, no site page",
+      "evidence": [
+        "V-E025",
+        "V-E030"
+      ],
+      "function": "Content",
+      "skill": "content-factory",
+      "dependency": "Transcript of the top video",
+      "destination": "vegaroofing.example/hail-claim-guide",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves the page",
+      "acceptance_test": "Guide is live, embeds the video and is indexed in Search Console",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A6",
+      "action": "Add an 'As seen on' block with TV, award, podcast and expo",
+      "finding": "Independent proof absent from site",
+      "evidence": [
+        "V-E023",
+        "V-E017",
+        "V-E019"
+      ],
+      "function": "Web",
+      "skill": "business-website-agent",
+      "dependency": "Logos and links",
+      "destination": "vegaroofing.example/ footer + /about",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves",
+      "acceptance_test": "Block renders with four working source links",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A7",
+      "action": "Add Person and Organization schema with sameAs, and fix the LinkedIn title",
+      "finding": "No Person markup; stale LinkedIn name",
+      "evidence": [
+        "V-E036",
+        "V-E051"
+      ],
+      "function": "Search & entity",
+      "skill": "knowledge-panel-entity-seo",
+      "dependency": "A8",
+      "destination": "vegaroofing.example/about + LinkedIn",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves the schema change and updates her own LinkedIn title",
+      "acceptance_test": "Rich Results test shows Person with 5 sameAs links",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A8",
+      "action": "Choose one public business name for every profile",
+      "finding": "Three names in use",
+      "evidence": [
+        "V-E008"
+      ],
+      "function": "Owner decision",
+      "skill": "evidence-verification",
+      "dependency": "None",
+      "destination": "action register",
+      "due": "2026-11-16",
+      "human_gate": "Marisol decides",
+      "acceptance_test": "Chosen name recorded in the register with the legal name mapped",
+      "state": "PROPOSED",
+      "executor": "HUMAN",
+      "window": "7"
+    },
+    {
+      "id": "A9",
+      "action": "Request relinks from News 6 and the roofing association",
+      "finding": "Both link to a dead Facebook page",
+      "evidence": [
+        "V-E018",
+        "V-E020"
+      ],
+      "function": "Outreach",
+      "skill": "knowledge-panel-entity-seo",
+      "dependency": "A8",
+      "destination": "gcnews6.example, roofingassoc.example",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves the email",
+      "acceptance_test": "Both pages link to vegaroofing.example",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A10",
+      "action": "Publish a dated facts page and a before/after gallery by street",
+      "finding": "No citable facts; 1,200 photos unused",
+      "evidence": [
+        "V-E048",
+        "V-E060"
+      ],
+      "function": "Content",
+      "skill": "content-factory",
+      "dependency": "A11",
+      "destination": "vegaroofing.example/facts, /gallery",
+      "due": "2027-01-08",
+      "human_gate": "Marisol approves facts",
+      "acceptance_test": "Facts page lists dated, sourced figures; gallery shows 24 permitted jobs",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "60"
+    },
+    {
+      "id": "A11",
+      "action": "Confirm the founding year and the number of roofs completed",
+      "finding": "2010 vs 2012; 3,500 vs 2,000",
+      "evidence": [
+        "V-E004",
+        "V-E005",
+        "V-E006",
+        "V-E007"
+      ],
+      "function": "Owner decision",
+      "skill": "evidence-verification",
+      "dependency": "None",
+      "destination": "action register",
+      "due": "2026-11-16",
+      "human_gate": "Marisol decides",
+      "acceptance_test": "Two confirmed facts with a document or job-count source",
+      "state": "PROPOSED",
+      "executor": "HUMAN",
+      "window": "7"
+    },
+    {
+      "id": "A12",
+      "action": "Install call tracking and two GA4 conversion events",
+      "finding": "Zero conversions tracked",
+      "evidence": [
+        "V-E035"
+      ],
+      "function": "Analytics",
+      "skill": "measurement-analytics",
+      "dependency": "GA4 access",
+      "destination": "GA4 property + site header",
+      "due": "2026-11-16",
+      "human_gate": "Marisol grants GA4 access",
+      "acceptance_test": "A test call and a test form both appear in GA4",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "7"
+    },
+    {
+      "id": "A13",
+      "action": "Reply to every new review within 48 hours and backfill 69 replies",
+      "finding": "31% reply rate",
+      "evidence": [
+        "V-E014"
+      ],
+      "function": "Reputation",
+      "skill": "positive-mentions-harvester",
+      "dependency": "Reply style approved",
+      "destination": "Google Business Profile",
+      "due": "2026-12-09",
+      "human_gate": "Marisol approves the reply style",
+      "acceptance_test": "Reply rate on the last 100 reviews is 100%",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "30"
+    },
+    {
+      "id": "A14",
+      "action": "Record four short claim videos with Dana Whitfield before Feb 15",
+      "finding": "Adjuster appears in 7 joint moments",
+      "evidence": [
+        "V-E056"
+      ],
+      "function": "Owner + partner",
+      "skill": "content-factory",
+      "dependency": "Dana agrees",
+      "destination": "YouTube + hail-claim guide",
+      "due": "2027-01-08",
+      "human_gate": "Dana consents to appear",
+      "acceptance_test": "Four videos uploaded and embedded on the guide",
+      "state": "PROPOSED",
+      "executor": "HUMAN",
+      "window": "60"
+    },
+    {
+      "id": "A15",
+      "action": "Run a $1/day test of the top hail-claim video for 7 days",
+      "finding": "41,200 organic views",
+      "evidence": [
+        "V-E025"
+      ],
+      "function": "Paid media",
+      "skill": "dollar-a-day-strategist",
+      "dependency": "A1, A2, A12 pass",
+      "destination": "Meta ad account (to be named)",
+      "due": "2027-01-08",
+      "human_gate": "Marisol approves account, budget, dates",
+      "acceptance_test": "Day-7 MAA report with cost per 15-sec view and calls",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "60"
+    },
+    {
+      "id": "A16",
+      "action": "Send a monthly MAA report: inspections booked by source",
+      "finding": "No lead log",
+      "evidence": [
+        "V-E035",
+        "V-U01"
+      ],
+      "function": "Analytics",
+      "skill": "measurement-analytics",
+      "dependency": "A12",
+      "destination": "Basecamp client thread",
+      "due": "2027-02-07",
+      "human_gate": "None",
+      "acceptance_test": "Report posted with calls and forms by source for 30 days",
+      "state": "PROPOSED",
+      "executor": "AGENT",
+      "window": "90"
+    },
+    {
+      "id": "A17",
+      "action": "Create a Wikidata item for the company once facts settle",
+      "finding": "No Wikidata item",
+      "evidence": [
+        "V-E040"
+      ],
+      "function": "Search & entity",
+      "skill": "knowledge-panel-entity-seo",
+      "dependency": "A8, A11, A10",
+      "destination": "wikidata.org",
+      "due": "2027-02-07",
+      "human_gate": "Marisol approves the facts used",
+      "acceptance_test": "Item live with 3 cited statements",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "90"
+    },
+    {
+      "id": "A18",
+      "action": "Revive or retire the Facebook page and redirect its followers",
+      "finding": "Silent since Feb 2023",
+      "evidence": [
+        "V-E049"
+      ],
+      "function": "Social",
+      "skill": "social-amplification-engine",
+      "dependency": "A8",
+      "destination": "facebook.example/vegaroofpros",
+      "due": "2027-01-08",
+      "human_gate": "Marisol chooses revive or retire",
+      "acceptance_test": "Page shows the new name and a post dated within 7 days",
+      "state": "PROPOSED",
+      "executor": "AGENT_AFTER_APPROVAL",
+      "window": "60"
+    }
+  ]
+}

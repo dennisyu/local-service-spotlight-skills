@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dennisyu/local-service-spotlight-skills/audit-factory/schema/audit.schema.json",
+  "title": "lss-audit/1.0 — the structured 20-page audit",
+  "description": "Models write this; the renderer draws it; the gates check it. Evidence ids must exist in the evidence ledger.",
+  "type": "object",
+  "required": ["schema", "meta", "pages", "actions"],
+  "properties": {
+    "schema": {"const": "lss-audit/1.0"},
+    "meta": {
+      "type": "object",
+      "required": ["subject", "date", "identity"],
+      "properties": {
+        "subject": {"type": "string", "minLength": 2},
+        "subject_type": {"enum": ["person", "company", "person+company"]},
+        "title": {"type": "string"},
+        "date": {"type": "string", "format": "date"},
+        "plan_start": {"type": "string", "format": "date"},
+        "prepared_for": {"type": "string"},
+        "prepared_by": {"type": "object", "properties": {"name": {"type": "string"}, "role": {"type": "string"}, "photo": {"type": "string"}}},
+        "confidentiality": {"type": "string"},
+        "palette": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}},
+        "install_url": {"type": "string", "format": "uri"},
+        "identity": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {"enum": ["CONFIRMED", "HOLD", "UNKNOWN"]},
+            "attributes": {"type": "array", "items": {"type": "object", "required": ["attribute", "evidence"],
+              "properties": {"attribute": {"type": "string"}, "evidence": {"$ref": "#/$defs/ids"}}}},
+            "namesakes": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "next_decision": {"type": "string"}
+      }
+    },
+    "exams": {
+      "type": "object",
+      "properties": {
+        "brand_authority": {
+          "type": "object",
+          "required": ["rows"],
+          "properties": {
+            "rubric": {"type": "string"},
+            "pass_line": {"type": "number"},
+            "rows": {"type": "array", "minItems": 10, "maxItems": 10, "items": {
+              "type": "object", "required": ["n", "score", "evidence"],
+              "properties": {"n": {"type": "integer", "minimum": 1, "maximum": 10},
+                             "score": {"oneOf": [{"type": "number", "minimum": 0, "maximum": 10}, {"const": "UNKNOWN"}]},
+                             "why": {"type": "string"}, "harm": {"type": "string"}, "evidence": {"$ref": "#/$defs/ids"}}}}
+          }
+        },
+        "separate": {"type": "array", "items": {"type": "object", "required": ["name", "value"]}}
+      }
+    },
+    "pages": {"type": "array", "minItems": 20, "maxItems": 20, "items": {"$ref": "#/$defs/page"}},
+    "actions": {"type": "array", "minItems": 12, "maxItems": 40, "items": {"$ref": "#/$defs/action"}}
+  },
+  "$defs": {
+    "ids": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z]{1,3}-[A-Z]?\\d{1,4}$"}},
+    "page": {
+      "type": "object",
+      "required": ["n", "type", "headline", "blocks"],
+      "properties": {
+        "n": {"type": "integer", "minimum": 1, "maximum": 20},
+        "type": {"enum": ["cover", "summary", "goal", "identity", "exams", "proof", "connections", "assets", "lighthouse", "offer",
+                          "dollar_a_day", "audience", "content_factory", "capture", "entity", "search_ai", "agents", "plan", "risks", "receipt"]},
+        "covers": {"type": "array", "items": {"type": "string"}},
+        "kicker": {"type": "string"},
+        "headline": {"type": "string", "minLength": 20},
+        "dek": {"type": "string"},
+        "blocks": {"type": "array", "items": {"$ref": "#/$defs/block"}}
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["prose", "cards", "stat_strip", "finding_map", "table", "callout", "quote", "checklist", "conflicts",
+                          "photo", "screenshot", "bars", "heatmap", "scorebar", "graph", "timeline", "swimlane", "matrix", "ladder",
+                          "flow", "topic_wheel", "donut", "qr"]},
+        "span": {"type": "integer", "minimum": 1, "maximum": 12},
+        "evidence": {"$ref": "#/$defs/ids"},
+        "actions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "action", "evidence", "function", "skill", "dependency", "destination", "due", "human_gate", "acceptance_test", "state"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^A\\d{1,3}$"},
+        "action": {"type": "string", "minLength": 10},
+        "finding": {"type": "string"},
+        "evidence": {"$ref": "#/$defs/ids"},
+        "function": {"type": "string"},
+        "skill": {"type": "string"},
+        "dependency": {"type": "string"},
+        "destination": {"type": "string"},
+        "due": {"type": "string", "format": "date"},
+        "human_gate": {"type": "string"},
+        "acceptance_test": {"type": "string", "minLength": 12},
+        "state": {"enum": ["PROPOSED", "STAGED", "APPROVED", "IN PROGRESS", "BLOCKED", "COMPLETE", "VERIFIED"]},
+        "executor": {"enum": ["AGENT", "AGENT_AFTER_APPROVAL", "HUMAN"]},
+        "window": {"enum": ["7", "30", "60", "90", 7, 30, 60, 90]}
+      }
+    }
+  }
+}

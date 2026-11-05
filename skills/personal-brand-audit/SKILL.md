@@ -23,6 +23,40 @@ rubric/version controls, weekly implementation review and batch correction gate.
 Use this skill's exact-20-page product contract; record authorized exceptions
 without treating historical report lengths as a universal rule.
 
+## Tiered production — the Audit Factory (read before producing at volume)
+
+Any agent can produce this audit without a frontier model doing the heavy lifting; the pilot
+measures how close to frontier quality it lands. Use the repository's
+[`audit-factory/`](../../audit-factory/README.md):
+
+1. **One runner owns the audit end to end** (a Claude/Codex/Cursor session, Muse, ChatGPT,
+   a cron job or a person). Never split stages across agents through repo notes or work
+   orders that no running process reads.
+2. **Models write content, code draws pages.** Stages 30-70 write `audit.json` blocks by
+   following the [stage cards](../../audit-factory/stages/00-README.md); the renderer owns
+   layout, scores, the swimlane, the QR and the page-20 receipt.
+3. **Spend frontier judgment twice:** synthesis (the eight findings, stage 50) and the final
+   structured review (stage 80). Harvest, drafting and actions run on the cheapest tier that
+   passes the gates.
+4. **Gates before review:** `python -m factory20 gate` and `render` must not HOLD before any
+   reviewer reads the file. Fix every message; the reviewer judges, not counts, and runs in a
+   fresh context that never saw the drafting.
+5. **Client-facing changes wait for the client's yes:** an action that touches the client's
+   site, profiles, reviews, ads or public records is `AGENT_AFTER_APPROVAL` with the approver
+   named (gate G65).
+
+6. **One key is enough:** the `openrouter`, `openrouter-lean` and `openrouter-budget` tiers send
+   every call through one `OPENROUTER_API_KEY`, ask only for providers that do not collect user
+   data, set each stage's reasoning effort, record the charge OpenRouter reports, and never cross
+   the spending cap (`--max-usd`). Zero data retention for a confidential brief also excludes
+   Safety Retention endpoints only when the OpenRouter account is set to "ZDR only".
+
+The standard tier is estimated at about $5 per audit by the conservative planning budget, and at
+about $1.61 (standard) or $0.95 (`openrouter-lean`) for one pass from an existing ledger, counted
+from a real audit's prompts and replies with the models' thinking included; the all-frontier run
+of Oct 23 measured about $280 at list price for research, writing and seven review rounds.
+These are estimates until the first live bill (measurements: `audit-factory/docs/CALIBRATION.md`).
+
 ## Dependency preflight
 
 A complete audit requires the eight routed skills named below. The `lss-everything` bundle
