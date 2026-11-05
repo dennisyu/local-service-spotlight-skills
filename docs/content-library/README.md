@@ -127,4 +127,5 @@ We are the hub; your library can be a spoke. You keep your own map in the same s
 - Standard: [update the canonical master, never start a silo](../../standards/update-the-canonical-master-never-start-a-silo.md)
 - Registry of public masters: [canonical-masters.json](../canonical-masters.json)
 - Public article: [Content Library: how agents keep one list of everything you have made](https://blitzmetrics.com/content-library/) (this method in plain words, with the diagram)
+- Public article: [Borrowed, Not Invented: the management methods our AI agents run on](https://blitzmetrics.com/borrowed-management-methods/) (where each of the seven rules comes from, and the proven next steps they let us take)
 - Framework: [Content Factory](https://blitzmetrics.com/content-factory/) and [Nine Triangles](https://blitzmetrics.com/ntf/)
