@@ -82,7 +82,7 @@ jobs:
           python3 -m factory20 init run --from-demo
           python3 -m factory20 run run --tier "$TIER" --max-usd "$MAX_USD" | tee run/result.json
       - name: Measure the PDF and write the receipt
-        if: always()
+        if: always() && env.HAS_KEY == 'true'     # without a key nothing ran, so there is nothing to measure
         working-directory: audit-factory
         shell: bash
         run: |
@@ -113,7 +113,7 @@ jobs:
               print("\n```\n" + (run / "measure.txt").read_text() + "```")
           PY
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && env.HAS_KEY == 'true'
         with:
           name: demo-audit-${{ inputs.tier }}
           path: |
