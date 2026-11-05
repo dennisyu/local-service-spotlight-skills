@@ -35,6 +35,17 @@ therefore do not enter this inventory. Dynamic sites must export every actual
 rendered route to this structure or supply an equivalent site-specific checker;
 checking one homepage cannot certify a whole site.
 
+Dynamic publishers may retain exact HTML without rewriting its image URLs. Set
+an asset's optional `served_url` to the literal public HTTPS URL in its `<img
+src>`. Keep `asset.path` as the actual retained local photo file; its byte hash
+and independent review remain required. `served_url` participates in
+`provenance_digest`, so changing it invalidates the prior review. Relative/local
+images continue to work unchanged. This mapping does not fetch the endpoint or
+prove it currently serves those bytes: retain the actual source capture and have
+the independent source/browser review inspect it. `srcset`/`picture`, implicit
+remote mappings and HTML rewrites that change the reviewed page hash do not
+satisfy this contract.
+
 Example manifest structure (all values are illustrative, not real evidence):
 
 ```json
@@ -111,3 +122,151 @@ Source rules: `every-public-page-has-real-imagery`, `every-article-has-pictures`
 `qa-from-a-different-context-window`. This procedure adds no schedule or fleet
 installation. File source distribution, runtime activation, actual execution,
 independent acceptance and publication as separate states.
+
+## Required publisher integration
+
+Marker `PHOTO-PROVENANCE-PUBLISH-GATE-2026-11-05` applies at the actual writer's
+effect boundary. The canonical
+[`publication_photo_gate.py`](../scripts/publication_photo_gate.py) performs no
+network request or content write. Publishing code, rather than the candidate's
+author, supplies its expected candidate paths, SHA256 values and canonical URLs:
+
+```python
+from scripts.publication_photo_gate import admit, revalidate
+
+commitment = admit(public_root, private_photo_manifest, private_render_proof,
+                   private_captures_root, {
+    "article/index.html": {"sha256": exact_candidate_sha256,
+                           "url": "https://example.com/article/"}
+})
+# Resolve destination authority and transaction controls separately.
+revalidate(commitment)
+# Only now may the existing authorized publisher dispatch these exact bytes.
+```
+
+`admit` raises `Hold` on missing, malformed or inconsistent evidence. It returns
+an immutable `EVIDENCE_CONSISTENT` commitment, not a release approval.
+`revalidate` checks the complete original public tree and original private
+proof/capture/code bytes again. A new HTML route, changed CSS or photo, revised
+review, or replaced screenshot cannot inherit an old result. All public HTML
+routes must match the expected mapping and photo manifest. Private manifests
+and captures stay outside the public root. Do not catch a failed gate and keep
+publishing or add a bypass flag. A CMS adapter may retain its exact body fragment
+as the candidate; its writer binds that fragment's actual bytes and destination
+before a write.
+
+The additional private rendered proof has this structure. Values below are
+illustrative, not real evidence:
+
+```json
+{
+  "version": 1,
+  "synthetic": false,
+  "pages": [{
+    "path": "article/index.html",
+    "url": "https://example.com/article/",
+    "page_sha256": "ACTUAL_CANDIDATE_SHA256",
+    "render_url": "http://127.0.0.1:8766/article/",
+    "collector": "rendered_visual_check",
+    "receipt": {"path": "article/receipt.json", "sha256": "ACTUAL_RECEIPT_SHA256"},
+    "review": {
+      "reviewer": "different-fresh-reviewer-session",
+      "result": "PASS",
+      "observed_at": "ACTUAL_TIME_WITH_TIMEZONE",
+      "page_sha256": "ACTUAL_CANDIDATE_SHA256",
+      "receipt_sha256": "ACTUAL_RECEIPT_SHA256",
+      "screenshot_sha256": {
+        "article/1280x800-js-on.png": "ACTUAL_SCREENSHOT_SHA256",
+        "article/1280x800-js-off.png": "ACTUAL_SCREENSHOT_SHA256",
+        "article/390x844-js-on.png": "ACTUAL_SCREENSHOT_SHA256",
+        "article/390x844-js-off.png": "ACTUAL_SCREENSHOT_SHA256"
+      },
+      "meaningful_real_photo_checked": true,
+      "source_permission_and_context_checked": true,
+      "title_and_first_screen_checked": true
+    }
+  }]
+}
+```
+
+The receipt retains four observations at the canonical viewports, with actual
+PNG/JPEG screenshot files of those dimensions, source-body files, hashes,
+loaded/visible visual measurements, a readable first-screen title, no horizontal
+overflow and matching stable measurement/screenshot evidence. Numeric limits
+come from `standards/visuals-above-the-fold.md`; a declared geometry PASS cannot
+waive a failed measurement. Captures and independent review must be no older
+than 24 hours, with five minutes of forward-clock tolerance. A changed page or
+asset still requires new review inside that window.
+
+The canonical renderer emits `collector: rendered_visual_check`. Each
+observation records `sourceBinding: response_body`, `sourceSha256`, and
+`sourceCapture: {path, sha256, bytes}` for the actual navigation response body,
+beside its screenshot. The gate verifies those retained body bytes against the
+candidate. Capture paths are relative to the receipt directory; the outer
+proof's screenshot-review map is relative to `captures_root`.
+
+Where the approved browser tool is CUA, use `collector: cua` in both the proof
+page and receipt. Retain the same observed viewport, loaded/painted geometry,
+title, overflow, `layoutStability: {status: STABLE,
+matchingMeasurementAndScreenshot: true}`, actual screenshot and source fields.
+Set `sourceBinding: paired_http_capture` and retain the exact separately captured
+HTML body, labeling it as paired HTTP evidence instead of claiming the canonical
+script or browser-response capture ran. A JavaScript-disabled case must actually
+disable execution while retaining the same source bytes; stripping scripts
+produces a different artifact. Preserve a missing or failed observation as HOLD.
+
+For a non-Python publisher, the CLI requires all five paths:
+
+```bash
+python3 scripts/publication_photo_gate.py --root /absolute/candidate \
+  --manifest /absolute/private/photos.json \
+  --render-proof /absolute/private/render-proof.json \
+  --captures /absolute/private/captures \
+  --expected-pages /absolute/private/publisher-owned-candidate-mapping.json
+```
+
+The CLI is a source check; the writer must still bind the same candidate at its
+effect boundary. A Python writer should retain and revalidate the commitment,
+then use its reviewed transaction and rollback. A disconnected writer that does
+not call the gate is unintegrated even if its agent read this document.
+
+The photo parser accepts `check(root, manifest, snapshot={relative_path: bytes})`
+for a publisher-owned immutable snapshot. It parses HTML, hashes photos and
+resolves local references lexically within those copied bytes; it never reopens
+live page or photo paths in that mode. The publisher gate explicitly binds the
+manifest's page and asset hashes to the initial candidate snapshot. JSON
+manifests, rendered proofs, receipts and policy are likewise parsed from the
+same bytes that produced their retained hashes. Hashing before and after a
+parser that independently rereads live paths is insufficient: a temporary file
+replacement could be shown only to the parser. Complete final tree/byte checks
+and revalidation remain necessary around this snapshot-based validation.
+
+All four source dependencies, including the renderer, belong to the frozen
+commitment. Every actual receipt, response body and screenshot must resolve
+outside the public root, even when a broader capture-directory argument happens
+to contain that root. The observed final URL must match the reviewed render URL
+including its query string; an unreviewed query variant is not equivalent proof.
+
+For a CUA unavailable-script case, `javaScriptEnabled: false` describes script
+availability for that observation, not a claim that a vendor browser setting was
+changed. Record `scriptAvailabilityMethod: http-csp-script-src-none`,
+`browserPreferenceChanged: false`, and `observedContentSecurityPolicy` containing
+the actual `script-src 'none'` directive. Capture that header and the unchanged
+HTML from the same paired HTTP response. Keep the same URL and preserve the
+normal source bytes. Missing CSP evidence cannot stand in for a disabled-script
+observation.
+
+The native marketplace with repository source `./` can include root scripts;
+the generic `pack2plugin.py` converter instead copies selected skill directories
+and optional agent/command directories. Check the actual installation instead
+of generalizing from either route. Private publishers may use an exact reviewed,
+hash-pinned source mirror beside their maintained entry point, preserving the
+module/renderer/standard dependencies and source revision. Instruction sync and
+installed checker bytes need separate receipts. Test actual invocation and
+rejected missing/changed-proof cases.
+
+This gate checks retained-byte and declaration consistency. It cannot
+authenticate a reviewer, source capture or screenshot, identify a person, grant
+usage rights, or defeat a fully fabricated evidence bundle. An independent
+reviewer must open the original sources and exact final artifacts. Synthetic
+software fixtures and manufactured declarations are never operational proof.

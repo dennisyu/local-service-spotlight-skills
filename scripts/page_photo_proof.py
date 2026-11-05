@@ -11,6 +11,8 @@ import hashlib
 from html.parser import HTMLParser
 import json
 from pathlib import Path
+import posixpath
+from types import MappingProxyType
 from urllib.parse import unquote, urlsplit
 
 
@@ -42,6 +44,43 @@ def inside(root: Path, relative: str) -> Path:
     if not candidate.is_relative_to(root) or not candidate.is_file():
         raise ValueError("missing file or path escapes public root")
     return candidate
+
+
+def relative_key(value: str) -> str:
+    """Canonical lexical keys for an immutable snapshot; no filesystem lookup."""
+    if (not nonblank(value) or value.startswith('/') or '\\' in value or
+            any(part == '..' for part in value.split('/'))):
+        raise ValueError('missing file or path escapes public root')
+    key = posixpath.normpath(value)
+    if key in ('', '.'):
+        raise ValueError('relative file path required')
+    return key
+
+
+def _frozen_files(root: Path, snapshot):
+    if snapshot is None:
+        files = {}
+        for path in root.rglob('*'):
+            if path.is_symlink():
+                raise ValueError('symlink in public source is unsupported')
+            if path.is_file():
+                files[path.relative_to(root).as_posix()] = path.read_bytes()
+    else:
+        files = dict(snapshot)
+    if any(type(name) is not str or relative_key(name) != name or type(body) is not bytes
+           for name, body in files.items()):
+        raise ValueError('snapshot needs canonical relative paths and immutable bytes')
+    return MappingProxyType(files)
+
+
+def _image_key(page: str, source: str) -> str:
+    if '\\' in source:
+        raise ValueError('backslash image paths are unsupported')
+    target = posixpath.normpath(source.lstrip('/') if source.startswith('/') else
+                              posixpath.join(posixpath.dirname(page), source))
+    if target == '..' or target.startswith('../'):
+        raise ValueError('image path escapes public root')
+    return relative_key(target)
 
 
 class Page(HTMLParser):
@@ -94,7 +133,7 @@ class Page(HTMLParser):
             self.text.append(data)
 
 
-def check(root: Path, manifest: dict) -> list[str]:
+def check(root: Path, manifest: dict, *, snapshot=None) -> list[str]:
     root = root.resolve()
     errors = []
     if not isinstance(manifest, dict) or manifest.get("version") != 1:
@@ -103,8 +142,11 @@ def check(root: Path, manifest: dict) -> list[str]:
     pages = manifest.get("pages")
     if not isinstance(assets, dict) or not isinstance(pages, list):
         return ["manifest needs assets object and pages list"]
-    actual = {p.relative_to(root).as_posix() for p in root.rglob("*")
-              if p.is_file() and p.suffix.lower() in (".html", ".htm")}
+    try:
+        files = _frozen_files(root, snapshot)
+    except (OSError, ValueError, TypeError) as exc:
+        return [str(exc)]
+    actual = {name for name in files if Path(name).suffix.lower() in ('.html', '.htm')}
     listed = [p.get("path") for p in pages if isinstance(p, dict)]
     if len(listed) != len(pages) or any(not nonblank(p) for p in listed):
         return ["every page entry needs a relative path"]
@@ -117,11 +159,12 @@ def check(root: Path, manifest: dict) -> list[str]:
     for record in pages:
         name = record["path"]
         try:
-            page_path = inside(root, name)
-            sha = digest(page_path)
+            page_key = relative_key(name)
+            page_bytes = files[page_key]
+            sha = hashlib.sha256(page_bytes).hexdigest()
             parsed = Page()
-            parsed.feed(page_path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError, ValueError) as exc:
+            parsed.feed(page_bytes.decode('utf-8'))
+        except (OSError, UnicodeError, ValueError, KeyError) as exc:
             errors.append(f"{name}: {exc}")
             continue
         if record.get("sha256") != sha:
@@ -166,12 +209,17 @@ def check(root: Path, manifest: dict) -> list[str]:
                 errors.append(f"{name}/{asset_id}: incomplete photo provenance")
             if review_provenance.get(asset_id) != provenance_digest(asset):
                 errors.append(f"{name}/{asset_id}: provenance changed or review digest missing")
+            served_url = asset.get("served_url")
+            if served_url is not None and (not public_url(served_url) or
+                    urlsplit(served_url).scheme != "https" or urlsplit(served_url).fragment):
+                errors.append(f"{name}/{asset_id}: served_url must be an explicit public HTTPS URL without a fragment")
             try:
-                photo = inside(root, asset.get("path"))
-                photo_sha = digest(photo)
+                photo_key = relative_key(asset.get('path'))
+                photo_bytes = files[photo_key]
+                photo_sha = hashlib.sha256(photo_bytes).hexdigest()
                 # Signature screening only. Actual decode/load and identity are
                 # checked by the separate rendered/source reviews, never here.
-                magic = photo.read_bytes()[:16]
+                magic = photo_bytes[:16]
                 raster = (magic.startswith(b"\xff\xd8\xff") or magic.startswith(b"\x89PNG\r\n\x1a\n") or
                           (magic.startswith(b"RIFF") and magic[8:12] == b"WEBP") or
                           magic.startswith((b"GIF87a", b"GIF89a")) or
@@ -183,17 +231,28 @@ def check(root: Path, manifest: dict) -> list[str]:
                 matching = []
                 for img in parsed.photos:
                     source = urlsplit(img.get("src", ""))
-                    if source.scheme or source.netloc or not source.path:
+                    if source.scheme or source.netloc:
+                        # A dynamic publisher retains the actual photo bytes locally
+                        # and binds this literal served URL into provenance review.
+                        # This never fetches or authenticates the remote endpoint.
+                        if (served_url is not None and img.get("src") == served_url and
+                                img.get('data-lss-asset-id') == asset_id):
+                            matching.append(img)
+                        continue
+                    if not source.path:
                         continue
                     relative = unquote(source.path)
-                    target = (root / relative.lstrip("/") if relative.startswith("/") else page_path.parent / relative).resolve()
-                    if target == photo and img.get("data-lss-asset-id") == asset_id:
+                    try:
+                        target = _image_key(page_key, relative)
+                    except ValueError:
+                        continue
+                    if target == photo_key and img.get("data-lss-asset-id") == asset_id:
                         matching.append(img)
                 if any(img["_unsupported_selection"] for img in matching):
                     errors.append(f"{name}/{asset_id}: srcset/picture image selection is unsupported; review all selected bytes with an equivalent validator")
                 if not any(img.get("data-lss-real-image") == "verified" and nonblank(img.get("alt")) for img in matching):
                     errors.append(f"{name}/{asset_id}: no matching marked photo with alt in page content")
-            except (OSError, ValueError, TypeError) as exc:
+            except (OSError, ValueError, TypeError, KeyError) as exc:
                 errors.append(f"{name}/{asset_id}: {exc}")
             if asset.get("source_url") not in parsed.links:
                 errors.append(f"{name}/{asset_id}: source link absent from page")
