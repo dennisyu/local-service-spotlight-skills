@@ -148,6 +148,11 @@ try {
       for (const observation of receipt.observations) {
         const bytes=await fs.readFile(path.join(directory,observation.screenshot));
         assert.equal(createHash('sha256').update(bytes).digest('hex'),observation.screenshotSha256);
+        const source = await fs.readFile(path.join(directory, observation.sourceCapture.path));
+        assert.equal(createHash('sha256').update(source).digest('hex'), observation.sourceSha256);
+        assert.equal(observation.sourceCapture.sha256, observation.sourceSha256);
+        assert.equal(observation.sourceCapture.bytes, source.length);
+        assert.equal(observation.sourceBinding, 'response_body');
         assert.equal(observation.httpStatus,200);
       }
       assert.equal(JSON.parse(await fs.readFile(path.join(directory,'receipt.json'),'utf8')).playbackReview,'NOT_TESTED');

@@ -23,6 +23,40 @@ rubric/version controls, weekly implementation review and batch correction gate.
 Use this skill's exact-20-page product contract; record authorized exceptions
 without treating historical report lengths as a universal rule.
 
+## Tiered production — the Audit Factory (read before producing at volume)
+
+Any agent can produce this audit without a frontier model doing the heavy lifting; the pilot
+measures how close to frontier quality it lands. Use the repository's
+[`audit-factory/`](../../audit-factory/README.md):
+
+1. **One runner owns the audit end to end** (a Claude/Codex/Cursor session, Muse, ChatGPT,
+   a cron job or a person). Never split stages across agents through repo notes or work
+   orders that no running process reads.
+2. **Models write content, code draws pages.** Stages 30-70 write `audit.json` blocks by
+   following the [stage cards](../../audit-factory/stages/00-README.md); the renderer owns
+   layout, scores, the swimlane, the QR and the page-20 receipt.
+3. **Spend frontier judgment twice:** synthesis (the eight findings, stage 50) and the final
+   structured review (stage 80). Harvest, drafting and actions run on the cheapest tier that
+   passes the gates.
+4. **Gates before review:** `python -m factory20 gate` and `render` must not HOLD before any
+   reviewer reads the file. Fix every message; the reviewer judges, not counts, and runs in a
+   fresh context that never saw the drafting.
+5. **Client-facing changes wait for the client's yes:** an action that touches the client's
+   site, profiles, reviews, ads or public records is `AGENT_AFTER_APPROVAL` with the approver
+   named (gate G65).
+
+6. **One key is enough:** the `openrouter`, `openrouter-lean` and `openrouter-budget` tiers send
+   every call through one `OPENROUTER_API_KEY`, ask only for providers that do not collect user
+   data, set each stage's reasoning effort, record the charge OpenRouter reports, and never cross
+   the spending cap (`--max-usd`). Zero data retention for a confidential brief also excludes
+   Safety Retention endpoints only when the OpenRouter account is set to "ZDR only".
+
+The standard tier is estimated at about $5 per audit by the conservative planning budget, and at
+about $1.61 (standard) or $0.95 (`openrouter-lean`) for one pass from an existing ledger, counted
+from a real audit's prompts and replies with the models' thinking included; the all-frontier run
+of Oct 23 measured about $280 at list price for research, writing and seven review rounds.
+These are estimates until the first live bill (measurements: `audit-factory/docs/CALIBRATION.md`).
+
 ## Dependency preflight
 
 A complete audit requires the eight routed skills named below. The `lss-everything` bundle
@@ -694,6 +728,19 @@ bidirectional-link verifier and rendered desktop/mobile review.
   changed bytes, omitted routes or missing independent review must HOLD.
   Also inspect the rendered desktop and mobile page;
   a hidden, broken, or contextless image does not count.
+- **A publishing route must enforce this before its content write or release.**
+  Marker `PHOTO-PROVENANCE-PUBLISH-GATE-2026-11-05`. Use the canonical
+  `scripts/publication_photo_gate.py` or an equivalent reviewed integration at
+  the actual publisher's effect boundary. The publisher supplies its exact
+  candidate HTML hashes and canonical destinations; the gate checks retained
+  photo/provenance bytes, independent review, actual response-body captures and
+  desktop/mobile JavaScript-on/off screenshot evidence. Revalidate that frozen
+  commitment immediately before dispatch. Missing evidence, a changed page,
+  asset, permission record, receipt or screenshot, an omitted route, or a stale
+  review stops dispatch. A checklist, a marker-only sweep, a pack installation,
+  or a caller's declared PASS cannot replace the publisher call. Keep held and
+  unintegrated routes visible; neither a merged gate nor one agent's successful
+  exercise proves every publisher or runtime enforced it.
 - Machine-only documents and routes that never render as visitor content—such as
   `robots.txt`, XML sitemaps, feeds, and true HTTP redirects—are exempt. A
   browser-rendered redirect placeholder is not exempt; replace it with a real

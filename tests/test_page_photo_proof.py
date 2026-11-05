@@ -149,6 +149,53 @@ class PagePhotoProofTests(unittest.TestCase):
         self.manifest["pages"][0]["review"].pop("asset_provenance_sha256")
         self.assertTrue(any("review digest missing" in x for x in self.errors()))
 
+    def test_explicit_reviewed_served_url_uses_retained_photo_bytes(self):
+        asset = self.manifest["assets"]["interview"]
+        asset["served_url"] = "https://example.com/wp-content/uploads/people.png"
+        self.page.write_text(self.page.read_text().replace('src="assets/people.png"',
+                             'src="' + asset["served_url"] + '"'))
+        self.refresh_page_hash()
+        self.assertTrue(any("provenance changed" in x for x in self.errors()))
+        self.manifest["pages"][0]["review"]["asset_provenance_sha256"]["interview"] = provenance_digest(asset)
+        self.assertEqual(self.errors(), [])
+        self.photo.write_bytes(self.photo.read_bytes() + b"changed")
+        self.assertTrue(any("photo bytes changed" in x for x in self.errors()))
+
+    def test_unlisted_or_unsafe_remote_image_cannot_satisfy_proof(self):
+        original = self.page.read_text()
+        for url in ("http://example.com/people.png", "https://user:password@example.com/people.png",
+                    "https://example.com/people.png#fragment"):
+            with self.subTest(url=url):
+                asset = self.manifest["assets"]["interview"]
+                asset["served_url"] = url
+                self.manifest["pages"][0]["review"]["asset_provenance_sha256"]["interview"] = provenance_digest(asset)
+                self.page.write_text(original.replace('src="assets/people.png"', 'src="' + url + '"'))
+                self.refresh_page_hash()
+                self.assertTrue(any("served_url" in x for x in self.errors()))
+        asset["served_url"] = "https://example.com/reviewed.png"
+        self.manifest["pages"][0]["review"]["asset_provenance_sha256"]["interview"] = provenance_digest(asset)
+        self.assertTrue(any("no matching marked photo" in x for x in self.errors()))
+
+    def test_snapshot_parses_only_copied_html_and_photo_bytes(self):
+        snapshot = {path.relative_to(self.root).as_posix(): path.read_bytes()
+                    for path in self.root.rglob('*') if path.is_file()}
+        self.page.write_text('<main>No qualifying photo</main>')
+        self.photo.write_text('<svg>not the reviewed raster</svg>')
+        self.assertEqual(check(self.root, self.manifest, snapshot=snapshot), [])
+        self.assertTrue(check(self.root, self.manifest))
+        snapshot['assets/people.png'] = bytearray(b'not immutable bytes')
+        self.assertTrue(any('immutable bytes' in e for e in check(self.root, self.manifest, snapshot=snapshot)))
+
+    def test_remote_image_must_have_the_matching_reviewed_asset_id(self):
+        asset = self.manifest['assets']['interview']
+        asset['served_url'] = 'https://example.com/people.png'
+        self.page.write_text(self.page.read_text().replace('src="assets/people.png"',
+                             'src="https://example.com/people.png"').replace(
+                             'data-lss-asset-id="interview"', 'data-lss-asset-id="other"'))
+        self.refresh_page_hash()
+        self.manifest['pages'][0]['review']['asset_provenance_sha256']['interview'] = provenance_digest(asset)
+        self.assertTrue(any('no matching marked photo' in e for e in self.errors()))
+
     def test_unknown_marked_photo_holds(self):
         self.page.write_text(self.page.read_text() + '<img src="assets/people.png" alt="Other photo" data-lss-real-image="verified" data-lss-asset-id="other">')
         self.refresh_page_hash()

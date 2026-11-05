@@ -31,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Check source-response capture without a browser
+        run: node --test tests/rendered_source_capture.test.mjs
       - name: Install browser test runtime
         run: |
           # Hosted runner's Azure HTTP mirror can stall every apt retry. Use the
