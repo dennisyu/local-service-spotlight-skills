@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import struct
 import tempfile
 import unittest
@@ -62,6 +63,8 @@ class PublicationPhotoGateTests(unittest.TestCase):
                     'layoutStability': {'status': 'STABLE', 'matchingMeasurementAndScreenshot': True},
                     'sourceBinding': 'paired_http_capture', 'sourceSha256': self.page_sha,
                     'sourceCapture': {'path': source_name, 'sha256': self.page_sha},
+                    **({'scriptAvailabilityMethod': 'http-csp-script-src-none', 'browserPreferenceChanged': False,
+                        'observedContentSecurityPolicy': "default-src 'self'; script-src 'none'"} if js is False else {}),
                     'screenshot': name, 'screenshotSha256': screenshot_hashes[name]})
         self.proof = {'version': 1, 'synthetic': False, 'pages': [
             {'path': 'index.html', 'url': self.url, 'render_url': self.render_url, 'collector': 'cua',
@@ -239,13 +242,108 @@ class PublicationPhotoGateTests(unittest.TestCase):
             gate.revalidate(value)
         (self.root / 'new.css').unlink()
         actual_check = gate.page_photo_proof.check
-        def mutate(root, manifest):
-            result = actual_check(root, manifest)
+        def mutate(root, manifest, **kwargs):
+            result = actual_check(root, manifest, **kwargs)
             (self.root / 'people.png').write_bytes(png_header(800, 600))
             return result
         with patch.object(gate.page_photo_proof, 'check', side_effect=mutate):
             with self.assertRaisesRegex(gate.Hold, 'changed during admission'):
                 self.admit()
+
+    def test_manifest_page_hash_must_equal_initial_publisher_candidate(self):
+        self.manifest['pages'][0]['sha256'] = '0' * 64
+        self.save()
+        with self.assertRaisesRegex(gate.Hold, 'manifest page differs'):
+            self.admit()
+
+    def test_real_checker_cannot_see_a_temporary_replacement_photo(self):
+        photo = self.root / 'people.png'
+        reviewed = photo.read_bytes()
+        invalid = b'<svg>not a real raster photograph</svg>'
+        photo.write_bytes(invalid)
+        asset = self.manifest['assets']['people']
+        asset['sha256'] = digest(photo)
+        self.manifest['pages'][0]['review']['asset_sha256']['people'] = asset['sha256']
+        self.manifest['pages'][0]['review']['asset_provenance_sha256']['people'] = provenance_digest(asset)
+        self.save()
+        actual_check = gate.page_photo_proof.check
+        def swap_around_genuine_check(*args, **kwargs):
+            photo.write_bytes(reviewed)
+            try:
+                return actual_check(*args, **kwargs)
+            finally:
+                photo.write_bytes(invalid)
+        with patch.object(gate.page_photo_proof, 'check', side_effect=swap_around_genuine_check):
+            with self.assertRaisesRegex(gate.Hold, 'unsupported raster signature'):
+                self.admit()
+        self.assertEqual(photo.read_bytes(), invalid)
+
+    def test_every_source_file_including_renderer_is_frozen(self):
+        value = self.admit()
+        renderer = gate.HERE / 'rendered_visual_check.mjs'
+        self.assertIn(str(renderer), [record[0] for record in value.files])
+        real_read = gate._read
+        def changed_read(path, cap=gate.MAX_BYTES):
+            body = real_read(path, cap)
+            return body + b'\n// changed renderer\n' if Path(path) == renderer else body
+        with patch.object(gate, '_read', side_effect=changed_read):
+            with self.assertRaisesRegex(gate.Hold, 'changed after admission'):
+                gate.revalidate(value)
+
+    def test_final_url_query_cannot_differ_from_reviewed_render_url(self):
+        for observation in self.receipt['observations']:
+            observation['finalUrl'] = self.render_url + '?unreviewed-variant=1'
+        self.save()
+        with self.assertRaisesRegex(gate.Hold, 'destination changed'):
+            self.admit()
+
+    def test_private_json_is_parsed_only_from_the_hashed_bytes(self):
+        for target in (self.manifest_path, self.proof_path, self.captures / 'receipt.json'):
+            with self.subTest(target=target):
+                valid = target.read_bytes()
+                target.write_bytes(b'{}')
+                actual_json = gate._json
+                def swap_around_genuine_json(path):
+                    if Path(path) != target:
+                        return actual_json(path)
+                    target.write_bytes(valid)
+                    try:
+                        return actual_json(path)
+                    finally:
+                        target.write_bytes(b'{}')
+                with patch.object(gate, '_json', side_effect=swap_around_genuine_json):
+                    with self.assertRaises(gate.Hold):
+                        self.admit()
+                self.assertEqual(target.read_bytes(), b'{}')
+                target.write_bytes(valid)
+
+    def test_cua_script_unavailability_does_not_claim_preference_change(self):
+        self.receipt['observations'][1]['observedContentSecurityPolicy'] = "script-src 'self'"
+        self.save()
+        with self.assertRaisesRegex(gate.Hold, 'explicit observed CSP'):
+            self.admit()
+
+    def test_capture_scope_ancestor_cannot_publish_private_receipts(self):
+        leaked = self.root / 'leaked-evidence'
+        shutil.copytree(self.captures, leaked)
+        # This uses a non-HTML extension so an HTML-inventory check alone
+        # cannot conceal the missing private/public placement check.
+        for observation in self.receipt['observations']:
+            original = observation['sourceCapture']['path']
+            replacement = original + '.body'
+            (leaked / original).rename(leaked / replacement)
+            observation['sourceCapture']['path'] = replacement
+        (leaked / 'receipt.json').write_text(json.dumps(self.receipt))
+        receipt_sha = digest(leaked / 'receipt.json')
+        item = self.proof['pages'][0]
+        item['receipt'] = {'path': 'public/leaked-evidence/receipt.json', 'sha256': receipt_sha}
+        item['review']['receipt_sha256'] = receipt_sha
+        item['review']['screenshot_sha256'] = {
+            'public/leaked-evidence/' + name: digest(leaked / name)
+            for name in item['review']['screenshot_sha256']}
+        self.proof_path.write_text(json.dumps(self.proof))
+        with self.assertRaisesRegex(gate.Hold, 'private capture file'):
+            gate.admit(self.root, self.manifest_path, self.proof_path, self.base, self.expected)
 
 
 if __name__ == '__main__':

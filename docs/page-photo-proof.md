@@ -230,6 +230,32 @@ effect boundary. A Python writer should retain and revalidate the commitment,
 then use its reviewed transaction and rollback. A disconnected writer that does
 not call the gate is unintegrated even if its agent read this document.
 
+The photo parser accepts `check(root, manifest, snapshot={relative_path: bytes})`
+for a publisher-owned immutable snapshot. It parses HTML, hashes photos and
+resolves local references lexically within those copied bytes; it never reopens
+live page or photo paths in that mode. The publisher gate explicitly binds the
+manifest's page and asset hashes to the initial candidate snapshot. JSON
+manifests, rendered proofs, receipts and policy are likewise parsed from the
+same bytes that produced their retained hashes. Hashing before and after a
+parser that independently rereads live paths is insufficient: a temporary file
+replacement could be shown only to the parser. Complete final tree/byte checks
+and revalidation remain necessary around this snapshot-based validation.
+
+All four source dependencies, including the renderer, belong to the frozen
+commitment. Every actual receipt, response body and screenshot must resolve
+outside the public root, even when a broader capture-directory argument happens
+to contain that root. The observed final URL must match the reviewed render URL
+including its query string; an unreviewed query variant is not equivalent proof.
+
+For a CUA unavailable-script case, `javaScriptEnabled: false` describes script
+availability for that observation, not a claim that a vendor browser setting was
+changed. Record `scriptAvailabilityMethod: http-csp-script-src-none`,
+`browserPreferenceChanged: false`, and `observedContentSecurityPolicy` containing
+the actual `script-src 'none'` directive. Capture that header and the unchanged
+HTML from the same paired HTTP response. Keep the same URL and preserve the
+normal source bytes. Missing CSP evidence cannot stand in for a disabled-script
+observation.
+
 The native marketplace with repository source `./` can include root scripts;
 the generic `pack2plugin.py` converter instead copies selected skill directories
 and optional agent/command directories. Check the actual installation instead

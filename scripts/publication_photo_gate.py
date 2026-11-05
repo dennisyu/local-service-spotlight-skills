@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 import stat
 import struct
+from types import MappingProxyType
 from urllib.parse import urlsplit
 
 try:
@@ -63,15 +64,20 @@ def _read(path, cap=MAX_BYTES):
         os.close(fd)
 
 
-def _json(path):
+def _json_bytes(body):
     def unique(pairs):
         result = {}
         for key, value in pairs:
             need(key not in result, 'duplicate JSON key: ' + key)
             result[key] = value
         return result
-    return json.loads(_read(path, MAX_JSON), object_pairs_hook=unique,
+    need(type(body) is bytes and len(body) <= MAX_JSON, 'bounded JSON bytes required')
+    return json.loads(body, object_pairs_hook=unique,
                       parse_constant=lambda _: (_ for _ in ()).throw(Hold('nonfinite JSON number')))
+
+
+def _json(path):
+    return _json_bytes(_read(path, MAX_JSON))
 
 
 def _root(path):
@@ -96,6 +102,13 @@ def _private(path, root):
     need(path.is_file() and not path.is_symlink(), 'private evidence file missing: ' + str(path))
     path = path.resolve()
     need(not path.is_relative_to(root), 'private evidence must be outside public root')
+    return path
+
+
+def _capture_file(captures_root, relative, public_root):
+    path = _file(captures_root, relative)
+    need(not path.resolve().is_relative_to(public_root),
+         'private capture file must be outside public root')
     return path
 
 
@@ -145,9 +158,8 @@ def _image_size(body):
     raise Hold('screenshot must retain PNG or JPEG viewport bytes')
 
 
-def _policy():
-    source = HERE.parent / 'standards/visuals-above-the-fold.md'
-    return json.loads(_read(source).decode().split('---', 2)[1])['rendered_gate']
+def _policy(body):
+    return _json_bytes(body.decode().split('---', 2)[1].encode())['rendered_gate']
 
 
 def _tree(root):
@@ -180,23 +192,36 @@ def _admit(root, manifest_path, render_proof_path, captures_root, expected_pages
     manifest_path, render_proof_path = _private(manifest_path, root), _private(render_proof_path, root)
     source_files = set(_tree(root))
     code_files = {Path(__file__).resolve(), Path(page_photo_proof.__file__).resolve(),
-                  HERE.parent / 'standards/visuals-above-the-fold.md'}
-    checked = {path: sha(_read(path)) for path in source_files | code_files |
-               {manifest_path, render_proof_path}}
+                  HERE / 'rendered_visual_check.mjs', HERE.parent / 'standards/visuals-above-the-fold.md'}
+    # All checks consume this same copied byte set. Hashing live paths before
+    # and after a separate parser is insufficient: files can be swapped only
+    # for the parser invocation and restored before the final hash pass.
+    snapshot = MappingProxyType({path.relative_to(root).as_posix(): _read(path) for path in source_files})
+    checked = {path: sha(snapshot[path.relative_to(root).as_posix()]) for path in source_files}
+    private_and_code = {path: _read(path) for path in code_files | {manifest_path, render_proof_path}}
+    checked.update({path: sha(body) for path, body in private_and_code.items()})
     need(isinstance(expected_pages, dict) and expected_pages, 'publisher candidate mapping required')
     expected = {}
     for name, entry in expected_pages.items():
         need(isinstance(entry, dict) and set(entry) == {'sha256', 'url'}, 'candidate needs exact hash and canonical URL')
         path = _file(root, name)
-        need(path.suffix.lower() in ('.html', '.htm') and sha(_read(path)) == entry['sha256'], 'candidate page bytes differ: ' + str(name))
+        need(path.suffix.lower() in ('.html', '.htm') and sha(snapshot[name]) == entry['sha256'], 'candidate page bytes differ: ' + str(name))
         url = _url(entry['url'], https=True)
         need(not url.query, 'canonical URL cannot contain a query')
         expected[name] = dict(entry)
-    manifest, proof, policy = _json(manifest_path), _json(render_proof_path), _policy()
-    errors = page_photo_proof.check(root, manifest)
-    need(not errors, '; '.join(errors))
+    manifest = _json_bytes(private_and_code[manifest_path])
+    proof = _json_bytes(private_and_code[render_proof_path])
+    policy = _policy(private_and_code[HERE.parent / 'standards/visuals-above-the-fold.md'])
     pages = manifest['pages']
     need({p['path'] for p in pages} == set(expected), 'publisher candidate/HTML inventory differs')
+    for page in pages:
+        need(page.get('sha256') == expected[page['path']]['sha256'] == sha(snapshot[page['path']]),
+             'photo manifest page differs from publisher candidate snapshot')
+    for asset in manifest['assets'].values():
+        key = page_photo_proof.relative_key(asset['path'])
+        need(sha(snapshot[key]) == asset.get('sha256'), 'photo manifest asset differs from initial byte snapshot')
+    errors = page_photo_proof.check(root, manifest, snapshot=snapshot)
+    need(not errors, '; '.join(errors))
     need(isinstance(proof, dict) and proof.get('version') == 1 and proof.get('synthetic') is False,
          'real rendered evidence contract required; synthetic or missing contract holds')
     rendered = proof.get('pages')
@@ -215,12 +240,13 @@ def _admit(root, manifest_path, render_proof_path, captures_root, expected_pages
         need(collector in ('cua', 'rendered_visual_check'), 'unknown rendered collector')
         render_url = _url(item.get('render_url'))
         reference = item['receipt']
-        receipt_path = _file(captures_root, reference['path'])
-        receipt_sha = sha(_read(receipt_path))
+        receipt_path = _capture_file(captures_root, reference['path'], root)
+        receipt_body = _read(receipt_path, MAX_JSON)
+        receipt_sha = sha(receipt_body)
         need(receipt_sha == reference.get('sha256'), 'rendered receipt bytes changed')
         checked[receipt_path] = receipt_sha
         capture_files.add(receipt_path)
-        receipt = _json(receipt_path)
+        receipt = _json_bytes(receipt_body)
         _fresh(receipt.get('observedAt'))
         need(receipt.get('collector') == collector and receipt.get('requestedUrl') == item['render_url'] and
              receipt.get('geometry') == 'PASS', 'rendered collector or URL mismatch / failed geometry')
@@ -241,8 +267,15 @@ def _admit(root, manifest_path, render_proof_path, captures_root, expected_pages
             need(type(key[0]) is int and type(key[1]) is int and type(key[2]) is bool and
                  key in required and key not in seen, 'duplicate, wrong or missing rendered viewport/script case')
             seen.add(key)
+            if collector == 'cua' and key[2] is False:
+                csp = observation.get('observedContentSecurityPolicy')
+                need(observation.get('scriptAvailabilityMethod') == 'http-csp-script-src-none' and
+                     observation.get('browserPreferenceChanged') is False and isinstance(csp, str) and
+                     any(part.strip().split() == ['script-src', "'none'"] for part in csp.split(';')),
+                     'CUA unavailable-script case needs explicit observed CSP and unchanged browser preference')
             final = _url(observation.get('finalUrl'))
-            need((final.scheme, final.netloc, final.path) == (render_url.scheme, render_url.netloc, render_url.path),
+            need((final.scheme, final.netloc, final.path, final.query) ==
+                 (render_url.scheme, render_url.netloc, render_url.path, render_url.query),
                  'rendered destination changed')
             need(observation.get('geometry') == 'PASS' and type(observation.get('httpStatus')) is int and
                  observation['httpStatus'] == 200 and observation.get('loaded') is True and
@@ -277,14 +310,15 @@ def _admit(root, manifest_path, render_proof_path, captures_root, expected_pages
             need(observation.get('sourceBinding') == binding, 'collector source binding mismatch')
             base = Path(reference['path']).parent
             source = observation['sourceCapture']
-            source_path = _file(captures_root, (base / source['path']).as_posix())
-            source_sha = sha(_read(source_path))
+            source_path = _capture_file(captures_root, (base / source['path']).as_posix(), root)
+            source_body = _read(source_path)
+            source_sha = sha(source_body)
             need(source_sha == source.get('sha256') == observation.get('sourceSha256') == candidate['sha256'],
                  'actual captured response differs from candidate source')
             need('bytes' not in source or (type(source['bytes']) is int and
-                 source['bytes'] == source_path.stat().st_size), 'captured response size differs')
+                 source['bytes'] == len(source_body)), 'captured response size differs')
             checked[source_path] = source_sha
-            screenshot_path = _file(captures_root, (base / observation['screenshot']).as_posix())
+            screenshot_path = _capture_file(captures_root, (base / observation['screenshot']).as_posix(), root)
             screenshot = _read(screenshot_path)
             need(sha(screenshot) == observation.get('screenshotSha256') and _image_size(screenshot) == key[:2],
                  'screenshot missing, changed or wrong viewport dimensions')
