@@ -31,7 +31,7 @@ not sit together; the decision is obvious)
 
 | Move | Look for | Example |
 |---|---|---|
-| **Contrast** | two numbers that should not coexist | 1,149 episodes vs 33 reviews |
+| **Contrast** | two numbers that should not coexist | 900 episodes vs 30 reviews |
 | **Stranded authority** | proof on someone else's domain that never points home | TV segment links to a dead Facebook page |
 | **Name collision** | the bare name belongs to someone else in search, the graph or an AI answer | first six results are a realtor and an actress |
 | **Contradiction ladder** | the subject's own numbers disagree across surfaces | 1,200 / 1,500 / 2,000 / 2,500 roofs replaced |

@@ -53,12 +53,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      # Only whether a key exists is visible to every step; the key itself is given to the one
+      # step that spends it.
+      HAS_KEY: ${{ secrets.OPENROUTER_API_KEY != '' }}
       TIER: ${{ inputs.tier }}
       MAX_USD: ${{ inputs.max_usd }}
     steps:
       - name: Stop early without a key
-        if: env.OPENROUTER_API_KEY == ''
+        if: env.HAS_KEY != 'true'
         run: |
           echo "::error::Add an OPENROUTER_API_KEY repository secret (Settings > Secrets and variables > Actions), then run this again."
           exit 1
@@ -66,13 +68,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install the kit and the browser that renders the PDF
+      - name: Install the kit, the browser that renders the PDF, and pdftoppm for the QR check
         run: |
+          sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
           python3 -m pip install -r audit-factory/requirements.txt
           python3 -m playwright install --with-deps chromium
       - name: Build the demo audit
         working-directory: audit-factory
-        shell: bash
+        shell: bash            # bash -eo pipefail: a HOLD (exit 2) fails this step even through tee
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           python3 -m factory20 init run --from-demo
           python3 -m factory20 run run --tier "$TIER" --max-usd "$MAX_USD" | tee run/result.json

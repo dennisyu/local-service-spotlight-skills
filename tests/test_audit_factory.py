@@ -142,7 +142,29 @@ class ScoreTests(unittest.TestCase):
 class GatePositiveTests(unittest.TestCase):
     def test_demo_passes_standard(self):
         rep = gates.gate_audit(render.expand(AUDIT, LEDGER), LEDGER, "standard")
-        self.assertEqual(rep.verdict, "PASS", rep.failures())
+        # the synthetic demo has no real preparer photo, so G81 warns; nothing else may
+        self.assertEqual(rep.verdict, "FIX", rep.failures())
+        self.assertEqual([c["id"] for c in rep.checks if c["status"] != "PASS"], ["G81"])
+
+    def test_a_real_audit_without_the_preparers_face_holds(self):
+        real = copy.deepcopy(AUDIT)
+        real["meta"]["confidentiality"] = "Client edition"
+        rep = gates.gate_audit(render.expand(real, LEDGER), LEDGER, "standard")
+        self.assertEqual(rep.verdict, "HOLD")
+        self.assertEqual([c["id"] for c in rep.failures()], ["G81"])
+        real["meta"]["prepared_by"]["photo"] = "assets/preparer.jpg"
+        rep = gates.gate_audit(render.expand(real, LEDGER), LEDGER, "standard")
+        self.assertNotIn("G81", {c["id"] for c in rep.checks if c["status"] != "PASS"})
+
+    def test_a_missing_qr_tool_warns_and_is_not_sent_to_the_writer(self):
+        rr = {"pdf_pages": 20, "overflow_pages": [], "fill": {}, "links": 500,
+              "qr_decoded": "UNCHECKED: pdftoppm (poppler-utils) is not installed"}
+        rep = gates.gate_render(rr, "https://localservicespotlight.com/install/").summary()
+        r05 = next(c for c in rep["checks"] if c["id"] == "R05")
+        self.assertEqual(r05["status"], "WARN")
+        self.assertIn("pdftoppm", r05["msg"])
+        self.assertNotEqual(rep["verdict"], "HOLD")
+        self.assertFalse([i for i in pipeline.fix_list({"checks": []}, {"gates": rep}) if i["id"] == "R05"])
 
     def test_enterprise_is_stricter(self):
         rep = gates.gate_audit(render.expand(AUDIT, LEDGER), LEDGER, "enterprise")
@@ -436,7 +458,8 @@ class PipelineTests(unittest.TestCase):
             (d / "brief.json").write_text(json.dumps(brief))
             res = pipeline.run(d, "standard", fake=fake_from_fixture(str(DEMO / "audit.json")), render_pdf=False)
             self.assertEqual(res["verdict"], "READY", res)
-            self.assertEqual(res["gate"], "PASS")
+            self.assertEqual(res["gate"], "FIX")                 # only G81: the synthetic demo has no real face
+            self.assertEqual(res["fix_rounds"], 0)               # a photo is not the writer's to fix
             self.assertEqual(res["review"], "READY")
             log = json.loads((d / "run.json").read_text())
             models = {a["stage"]: a["model"] for a in log["attempts"]}

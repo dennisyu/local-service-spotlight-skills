@@ -421,17 +421,25 @@ def render(audit_path: str | pathlib.Path, ledger_path: str | pathlib.Path | Non
     return report
 
 
+QR_UNCHECKED = "UNCHECKED"
+
+
 def _decode_qr(pdf: str | pathlib.Path, audit: dict) -> str | None:
+    """The URL the agents-page QR decodes to, None if it decodes to nothing, or a value starting
+    with QR_UNCHECKED when a tool the check needs is not installed (not the writer's fault)."""
     pages = [p.get("n") for p in audit.get("pages", []) if p.get("type") == "agents"]
     if not pages:
         return None
     try:
         import cv2
     except ImportError:
-        return None
+        return f"{QR_UNCHECKED}: opencv-python-headless is not installed"
     tmp = pathlib.Path(tempfile.mkdtemp())
-    subprocess.run(["pdftoppm", "-r", "200", "-f", str(pages[0]), "-l", str(pages[0]), "-png", str(pdf), str(tmp / "q")],
-                   check=False, capture_output=True)
+    try:
+        subprocess.run(["pdftoppm", "-r", "200", "-f", str(pages[0]), "-l", str(pages[0]), "-png", str(pdf), str(tmp / "q")],
+                       check=False, capture_output=True)
+    except FileNotFoundError:
+        return f"{QR_UNCHECKED}: pdftoppm (poppler-utils) is not installed"
     for png in tmp.glob("q*.png"):
         img = cv2.imread(str(png))
         if img is None:

@@ -9,13 +9,13 @@ DeepSeek), plain code and the runner do everything else. The design and the qual
 in code, so any model fills in the same proven template and is told exactly what to fix.
 Standard tier: **about $5 per audit** in API fees by the conservative planning estimate (stage
 budgets, research included). Counted from the prompts and replies of a real 20-page audit, one
-pass from an existing evidence ledger comes to about **$1.26 on standard and $0.71 on the
+pass from an existing evidence ledger comes to about **$1.61 on standard and $0.95 on the
 one-key OpenRouter tier** — estimates until the first live bill, which the pilot records.
 
 ## Why Claude's audits were better (and why that is fixable)
 
 Measured on finished PDFs ([docs/CALIBRATION.md](docs/CALIBRATION.md)): the audits Dennis graded
-best carry 460-470 words and 95-100 specific numbers per page with evidence on every page; the
+best carry 460-475 words and 95-100 specific numbers per page with evidence on every page; the
 ones he graded lower carry 200-270 words and 8-39 numbers. Four causes, each with a fix here:
 
 | Cause | Evidence | Fix in this kit |
@@ -36,7 +36,7 @@ chases later nothing had happened. **One runner owns an audit end to end.**
 | 10 Collect | **no collector code yet** — the runner researches with its own search and data tools (web search, Ahrefs, Knowledge Graph) following the card | the runner |
 | 20 Harvest | **no harvest code yet** — the runner (or cheap helpers it starts) turns captured sources into ledger rows following the card | the runner |
 | 30-70 Identity → actions | `factory20 run` calls each stage's model, checks the output, retries with the failure list, escalates one rung | code + routed models |
-| Gates, render, fix rounds | code: 39 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
+| Gates, render, fix rounds | code: 40 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
 | 80 Review | code calls the review model in a fresh context (final files only, no drafting history); S0/S1 sends fixes back and re-reviews | code + review model |
 | 90 Deliver | `factory20 basecamp` writes the to-do list; filing and the Basecamp post follow [stages/90-deliver.md](stages/90-deliver.md) | the runner |
 
@@ -62,11 +62,14 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
 ## Setup for agencies and AI builders
 
 1. **Python 3.11+** and `pip install -r requirements.txt`; Chromium through Playwright
-   (`python -m playwright install chromium`), and `pdftoppm` (poppler) for the QR check.
+   (`python -m playwright install chromium`), and `pdftoppm` for the QR check (`poppler-utils` on
+   Linux, `brew install poppler` on a Mac; without it the QR check warns instead of passing).
 2. **Model keys** for a live run. Simplest: one `OPENROUTER_API_KEY` and an `openrouter*` tier,
    which sends every call — Claude included — through OpenRouter ([below](#run-it-through-openrouter-one-key)).
-   Otherwise `ANTHROPIC_API_KEY` for the Claude stages plus `OPENROUTER_API_KEY` for DeepSeek in
-   the lean tier. No key? Use the manual provider: the runner writes `prompts/<stage>.md` and
+   Otherwise each provider's own key: `standard`, `muse` and `enterprise` need
+   `ANTHROPIC_API_KEY`; `lean` also needs `OPENAI_API_KEY` (GPT-6.1 Terra) and `OPENROUTER_API_KEY`
+   (DeepSeek), plus `GEMINI_API_KEY` if you run its harvest stage. A missing key holds the audit
+   and names the variable. No key? Use the manual provider: the runner writes `prompts/<stage>.md` and
    reads `outputs/<stage>.json`, so an app session that can read and write files in the run
    folder can answer each stage. Keys come from your own secret store; never put one in a file.
 3. **Data accounts** for research (steps 10-20): a web search tool, a backlink and keyword tool
@@ -78,21 +81,23 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
 
 | Tier | Frontier model does | Everything else | Planning* | From a ledger† |
 |---|---|---|---:|---:|
-| `lean` | final review (Opus 5.5, 1 pass) | Gemini Flash-Lite, GPT-6.1 Terra, DeepSeek V4.1 Flash, Sonnet findings | ≈ $2.70 | ≈ $0.62 |
-| `standard` | findings + review (Opus 5.5, ≤ 2 passes) | Haiku harvest and fixes, Sonnet identity/score/pages/actions | ≈ $5.40 ($4.70 batched) | ≈ $1.26 |
-| `muse` | findings + review (Opus 5.5) | pages and actions drafted in an app session's own subscription | ≈ $4.20 | ≈ $0.80 |
-| `enterprise` | findings + review (Fable 5.1, ≤ 3 passes) + a person's read | Opus drafting, Sonnet harvest | ≈ $17.80 | ≈ $2.99 |
-| `openrouter` | the standard tier's models, all through one OpenRouter key | — | ≈ $5.40 | ≈ $1.26 |
-| `openrouter-lean` | final review (Opus 5.5, 1 pass) | Sonnet identity, score and the eight findings; DeepSeek V4.1 Flash pages, actions and fixes — one key | ≈ $2.90 | ≈ $0.71 |
-| `openrouter-budget` | none — **experimental, not measured** | Grok 4.7 judgment, DeepSeek drafting, GPT-6.1 Sol review; Sonnet only if a cheaper model fails twice | ≈ $2.20 | ≈ $0.49 |
+| `lean` | final review (Opus 5.5, 1 pass) | Gemini Flash-Lite, GPT-6.1 Terra, DeepSeek V4.1 Flash, Sonnet findings | ≈ $2.65 | ≈ $0.80 |
+| `standard` | findings + review (Opus 5.5, ≤ 2 passes) | Haiku harvest and fixes, Sonnet identity/score/pages/actions | ≈ $5.40 ($4.70 batched) | ≈ $1.61 |
+| `muse` | findings + review (Opus 5.5) | pages and actions drafted in an app session's own subscription | ≈ $4.20 | ≈ $1.10 |
+| `enterprise` | findings + review (Fable 5.1, ≤ 3 passes) + a person's read | Opus drafting, Sonnet harvest | ≈ $17.80 | ≈ $3.82 |
+| `openrouter` | the standard tier's models, all through one OpenRouter key | — | ≈ $5.40 | ≈ $1.61 |
+| `openrouter-lean` | final review (Opus 5.5, 1 pass) | Sonnet identity, score and the eight findings; DeepSeek V4.1 Flash pages, actions and fixes — one key | ≈ $2.90 | ≈ $0.95 |
+| `openrouter-budget` | none — **experimental, not measured** | Grok 4.7 judgment, DeepSeek drafting, GPT-6.1 Sol review; Sonnet only if a cheaper model fails twice | ≈ $2.05 | ≈ $0.62 |
 | reference | the Oct 23 all-Claude Cowork run, measured tokens at list price | — | $281 ($301 with its website package) | — |
 
 *Planning estimate: the stage budgets in [config/routing.json](config/routing.json), research
 included (about $0.50 of every tier is data: SERP, backlinks, keywords), sized generously.
 †From a ledger: one pass from an existing evidence ledger (stages 30-80), counted from the
 prompts and replies of a real 20-page audit (`measured_profile` in routing.json) with one fix
-round and one review pass; `cost` also prints a worst case (three fix rounds, every review
-pass, 25% retries). The review and fix sizes in it are assumptions until the first live run.
+round, one review pass and a typical amount of thinking for each stage's reasoning effort;
+`cost` also prints a worst case (three fix rounds, every review pass, every call thinking up to
+its full room, 25% retries). The review and fix sizes and the thinking amounts are assumptions
+until the first live run.
 Either way `run.json` logs the real cost of every call. Claude prices verified 2026-11-04;
 OpenRouter prices read from OpenRouter's own models list the same day; others from dated
 third-party tables — re-check before quoting. All tiers run the same gates; the lean tiers use
@@ -101,8 +106,11 @@ lower density thresholds (`gates.TIERS`). Every tier has a spending cap (`max_us
 **Confidential briefs never reach a flagged model.** When `brief.json` lists `do_not_print`
 items, the router skips any model marked `"confidential_ok": false` (DeepSeek and Qwen, after
 the Oct 25 bake-off) on the first draft, on every fix round and on the review, and uses the next
-safe rung on the tier's ladder. Through OpenRouter such a run also accepts only
-zero-data-retention endpoints; if a model has none, the audit holds rather than fall back.
+safe rung on the tier's ladder. Through OpenRouter such a run also asks for zero data retention
+(`provider.zdr: true`). That flag follows your OpenRouter account's privacy setting: set it to
+**"ZDR only"** to exclude Safety Retention endpoints too, which may keep prompts and replies for
+safety review, flagged or not (self-serve accounts allow them until you change it). If no
+endpoint qualifies, the audit holds rather than fall back.
 
 ## Run it through OpenRouter (one key)
 
@@ -112,11 +120,17 @@ prices through with no markup and charges a fee when you buy credits
 Anthropic's (OpenRouter's models list, 2026-11-04). So the `openrouter` tier is the standard tier
 on one key, and `openrouter-lean` is the few-dollar tier. What the kit does on every call:
 
-- asks only for providers that do not collect prompts (`provider.data_collection: "deny"`), and
-  zero-retention endpoints only (`provider.zdr: true`) when the brief is confidential;
+- asks only for providers that do not collect user data, in OpenRouter's terms
+  (`provider.data_collection: "deny"`), and for zero data retention when the brief is
+  confidential (see the account setting above);
+- sets each stage's reasoning effort — deeper for the judgment calls, none or the lowest level for
+  drafting — and leaves room for that thinking in the reply limit, because Sonnet and Opus 5.5
+  always think and thinking is billed as output; a reply cut off at its limit gets one retry
+  with twice the room;
 - records the charge OpenRouter reports in the reply, not an estimate, in `run.json`;
 - retries rate limits and server errors (honouring `Retry-After`), stops at once on a bad key or
-  empty credits, and stops the whole run at its spending cap — a held audit says why;
+  empty credits, and never crosses the spending cap: a call whose worst case would cross it is not
+  made, and the held audit says why;
 - writes pages 3-19 in four calls that share a cached prefix, because a real audit's pages run
   about 19,000 output tokens, more than one reply should carry.
 
@@ -134,9 +148,10 @@ on pull requests it only re-checks models and prices. Real client audits belong 
 repository or on your own machine, never in a public workflow.
 
 **Status, 2026-11-04:** the adapter is tested against a local stand-in for OpenRouter's API
-(20 tests: request shape, privacy flags, retries, empty credits, the cap, page batches, whole
-runs on each one-key tier) and every route is checked against OpenRouter's live models list. A
-live OpenRouter run of this kit has not happened yet; the first one is next, and its bill and
+(30 tests: request shape, privacy flags, reasoning effort, cut-off replies, malformed replies,
+retries, moderation refusals, empty credits, missing keys, the cap, page batches, whole runs on
+each one-key tier) and every route, price and effort level is checked against OpenRouter's live
+models list. A live OpenRouter run of this kit has not happened yet; the first one is next, and its bill and
 judge score go into [docs/CALIBRATION.md](docs/CALIBRATION.md). Earlier evidence: on Oct 27 a
 Claude-researched 20-page audit was replayed on DeepSeek V3.2 through OpenRouter for $0.018 of
 drafting — the diagnosis held, but its score ran 5 points generous and one citation was wrong,
@@ -165,12 +180,14 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 
 ## Quality control
 
-1. **Gates (free, every draft):** 39 content gates (28 must pass, 11 warn) — page structure,
-   cited ids that exist in the ledger and at least three per page, namesake leakage, insight-card
-   anatomy, the page-2 word budget, headline claims, buzzwords, density, specificity, a visual on
-   every page, identity, score calibration, the action contract, approval before any client-facing
-   change, privacy (including the brief's do-not-print list), the install QR — plus 5 render gates
-   (3 must pass, 2 warn) for page count, overflow, fill, links and a decoded QR. Every message says
+1. **Gates (free, every draft):** 40 content gates (29 must pass on a real audit, 11 warn) — page
+   structure, cited ids that exist in the ledger and at least three per page, namesake leakage,
+   insight-card anatomy, the page-2 word budget, headline claims, buzzwords, density,
+   specificity, a visual on every page, identity, score calibration, the action contract,
+   approval before any client-facing change, privacy (including the brief's do-not-print list),
+   the install QR, and the preparer's name and face on page 1 (a warning on the synthetic demo,
+   a failure on a real audit) — plus 5 render gates (3 must pass, 2 warn) for page count,
+   overflow, fill, links and a decoded QR. Every message says
    what to fix; an overflow says by how much and which card is tallest. `HOLD` never ships.
 2. **One structured frontier review** ([stages/80-review.md](stages/80-review.md)) on the exact
    final files, in a fresh context that never saw the drafting: twelve judgment checks code cannot
@@ -190,7 +207,9 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 | `config/agents.json` | which running agent picks up each function's to-dos, and who chases them |
 | `schema/audit.schema.json` | the `audit.json` contract |
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
-| `docs/CALIBRATION.md` | the measurements behind every threshold, and the blind tests |
-| `../tests/test_audit_factory.py` | 70 tests: every gate has a failing mutation |
-| `../tests/test_audit_factory_openrouter.py` | 20 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
+| `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
+| `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, and `make_chart.py`, which draws the cost chart from the cost model |
+| `../tests/test_audit_factory.py` | 72 tests: every gate has a failing mutation |
+| `../tests/test_audit_factory_openrouter.py` | 30 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
+| `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

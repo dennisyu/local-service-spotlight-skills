@@ -84,7 +84,7 @@ with a frozen snapshot of the kit. The judge found no echoes in the clean run.
 | Clickable links | 0 | 603 | 842 | 383 |
 | Brand Authority | older 7-part rubric, no total | 49 / 100 | 48 / 100 | 44 / 100 |
 | Actions (agent-run) | — | 24 (19) | 31 (25) | 20 (14) |
-| Tokens (deduplicated) · list price | 1.1 billion · $281 for the audit | 77K out, 8.0M cache reads · ≈ $2.45 | 96K out, 7.6M cache reads · ≈ $2.50 | 142K out, 4.0M cache reads · ≈ $0.70 |
+| Tokens (deduplicated) · list price | not measured for this audit; a comparable all-Claude 20-page audit (Oct 23): 1.04 billion · $281 for research, writing and 7 review rounds | 77K out, 8.0M cache reads · ≈ $2.45 | 96K out, 7.6M cache reads · ≈ $2.50 | 142K out, 4.0M cache reads · ≈ $0.70 |
 
 **What the clean run missed:** #13, a rival that outranks the brand with fewer assets, and
 #14, facts in the work order that the evidence does not support; #5 was partial (it saw brand
@@ -106,20 +106,28 @@ name collides with a large retailer's product name in search.
 35-70-word card spec; the clean run, under the new 30-50-word spec and the G24 budget, did not.
 
 **What this shows:** on a frontier-researched ledger, Sonnet with this kit finds most of what
-Claude found (11 of 14) at about 1/115th of the cost, with no frontier model in the loop.
-Whether Opus findings add enough to earn twice the price is the pilot's main question: it runs
-lean (Sonnet findings, one Opus review) against standard on the same subjects. **What it does
+Claude found (11 of 14) for about $2.45 of writing, with no frontier model in the loop. That is
+not a like-for-like ratio with the $281 all-Claude audit: its total also paid for the research
+and for seven review rounds (about $142 of it), and it was a different subject. The like-for-like
+comparison is writing plus one review from the same ledger, which the pilot measures. Whether
+Opus findings add enough to earn twice the price is the pilot's main question: it runs lean
+(Sonnet findings, one Opus review) against standard on the same subjects. **What it does
 not show:** research quality from a cheap harvest (the clean ledger still carries the research
 lanes' own notes, as any harvest would), or what the frontier review adds.
 
 ## The OpenRouter path (2026-11-04)
 
 **What is tested.** Every call the kit makes through OpenRouter, against a local stand-in for
-OpenRouter's chat API (`tests/test_audit_factory_openrouter.py`, 20 tests, no key, no spend): the
-privacy flag on every request, zero-retention-only routing for confidential briefs, cache
-breakpoints for Claude, JSON mode for open models, retries, an empty-credit key, the spending
-cap, the four page batches, and whole runs on each one-key tier. `factory20 openrouter-check`
-found all nine configured routes on OpenRouter's live models list at the configured prices.
+OpenRouter's chat API (`tests/test_audit_factory_openrouter.py`, 30 tests, no key, no spend): the
+privacy flag on every request, zero-retention routing for confidential briefs, cache breakpoints
+for Claude, JSON mode for open models, each stage's reasoning effort and the room left for it,
+cut-off replies, replies in the wrong shape, retries, moderation refusals, an empty-credit key, a
+missing key, the spending cap (the stand-in charges every call its worst case, and the run still
+stays under the cap), the four page batches, and whole runs on each one-key tier.
+`factory20 openrouter-check` found all nine configured routes on OpenRouter's live models list
+at the configured prices and effort levels. A dated copy of the part of that list the config
+uses is kept in `fixtures/openrouter/`, so the price test compares the config with what
+OpenRouter listed, not with itself.
 
 **What testing the path found.** Two defects that replayed answers could never show:
 
@@ -130,17 +138,55 @@ found all nine configured routes on OpenRouter's live models list at the configu
    could reach a model the bake-off flagged. Fix rounds and reviews now carry the guard; the test
    for it fails on the old code.
 
+**What the independent code review found.** A separate reviewer that wrote none of the code
+reviewed the adapter and the cost model. Its findings, grouped into five, are all fixed; each
+claim about how an API behaves was checked against OpenRouter's or Anthropic's documentation or
+OpenRouter's live models list, and each code fix has a test:
+
+1. **Thinking was not counted.** Sonnet and Opus 5.5 think on every call, and thinking is billed
+   as output and counts against the reply limit. The reply limits left no room for it and the
+   cost model left it out. Each stage now names a reasoning effort (medium for identity and
+   score, high for the findings and the review, none or the lowest level for drafting), its
+   reply limit is the answer budget plus room for that effort, and the cost model adds the
+   thinking. That alone moved the typical estimate from $1.26 to $1.61 on standard and from
+   $0.71 to $0.95 on `openrouter-lean` (with the thinking set to zero, the model gives the old
+   numbers exactly).
+2. **The spending cap could be crossed.** It was checked against what had already been spent, so
+   the last call could run past it. Every call now checks its own worst case first (every
+   prompt character counted as a third of a token, no cache discount, the whole reply limit
+   spent); a call that could cross the cap is not made, and the audit holds with the reason.
+   Removing the check fails two tests.
+3. **A cut-off reply was treated as a writing mistake.** It was sent back with "fix your JSON".
+   Replies that stop at their limit (`finish_reason` "length", `stop_reason` "max_tokens") now
+   get one retry on the same model with twice the room, then the normal escalation.
+4. **Some failures crashed the run instead of holding it:** a reply that was valid JSON but not
+   an object, a missing `pdftoppm`, and a missing API key (a bare `KeyError`). Each now holds the
+   audit or warns, with the reason, and every call's charge is written to `run.json` before its
+   reply is parsed, so no failure can lose a charge from the record. A moderation refusal (403
+   for flagged text) no longer stops the run as if the key were bad; the next model gets a try.
+5. **The privacy claim was too strong.** `provider.zdr: true` excludes OpenRouter's Safety
+   Retention endpoints only when the account itself is set to "ZDR only"; self-serve accounts
+   allow them until changed. The docs now say so, and use OpenRouter's own term for
+   `data_collection: "deny"` ("providers which do not collect user data") instead of "keep no
+   prompts".
+
 **What one audit costs, counted from a real audit's prompts and replies** (the clean blind run's
-own stage files; the review and fix sizes are assumptions), from an existing ledger:
+own stage files; the review and fix sizes and the thinking are assumptions), from an existing
+ledger:
 
 | Tier | Typical | Worst case |
 |---|---:|---:|
-| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.71 | $0.90 |
-| `openrouter` and `standard` (same models, one key or two) | $1.26 | $1.86 |
-| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.49 | $0.62 |
+| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.95 | $1.51 |
+| `openrouter` and `standard` (same models, one key or two) | $1.61 | $3.07 |
+| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.62 | $0.96 |
 
-Typical is one fix round and one review pass; worst case is three fix rounds, every review pass
-and 25% retries. Research (stages 10-20) is extra. **Not measured yet:** a live bill, and the
+Typical is one fix round, one review pass and a typical amount of thinking per call (1,000
+tokens at low effort, 3,000 at medium, 6,000 at high); worst case is three fix rounds, every
+review pass, every call thinking up to its full room (2,048 / 6,144 / 12,288 tokens) and 25%
+retries. On `openrouter-lean` the one Opus review is about half the typical cost ($0.52 of
+$0.95). Research (stages 10-20) is extra. These sit below the $2.45 the Sonnet blind test cost
+because that was an interactive session re-reading its files (8.0 million cache reads); the
+runner sends each stage's prompt once. **Not measured yet:** a live bill, and the
 quality of the one-key tiers. The first live run rebuilds the public demo on each one-key tier,
 then the clean blind ledger on `openrouter-lean`, scored by the same independent judge; its
 numbers replace this paragraph. The Oct 27 replay below is the evidence so far for cheap drafting

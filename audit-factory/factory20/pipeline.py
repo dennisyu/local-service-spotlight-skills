@@ -150,6 +150,7 @@ CHECKS = {"identity": check_identity, "score": check_score, "synthesis": check_s
           "pages": check_pages, "actions": check_actions}
 MAX_FIX_ROUNDS = 3
 FRONT_GATES = {"G20", "G21", "G22", "G24"}
+NOT_THE_WRITERS = {"G81"}   # the preparer's photo comes from the brief and assets, not from a model
 # Pages 3-19 come back in four calls, not one. A real audit's pages run about 19,000 output
 # tokens (measured on the Nov 4 clean blind run), more than one reply may carry; four
 # batches share the same cached prefix, so the split costs little and nothing is cut off.
@@ -183,10 +184,11 @@ def _serious(review: dict | None) -> list[dict]:
 def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None = None) -> list[dict]:
     """Every open item, in the words a drafting model can act on."""
     items = [{"from": "gate", "id": c["id"], "status": c["status"], "msg": c["msg"]}
-             for c in gate_rep.get("checks", []) if c["status"] != "PASS"]
+             for c in gate_rep.get("checks", []) if c["status"] != "PASS" and c["id"] not in NOT_THE_WRITERS]
     if render_rep:
         items += [{"from": "render", "id": c["id"], "status": c["status"], "msg": c["msg"]}
-                  for c in render_rep.get("gates", {}).get("checks", []) if c["status"] != "PASS"]
+                  for c in render_rep.get("gates", {}).get("checks", [])
+                  if c["status"] != "PASS" and not c["msg"].startswith("QR not checked")]
     if review:
         items += [{"from": "review", "id": f.get("id"), "status": "FAIL" if f.get("severity") in ("S0", "S1") else "WARN",
                    "page": f.get("page"), "msg": f"{f.get('problem', '')} Fix: {f.get('fix', '')}"}

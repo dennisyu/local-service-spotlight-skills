@@ -49,6 +49,9 @@ def check(cfg: dict, models: list[dict], tolerance: float = 0.10) -> dict:
         m = live.get(route)
         row = {"key": key, "route": route, "listed": m is not None, "drift": {}, "live": {}}
         if m:
+            live_efforts = (m.get("reasoning") or {}).get("supported_efforts")
+            if p.get("efforts") is not None and live_efforts is not None and set(p["efforts"]) != set(live_efforts):
+                row["drift"]["efforts"] = {"ours": p["efforts"], "live": live_efforts}
             for ours, theirs in FIELDS:
                 v = _per_million((m.get("pricing") or {}).get(theirs))
                 if v is None:
@@ -73,6 +76,27 @@ def _fmt(v) -> str:
     if isinstance(v, int):
         return str(v)
     return f"{v:.2f}" if abs(v - round(v, 2)) < 1e-12 and v >= 0.1 else repr(round(v, 6))
+
+
+SNAPSHOTS = K.ROOT / "fixtures" / "openrouter"
+
+
+def save_snapshot(cfg: dict, models: list[dict], today: str | None = None, folder: pathlib.Path = SNAPSHOTS) -> pathlib.Path:
+    """Keep the slice of OpenRouter's models list that the config relies on, dated, so tests can
+    check the config against what OpenRouter actually listed rather than against itself."""
+    today = today or dt.date.today().isoformat()
+    routes = {p.get("route") for p in cfg["prices"].values() if p.get("provider") == "openrouter"}
+    keep = [{"id": m["id"], "pricing": m.get("pricing"), "reasoning": m.get("reasoning")} for m in models if m["id"] in routes]
+    folder.mkdir(parents=True, exist_ok=True)
+    out = folder / f"models-{today}.json"
+    out.write_text(json.dumps({"source": MODELS_URL, "read": today, "data": sorted(keep, key=lambda m: m["id"])},
+                              indent=1) + "\n", encoding="utf-8")
+    return out
+
+
+def latest_snapshot(folder: pathlib.Path = SNAPSHOTS) -> pathlib.Path | None:
+    files = sorted(folder.glob("models-*.json"))
+    return files[-1] if files else None
 
 
 def write_prices(report: dict, path: str | pathlib.Path = K.ROUTING, today: str | None = None) -> list[str]:

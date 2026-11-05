@@ -81,7 +81,7 @@ def cmd_cost(a) -> int:
             print(f"  x {a.per_month}/month = ${cost.monthly(t, a.per_month, cfg, a.batch):,.2f}")
     print(f"\nFrom an existing ledger, measured profile ({cfg['measured_profile']['label']}):")
     print(f"  {'tier':18s} {'typical':>8s} {'worst case':>11s}   (typical = 1 fix round, 1 review pass; "
-          "worst = 3 fix rounds, every review pass, 25% retries)")
+          "worst = 3 fix rounds, every review pass, full thinking room, 25% retries)")
     for t in tiers:
         r = cost.measured_range(t, cfg)
         line = f"  {t:18s} ${r['typical']['total_usd']:>7.2f} ${r['worst']['total_usd']:>10.2f}"
@@ -170,12 +170,14 @@ def cmd_openrouter_check(a) -> int:
     print(f"OpenRouter routes in routing.json: {len(rep['rows'])} · models listed on OpenRouter: {len(models)}")
     for r in rep["rows"]:
         state = "MISSING" if not r["listed"] else ("DRIFT" if r["drift"] else "ok")
-        detail = "; ".join(f"{f} ${d['ours']} -> ${d['live']}" for f, d in r["drift"].items())
+        detail = "; ".join(f"{f} {d['ours']} -> {d['live']}" for f, d in r["drift"].items())
         print(f"  [{state:7s}] {r['key']:34s} {detail}")
     if a.write and rep["drifted"]:
         changed = openrouter.write_prices(rep)
         print(f"updated {len(changed)} price lines in config/routing.json: {', '.join(changed)}")
         rep = openrouter.check(cost.load_routing(), models, a.tolerance)
+    if a.write:
+        print(f"saved {openrouter.save_snapshot(cost.load_routing(), models)} (the tests check the config against it)")
     if rep["missing"]:
         print(f"routes no longer on OpenRouter: {', '.join(rep['missing'])}"
               + (f" (used by a tier: {', '.join(rep['missing_in_use'])})" if rep["missing_in_use"] else ""))

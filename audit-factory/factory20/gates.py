@@ -346,6 +346,14 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
               f"self-claimed money/rank language on the front: {sorted(set(risky))[:6]} — attribute it or cite an independent source",
               hard=False)
 
+    # ---------- G81 prepared by ----------
+    pb = meta.get("prepared_by") or {}
+    synthetic = str(meta.get("confidentiality", "")).upper().startswith("SYNTHETIC")
+    R.add("G81", "Page 1 shows who prepared the audit, with their face", "delivery",
+          bool(pb.get("name")) and bool(pb.get("photo")),
+          "add prepared_by.name and prepared_by.photo (an approved photo of the preparer's face in assets/)",
+          hard=not synthetic)
+
     # ---------- G80 agents page ----------
     install = meta.get("install_url", "https://localservicespotlight.com/install/")
     qrs = [b for p in pages for b in p.get("blocks", []) if b.get("type") == "qr"]
@@ -380,6 +388,10 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
     R.add("R04", "PDF carries clickable source links", "render", render_report.get("links", 0) >= 30,
           f"only {render_report.get('links', 0)} link annotations", hard=False)
     if expected_qr:
-        R.add("R05", "QR decodes to the install URL", "render", render_report.get("qr_decoded") == expected_qr,
-              f"QR decoded to {render_report.get('qr_decoded')!r}")
+        got = render_report.get("qr_decoded")
+        if isinstance(got, str) and got.startswith("UNCHECKED"):
+            R.add("R05", "QR decodes to the install URL", "render", False,
+                  f"QR not checked: {got.split(':', 1)[-1].strip()}; install it to check the code", hard=False)
+        else:
+            R.add("R05", "QR decodes to the install URL", "render", got == expected_qr, f"QR decoded to {got!r}")
     return R

@@ -1,16 +1,17 @@
 <!--
   New section for https://blitzmetrics.com/how-we-audit/ (WordPress post 112500).
   Insert as a new H2 section directly AFTER "How do you run a business strategy audit with your agent?"
-  and BEFORE "Several exams; no blended score". Upload the two images in ./img/ to the media library and
-  replace the src values. Keep every other section of the live page as it is.
+  and BEFORE "Several exams; no blended score". Upload both images in ./img/ to the media library and
+  replace the src and srcset values (the phone chart is the <source> inside <picture>). Keep every other section of the live page as it is.
+  The chart is drawn by make_chart.py from the kit's own cost model; re-run it after any price change.
 -->
 <h2>Have cheaper models write the 20-page report</h2>
 
-<p><strong>Our first 20-page audits cost about $281 each in AI fees, because our most expensive model did every step. Now a cheaper model writes the pages, code draws and checks them, and the expensive model only reviews the finished file. From research that is already done, the writing costs a few dollars or less. That is cheap enough to run an audit every month, not once a year.</strong></p>
+<p><strong>One of our first 20-page audits cost $281 in AI fees. Our most expensive model did every step. Now a cheaper model writes the pages. Code draws and checks them. The expensive model only reviews the finished file. From research that is already done, that should cost about $1 to $2. That is cheap enough to run an audit every month, not once a year.</strong></p>
 
 <figure>
-  <img src="img/cost-per-audit.png" width="1760" height="920" alt="Bar chart of model fees for one 20-page audit: $281 for the all-Claude audit of Oct 23 (research, writing and seven review rounds, measured); $2.45 for Sonnet writing with the kit from Claude's research (measured); about $1.26 for the standard tier through the API and about $0.71 for the one-key OpenRouter lean tier (both estimates).">
-  <figcaption>Model fees for one 20-page audit. The top two are measured token counts at list price; the bottom two are estimates from a real audit's prompt and reply sizes until the first live bill. The bottom three start from research that is already done.</figcaption>
+  <picture><source media="(max-width: 600px)" srcset="img/cost-per-audit-phone.png" width="900" height="1280"><img src="img/cost-per-audit.png" width="1760" height="920" alt="Bar chart of model fees for one 20-page audit: $281 for the all-Claude audit of Oct 23 (research, writing and seven review rounds, measured); $2.45 for Sonnet writing with the kit from Claude's research (measured); about $1.61 for the standard tier through the API and about $0.95 for the one-key OpenRouter lean tier (both estimates, thinking included)."></picture>
+  <figcaption>Model fees for one 20-page audit. The top two are measured token counts at list price; the bottom two are estimates from a real audit's prompt and reply sizes, with the models' thinking included, until the first live bill. The bottom three start from research that is already done.</figcaption>
 </figure>
 
 <table>
@@ -18,29 +19,30 @@
   <tbody>
     <tr><td>All Claude, Oct 23, 2026: research, writing and seven review rounds</td><td>$281</td><td>measured tokens at list price</td></tr>
     <tr><td>Claude Sonnet with the kit, writing from Claude's research, no review (Nov 4)</td><td>$2.45</td><td>measured tokens at list price</td></tr>
-    <tr><td>Standard tier through the API, writing from research plus one Opus review</td><td>about $1.26</td><td>estimate from a real audit's prompt and reply sizes</td></tr>
-    <tr><td>One OpenRouter key, lean tier, writing from research plus one Opus review</td><td>about $0.71</td><td>same estimate</td></tr>
+    <tr><td>Standard tier through the API, writing from research plus one Opus review</td><td>about $1.61</td><td>estimate from a real audit's prompt and reply sizes, thinking included</td></tr>
+    <tr><td>One OpenRouter key, lean tier, writing from research plus one Opus review</td><td>about $0.95</td><td>same estimate</td></tr>
   </tbody>
 </table>
 
 <h3>What changed</h3>
 <ul>
   <li><strong>Models write words; code draws the pages.</strong> Every model fills the same 20-page template, so a cheaper model never has to invent the design.</li>
-  <li><strong>44 automatic checks run on every draft.</strong> They look for evidence on every page, scores that add up, a picture on every page and nothing from the do-not-print list. Each failure tells the writer exactly what to fix.</li>
+  <li><strong>45 automatic checks run on every draft.</strong> They look for evidence on every page, scores that add up, a picture on every page, nothing from the do-not-print list, and the name and face of the person who prepared the audit. Each failure tells the writer exactly what to fix.</li>
   <li><strong>The expensive model reviews once, with fresh eyes.</strong> It sees only the finished files, never the drafting. A serious finding goes back for a fix before the audit can pass.</li>
   <li><strong>Every action names who does it.</strong> Anything that touches a client's website, profiles or listings waits for a named person's yes.</li>
 </ul>
 
 <h3>What we tested</h3>
 <p>We gave Claude Sonnet the research behind one of our October company audits, with our own conclusions taken out, and let it build all 20 pages with the kit. A separate reviewer that built none of the audits scored every page against the original audit's 14 insights. Sonnet found 11, partly found 1 and missed 2, for $2.45 in measured model fees. Our first try at this test was not fully blind: some of our guidance was still inside the research file. We removed it and ran the test again. The 11 of 14 is from the clean run.</p>
+<p>Before spending anything on the one-key path, we tested it against a stand-in for OpenRouter's API, and a separate agent reviewed the code. Together they found seven problems, all fixed. The biggest: Claude's Sonnet and Opus models think before they answer, that thinking is billed, and our first estimate left it out. Counting it raised the estimates to the numbers above.</p>
 
 <h3>Run it yourself</h3>
-<p>The kit is free on GitHub: <a href="https://github.com/dennisyu/local-service-spotlight-skills/tree/main/audit-factory">our 20-page audit kit (Audit Factory 20)</a>. It builds a made-up demo business with no keys at all. For a live run, one OpenRouter key reaches every model the kit uses, Claude included. Create a key at <a href="https://openrouter.ai/">openrouter.ai</a> and keep it in your own secret store, never in a file.</p>
+<p>The kit is free on GitHub: <a href="https://github.com/dennisyu/local-service-spotlight-skills/tree/main/audit-factory">our 20-page audit kit (Audit Factory 20)</a>. It builds a made-up demo business with no keys at all. For a live run, one <a href="https://openrouter.ai/">OpenRouter</a> key reaches every model the kit uses, Claude included. Create a key at openrouter.ai and keep it in your own secret store, never in a file.</p>
 <pre><code>cd audit-factory
 pip install -r requirements.txt &amp;&amp; python -m playwright install chromium
 python -m factory20 init runs/demo --from-demo
 python -m factory20 run runs/demo --tier openrouter-lean --max-usd 3</code></pre>
-<p>Every call asks for providers that keep no prompts. Every run has a spending cap. The cost of each call goes into a receipt file next to the PDF.</p>
+<p>Every call asks only for providers that do not collect user data. A confidential audit also asks for zero data retention; for the strictest version, set your OpenRouter account's privacy setting to "ZDR only". Every run has a spending cap it never crosses, and the cost of each call goes into a receipt file next to the PDF.</p>
 
 <h3>What is not proven yet</h3>
 <ul>

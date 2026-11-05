@@ -14,12 +14,22 @@ Providers
               session (Muse, ChatGPT, Claude.ai) running the factory itself
   fake        deterministic stub for tests
 
-OpenRouter calls always ask for providers that do not collect prompts
-(provider.data_collection = "deny"). A confidential brief (one with do_not_print items)
-also asks for zero-data-retention endpoints only (provider.zdr = true): if a model has
-none, the call fails and the audit holds. It never falls back to a provider that keeps
-data. The cost recorded for each call is the charge OpenRouter reports in the reply,
-not an estimate.
+Privacy on OpenRouter. Every call asks only for providers that do not collect user data
+(provider.data_collection = "deny"). A confidential brief (one with do_not_print
+items) also sets provider.zdr = true. That request flag follows the account's own privacy
+setting: only an account set to "ZDR only" excludes OpenRouter's Safety Retention
+endpoints, which may keep prompts and replies for safety review (self-serve accounts allow
+them until you change it). If no endpoint qualifies, the call fails and the audit holds; it never
+falls back to a provider that keeps or trains on data.
+
+Reasoning. Sonnet, Opus and Fable think on every call, and several cheap models reason by default.
+Thinking is billed as output and counts against the reply limit, so each stage names an
+effort (deep for judgment, none or low for drafting) and its token limit is the answer
+budget plus room for that effort.
+
+Cost. The cost recorded for each OpenRouter call is the charge OpenRouter reports in the
+reply. The spending cap is checked before every call against that call's worst case, so a
+run never crosses it.
 """
 from __future__ import annotations
 
@@ -33,6 +43,7 @@ import urllib.parse
 import urllib.request
 
 from . import cost as K
+from .cost import EFFORT_ROOM, effort_for  # noqa: F401  (re-exported for callers and tests)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 STAGES_DIR = ROOT / "stages"
@@ -42,8 +53,11 @@ APP_URL = "https://github.com/dennisyu/local-service-spotlight-skills/tree/main/
 APP_TITLE = "LSS Audit Factory"
 RETRY_STATUS = {408, 409, 425, 429, 500, 502, 503, 504}
 FATAL_STATUS = {401, 402, 403}      # bad key, no credits, key not allowed: no other model fixes these
+MODERATION = re.compile(r"moderat|flagged", re.I)   # a 403 for flagged input is about the text, not the key
 MAX_RETRIES = 4
 DEFAULT_MAX_OUT = 16000
+DEFAULT_MODEL_MAX_OUT = 64000
+CHARS_PER_TOKEN_FLOOR = 3.0          # worst-case token count for the spending cap (JSON runs ~3.5-4)
 # Prompts mark where their stable prefix ends (brief + ledger, then earlier stage files).
 # Stages that call the same prefix more than once (page batches, fix rounds, review passes)
 # ask Claude to cache up to each mark; every other provider just gets the joined text.
@@ -80,11 +94,19 @@ class ProviderError(Exception):
     def __init__(self, msg: str, status: int | None = None):
         super().__init__(msg)
         self.status = status
-        self.fatal = status in FATAL_STATUS
+        self.fatal = status in FATAL_STATUS and not (status == 403 and MODERATION.search(msg))
 
 
 class BudgetExceeded(Exception):
-    """The run reached its spending cap. The audit holds instead of spending more."""
+    """The run's spending cap would be crossed. The audit holds instead of spending more."""
+
+
+def _env_key(name: str) -> str:
+    key = os.environ.get(name)
+    if not key:
+        raise ProviderError(f"{name} is not set. Export it from your own secret store; "
+                            "never write it into the run folder or the repo.", 401)
+    return key
 
 
 def _error_detail(raw: bytes) -> str:
@@ -136,12 +158,25 @@ def _post(url: str, headers: dict, body: dict, timeout: int = 600, retries: int 
     raise ProviderError(f"no answer from {host}")    # unreachable; keeps type checkers honest
 
 
+# ------------------------------------------------------------------ reasoning effort
+def token_budget(p: dict, answer: int, effort: str | None) -> int:
+    """The reply limit for one call: answer budget + room to think, capped by the model."""
+    cap = int(p.get("max_out", DEFAULT_MODEL_MAX_OUT))
+    return min(answer + EFFORT_ROOM.get(effort or "none", 0), cap)
+
+
+def worst_case_usd(cfg: dict, model: str, system: str, user: str, max_tokens: int) -> float:
+    """An upper bound for one call at list price: every prompt character counted as a third of a
+    token, no cache discount, and the whole reply limit spent."""
+    p = cfg["prices"][model]
+    n_in = (len(system) + len(_flat(user))) / CHARS_PER_TOKEN_FLOOR
+    return round((n_in * max(p["in"], p.get("cache_write", 0)) + max_tokens * p["out"]) / 1e6, 6)
+
+
+# ------------------------------------------------------------------ providers
 def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, confidential: bool,
-                cache: bool = False) -> dict:
-    key = os.environ.get("OPENROUTER_API_KEY")
-    if not key:
-        raise ProviderError("OPENROUTER_API_KEY is not set. Export it from your own secret store; "
-                            "never write it into the run folder or the repo.", 401)
+                cache: bool = False, effort: str | None = None) -> dict:
+    key = _env_key("OPENROUTER_API_KEY")
     base = os.environ.get("OPENROUTER_BASE_URL", OPENROUTER_BASE).rstrip("/")
     route = p.get("route", model)
     if route.startswith("anthropic/"):       # Claude caches only where a breakpoint says so
@@ -150,67 +185,82 @@ def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, co
     else:                                    # other providers cache repeated prefixes on their own
         sys_msg = {"role": "system", "content": system}
         user_content = _flat(user)
-    body = {"model": route, "max_tokens": min(max_tokens, int(p.get("max_out", max_tokens))),
+    body = {"model": route, "max_tokens": max_tokens,
             "messages": [sys_msg, {"role": "user", "content": user_content}],
             "provider": {"data_collection": "deny", **({"zdr": True} if confidential else {})}}
+    if effort:
+        body["reasoning"] = {"effort": effort}
     if p.get("temperature") is not None:     # newer Claude and GPT models take no temperature
         body["temperature"] = p["temperature"]
     if p.get("json_mode"):
         body["response_format"] = {"type": "json_object"}
     r = _post(f"{base}/chat/completions",
               {"authorization": f"Bearer {key}", "HTTP-Referer": APP_URL, "X-Title": APP_TITLE}, body)
-    msg = ((r.get("choices") or [{}])[0] or {}).get("message") or {}
+    choice = (r.get("choices") or [{}])[0] or {}
+    msg = choice.get("message") or {}
     u = r.get("usage") or {}
     ptd = u.get("prompt_tokens_details") or {}
+    ctd = u.get("completion_tokens_details") or {}
     reported = u.get("cost")
     return {"text": msg.get("content") or "",
             "usage": {"in": u.get("prompt_tokens", 0) or 0, "out": u.get("completion_tokens", 0) or 0,
-                      "cache_read": ptd.get("cached_tokens", 0) or 0, "cache_write": ptd.get("cache_write_tokens", 0) or 0},
+                      "cache_read": ptd.get("cached_tokens", 0) or 0, "cache_write": ptd.get("cache_write_tokens", 0) or 0,
+                      "reasoning": ctd.get("reasoning_tokens", 0) or 0},
             "model": model, "provider": "openrouter", "served_by": r.get("provider"), "served_model": r.get("model"),
+            "truncated": choice.get("finish_reason") == "length",
             "reported_usd": float(reported) if reported is not None else None}
 
 
 def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAULT_MAX_OUT,
          run_dir: pathlib.Path | None = None, stage: str = "stage", fake=None, confidential: bool = False,
-         cache: bool = False) -> dict:
-    """Return {"text", "usage": {"in","out","cache_read","cache_write"}, "model", "provider"}
-    plus, for OpenRouter, "reported_usd" (the charge OpenRouter reports) and "served_by"."""
+         cache: bool = False, effort: str | None = None) -> dict:
+    """Return {"text", "usage": {"in","out","cache_read","cache_write"}, "model", "provider", "truncated"}
+    plus, for OpenRouter, "reported_usd" (the charge OpenRouter reports) and "served_by".
+    max_tokens is the whole reply limit, thinking included (see token_budget)."""
     p = cfg["prices"][model]
     prov = p["provider"]
     if fake is not None:
         flat = _flat(user)
         text = fake(stage, model, system, flat)
         return {"text": text, "usage": {"in": len(flat) // 4, "out": len(text) // 4, "cache_read": 0, "cache_write": 0},
-                "model": model, "provider": "fake"}
+                "model": model, "provider": "fake", "truncated": False}
     if prov == "openrouter":
-        return _openrouter(p, model, system, user, max_tokens, confidential, cache)
+        return _openrouter(p, model, system, user, max_tokens, confidential, cache, effort)
     user = _flat(user) if prov != "anthropic" else user
+    truncated = False
     if prov == "anthropic":
         body = {"model": model, "max_tokens": max_tokens,
                 "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
                 "messages": [{"role": "user", "content": _claude_user(user, cache)}]}
+        if effort:
+            body["output_config"] = {"effort": effort}
         r = _post("https://api.anthropic.com/v1/messages",
-                  {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"}, body)
+                  {"x-api-key": _env_key("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01"}, body)
         text = "".join(c.get("text", "") for c in r.get("content", []) if c.get("type") == "text")
         u = r.get("usage", {})
         usage = {"in": u.get("input_tokens", 0), "out": u.get("output_tokens", 0),
                  "cache_read": u.get("cache_read_input_tokens", 0), "cache_write": u.get("cache_creation_input_tokens", 0)}
+        truncated = r.get("stop_reason") == "max_tokens"
     elif prov == "openai":
         body = {"model": p.get("route", model), "temperature": 0.3, "max_tokens": max_tokens,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-        r = _post("https://api.openai.com/v1/chat/completions", {"authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"}, body)
-        text = r["choices"][0]["message"]["content"]
+        r = _post("https://api.openai.com/v1/chat/completions", {"authorization": f"Bearer {_env_key('OPENAI_API_KEY')}"}, body)
+        choice = (r.get("choices") or [{}])[0] or {}
+        text = (choice.get("message") or {}).get("content") or ""
         u = r.get("usage", {})
         usage = {"in": u.get("prompt_tokens", 0), "out": u.get("completion_tokens", 0), "cache_read": 0, "cache_write": 0}
+        truncated = choice.get("finish_reason") == "length"
     elif prov == "gemini":
         url = (f"https://generativelanguage.googleapis.com/v1beta/models/{p.get('route', model)}:generateContent"
-               f"?key={os.environ['GEMINI_API_KEY']}")
+               f"?key={_env_key('GEMINI_API_KEY')}")
         body = {"systemInstruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": [{"text": user}]}],
                 "generationConfig": {"temperature": 0.3, "maxOutputTokens": max_tokens}}
         r = _post(url, {}, body)
-        text = "".join(pt.get("text", "") for pt in r["candidates"][0]["content"]["parts"])
+        cand = (r.get("candidates") or [{}])[0] or {}
+        text = "".join(pt.get("text", "") for pt in (cand.get("content") or {}).get("parts", []))
         u = r.get("usageMetadata", {})
         usage = {"in": u.get("promptTokenCount", 0), "out": u.get("candidatesTokenCount", 0), "cache_read": 0, "cache_write": 0}
+        truncated = cand.get("finishReason") == "MAX_TOKENS"
     elif prov == "manual":
         assert run_dir is not None, "manual provider needs a run folder"
         (run_dir / "prompts").mkdir(parents=True, exist_ok=True)
@@ -218,12 +268,12 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAUL
         out = run_dir / "outputs" / f"{stage}.json"
         if out.exists():
             return {"text": out.read_text(encoding="utf-8"), "usage": {"in": 0, "out": 0, "cache_read": 0, "cache_write": 0},
-                    "model": model, "provider": "manual"}
+                    "model": model, "provider": "manual", "truncated": False}
         (run_dir / "prompts" / f"{stage}.md").write_text(f"# SYSTEM\n\n{system}\n\n# USER\n\n{user}\n", encoding="utf-8")
         raise Pending(f"answer {run_dir / 'prompts' / (stage + '.md')} and save the JSON to {out}")
     else:
         raise ValueError(f"no provider for {model}")
-    return {"text": text, "usage": usage, "model": model, "provider": prov}
+    return {"text": text, "usage": usage, "model": model, "provider": prov, "truncated": truncated}
 
 
 def usd(cfg: dict, model: str, usage: dict) -> float:
@@ -283,36 +333,47 @@ def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=
     """Run one stage: call, parse, check; retry once with the error, then escalate one rung.
 
     check(obj) -> list of problems (empty = accepted). Every attempt is logged with tokens
-    and cost to run.json so the per-audit attribution is measured, not estimated: OpenRouter
-    attempts log the charge OpenRouter reported, the rest log list price. With
-    confidential=True (the brief lists do-not-print items) flagged models are skipped.
-    max_usd is the run's spending cap: no call starts once the run has spent it.
+    and cost to run.json before anything else happens, so the per-audit attribution is
+    measured, not estimated: OpenRouter attempts log the charge OpenRouter reported, the rest
+    log list price. With confidential=True (the brief lists do-not-print items) flagged
+    models are skipped. max_usd is the run's spending cap: a call whose worst case would
+    cross it is never made. A reply cut off at its token limit is retried once on the same
+    model with twice the room before the stage moves up a rung.
     """
     cfg = cfg or K.load_routing()
     st = next(s for s in cfg["stages"] if s["id"] == stage_id)
     system = (STAGES_DIR / st["card"]).read_text(encoding="utf-8")
-    max_tokens = int(st.get("max_out", DEFAULT_MAX_OUT))
+    answer = int(st.get("max_out", DEFAULT_MAX_OUT))
     model = safe_model(cfg, cfg["tiers"][tier]["models"][stage_id], confidential, tier)
     log_path = run_dir / "run.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {"tier": tier, "attempts": []}
-    escalations, prompt = 0, user
+    escalations, prompt, boosted = 0, user, False
     for attempt in range(1, 6):
-        so_far = round(sum(a.get("usd", 0) or 0 for a in log["attempts"]), 5)
-        if max_usd is not None and so_far >= max_usd:
+        p = cfg["prices"][model]
+        effort = effort_for(p, st.get("effort"))
+        limit = token_budget(p, answer * (2 if boosted else 1), effort)
+        so_far = round(sum(a.get("usd", 0) or 0 for a in log["attempts"]), 6)
+        if max_usd is not None and fake is None and p["provider"] not in ("manual", "none"):
+            worst = worst_case_usd(cfg, model, system, prompt, limit)
+            if so_far + worst > max_usd:
+                raise BudgetExceeded(f"spending cap ${max_usd:.2f}: ${so_far:.4f} spent, and the {stage_id} call on "
+                                     f"{model} could cost up to ${worst:.4f}")
+        elif max_usd is not None and so_far >= max_usd:
             raise BudgetExceeded(f"spending cap ${max_usd:.2f} reached (${so_far:.4f} spent) before {stage_id}")
         t0 = time.time()
-        entry = {"stage": stage_id, "attempt": attempt, "model": model}
+        entry = {"stage": stage_id, "attempt": attempt, "model": model, "effort": effort, "max_tokens": limit}
+        res = None
         try:
-            res = call(model, system, prompt, cfg, max_tokens=max_tokens, run_dir=run_dir, stage=stage_id,
-                       fake=fake, confidential=confidential, cache=bool(st.get("cache_prefix")))
+            res = call(model, system, prompt, cfg, max_tokens=limit, run_dir=run_dir, stage=stage_id,
+                       fake=fake, confidential=confidential, cache=bool(st.get("cache_prefix")), effort=effort)
         except ProviderError as e:
-            entry.update({"provider": cfg["prices"][model]["provider"], "usage": {"in": 0, "out": 0},
-                          "usd": 0.0, "seconds": round(time.time() - t0, 1), "problems": [f"provider error: {e}"]})
+            entry.update({"provider": p["provider"], "usage": {"in": 0, "out": 0}, "usd": 0.0,
+                          "seconds": round(time.time() - t0, 1), "problems": [f"provider error: {e}"]})
             log["attempts"].append(entry)
             log_path.write_text(json.dumps(log, indent=1))
             if e.fatal:
                 raise
-            res, problems = None, [f"provider error: {e}"]
+            problems = [f"provider error: {e}"]
         if res is not None:
             list_usd = usd(cfg, model, res["usage"])
             reported = res.get("reported_usd")
@@ -322,20 +383,32 @@ def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=
                           "seconds": round(time.time() - t0, 1)})
             if res.get("served_by"):
                 entry["served_by"] = res["served_by"]
-            try:
-                obj = extract_json(res["text"])
-                problems = check(obj) if check else []
-            except (ValueError, json.JSONDecodeError) as e:
-                obj, problems = None, [f"reply was not valid JSON (was it cut off at {max_tokens} tokens?): {e}"]
+            log["attempts"].append(entry)          # the charge is on the record before anything can fail
+            log_path.write_text(json.dumps(log, indent=1))
+            obj = None
+            if res.get("truncated"):
+                problems = [f"reply was cut off at its {limit}-token limit"]
+            else:
+                try:
+                    obj = extract_json(res["text"])
+                    if not isinstance(obj, dict):
+                        problems = ["reply must be one JSON object, in the output shape your card defines"]
+                    else:
+                        problems = check(obj) if check else []
+                except (ValueError, json.JSONDecodeError) as e:
+                    problems = [f"reply was not valid JSON: {e}"]
+                except Exception as e:                 # a malformed shape must not crash the run
+                    problems = [f"reply did not match the output shape ({type(e).__name__}: {e})"]
             entry["problems"] = problems[:20]
-            log["attempts"].append(entry)
             log_path.write_text(json.dumps(log, indent=1))
             if not problems:
                 if write:
                     (run_dir / f"{stage_id}.json").write_text(json.dumps(obj, indent=1, ensure_ascii=False))
                 return {"ok": True, "model": model, "obj": obj, "attempts": attempt}
-        if res is not None:   # a provider error is not the writer's fault: resend the same prompt
-            feedback = "\n".join(f"- {p}" for p in problems[:20])
+            if res.get("truncated") and not boosted:  # a budget problem, not a writing problem
+                boosted = True
+                continue
+            feedback = "\n".join(f"- {x}" for x in problems[:20])
             prompt = f"{user}\n\n# YOUR PREVIOUS ANSWER FAILED THESE CHECKS — fix every one and answer again\n{feedback}"
         if attempt % 2 == 0:  # two tries per rung, then one rung up
             up = next_rung(cfg, model, tier)
@@ -343,5 +416,5 @@ def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=
                 up = safe_model(cfg, up, confidential, tier)
             if up is None or escalations >= max_escalations:
                 break
-            model, escalations = up, escalations + 1
+            model, escalations, boosted = up, escalations + 1, False
     return {"ok": False, "model": model, "obj": None, "attempts": attempt}

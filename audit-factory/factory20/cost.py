@@ -18,6 +18,30 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 ROUTING = ROOT / "config" / "routing.json"
 
 
+# Reasoning effort. Thinking is billed as output and counts against the reply limit.
+EFFORT_ORDER = ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
+EFFORT_ROOM = {"none": 0, "minimal": 1024, "low": 2048, "medium": 6144, "high": 12288, "xhigh": 20480, "max": 32768}
+# What a call is assumed to spend thinking, typically, until live runs measure it.
+EFFORT_TYPICAL = {"none": 0, "minimal": 500, "low": 1000, "medium": 3000, "high": 6000, "xhigh": 10000, "max": 16000}
+CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"]   # Messages API output_config.effort; no "none"
+
+
+def effort_for(p: dict, wanted: str | None) -> str | None:
+    """The effort to send a model: the stage's wish where the model offers it, otherwise the
+    nearest level above it that the model offers (a model that cannot stop thinking gets its
+    lowest level). None means the model takes no effort setting."""
+    offered = p.get("efforts")
+    if p.get("provider") == "anthropic" and offered is None:
+        offered = CLAUDE_EFFORTS
+    if not offered or not wanted:
+        return None
+    if wanted in offered:
+        return wanted
+    rank = EFFORT_ORDER.index(wanted) if wanted in EFFORT_ORDER else 3
+    above = [e for e in EFFORT_ORDER[rank:] if e in offered]
+    return above[0] if above else offered[-1]
+
+
 def load_routing(path: str | pathlib.Path | None = None) -> dict:
     return json.loads(pathlib.Path(path or ROUTING).read_text(encoding="utf-8"))
 
@@ -70,28 +94,34 @@ def _call_usd(p: dict, n_in: float, n_out: float, cached: float = 0, first: bool
 
 
 def measured_cost(tier: str, cfg: dict | None = None, fix_rounds: int = 1, review_passes: int = 1,
-                  retry_share: float = 0.0) -> dict:
+                  retry_share: float = 0.0, worst_thinking: bool = False) -> dict:
     """Cost of one audit from an existing ledger, from the measured profile (prompt and reply
     sizes of a real 20-page audit), at this tier's models and prices.
 
-    Typical = one fix round and one review pass. Worst case = three fix rounds, the tier's
-    full review passes and a retry allowance on top. Research (stages 10-20) is not included:
+    Typical = one fix round, one review pass and a typical amount of thinking for each call's
+    effort. Worst case = three fix rounds, the tier's full review passes, every call thinking
+    up to its full room, and a retry allowance on top. Research (stages 10-20) is not included:
     it depends on how much there is to collect, and the planning estimate covers it."""
     cfg = cfg or load_routing()
     prof = cfg["measured_profile"]["stages"]
     t = cfg["tiers"][tier]
     rows = []
+    stage_effort = {st["id"]: st.get("effort") for st in cfg["stages"]}
+    think = EFFORT_ROOM if worst_thinking else EFFORT_TYPICAL
     for sid, s in prof.items():
         model = t["models"][sid]
         p = cfg["prices"][model]
         reps = {"review": review_passes, "fix": fix_rounds}.get(sid, 1)
         n = s["calls"] * reps
         pre = s.get("cached_prefix", 0)
-        out_per_call = s["out"] / s["calls"]
+        effort = effort_for(p, stage_effort.get(sid))
+        thinking = think.get(effort or "none", 0)
+        out_per_call = s["out"] / s["calls"] + thinking
         usd = sum(_call_usd(p, s["in"], out_per_call, pre, first=(k == 0)) for k in range(n)) if n else 0.0
         usd *= 1 + retry_share
-        rows.append({"stage": sid, "model": model, "calls": n, "in": int(s["in"] * n), "out": int(out_per_call * n),
-                     "usd": round(usd, 4), "assumed": s.get("assumed", [])})
+        rows.append({"stage": sid, "model": model, "calls": n, "effort": effort, "in": int(s["in"] * n),
+                     "out": int(out_per_call * n), "usd": round(usd, 4),
+                     "assumed": s.get("assumed", []) + (["thinking"] if thinking else [])})
     total = round(sum(r["usd"] for r in rows), 2)
     return {"tier": tier, "stages": rows, "total_usd": total,
             "frontier_usd": round(sum(r["usd"] for r in rows if is_frontier(r["model"])), 2)}
@@ -101,8 +131,8 @@ def measured_range(tier: str, cfg: dict | None = None) -> dict:
     """Typical and worst-case cost of one audit from an existing ledger."""
     cfg = cfg or load_routing()
     passes = cfg["tiers"][tier].get("review_passes", 1)
-    return {"typical": measured_cost(tier, cfg), "worst": measured_cost(tier, cfg, fix_rounds=3,
-                                                                        review_passes=passes, retry_share=0.25)}
+    return {"typical": measured_cost(tier, cfg),
+            "worst": measured_cost(tier, cfg, fix_rounds=3, review_passes=passes, retry_share=0.25, worst_thinking=True)}
 
 
 def _class_cost(p: dict, tok: dict) -> float:

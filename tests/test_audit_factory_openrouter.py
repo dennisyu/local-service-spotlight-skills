@@ -30,6 +30,8 @@ AUDIT = json.loads((DEMO / "audit.json").read_text())
 STAGE_OF = {"Stage 30": "identity", "Stage 40": "score", "Stage 50": "synthesis", "Stage 70": "actions",
             "Stage 80": "review"}
 COST_PER_CALL = 0.001
+CFG = cost.load_routing()
+ROUTE_PRICE = {p["route"]: p for p in CFG["prices"].values() if p.get("provider") == "openrouter"}
 
 
 class MockOpenRouter:
@@ -38,6 +40,7 @@ class MockOpenRouter:
     def __init__(self):
         self.requests: list[dict] = []
         self.script: list[tuple[int, dict, dict]] = []    # forced replies, consumed first
+        self.cost = lambda body: COST_PER_CALL            # what OpenRouter "charges" for a call
         self.answer = fake_from_fixture(str(DEMO / "audit.json")).answer
         mock = self
 
@@ -88,7 +91,8 @@ class MockOpenRouter:
                 "choices": [{"index": 0, "finish_reason": "stop",
                              "message": {"role": "assistant", "content": "```json\n" + json.dumps(obj) + "\n```"}}],
                 "usage": {"prompt_tokens": len(user) // 4, "completion_tokens": 900,
-                          "prompt_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0}, "cost": COST_PER_CALL}}
+                          "prompt_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0},
+                          "completion_tokens_details": {"reasoning_tokens": 400}, "cost": self.cost(body)}}
 
     def close(self):
         self.server.shutdown()
@@ -225,14 +229,92 @@ class OpenRouterHTTPTests(unittest.TestCase):
             self.assertIn("Insufficient credits", res["hold_reason"])
             self.assertEqual(len(self.mock.requests), 1)                          # no retry, no escalation
 
-    def test_spending_cap_stops_before_the_next_call(self):
+    def test_spending_cap_is_never_crossed(self):
+        """Every call is charged its full worst case at list price, the most a real call can cost.
+        The run must stop before the call that could cross the cap, never after it."""
+        def worst(body):
+            p = ROUTE_PRICE[body["model"]]
+            chars = len(json.dumps(body["messages"], ensure_ascii=False))
+            return (chars / router.CHARS_PER_TOKEN_FLOOR * max(p["in"], p["cache_write"]) + body["max_tokens"] * p["out"]) / 1e6
+        self.mock.cost = worst
         with tempfile.TemporaryDirectory() as d:
             d = run_dir(pathlib.Path(d))
-            res = pipeline.run(d, "openrouter-lean", render_pdf=False, max_usd=0.0025)
+            res = pipeline.run(d, "openrouter-lean", render_pdf=False, max_usd=0.60)
             self.assertEqual(res["verdict"], "HOLD", res)
             self.assertIn("spending cap", res["hold_reason"])
-            self.assertEqual(len(self.mock.requests), 3)                          # $0.003 spent, cap $0.0025
-            self.assertAlmostEqual(res["usd"], 0.003, places=6)
+            self.assertIn("could cost up to", res["hold_reason"])
+            self.assertLessEqual(res["usd"], 0.60)
+            self.assertGreater(len(self.mock.requests), 0)
+
+    def test_a_cap_below_the_first_call_spends_nothing(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            res = pipeline.run(d, "openrouter-lean", render_pdf=False, max_usd=0.01)
+            self.assertEqual(res["verdict"], "HOLD", res)
+            self.assertEqual(self.mock.requests, [])
+            self.assertEqual(res["usd"], 0.0)
+
+    def test_each_stage_sends_its_reasoning_effort_and_room_to_think(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            pipeline.run(d, "openrouter-lean", render_pdf=False)
+            by_stage = {}
+            for r in self.mock.requests:
+                by_stage.setdefault(self.mock.stage(r["body"]), r["body"])
+            self.assertEqual(by_stage["identity"]["reasoning"], {"effort": "medium"})
+            self.assertEqual(by_stage["identity"]["max_tokens"], 6000 + router.EFFORT_ROOM["medium"])
+            self.assertEqual(by_stage["synthesis"]["reasoning"], {"effort": "high"})
+            self.assertEqual(by_stage["pages"]["reasoning"], {"effort": "none"})      # DeepSeek can stop thinking
+            self.assertEqual(by_stage["pages"]["max_tokens"], 12000)
+            self.assertEqual(by_stage["review"]["reasoning"], {"effort": "high"})
+            log = json.loads((d / "run.json").read_text())["attempts"]
+            self.assertTrue(all(a["usage"].get("reasoning") == 400 for a in log))
+
+    def test_claude_cannot_stop_thinking_so_drafting_gets_its_lowest_effort(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            pipeline.run(d, "openrouter", render_pdf=False)
+            pages = next(r["body"] for r in self.mock.requests if self.mock.stage(r["body"]) == "pages")
+            self.assertEqual(pages["model"], "anthropic/claude-sonnet-5.5")
+            self.assertEqual(pages["reasoning"], {"effort": "low"})
+            self.assertEqual(pages["max_tokens"], 12000 + router.EFFORT_ROOM["low"])
+
+    def test_a_reply_that_is_not_an_object_is_logged_and_retried(self):
+        self.mock.script = [(200, {}, {"choices": [{"message": {"content": '["not an object"]'}, "finish_reason": "stop"}],
+                                       "usage": {"prompt_tokens": 10, "completion_tokens": 5, "cost": 0.002}})]
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            res = pipeline.run(d, "openrouter-lean", render_pdf=False)
+            self.assertEqual(res["verdict"], "READY", res)
+            first = json.loads((d / "run.json").read_text())["attempts"][0]
+            self.assertEqual(first["usd"], 0.002)                                  # the charge is on the record
+            self.assertIn("one JSON object", first["problems"][0])
+
+    def test_a_cut_off_reply_gets_twice_the_room_on_the_same_model(self):
+        self.mock.script = [(200, {}, {"choices": [{"message": {"content": '{"identity": {'}, "finish_reason": "length"}],
+                                       "usage": {"prompt_tokens": 10, "completion_tokens": 12144, "cost": 0.12}})]
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            res = pipeline.run(d, "openrouter-lean", render_pdf=False)
+            self.assertEqual(res["verdict"], "READY", res)
+            first, second = self.mock.requests[0]["body"], self.mock.requests[1]["body"]
+            self.assertEqual(first["model"], second["model"])
+            self.assertEqual(second["max_tokens"], 2 * 6000 + router.EFFORT_ROOM["medium"])
+            log = json.loads((d / "run.json").read_text())["attempts"]
+            self.assertIn("cut off", log[0]["problems"][0])
+
+    def test_a_moderation_refusal_is_a_stage_problem_not_a_dead_key(self):
+        self.mock.script = [(403, {}, {"error": {"message": "Input flagged by moderation", "code": 403}})]
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            res = pipeline.run(d, "openrouter-lean", render_pdf=False)
+            self.assertEqual(res["verdict"], "READY", res)
+        self.mock.script = [(403, {}, {"error": {"message": "Key not allowed for this model", "code": 403}})]
+        with tempfile.TemporaryDirectory() as d:
+            d = run_dir(pathlib.Path(d))
+            res = pipeline.run(d, "openrouter-lean", render_pdf=False)
+            self.assertEqual(res["verdict"], "HOLD", res)
+            self.assertIn("403", res["hold_reason"])
 
     def test_experimental_tier_runs_but_says_so(self):
         with tempfile.TemporaryDirectory() as d:
@@ -241,6 +323,25 @@ class OpenRouterHTTPTests(unittest.TestCase):
             self.assertIn("experimental", res["warning"])
             self.assertEqual({r["body"]["model"] for r in self.mock.requests if self.mock.stage(r["body"]) == "review"},
                              {"openai/gpt-6.1-sol"})
+
+
+class DirectProviderTests(unittest.TestCase):
+    def test_a_missing_key_holds_the_audit_with_its_name(self):
+        env = os.environ.pop("ANTHROPIC_API_KEY", None)
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                d = run_dir(pathlib.Path(d))
+                res = pipeline.run(d, "standard", render_pdf=False)
+                self.assertEqual(res["verdict"], "HOLD", res)
+                self.assertIn("ANTHROPIC_API_KEY", res["hold_reason"])
+        finally:
+            if env is not None:
+                os.environ["ANTHROPIC_API_KEY"] = env
+
+    def test_claude_direct_gets_an_effort_and_no_none(self):
+        p = cost.load_routing()["prices"]["claude-opus-5-5"]
+        self.assertEqual(router.effort_for(p, "high"), "high")
+        self.assertEqual(router.effort_for(p, "none"), "low")
 
 
 class PipelineGuardTests(unittest.TestCase):
@@ -299,9 +400,25 @@ class OpenRouterCheckTests(unittest.TestCase):
             out = [m for m in out if m["id"] != route] + ([{"id": route, "pricing": pricing}] if pricing else [])
         return out
 
-    def test_current_config_matches_its_own_prices(self):
-        rep = openrouter.check(cost.load_routing(), self.models())
+    def test_config_matches_the_latest_saved_openrouter_list(self):
+        """Not the config against itself: a dated copy of what OpenRouter actually listed."""
+        snap = openrouter.latest_snapshot()
+        self.assertIsNotNone(snap)
+        rep = openrouter.check(cost.load_routing(), openrouter.load_models(snap))
         self.assertTrue(rep["ok"], rep)
+
+    def test_a_tampered_config_price_fails_against_the_saved_list(self):
+        cfg = copy.deepcopy(cost.load_routing())
+        cfg["prices"]["or:anthropic/claude-opus-5.5"]["in"] *= 100
+        rep = openrouter.check(cfg, openrouter.load_models(openrouter.latest_snapshot()))
+        self.assertEqual(rep["drifted"], ["or:anthropic/claude-opus-5.5"])
+
+    def test_a_changed_effort_list_is_drift(self):
+        models = openrouter.load_models(openrouter.latest_snapshot())
+        ds = next(m for m in models if m["id"] == "deepseek/deepseek-v4.1-flash")
+        ds["reasoning"] = dict(ds["reasoning"], supported_efforts=["high", "low"])       # "none" withdrawn
+        rep = openrouter.check(cost.load_routing(), models)
+        self.assertIn("or:deepseek/deepseek-v4.1-flash", rep["drifted"])
 
     def test_a_removed_route_and_a_price_rise_both_fail(self):
         models = self.models(**{"x-ai/grok-4.7": None,

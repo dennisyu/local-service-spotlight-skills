@@ -46,14 +46,16 @@ measures how close to frontier quality it lands. Use the repository's
    named (gate G65).
 
 6. **One key is enough:** the `openrouter`, `openrouter-lean` and `openrouter-budget` tiers send
-   every call through one `OPENROUTER_API_KEY`, ask for providers that keep no prompts, record
-   the charge OpenRouter reports, and stop at a spending cap (`--max-usd`).
+   every call through one `OPENROUTER_API_KEY`, ask only for providers that do not collect user
+   data, set each stage's reasoning effort, record the charge OpenRouter reports, and never cross
+   the spending cap (`--max-usd`). Zero data retention for a confidential brief also excludes
+   Safety Retention endpoints only when the OpenRouter account is set to "ZDR only".
 
 The standard tier is estimated at about $5 per audit by the conservative planning budget, and at
-about $1.26 (standard) or $0.71 (`openrouter-lean`) for one pass from an existing ledger, counted
-from a real audit's prompts and replies; the all-frontier run of Oct 23 measured about $280 at
-list price. These are estimates until the first live bill (measurements:
-`audit-factory/docs/CALIBRATION.md`).
+about $1.61 (standard) or $0.95 (`openrouter-lean`) for one pass from an existing ledger, counted
+from a real audit's prompts and replies with the models' thinking included; the all-frontier run
+of Oct 23 measured about $280 at list price for research, writing and seven review rounds.
+These are estimates until the first live bill (measurements: `audit-factory/docs/CALIBRATION.md`).
 
 ## Dependency preflight
 
