@@ -37,7 +37,7 @@
 <p>Before spending anything on the one-key path, we tested it against a stand-in for OpenRouter's API, and a separate agent reviewed the code. Together they found seven problems, all fixed. The biggest: Claude's Sonnet and Opus models think before they answer, that thinking is billed, and our first estimate left it out. Counting it raised the estimates to the numbers above.</p>
 
 <h3>Run it yourself</h3>
-<p>The kit is free on GitHub: <a href="https://github.com/dennisyu/local-service-spotlight-skills/tree/main/audit-factory">our 20-page audit kit (Audit Factory 20)</a>. It builds a made-up demo business with no keys at all. For a live run, one <a href="https://openrouter.ai/">OpenRouter</a> key reaches every model the kit uses, Claude included. Create a key at openrouter.ai and keep it in your own secret store, never in a file.</p>
+<p>The kit is free on GitHub: <a href="https://github.com/dennisyu/local-service-spotlight-skills/tree/main/audit-factory">our 20-page audit kit (Audit Factory 20)</a>. It builds a made-up demo business with no keys at all. For a live run, one OpenRouter key reaches every model the kit uses, Claude included. Create a key at <a href="https://openrouter.ai/">openrouter.ai</a> and keep it in your own secret store, never in a file.</p>
 <pre><code>cd audit-factory
 pip install -r requirements.txt &amp;&amp; python -m playwright install chromium
 python -m factory20 init runs/demo --from-demo
