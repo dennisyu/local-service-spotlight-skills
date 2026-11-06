@@ -213,12 +213,19 @@ def validate(root: Path) -> list[str]:
         except StandardError as exc:
             errors.append(str(exc))
             expected_here = []
-        for slug, block in expected_here:
-            if block not in skill_text:
-                errors.append(
-                    f"{skill_file.relative_to(root)} has a missing or stale "
-                    f"shared rule: {slug}"
-                )
+        # Standard v2 (fleet decision D-2026-11-05-05): block presence is
+        # enforced only on skills that carry blocks (legacy inlined state).
+        # A skill carrying no blocks is either in the referenced form or not
+        # yet converted — its source state is validated by
+        # scripts/sync_shared_rules.py, and standalone exports inline the
+        # blocks at packaging time, so presence is not checked here.
+        if "<!-- shared-rule:" in skill_text:
+            for slug, block in expected_here:
+                if block not in skill_text:
+                    errors.append(
+                        f"{skill_file.relative_to(root)} has a missing or stale "
+                        f"shared rule: {slug}"
+                    )
 
         for markdown in skill_dir.rglob("*.md"):
             text = markdown.read_text(encoding="utf-8")
