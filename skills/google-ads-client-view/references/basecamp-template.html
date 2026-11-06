@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{CLIENT}} — {{DATE}} — Basecamp paste version</title>
+<!--
+  STRUCTURAL TEMPLATE for google-ads-client-view.
+  Reuse the layout and the paste-safe markup; replace every {{TOKEN}}.
+  Rules:
+   - The white .paste card is what the user copies into Basecamp.
+   - Use only: h1/h2, blockquote, ul/ol, b/i, emoji. No SVG, no tables, no
+     color-dependent meaning.
+   - Charts are dragged-in PNGs; keep the [CHART] placeholders.
+   - {{WORKING_ITEMS}}, {{ATTENTION_ITEMS}}, {{CLIENT_ASKS}}, {{WE_DID}} and the
+     full-analysis blocks are projected from the MAA per the SKILL.md source map.
+     Do not invent content the MAA does not contain.
+-->
+<style>
+  body{margin:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:#1d1d1f;line-height:1.55}
+  .howto{max-width:760px;margin:22px auto 0;background:#fff8e1;border:1px solid #e6c34d;border-radius:10px;padding:14px 20px;font-size:14px;color:#5a4a00}
+  .paste{max-width:760px;margin:14px auto 30px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:30px 34px}
+  h1{font-size:21px;margin:0 0 2px}
+  .status{font-size:15px;font-weight:700;color:#1f7a4d;margin:0 0 16px}
+  h2{font-size:16px;margin:24px 0 8px}
+  blockquote{margin:0 0 4px;padding:12px 18px;border-left:4px solid #1f7a4d;background:#f3f9f5;font-size:16px;border-radius:0 6px 6px 0}
+  ul,ol{margin:6px 0;padding-left:22px}
+  li{margin:7px 0;font-size:15.5px}
+  ul.flag{list-style:none;padding-left:0}
+  ul.flag li{margin:8px 0}
+  .chartph{border:2px dashed #2c6fb3;border-radius:8px;background:#eef4fb;color:#2c6fb3;font-size:14px;font-weight:600;text-align:center;padding:18px;margin:10px 0}
+  hr{border:none;border-top:1px solid #e5e7eb;margin:22px 0}
+  .metrics .camp{font-weight:700;margin:10px 0 4px}
+  .metrics ul{margin:0;padding-left:22px}
+  .metrics li{margin:2px 0;font-size:15px}
+  code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:90%}
+</style>
+</head>
+<body>
+
+<div class="howto">
+  <b>How to use this in Basecamp:</b> select everything in the white card below, copy, and paste into your Basecamp message. Then drag the two chart images
+  (<code>{{LEADS_PNG}}</code>, <code>{{CPL_PNG}}</code>) into the spots marked <b>[CHART]</b>. Headings, bold, bullets, the blockquote, and emoji survive the paste; the colored boxes here are preview-only.
+</div>
+
+<div class="paste">
+
+  <h1>{{CLIENT}} — Weekly Google Ads Report</h1>
+  <p class="status">{{STATUS_DOT}} {{STATUS_LABEL}} &nbsp;·&nbsp; Week of {{DATE_PRETTY}}</p>
+
+  <h2>The bottom line</h2>
+  <blockquote>{{BOTTOM_LINE_PARAGRAPH}}</blockquote>
+
+  <h2>📊 The trend — last 13 weeks</h2>
+  <div class="chartph">[CHART] Drag in: {{LEADS_PNG}}</div>
+  <div class="chartph">[CHART] Drag in: {{CPL_PNG}}</div>
+
+  <h2>What's working ✅</h2>
+  <ul class="flag">
+    {{WORKING_ITEMS — one <li>✅ ...</li> per positive finding in Analysis}}
+  </ul>
+
+  <h2>What needs attention 🔴</h2>
+  <ul class="flag">
+    {{ATTENTION_ITEMS — client-facing critical/decision items only, <li>🔴 <b>...</b></li>}}
+  </ul>
+
+  <h2>👉 What we need from you this week</h2>
+  <ol>
+    {{CLIENT_ASKS — one <li><b>ask</b> + one-line why</li> per client-side Action}}
+  </ol>
+
+  <h2>What we did this week (no action needed)</h2>
+  <ul class="flag">
+    {{WE_DID — one <li>✅ ...</li> per our-side Action}}
+  </ul>
+
+  <hr>
+
+  <h2>Full analysis (for the detail-minded)</h2>
+
+  <p><b>Metrics</b></p>
+  <div class="metrics">
+    <div class="camp">{{CAMPAIGN_NAME}} ({{CAMPAIGN_TYPE}} | {{BID_STRATEGY}})</div>
+    <ul>
+      <li><b>Cost</b>: {{COST}}</li>
+      <li><b>Impressions</b>: {{IMPRESSIONS}}</li>
+      <li><b>Clicks</b>: {{CLICKS}}</li>
+      <li><b>CTR</b>: {{CTR}}</li>
+      <li><b>CPC</b>: {{CPC}}</li>
+      <li><b>Conversions</b>: {{CONVERSIONS}}</li>
+      <li><b>CPA</b>: {{CPA}}</li>
+    </ul>
+    <!-- repeat the .camp + ul block for each Search/PMax campaign in the MAA -->
+  </div>
+
+  {{ANALYSIS_PARAGRAPHS — verbatim from the MAA, including the CRM check}}
+
+  <p><b>Action.</b></p>
+  <ol>
+    {{ACTION_ITEMS — verbatim from the MAA}}
+  </ol>
+
+  <p><b>Start here:</b> {{START_HERE — verbatim from the MAA}}</p>
+
+</div>
+</body>
+</html>
