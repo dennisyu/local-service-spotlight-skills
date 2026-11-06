@@ -18,6 +18,27 @@ no ``standards/`` directory, no repository. A rule that is only linked is a rule
 that rides along until it reaches the user and then vanishes. A rule that is
 copied in arrives with them.
 
+Standard v2 (adopted 2026-11-05, fleet decision D-2026-11-05-05) moves the
+copying to where the constraint actually lives — distribution, not authoring:
+
+- In the SOURCE tree, a skill may adopt the referenced form: its ``SKILL.md``
+  carries a "## Shared rules — harness layer (referenced, not inlined)" pointer
+  block instead of the copied blocks. This script VALIDATES referenced skills
+  (a referenced skill that also carries inlined blocks fails the check) and
+  never re-inlines them.
+- ``AGENTS.md`` always carries every block in full — it is the in-repo
+  harness-layer copy the references point at, alongside ``standards/``.
+- Skills that still carry blocks keep the legacy behaviour: blocks are
+  embedded and checked exactly as before, until their conversion wave.
+- A skill with NO blocks and NO pointer is "not yet converted": the source
+  sync reports it as migration-pending and leaves it alone (it is covered in
+  the source tree by ``AGENTS.md``/``standards/``, and at export — below).
+  Under the pre-v2 script such a file read as "stale" and a plain sync
+  inlined into it; that is precisely the authoring-state copying v2 ends.
+- ``--export DIR`` builds a standalone tree (``AGENTS.md`` + ``skills/``) in
+  which EVERY skill carries its blocks inlined, whatever its source state —
+  the distribution guarantee above, satisfied at packaging time.
+
 The JSON header of a standard is machine configuration for the fleet sweep, not
 guidance, so only the prose body is embedded. Blocks are written in sorted slug
 order so output is deterministic.
@@ -51,6 +72,30 @@ def marker(slug: str) -> tuple[str, str]:
 
 INDEX_START = "<!-- shared-rule-index:start -->"
 INDEX_END = "<!-- shared-rule-index:end -->"
+
+REFERENCED_HEADING = "## Shared rules — harness layer (referenced, not inlined)"
+
+
+def is_referenced(text: str) -> bool:
+    """True when a skill file has adopted the Standard v2 referenced form."""
+    return REFERENCED_HEADING in text
+
+
+def referenced_problems(path: Path, text: str) -> list[str]:
+    """A referenced skill must carry the pointer only — no inlined blocks."""
+    problems = []
+    blocks = sorted(set(re.findall(r"<!-- shared-rule:([a-z0-9-]+):start -->", text)))
+    if blocks:
+        problems.append(
+            f"{path.relative_to(ROOT)}: referenced form but carries inlined "
+            f"shared-rule block(s): {', '.join(blocks)}"
+        )
+    if INDEX_START in text or INDEX_END in text:
+        problems.append(
+            f"{path.relative_to(ROOT)}: referenced form but carries a "
+            "shared-rule index block"
+        )
+    return problems
 
 
 def standards() -> list[tuple[str, str]]:
@@ -134,35 +179,85 @@ def drop_index(text: str) -> str:
     return (before.rstrip() + "\n" + after.lstrip("\n")).rstrip() + "\n"
 
 
-def sync(check: bool = False, prune: bool = False) -> tuple[list[Path], list[tuple[Path, str]]]:
+def expected_text(
+    current: str, keep: list, rest: list, prune: bool = False
+) -> tuple[str, list[str]]:
+    """The fully-inlined text a file should carry, plus orphan slugs found."""
+    expected = drop_index(current)
+    wanted = {s.slug for s in keep}
+    orphans: list[str] = []
+
+    # a rule the file should no longer carry: source deleted, or now out of scope
+    for slug in orphan_blocks(current, wanted):
+        if prune or any(s.slug == slug for s in rest):
+            expected = drop_block(expected, slug)
+        else:
+            orphans.append(slug)
+
+    for standard in keep:
+        expected = upsert(expected, standard.slug, standard.block())
+
+    block = index_block(rest)
+    if block:
+        expected = expected.rstrip() + "\n\n" + block + "\n"
+    return expected, orphans
+
+
+def sync(
+    check: bool = False, prune: bool = False
+) -> tuple[list[Path], list[tuple[Path, str]], list[str], list[Path]]:
     changed: list[Path] = []
     orphans: list[tuple[Path, str]] = []
+    problems: list[str] = []
+    pending: list[Path] = []
 
     for path, keep, rest in plan():
         current = path.read_text(encoding="utf-8") if path.exists() else ""
-        expected = drop_index(current)
-        wanted = {s.slug for s in keep}
 
-        # a rule the file should no longer carry: source deleted, or now out of scope
-        for slug in orphan_blocks(current, wanted):
-            if prune or any(s.slug == slug for s in rest):
-                expected = drop_block(expected, slug)
-            else:
-                orphans.append((path, slug))
+        # Standard v2 referenced form: validate, never re-inline. AGENTS.md is
+        # exempt — it is the harness-layer copy and always carries the blocks.
+        if path.name != "AGENTS.md" and is_referenced(current):
+            problems.extend(referenced_problems(path, current))
+            continue
 
-        for standard in keep:
-            expected = upsert(expected, standard.slug, standard.block())
+        # Not yet converted (no blocks, no pointer): report, never inline.
+        if (
+            path.name != "AGENTS.md"
+            and not re.search(r"<!-- shared-rule:[a-z0-9-]+:start -->", current)
+            and INDEX_START not in current
+        ):
+            pending.append(path)
+            continue
 
-        block = index_block(rest)
-        if block:
-            expected = expected.rstrip() + "\n\n" + block + "\n"
+        expected, file_orphans = expected_text(current, keep, rest, prune)
+        orphans.extend((path, slug) for slug in file_orphans)
 
         if current == expected:
             continue
         changed.append(path)
         if not check:
             path.write_text(expected, encoding="utf-8")
-    return changed, orphans
+    return changed, orphans, problems, pending
+
+
+def export_tree(target: Path) -> list[Path]:
+    """Write a standalone tree in which every skill carries its blocks inlined.
+
+    This is the distribution-time half of Standard v2: whatever form a skill
+    has in the source tree (referenced or legacy), its exported copy is
+    self-contained, satisfying the constraint in this module's docstring.
+    """
+    if target.exists() and any(target.iterdir()):
+        raise StandardError(f"export target {target} exists and is not empty")
+    written: list[Path] = []
+    for path, keep, rest in plan():
+        current = path.read_text(encoding="utf-8") if path.exists() else ""
+        expected, _ = expected_text(current, keep, rest, prune=True)
+        dest = target / path.relative_to(ROOT)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(expected, encoding="utf-8")
+        written.append(dest)
+    return written
 
 
 def main() -> int:
@@ -178,6 +273,13 @@ def main() -> int:
         help="also remove blocks whose standards/ file is gone (renaming or "
         "retiring a rule)",
     )
+    parser.add_argument(
+        "--export",
+        metavar="DIR",
+        help="build a standalone tree in DIR with every skill's shared-rule "
+        "blocks inlined (Standard v2 distribution mode); the source tree is "
+        "not modified",
+    )
     args = parser.parse_args()
 
     try:
@@ -185,11 +287,35 @@ def main() -> int:
         if not rules:
             print("No files in standards/ — nothing to sync.")
             return 0
-        changed, orphans = sync(check=args.check, prune=args.prune)
+        if args.export:
+            written = export_tree(Path(args.export))
+            print(
+                f"Exported {len(written)} file(s) with shared rules inlined to "
+                f"{args.export} (source tree unchanged)."
+            )
+            return 0
+        changed, orphans, problems, pending = sync(
+            check=args.check, prune=args.prune
+        )
     except StandardError as exc:
         # A malformed rule must read like a fixable mistake, not a crash.
         print(f"Cannot sync — {exc}")
         return 1
+
+    if problems:
+        print("Referenced-form violations (Standard v2):")
+        for problem in problems:
+            print(f"- {problem}")
+        return 1
+
+    if pending:
+        print(
+            "Not yet converted to the referenced form (Standard v2 migration "
+            "pending; covered by AGENTS.md/standards in-tree and inlined at "
+            "export):"
+        )
+        for path in pending:
+            print(f"- {path.relative_to(ROOT)}")
 
     if orphans:
         print("Orphan rule blocks (no matching file in standards/):")
