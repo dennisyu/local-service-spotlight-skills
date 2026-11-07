@@ -55,6 +55,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from standards_lib import (  # noqa: E402
     StandardError,
+    fold_nbsp,
     load_standards,
     markers,
     skill_scopes,
@@ -232,7 +233,7 @@ def sync(
         expected, file_orphans = expected_text(current, keep, rest, prune)
         orphans.extend((path, slug) for slug in file_orphans)
 
-        if current == expected:
+        if fold_nbsp(current) == fold_nbsp(expected):
             continue
         changed.append(path)
         if not check:

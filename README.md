@@ -134,7 +134,7 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 38 skills |
+| `lss-everything` | All 39 skills |
 | `authority-and-reputation` | Personal-brand audit intake plus its installed authority/reputation lanes; use `lss-everything` for the full workflow |
 | `content-engine` | Articles, video, repurposing, and distribution |
 | `client-operations` | Onboarding, cadence, access, reporting including GA4, and audits |

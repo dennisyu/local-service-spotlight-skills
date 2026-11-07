@@ -172,6 +172,15 @@ def markers(slug: str) -> tuple[str, str]:
     )
 
 
+def fold_nbsp(text: str) -> str:
+    """Treat non-breaking spaces as ordinary spaces when comparing rule text.
+
+    A distributed copy may use a non-breaking space in a public name so the
+    line stays readable without being rewritten on every sync.
+    """
+    return text.replace("\u00a0", " ")
+
+
 def split_front_matter(text: str, where: str) -> tuple[dict, str]:
     """Return (header, body). A file with no header is legal and yields {}."""
     if not text.startswith(DELIMITER + "\n"):

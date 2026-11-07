@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from standards_lib import (  # noqa: E402
     StandardError,
+    fold_nbsp,
     load_standards,
     skill_scopes,
     standards_for,
@@ -189,7 +190,7 @@ def validate(root: Path) -> list[str]:
     if not agents_file.is_file():
         errors.append("missing AGENTS.md with the shared house rules")
     else:
-        agents_text = agents_file.read_text(encoding="utf-8")
+        agents_text = fold_nbsp(agents_file.read_text(encoding="utf-8"))
         for slug, block in blocks:
             if block not in agents_text:
                 errors.append(f"AGENTS.md has a missing or stale shared rule: {slug}")
@@ -207,7 +208,7 @@ def validate(root: Path) -> list[str]:
             )
         if not metadata.get("description"):
             errors.append(f"{skill_file.relative_to(root)} needs a description")
-        skill_text = skill_file.read_text(encoding="utf-8")
+        skill_text = fold_nbsp(skill_file.read_text(encoding="utf-8"))
         try:
             expected_here = blocks_for_skill(root, skill_file)
         except StandardError as exc:
