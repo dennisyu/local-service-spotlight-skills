@@ -1133,8 +1133,10 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
 
 ### Pre-flight, every run, before the first search or the first draft
 
-1. **Resolve the master.** Look up the topic in `docs/canonical-masters.json` in the
-   skills repository. If it is not there, or you do not have the repository, search
+1. **Resolve the master.** Look up the topic in the Canonical Directory
+   (https://blitzmetrics.com/canonical/; the team registry is `canonical/registry.yml` in
+   agent-runtime, mirrored for pack members in `docs/canonical-masters.json`). Never start
+   a second registry. If the topic is not there, search
    whichever of these you can reach before concluding no master exists, and record
    which you could not reach: shared memory, the Canonical Directory and Task Library,
    site search across our domains by title *and* by likely slug (two slugs can serve
@@ -1165,7 +1167,7 @@ No regular expression honestly certifies semantic fidelity, evidence quality or 
   when a second competing copy already exists and `congruency-audit` to confirm the
   master and its skins agree afterwards.
 - **If no master exists, you are creating it.** Create exactly one, register it in
-  `docs/canonical-masters.json` in the same change, and link it into its SEO Tree
+  the canonical registry (and its public mirror) in the same change, and link it into its SEO Tree
   parent. If you do not have the repository, record the new master's location in your
   run's meta article instead.
 
