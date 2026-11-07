@@ -12,6 +12,8 @@
                                                        stages 30-70 -> gates -> PDF -> up to 3 fix rounds -> fresh-context review
   init     <run-dir> (--from-demo | --ledger L --brief B) [--assets DIR]
                                                        make a run folder (the public demo needs no private data)
+  bundle   <run-dir>                                   bundle a finished run for the house audit-quality gate
+                                                       (exit 2 if the run is not finished or its records disagree)
   openrouter-check [--models FILE] [--write]           every OpenRouter route still listed, at the price we assume
 """
 from __future__ import annotations
@@ -163,6 +165,32 @@ def cmd_init(a) -> int:
     return 0
 
 
+def cmd_bundle(a) -> int:
+    """Receipt + manifest + evidence envelopes for docs/audit-quality/verify_bundle.py."""
+    from . import bundle
+    try:
+        s = bundle.build(a.run_dir)
+    except bundle.BundleError as e:
+        print(f"not bundled: {e}")
+        return 2
+    print(f"bundle written in {s['run']}: {s['receipt']} + {s['manifest']} · {s['artifacts']} artifacts · "
+          f"{s['evidence']} evidence rows ({s['ledger_rows']} ledger rows) · {s['claims']} claims · "
+          f"{s['actions']} actions")
+    if s["skipped_rows"]:
+        print(f"  {s['skipped_rows']} ledger rows have no id and could not be bound")
+    print("  synthetic: " + ("yes — " + "; ".join(s["synthetic_reasons"]) if s["synthetic"] else "no"))
+    passed = [n for n, st in s["checks"].items() if st == "PASS"]
+    print(f"  required checks: PASS {', '.join(passed) or 'none'}; {len(s['checks']) - len(passed)} not PASS"
+          f" · actual cost {s['actual_cost']}")
+    print("  left open (the gate decides; this is the bundle's own list):")
+    for item in s["open"]:
+        print(f"    - {item}")
+    root = ROOT.parent / "docs" / "audit-quality" / "verify_bundle.py"
+    mode = " --mode exercise" if s["synthetic"] else ""
+    print(f"grade it: python3 {root if root.exists() else 'docs/audit-quality/verify_bundle.py'} --root {s['run']}{mode}")
+    return 0
+
+
 def cmd_openrouter_check(a) -> int:
     cfg = cost.load_routing()
     models = openrouter.load_models(a.models) if a.models else openrouter.fetch_models()
@@ -204,13 +232,15 @@ def main(argv=None) -> int:
     rn.add_argument("--max-usd", type=float, help="spending cap for this run (default: the tier's max_usd)")
     i = sp.add_parser("init"); i.add_argument("run_dir"); i.add_argument("--from-demo", action="store_true")
     i.add_argument("--ledger"); i.add_argument("--brief"); i.add_argument("--assets")
+    bd = sp.add_parser("bundle", help="bundle a finished run for docs/audit-quality/verify_bundle.py")
+    bd.add_argument("run_dir")
     o = sp.add_parser("openrouter-check"); o.add_argument("--models", help="saved copy of OpenRouter's models list (default: fetch it)")
     o.add_argument("--write", action="store_true", help="update drifted prices in config/routing.json")
     o.add_argument("--tolerance", type=float, default=0.10, help="allowed price drift before the check fails (default 10%%)")
     a = ap.parse_args(argv)
     return {"gate": cmd_gate, "render": cmd_render, "measure": cmd_measure, "cost": cmd_cost, "pack": cmd_pack,
             "basecamp": cmd_basecamp, "card": cmd_card, "run": cmd_run, "init": cmd_init,
-            "openrouter-check": cmd_openrouter_check}[a.cmd](a)
+            "bundle": cmd_bundle, "openrouter-check": cmd_openrouter_check}[a.cmd](a)
 
 
 if __name__ == "__main__":

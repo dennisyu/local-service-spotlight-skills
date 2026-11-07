@@ -27,6 +27,12 @@ rebuilt to a written visual standard — after which Muse's next audit measured 
 rows are not 20-page audits (a 15-page and a 46-page ChatGPT build), and density is a review
 trigger, not proof of quality.
 
+**These measurements are not reviewer calibration.** `python -m factory20 bundle` makes any finished
+run gradable by the house gate (`docs/audit-quality/verify_bundle.py`): it proves which bytes were
+graded and lists every check the run did not perform, but it records calibration as `NOT_RUN`, so
+every bundle holds until people grade three safe anchor audits (the synthetic demo's bundle can be
+one) and that grading is recorded.
+
 ## What the numbers say
 
 1. **The gap is mostly specification, not intelligence.** Muse went from below-bar to
