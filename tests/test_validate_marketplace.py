@@ -5,7 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.validate_marketplace import validate
+from scripts.validate_marketplace import frontmatter_yaml_problems, validate
+
+try:
+    import yaml
+except ImportError:  # the validator itself needs no dependency
+    yaml = None
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -157,6 +162,88 @@ class MarketplaceValidatorTests(unittest.TestCase):
                 ),
                 errors,
             )
+
+    def test_unquoted_colon_in_skill_frontmatter_fails(self):
+        with tempfile.TemporaryDirectory() as temp_name:
+            copied = self.copy_repository(temp_name)
+            skill_file = copied / "skills" / "boil-the-ocean" / "SKILL.md"
+            text = skill_file.read_text(encoding="utf-8")
+            start = text.index('description: "')
+            end = text.index('"\n', start + len('description: "'))
+            unquoted = "description: " + text[start + len('description: "'):end]
+            skill_file.write_text(text[:start] + unquoted + text[end + 1:], encoding="utf-8")
+
+            errors = validate(copied)
+
+            self.assertTrue(
+                any(
+                    "skills/boil-the-ocean/SKILL.md frontmatter line 3: description "
+                    "has an unquoted ': '" in error
+                    for error in errors
+                ),
+                errors,
+            )
+
+    def test_frontmatter_problem_detector_cases(self):
+        def problems(line):
+            return frontmatter_yaml_problems(f"---\nname: x\n{line}\n---\nbody\n")
+
+        self.assertEqual(problems('description: "Use when: quoted, so fine."'), [])
+        self.assertEqual(problems("description: >"), [])
+        self.assertEqual(problems("description: Plain words, no colon space."), [])
+        self.assertEqual(problems("rule-scopes: [agent-behaviour]"), [])
+        self.assertEqual(problems("references:"), [])
+        self.assertEqual(problems("  - https://example.com/a:b"), [])
+        self.assertTrue(problems("description: Use when: this breaks strict YAML"))
+        self.assertTrue(problems("description: Ends with a colon:"))
+        self.assertTrue(problems("description: Has a comment # marker"))
+        self.assertTrue(problems("description: *starts with an alias"))
+        self.assertTrue(problems("description: - starts like a list"))
+        self.assertTrue(problems('description: "never closed'))
+        self.assertEqual(problems('description: "x" # a comment after the quote'), [])
+        self.assertEqual(problems("description: 'it''s fine' # c"), [])
+        self.assertEqual(problems('description: "a quoted value that\n  continues on the next line"'), [])
+        self.assertTrue(problems('description: "x" then more text'))
+        self.assertEqual(frontmatter_yaml_problems("---\nname: x\nno closing fence\n"), ["is not closed with ---"])
+        self.assertTrue(
+            frontmatter_yaml_problems("---\r\nname: x\r\ndescription: Use when: broken\r\n---\r\nbody\r\n")
+        )
+
+    @unittest.skipIf(yaml is None, "PyYAML not installed; the dependency-free cases above still run")
+    def test_detector_agrees_with_a_strict_parser(self):
+        samples = {
+            'description: "Use when: quoted, so fine."': "Use when: quoted, so fine.",
+            'description: "x" # a comment after the quote': "x",
+            "description: 'it''s fine' # c": "it's fine",
+            'description: "a quoted value that\n  continues on the next line"': "a quoted value that continues on the next line",
+            "description: Plain words, no colon space.": "Plain words, no colon space.",
+            "description: Use when: this breaks strict YAML": "Use when: this breaks strict YAML",
+            "description: Ends with a colon:": "Ends with a colon:",
+            "description: Has a comment # marker": "Has a comment # marker",
+            'description: "x" then more text': 'x" then more text',
+            'description: "never closed': '"never closed',
+            "description: *starts with an alias": "*starts with an alias",
+            "description: - starts like a list": "- starts like a list",
+        }
+        for line, meant in samples.items():
+            with self.subTest(line=line):
+                try:
+                    loaded = yaml.safe_load(f"name: x\n{line}\n")
+                    strict_problem = loaded.get("description") != meant
+                except yaml.YAMLError:
+                    strict_problem = True
+                detector_problem = bool(frontmatter_yaml_problems(f"---\nname: x\n{line}\n---\nbody\n"))
+                self.assertEqual(detector_problem, strict_problem)
+
+    @unittest.skipIf(yaml is None, "PyYAML not installed; the dependency-free check above still runs")
+    def test_every_skill_frontmatter_loads_with_a_strict_parser(self):
+        for skill_file in sorted((REPOSITORY / "skills").glob("*/SKILL.md")):
+            text = skill_file.read_text(encoding="utf-8")
+            frontmatter = text[4:text.index("\n---", 4)]
+            with self.subTest(skill=skill_file.parent.name):
+                loaded = yaml.safe_load(frontmatter)
+                self.assertEqual(loaded["name"], skill_file.parent.name)
+                self.assertTrue(loaded["description"])
 
 
 if __name__ == "__main__":

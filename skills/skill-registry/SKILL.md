@@ -121,6 +121,11 @@ approval.
 1. List the canonical marketplace commit and every available skill.
 2. List what each target account and fleet site actually reports as its commit/version and installed skills.
 3. Diff them. **Every target behind the canonical commit is a propagation failure; every untracked local skill is an orphan.**
+   Where the installed copy is readable on disk, diff it by content, not by folder name:
+   `python3 scripts/check_installed_parity.py --installed <installed skills dir>`. It hashes
+   every file, separates installer reformatting of frontmatter from real drift, keeps local
+   extras as reported (never deleted), and lists any repository SKILL.md a strict YAML
+   loader would reject. Exit 1 means a skill is missing or its text differs.
 4. For each recurring scheduled job, confirm the skill it names still exists under that exact name. Renaming a skill silently breaks every job that calls it.
 5. Check the local desktop scheduled jobs separately. They do not appear in a cloud listing, so a cloud-only audit will report them as absent when they are running fine — and will miss them entirely when they are broken.
 6. Reconcile each scheduled job's last attempted, succeeded, failed, and next expected timestamps against its durable receipts.
