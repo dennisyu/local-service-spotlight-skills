@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install \u2014 all 38 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 39 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -24,6 +24,7 @@
         "./skills/client-relationship-cadence",
         "./skills/content-agent",
         "./skills/content-factory",
+        "./skills/content-library-keeper",
         "./skills/definitive-article-writer",
         "./skills/dollar-a-day-strategist",
         "./skills/evidence-verification",
@@ -74,13 +75,14 @@
     },
     {
       "name": "content-engine",
-      "description": "Turn one idea into everything \u2014 articles, video, repurposing, amplification, distribution. (7 skills)",
+      "description": "Turn one idea into everything \u2014 articles, video, repurposing, amplification, distribution. (8 skills)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/business-website-agent",
         "./skills/content-agent",
         "./skills/content-factory",
+        "./skills/content-library-keeper",
         "./skills/definitive-article-writer",
         "./skills/dollar-a-day-strategist",
         "./skills/social-amplification-engine",

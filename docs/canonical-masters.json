@@ -239,6 +239,108 @@
         "by": "Codex, entity content maintenance",
         "what": "Read the accepted operational reference and its acceptance receipt in this repository. Confirmed the current concept locator remains /nine-triangles/ rather than assigning its role to the long article URL cited in August. Direct anonymous fetch of both URLs returned HTTP 403; live semantics, definitive certification and downstream adoption remain unverified."
       }
+    },
+    {
+      "topic": "content-library",
+      "subject": "Your Content Factory Library",
+      "entity_type": "inventory",
+      "owner_function": "Content operations (library upkeep)",
+      "source_of_truth": {
+        "url": null,
+        "note": "The Library Map tab of the company's library sheet names the one master for each kind of knowledge (recordings, published pages, people, proof, speaking, photos, methods) and the agent function that owns it. Private: lives in the company's own Google Drive and repositories. Agents with access find it from the company's private agent runtime; it is not linked from this public file. Counts live in each master, never in this registry."
+      },
+      "hub": {
+        "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/content-library/README.md",
+        "role": "Public method: how the library is organized, the seven borrowed rules, the daily agent loop, and the hub-and-spoke protocol for other teams' agents."
+      },
+      "method": {
+        "url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/content-library-keeper/SKILL.md",
+        "role": "Runnable skill with the inventory and map-snapshot scripts."
+      },
+      "skins": [
+        {
+          "url": null,
+          "role": "Private generated copy in the company's repository: the published inventory, the lists the agents work and a dated snapshot of the Library Map. Generated, never edited by hand."
+        }
+      ],
+      "owning_skill": {
+        "name": "content-library-keeper",
+        "in_this_repo": true
+      },
+      "cadence": "Daily at 4:41 am Pacific by the library agent's scheduled task (created 2026-11-04). It posts to the team's project thread only when something changed or needs a person; other agents work the lists it generates.",
+      "claim_id_pattern": "master:content-library:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-04",
+        "by": "Claude, content library",
+        "what": "Built the Library Map from live reads of the sheet, the recordings backup folders, the people registry and four live sitemaps; every Rows-now cell is a formula or 'external'."
+      },
+      "public_article": {
+        "url": "https://blitzmetrics.com/content-library/",
+        "role": "The method in plain words, with its diagram and the first day's results."
+      }
+    },
+    {
+      "topic": "published-pages",
+      "subject": "Pages published on the company's own sites",
+      "entity_type": "inventory",
+      "owner_function": "Content operations (library upkeep)",
+      "source_of_truth": {
+        "url": null,
+        "note": "Each site's own sitemap is the source of truth for what is published; there is no single URL. The library agent rebuilds the copy daily with content-library-keeper's published_inventory.py, counting each page once."
+      },
+      "hub": {
+        "url": null,
+        "role": "Private summary tab: counts per site, topics, one line per list with its count and the agent that works it, and the sitemap defects. Private: lives in the company's own Google Drive and repositories. Agents with access find it from the company's private agent runtime; it is not linked from this public file."
+      },
+      "skins": [
+        {
+          "url": null,
+          "role": "Private generated copy, one row per URL listed in the sitemaps."
+        }
+      ],
+      "competing_copies": [
+        {
+          "url": null,
+          "found": "2026-11-04",
+          "disposition": "Five hand-kept per-site article tabs in the private library sheet were frozen and renamed with a (legacy) suffix on 2026-11-04. They stay as history; their gaps are not filled in, because the sitemap is the list."
+        }
+      ],
+      "owning_skill": {
+        "name": "content-library-keeper",
+        "in_this_repo": true
+      },
+      "cadence": "Daily. The inventory stops and writes nothing if any part of a sitemap fails, too many pages do not answer or are blocked, or a site's count drops sharply, so the previous rows stay and a partial count never replaces a full one.",
+      "claim_id_pattern": "master:published-pages:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-04",
+        "by": "Claude, content library",
+        "what": "Read the sitemap index and child sitemaps of dennisyu.com, blitzmetrics.com, localservicespotlight.com and yourcontentfactory.com; WordPress REST was open on two of them and page HTML was read on the other two."
+      }
+    },
+    {
+      "topic": "people-registry",
+      "subject": "People and companies Dennis Yu works with",
+      "entity_type": "registry",
+      "owner_function": "Relationships",
+      "source_of_truth": {
+        "url": null,
+        "note": "Private repository registry, one row per unique entity with provenance; merges are recorded beside it. Private: lives in the company's own Google Drive and repositories. Agents with access find it from the company's private agent runtime; it is not linked from this public file."
+      },
+      "hub": {
+        "url": null,
+        "gap": "No public hub by design: relationship data stays private. Public pages about a person are supporting pages for that person's own entity, not copies of the registry."
+      },
+      "owning_skill": {
+        "name": "content-library-keeper",
+        "in_this_repo": true
+      },
+      "cadence": "Updated when a relationship is confirmed from a source. The library's daily refresh counts the real relationships no page names yet; the honor-article program writes those pages.",
+      "claim_id_pattern": "master:people-registry:<pass>:<YYYY-MM-DD>",
+      "last_verified": {
+        "date": "2026-11-04",
+        "by": "Claude, content library",
+        "what": "Read registry.json and matched every person against the titles of the live published pages."
+      }
     }
   ]
 }
