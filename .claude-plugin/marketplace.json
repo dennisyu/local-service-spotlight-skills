@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "lss-everything",
-      "description": "Everything we use, in one install \u2014 all 50 Local Service Spotlight skills. Start here; this is what most people want.",
+      "description": "Everything we use, in one install \u2014 all 51 Local Service Spotlight skills. Start here; this is what most people want.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -64,7 +64,8 @@
         "./skills/google-ads-reviewer",
         "./skills/google-ads-script",
         "./skills/personal-brand-strategist",
-        "./skills/personal-brand-website-agent"
+        "./skills/personal-brand-website-agent",
+        "./skills/fitting-reply"
       ]
     },
     {
@@ -104,7 +105,7 @@
     },
     {
       "name": "client-operations",
-      "description": "Run the account \u2014 cadence, access, reporting including GA4 and Google Ads, audits. (22 skills)",
+      "description": "Run the account \u2014 cadence, access, reporting including GA4 and Google Ads, audits. (23 skills)",
       "source": "./",
       "strict": false,
       "skills": [
@@ -129,7 +130,8 @@
         "./skills/google-ads-lp-auditor",
         "./skills/google-ads-onboarding",
         "./skills/google-ads-reviewer",
-        "./skills/google-ads-script"
+        "./skills/google-ads-script",
+        "./skills/fitting-reply"
       ]
     },
     {
