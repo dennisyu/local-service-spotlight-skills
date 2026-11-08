@@ -42,7 +42,7 @@
           "required": ["rows"],
           "properties": {
             "rubric": {"type": "string"},
-            "pass_line": {"type": "number"},
+            "pass_line": {"type": "number", "description": "ignored: the pass line is fixed in code (score.PASS_LINE)"},
             "rows": {"type": "array", "minItems": 10, "maxItems": 10, "items": {
               "type": "object", "required": ["n", "score", "evidence"],
               "properties": {"n": {"type": "integer", "minimum": 1, "maximum": 10},

@@ -66,8 +66,8 @@ API_PROVIDERS = {"anthropic", "openrouter", "openai", "gemini"}
 LEDGER_SECTIONS = ("items", "ambiguous", "conflicts", "unknowns")   # Ledger.from_json reads them in this order
 REVIEW_LIMITS = (
     "It does not count as the house independent review: it reads audit.json, the ledger pack and the "
-    "gate and render reports, but pipeline.review_prompt sends no page images (stages/80-review.md lists "
-    "them), so no reviewer saw the rendered PDF; review.json records no hash of what was reviewed; the "
+    "gate and render reports, but pipeline.review_prompt sends no page images (the review card says "
+    "so), so no reviewer saw the rendered PDF; review.json records no hash of what was reviewed; the "
     "brief's do-not-print list is withheld from it; and the second review on a different model that the "
     "kit asks of pilot and enterprise audits is not run by the code.")
 

@@ -127,10 +127,15 @@ on one key, and `openrouter-lean` is the few-dollar tier. What the kit does on e
   drafting — and leaves room for that thinking in the reply limit, because Sonnet and Opus 5.5
   always think and thinking is billed as output; a reply cut off at its limit gets one retry
   with twice the room;
-- records the charge OpenRouter reports in the reply, not an estimate, in `run.json`;
+- records the charge OpenRouter reports in the reply (it returns one on every response), not an
+  estimate, in `run.json`;
+- sends a price ceiling (`provider.max_price`): the listed price, at its long-context tier when the
+  prompt can reach it, plus 25% headroom (`max_price_headroom`), so no provider charges more than
+  the spending cap assumed; a call no provider can serve under it fails and escalates;
 - retries rate limits and server errors (honouring `Retry-After`), stops at once on a bad key or
-  empty credits, and never crosses the spending cap: a call whose worst case would cross it is not
-  made, and the held audit says why;
+  empty credits, and never crosses the spending cap: before each call it adds that call's worst
+  case (every prompt byte a token, the whole reply limit, the ceiling rate) to what the run has
+  spent, and a call that could cross the cap is not made; the held audit says why;
 - writes pages 3-19 in four calls that share a cached prefix, because a real audit's pages run
   about 19,000 output tokens, more than one reply should carry.
 
@@ -233,8 +238,8 @@ because it carries no time zone.
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
 | `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
-| `../tests/test_audit_factory.py` | 72 tests: every gate has a failing mutation |
-| `../tests/test_audit_factory_openrouter.py` | 30 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
+| `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
+| `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

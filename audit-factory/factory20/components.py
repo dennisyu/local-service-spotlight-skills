@@ -257,10 +257,19 @@ def heatmap(b, ctx):
         g.append(f'<text x="{xs + 30}" y="{y + 17}" class="tid">{E(" ".join(ev[:3]))}</text>')
     H = 10 + len(rows) * rowh
     res = ctx.exam_result()
-    tot = (f'<div class="examtot"><div class="et-v">{E(str(res["total"] if res["total"] is not None else res["known_subtotal"]))}'
-           f'<span>/100</span></div><div class="et-s">{E(res["verdict"])}</div>'
+    tot = (f'<div class="examtot"><div class="et-v">{_exam_figure(res)}</div><div class="et-s">{E(res["verdict"])}</div>'
            f'<div class="et-p">Pass line {res["pass_line"]} · ten equal rows · never averaged with other exams</div></div>') if res else ""
     return f'<div class="blk heatmap" {_span(b)}>{_title(b)}<div class="hmwrap">{_svg(Wd, H, "".join(g))}{tot}</div>{_caption(b, ctx)}</div>'
+
+
+def _exam_figure(res: dict) -> str:
+    """The big number in the exam box. Only a complete exam prints a score out of 100: an
+    incomplete one prints what it knows out of what it checked, and identity HOLD prints none."""
+    if res["total"] is not None:
+        return f'{E(str(res["total"]))}<span>/100</span>'
+    if res["status"] == "INCOMPLETE":
+        return f'{E(str(res["known_subtotal"]))}<span> of {10 * res["known_rows"]} checked</span>'
+    return '\u2014<span> no score</span>'
 
 
 def scorebar(b, ctx):
