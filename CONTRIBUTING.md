@@ -23,6 +23,16 @@ Instead:
 6. If behavior or distribution changed, complete the relevant checks in
    [ACCEPTANCE.md](ACCEPTANCE.md).
 
+**Bulk imports are operations, not exceptions.** Lifting a family of files from
+a snapshot, a sibling repo, or a live skill page still goes through one branch
+and one pull request — one commit for the whole lift, not one commit per file.
+Single-file commits pushed straight to `main` bypass validation once per file
+and leave no single place to review or revert the batch. A bulk import is a
+behavior-changing operation: log it in the fleet ops log the same day, naming
+the operator, the source snapshot, the scope (which skills or directories), and
+the rollback (revert the one merge commit). If the import is verbatim, say so
+in the PR and name the owner of the source family.
+
 For recurring distribution, follow
 `skills/skill-registry/references/update-contract.md`. The GitHub commit is the
 release identity; a ZIP filename or modification date is not.
@@ -158,5 +168,5 @@ volume zero, including any separate playback test.
 The same first-screen pass requires one readable H1/level-one heading line
 (18px minimum, 90% visible). CSS background measurements account for opaque
 descendant and before/after layers, including overlays that ignore pointer
-events. Transparent text and light tints may coexist with the photo; retain
-the actual screenshot review for crop, legibility and complicated compositing.
+events. Transparent text and light tints may coexist with the photo; retain the
+actual screenshot review for crop, legibility and complicated compositing.
