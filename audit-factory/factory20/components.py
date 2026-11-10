@@ -9,6 +9,8 @@ import html
 import math
 import re
 
+from . import model as M
+
 E = html.escape
 STATE_CLASS = {"OBSERVED": "obs", "INFERRED": "inf", "UNKNOWN": "unk", "PROPOSED": "inf", "REPORTED": "inf"}
 
@@ -135,7 +137,7 @@ def finding_map(b, ctx):
 
 def table(b, ctx):
     cols = b.get("columns", [])
-    ev_col = {i for i, c in enumerate(cols) if str(c).lower() in ("evidence", "refs", "source ids", "evidence ids")}
+    ev_col = set(M.evidence_columns(cols))   # the same rule refs_in uses, so every chip is checked
     st_col = {i for i, c in enumerate(cols) if str(c).lower() in ("state", "status")}
     head = "".join(f"<th>{md(str(c))}</th>" for c in cols)
     body = []
@@ -143,8 +145,7 @@ def table(b, ctx):
         cells = []
         for i, v in enumerate(r):
             if i in ev_col:
-                ids = v if isinstance(v, list) else re.split(r"[,\s]+", str(v).strip())
-                cells.append(f"<td>{chips([x for x in ids if x], ctx)}</td>")
+                cells.append(f"<td>{chips(M.cell_ids(v), ctx)}</td>")
             elif i in st_col and str(v).upper() in STATE_CLASS:
                 cells.append(f"<td>{badge(str(v))}</td>")
             else:

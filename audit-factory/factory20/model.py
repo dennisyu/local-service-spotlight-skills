@@ -25,7 +25,10 @@ VISUAL_BLOCKS = {
 }
 TEXT_BLOCKS = {"prose", "cards", "stat_strip", "table", "callout", "checklist", "conflicts", "quote"}
 ALL_BLOCKS = VISUAL_BLOCKS | TEXT_BLOCKS
-BADGES = {"OBSERVED", "INFERRED", "UNKNOWN"}
+# REPORTED is a ledger state (ledger.STATES) and the renderer already draws it; a card built on
+# REPORTED evidence must be able to say so. Without it, the Nov 10 pilot's writers had to retry,
+# climb the model ladder, or relabel reported evidence as INFERRED to pass G21.
+BADGES = {"OBSERVED", "INFERRED", "UNKNOWN", "REPORTED"}
 ACTION_STATES = {"PROPOSED", "STAGED", "APPROVED", "IN PROGRESS", "BLOCKED", "COMPLETE", "VERIFIED"}
 EXECUTORS = {"AGENT", "AGENT_AFTER_APPROVAL", "HUMAN"}
 ACTION_FIELDS = ["id", "action", "evidence", "function", "skill", "dependency", "destination",
@@ -33,6 +36,9 @@ ACTION_FIELDS = ["id", "action", "evidence", "function", "skill", "dependency", 
 
 EVID_KEYS = ("evidence", "refs", "evidence_ids")
 ACTION_KEYS = ("actions", "action_ids")
+# A table column with one of these names holds evidence ids; the renderer draws each id in it
+# as a linked chip, so every check that counts or verifies citations reads it too.
+EVIDENCE_COLUMNS = ("evidence", "refs", "source ids", "evidence ids")
 
 
 def load(path: str | pathlib.Path) -> dict:
@@ -50,8 +56,39 @@ def walk(obj) -> Iterator:
             yield from walk(v)
 
 
+def cell_ids(v) -> list[str]:
+    """The evidence ids in one table cell, split exactly as the renderer splits them into chips."""
+    parts = v if isinstance(v, list) else re.split(r"[,\s]+", str(v).strip())
+    return [str(x).strip() for x in parts if str(x).strip()]
+
+
+def evidence_columns(columns) -> list[int]:
+    """Indexes of the table columns that hold evidence ids."""
+    if not isinstance(columns, list):
+        return []
+    return [i for i, c in enumerate(columns) if str(c).strip().lower() in EVIDENCE_COLUMNS]
+
+
+def table_refs(d: dict) -> list[str]:
+    """Evidence ids in a table's evidence columns (a block {columns, rows}); [] for anything else."""
+    idx = evidence_columns(d.get("columns"))
+    rows = d.get("rows")
+    if not idx or not isinstance(rows, list):
+        return []
+    out: list[str] = []
+    for r in rows:
+        if isinstance(r, list):
+            for i in idx:
+                if i < len(r):
+                    out += cell_ids(r[i])
+    return out
+
+
 def refs_in(obj) -> list[str]:
-    """All evidence ids referenced anywhere inside obj, in first-seen order."""
+    """All evidence ids referenced anywhere inside obj, in first-seen order: every evidence /
+    refs / evidence_ids field, and every id in a table's evidence column (the renderer turns
+    those into chips, so the checks must see them; until Nov 10 they did not, and a page that
+    cited a dozen ids in its tables failed "cite at least 3 evidence ids")."""
     seen: dict[str, None] = {}
     for d in walk(obj):
         for k in EVID_KEYS:
@@ -62,6 +99,8 @@ def refs_in(obj) -> list[str]:
                 for x in v:
                     if isinstance(x, str) and x.strip():
                         seen.setdefault(x.strip(), None)
+        for x in table_refs(d):
+            seen.setdefault(x, None)
     return list(seen)
 
 

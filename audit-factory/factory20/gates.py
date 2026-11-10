@@ -91,6 +91,34 @@ def _digits(s: str) -> str:
     return re.sub(r"\D", "", s)[-10:]
 
 
+def _urls_of(obj) -> str:
+    return " ".join(d["url"] for d in M.walk(obj) if isinstance(d.get("url"), str))
+
+
+def _where_text(found, pages: list[dict], actions: list[dict]) -> str:
+    """Where each found string sits: 'page 4; page 19; action register A8'. The fix loop reads
+    this to send the item to the writer who owns that text (pages 1-2 the synthesis model,
+    pages 3-19 the fix model, the register the actions model)."""
+    lows = [str(f).lower() for f in found if str(f).strip()]
+    spots = [f"page {p.get('n')}" for p in pages
+             if any(f in (M.text_of(p) + " " + _urls_of(p)).lower() for f in lows)]
+    ids = [str(a.get("id", "?")) for a in actions
+           if any(f in (M.text_of(a) + " " + _urls_of(a)).lower() for f in lows)]
+    if ids:
+        spots.append("action register " + ", ".join(ids[:8]))
+    return "; ".join(spots) or "unlocated"
+
+
+def _where_refs(refs, pages: list[dict], actions: list[dict]) -> str:
+    """Where each evidence id is cited, in the same form as _where_text."""
+    want = set(refs)
+    spots = [f"page {p.get('n')}" for p in pages if want & set(M.refs_in(p))]
+    ids = [str(a.get("id", "?")) for a in actions if want & set(M.refs_in(a))]
+    if ids:
+        spots.append("action register " + ", ".join(ids[:8]))
+    return "; ".join(spots) or "unlocated"
+
+
 def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard",
                do_not_print: list[str] | None = None, allowed_phones: list[str] | None = None) -> Report:
     T = TIERS[tier]
@@ -126,15 +154,24 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     if ledger is not None:
         dangling = sorted(r for r in uniq if not ledger.has(r))
         R.add("G10", "Every evidence ref exists in the ledger", "evidence", not dangling,
-              f"{len(dangling)} refs not in ledger: {dangling[:12]} — cite real ledger ids only")
+              f"{len(dangling)} refs not in ledger: {dangling[:12]} — cite real ledger ids only "
+              f"(cited on {_where_refs(dangling, pages, actions)})")
         cited = [ledger.get(r) for r in uniq if ledger.get(r)]
         wrong_person = [c["id"] for c in cited if c["kind"] == "ambiguous" or c["match"] in ("AMBIGUOUS", "NAMESAKE", "REJECTED")]
         # ambiguous rows may be cited only on the identity page
         id_page = M.page_by_type(audit, "identity") or {}
-        allowed = set(M.refs_in(id_page)) | set(M.refs_in(M.page_by_type(audit, "risks") or {}))
+        # A namesake row must be introduced on the identity or risks page before anything else
+        # cites it. Other citations are left to the reviewer (check 1): a low entity score or the
+        # entity page may rightly cite someone who shares the subject's name. (Tried Nov 10:
+        # flagging every citation outside those two pages held a real rebuild on an exam row that
+        # cited the namesake to explain a score of 1.)
+        risks_page = M.page_by_type(audit, "risks") or {}
+        allowed = set(M.refs_in(id_page)) | set(M.refs_in(risks_page))
         leak = sorted(set(wrong_person) - allowed)
+        leak_on = [p for p in pages if p is not id_page and p is not risks_page]
         R.add("G11", "Namesake/ambiguous rows cited only on identity or risks pages", "evidence", not leak,
-              f"ambiguous/namesake evidence used as proof: {leak[:10]}")
+              f"ambiguous/namesake evidence used as proof: {leak[:10]} "
+              f"(cited on {_where_refs(leak, leak_on, actions)})")
         with_url = sum(1 for c in cited if c["kind"] == "evidence" and c["url"].startswith("http"))
         ev_cited = sum(1 for c in cited if c["kind"] == "evidence")
         share = with_url / ev_cited if ev_cited else 0
@@ -155,7 +192,7 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     for i, c in enumerate(cards, 1):
         probs = []
         if c.get("badge") not in M.BADGES:
-            probs.append("badge")
+            probs.append(f"badge {c.get('badge')!r} is not one of {', '.join(sorted(M.BADGES))}")
         if M.words(c.get("title", "")) < 4:
             probs.append("title<4 words")
         if M.words(c.get("body", "")) < 25:
@@ -318,15 +355,17 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     shipped = " ".join([text, M.text_of(actions), _printed_urls(pages), _printed_urls(actions)])
     emails = sorted({e for e in EMAIL.findall(shipped) if e.lower() not in ALLOWED_EMAILS})
     R.add("G70", "No personal email addresses in the client edition", "privacy", not emails,
-          f"remove {emails}")
+          f"remove {emails} (found on {_where_text(emails, pages, actions)})" if emails else "")
     # A local business's own listed numbers are fair game (name-address-phone checks need them);
     # list them in brief.allowed_phones. Any other number is a private one.
     ok_phones = {_digits(p) for p in (allowed_phones or [])}
     phones = [p for p in PHONE.findall(shipped) if _digits(p) not in ok_phones]
     R.add("G71", "No phone numbers except the business's own listed numbers", "privacy", not phones,
-          f"remove {phones[:5]}, or add the business's own listed numbers to brief.allowed_phones")
+          f"remove {phones[:5]} (found on {_where_text(phones[:5], pages, actions)}), or add the business's "
+          "own listed numbers to brief.allowed_phones" if phones else "")
     sec = sorted(set(m.lower() for m in SECRETS.findall(shipped)))
-    R.add("G72", "No credentials or internal agent receipts", "privacy", not sec, f"remove {sec}")
+    R.add("G72", "No credentials or internal agent receipts", "privacy", not sec,
+          f"remove {sec} (found on {_where_text(sec, pages, actions)})" if sec else "")
     # The brief's do-not-print list: confidential numbers, embargoed titles, private names.
     # Cheap models leaked exactly these in the Oct 25 bake-off. The message never repeats
     # the strings, because gate.json travels further than the brief.
@@ -381,8 +420,16 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
     for n in over:
         d = detail.get(str(n)) or {}
         if d:
-            parts.append(f"page {n} runs {round(100 * d.get('over_pct', 0))}% past the page — cut about "
-                         f"{d.get('cut_words', '?')} words or shrink a visual; tallest: {', '.join(d.get('tallest', []))}")
+            over = f"{round(100 * d.get('over_pct', 0))}%" + (f" ({d['over_px']}px)" if d.get("over_px") else "")
+            msg = (f"page {n} runs {over} past the page — cut about {d.get('cut_words', '?')} words from your own "
+                   f"blocks, or drop or move one of them")
+            if d.get("options"):
+                msg += f" ({'; '.join(d['options'])})"
+            msg += f"; your tallest: {', '.join(d.get('tallest', []))}"
+            if d.get("fixed"):
+                msg += (f"; also on this page, drawn by the renderer and not in your page object, so you cannot "
+                        f"change it: {', '.join(d['fixed'])}")
+            parts.append(msg)
         else:
             parts.append(f"page {n} overflows")
     R.add("R02", "No page overflows (text cut off)", "render", not over,

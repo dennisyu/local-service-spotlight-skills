@@ -363,8 +363,9 @@ def spent(run_dir: pathlib.Path) -> float:
 
 def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=None, cfg: dict | None = None,
               fake=None, max_escalations: int = 1, confidential: bool = False, max_usd: float | None = None,
-              write: bool = True) -> dict:
+              write: bool = True, model: str | None = None) -> dict:
     """Run one stage: call, parse, check; retry once with the error, then escalate one rung.
+    model overrides the tier's model for this stage (the fix loop's one-rung-up round uses it).
 
     check(obj) -> list of problems (empty = accepted). Every attempt is logged with tokens
     and cost to run.json before anything else happens, so the per-audit attribution is
@@ -378,7 +379,7 @@ def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=
     st = next(s for s in cfg["stages"] if s["id"] == stage_id)
     system = (STAGES_DIR / st["card"]).read_text(encoding="utf-8")
     answer = int(st.get("max_out", DEFAULT_MAX_OUT))
-    model = safe_model(cfg, cfg["tiers"][tier]["models"][stage_id], confidential, tier)
+    model = safe_model(cfg, model or cfg["tiers"][tier]["models"][stage_id], confidential, tier)
     log_path = run_dir / "run.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {"tier": tier, "attempts": []}
     escalations, prompt, boosted = 0, user, False

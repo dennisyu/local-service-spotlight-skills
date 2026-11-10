@@ -203,7 +203,14 @@ class GateNegativeTests(unittest.TestCase):
         self.mutate(lambda a: self.page(a, 3)["blocks"][0]["steps"][0]["evidence"].append("V-E999"), "G10")
 
     def test_G11_namesake_used_as_proof(self):
-        self.mutate(lambda a: self.page(a, 2)["blocks"][0]["items"][0]["evidence"].append("V-A01"), "G11")
+        def cite_without_introducing(a):
+            # The demo introduces V-A01 in the identity page's namesake table. Since Nov 10 a table's
+            # Evidence column counts as citing, so take the row out there first; until then this
+            # test passed only because G11 could not see that table.
+            t = next(b for b in self.page(a, 4)["blocks"] if b["type"] == "table")
+            t["rows"] = [r for r in t["rows"] if "V-A01" not in str(r[-1])]
+            self.page(a, 2)["blocks"][0]["items"][0]["evidence"].append("V-A01")
+        self.mutate(cite_without_introducing, "G11")
 
     def test_G20_too_few_cards(self):
         self.mutate(lambda a: self.page(a, 2)["blocks"][0].update(items=self.page(a, 2)["blocks"][0]["items"][:3]), "G20")
