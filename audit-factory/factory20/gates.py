@@ -167,7 +167,7 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
         risks_page = M.page_by_type(audit, "risks") or {}
         leak_on = [p for p in pages if p is not id_page and p is not risks_page and p.get("type") != "exams"]
         leak = sorted(set(wrong_person) & (set(M.refs_in(leak_on)) | set(M.refs_in(actions))))
-        R.add("G11", "Namesake/ambiguous rows cited only on the identity, risks or exam pages", "evidence", not leak,
+        R.add("G11", "Namesake/ambiguous rows cited only on identity or risks pages", "evidence", not leak,
               f"ambiguous/namesake evidence used as proof: {leak[:10]} "
               f"(cited on {_where_refs(leak, leak_on, actions)})")
         with_url = sum(1 for c in cited if c["kind"] == "evidence" and c["url"].startswith("http"))
