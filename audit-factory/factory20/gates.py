@@ -147,6 +147,11 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
                       if b.get("type") not in M.ALL_BLOCKS]
     R.add("G04", "Only known block types", "structure", not unknown_blocks,
           f"unknown block types {unknown_blocks}; use one of {sorted(M.ALL_BLOCKS)}")
+    if ledger is not None:
+        odd = M.off_shape(r["id"] for r in ledger.rows)
+        R.add("G05", "Every ledger id can be cited in a table", "structure", not odd,
+              f"ledger ids {odd[:10]} lack the id shape (V-E012, E-001); a table cell reads ids by that "
+              "shape, so these print as plain words that no check counts. Rename them in the ledger")
 
     # ---------- G10 evidence linkage ----------
     all_refs = M.refs_in(pages) + M.refs_in(actions) + M.refs_in(audit.get("exams", {}))

@@ -379,11 +379,12 @@ MEASURE_JS = """
 
 def _grid_rows(blocks: list[dict]) -> list[list[int]]:
     """Block indexes by grid row, as the browser places them: in order, a new row whenever the
-    next block's span no longer fits in the 12 columns."""
+    next block's span no longer fits in the 12 columns. A block without a span takes its
+    renderer's default (a photo or the QR four columns), not twelve."""
     rows: list[list[int]] = []
     used = 12
     for i, b in enumerate(blocks):
-        span = min(max(int(b.get("span", 12) or 12), 1), 12)
+        span = C.span_of(b)
         if used + span > 12:
             rows.append([])
             used = 0

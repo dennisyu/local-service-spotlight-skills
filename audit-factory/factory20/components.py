@@ -53,8 +53,25 @@ def badge(state: str) -> str:
     return f'<span class="badge b-{STATE_CLASS.get(s, "unk")}">{E(s)}</span>'
 
 
-def _span(b, default=12) -> str:
-    return f'style="grid-column: span {int(b.get("span", default))}"'
+# A block without a span takes its type's default: photos, screenshots and the QR sit four
+# columns wide, everything else the full twelve. The overflow advice reads the same table
+# (span_of), so it places blocks in the rows the browser does.
+DEFAULT_SPAN = {"photo": 4, "screenshot": 4, "qr": 4}
+
+
+def span_of(b) -> int:
+    """The grid columns a block takes, 1 to 12, as the browser lays it out."""
+    d = DEFAULT_SPAN.get(b.get("type"), 12)
+    try:
+        sp = int(b.get("span", d) or d)
+    except (TypeError, ValueError):
+        sp = d
+    return min(max(sp, 1), 12)
+
+
+def _span(b) -> str:
+    d = DEFAULT_SPAN.get(b.get("type"), 12)
+    return f'style="grid-column: span {int(b.get("span", d))}"'
 
 
 def _title(b) -> str:
@@ -195,7 +212,7 @@ def photo(b, ctx):
         ctx.missing_assets.append(src or "(no src)")
         img = f'<div class="noimg">IMAGE NEEDED<br><span>{E(src or b.get("caption", ""))}</span></div>'
     h = int(b.get("height", 150))
-    return (f'<figure class="blk photo" {_span(b, 4)}><div class="frame" style="height:{h}px">{img}</div>'
+    return (f'<figure class="blk photo" {_span(b)}><div class="frame" style="height:{h}px">{img}</div>'
             f'{_caption(b, ctx)}</figure>')
 
 
@@ -487,7 +504,7 @@ def qr(b, ctx):
         svg = segno.make(url, error="m").svg_inline(scale=4, border=3, dark="#111111", omitsize=True)
     except Exception:  # segno missing: the printed URL still works
         svg = '<div class="noimg">QR</div>'
-    return (f'<div class="blk qr" {_span(b, 4)}><div class="qrimg">{svg}</div>'
+    return (f'<div class="blk qr" {_span(b)}><div class="qrimg">{svg}</div>'
             f'<div class="qrurl"><a href="{E(url)}">{E(url)}</a></div><div class="cap">{md(b.get("caption", "Scan to install the agents"))}</div></div>')
 
 

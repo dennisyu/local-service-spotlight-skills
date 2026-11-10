@@ -365,6 +365,12 @@ class GateMutationCoverageTests(unittest.TestCase):
     def test_G04_unknown_block_type(self):
         self.trips(lambda a: self.page(a, 5)["blocks"].append({"type": "sparkle"}), "G04")
 
+    def test_G05_a_ledger_id_a_table_cannot_cite(self):
+        data = json.loads((DEMO / "ledger.json").read_text())
+        data["unknowns"][0]["id"] = "VU01"      # no hyphen: a table cell would print it as a word
+        self.assertEqual(gate_statuses(copy.deepcopy(AUDIT), "G05", ledger=Ledger.from_json(data)), ["FAIL"])
+        self.assertEqual(gate_statuses(copy.deepcopy(AUDIT), "G05"), ["PASS"])
+
     def test_G12_most_cited_rows_have_no_link(self):
         data = json.loads((DEMO / "ledger.json").read_text())
         for row in data["items"][:45]:
@@ -583,8 +589,8 @@ class RouterTests(unittest.TestCase):
             d = pathlib.Path(d)
             with self.assertRaises(router.Pending):
                 router.run_stage("pages", "user", "muse", d, check=lambda o: [])
-            self.assertTrue((d / "prompts" / "pages.md").exists())
-            (d / "outputs" / "pages.json").write_text('{"pages": []}')
+            [asked] = (d / "prompts").glob("pages-*.md")
+            (d / "outputs" / f"{asked.stem}.json").write_text('{"pages": []}')
             self.assertTrue(router.run_stage("pages", "user", "muse", d, check=lambda o: [])["ok"])
 
 

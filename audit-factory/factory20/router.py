@@ -10,8 +10,9 @@ Providers
   openrouter  OpenAI-compatible chat  OPENROUTER_API_KEY   one key for Claude, DeepSeek, GPT, Grok, Gemini
   openai      Chat Completions        OPENAI_API_KEY
   gemini      generateContent         GEMINI_API_KEY
-  manual      writes prompts/<stage>.md and waits for outputs/<stage>.json — for an app
-              session (Muse, ChatGPT, Claude.ai) running the factory itself
+  manual      writes prompts/<stage>-<hash>.md and waits for outputs/<stage>-<hash>.json, one
+              pair per distinct call — for an app session (Muse, ChatGPT, Claude.ai) running
+              the factory itself
   fake        deterministic stub for tests
 
 Privacy on OpenRouter. Every call asks only for providers that do not collect user data
@@ -38,6 +39,7 @@ could cross the cap is never made.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import pathlib
@@ -92,6 +94,16 @@ def _claude_user(user: str, cache: bool):
 
 class Pending(Exception):
     """A manual stage is waiting for its output file."""
+
+
+def manual_name(stage: str, model: str, body: str) -> str:
+    """A manual call's file name: its stage and a hash of the model and the exact prompt. Until
+    Nov 10 every call of a stage shared outputs/<stage>.json, so a retry with feedback, page
+    batches 2-4, a second fix round and an action-register revision all read back the first
+    answer. Each distinct call now gets its own file, and a restarted run finds the answers it
+    already has."""
+    digest = hashlib.sha256((model + "\n" + body).encode("utf-8")).hexdigest()
+    return f"{stage}-{digest[:10]}"
 
 
 class ProviderError(Exception):
@@ -298,12 +310,14 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAUL
         assert run_dir is not None, "manual provider needs a run folder"
         (run_dir / "prompts").mkdir(parents=True, exist_ok=True)
         (run_dir / "outputs").mkdir(parents=True, exist_ok=True)
-        out = run_dir / "outputs" / f"{stage}.json"
+        body = f"# SYSTEM\n\n{system}\n\n# USER\n\n{_flat(user)}\n"
+        name = manual_name(stage, model, body)
+        out = run_dir / "outputs" / f"{name}.json"
         if out.exists():
             return {"text": out.read_text(encoding="utf-8"), "usage": {"in": 0, "out": 0, "cache_read": 0, "cache_write": 0},
                     "model": model, "provider": "manual", "truncated": False}
-        (run_dir / "prompts" / f"{stage}.md").write_text(f"# SYSTEM\n\n{system}\n\n# USER\n\n{user}\n", encoding="utf-8")
-        raise Pending(f"answer {run_dir / 'prompts' / (stage + '.md')} and save the JSON to {out}")
+        (run_dir / "prompts" / f"{name}.md").write_text(body, encoding="utf-8")
+        raise Pending(f"answer {run_dir / 'prompts' / (name + '.md')} and save the JSON to {out}")
     else:
         raise ValueError(f"no provider for {model}")
     return {"text": text, "usage": usage, "model": model, "provider": prov, "truncated": truncated}

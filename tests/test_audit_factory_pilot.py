@@ -2,10 +2,12 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 33 of the 36 tests below fail on the kit as it
+for retries and bigger models they did not need. 43 of the 46 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 16 of them were added after
-an independent review of the first version of this change and fail on that version (4f31005).
+demo's G10 and G11, the page footer, and the bound on words to cut. 25 fail on the first version
+of this change (4f31005, which the first independent review read) and 9 on the second (f91aa74,
+which the second review read); the tenth test added after that review guards the browser
+measurement it confirmed by probe.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -24,6 +26,14 @@ an independent review of the first version of this change and fail on that versi
 7. A fix answer of no pages (nothing on pages 3-19 can clear a ledger-level warning) was
    rejected and retried up the ladder, and a warning the last round already had got a round to
    itself. An empty answer is now an answer, and such warnings get no round of their own.
+8. The manual provider (the muse tier answers pages, actions and fixes through files) kept one
+   answer file per stage, so a retry, page batches 2-4, a second fix round and the register
+   revision in 4 all read back the first answer. Each distinct call now has its own file.
+9. The second review found four smaller holes: an empty fix answer to a FAIL on a page the
+   writer owns was accepted; an overflow on code-built page 20 went to the page writer and
+   bought a rung-up round; a photo or QR without a span was placed in a row of its own; and a
+   ledger id without the id shape (E012) left every table citation of it unread. Such a ledger
+   now holds the run before any call (G05).
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -37,6 +47,7 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[1] / "audit-factory"
 sys.path.insert(0, str(ROOT))
@@ -187,6 +198,32 @@ class TableEvidenceTests(unittest.TestCase):
         next(x for x in page(b, 6)["blocks"] if isinstance(x.get("evidence"), list))["evidence"].append("V-A01")
         self.assertEqual(checks(b)["G11"]["status"], "FAIL")
 
+    def test_ids_joined_by_a_slash_or_listed_in_one_item_are_each_read(self):
+        self.assertEqual(M.split_cell("V-E001/V-E002"), (["V-E001", "V-E002"], ""))
+        self.assertEqual(M.split_cell(["V-E001 V-E002", None]), (["V-E001", "V-E002"], ""))
+        self.assertEqual(M.split_cell(["V-E001; see V-E003"]), (["V-E001", "V-E003"], "see"))
+        self.assertEqual(M.split_cell("n/a"), ([], "n/a"))              # a slash between words stays a word
+
+    def test_a_ledger_id_no_table_can_cite_holds_the_run_before_any_call(self):
+        calls = []
+
+        def fake(stage, model, system, user):
+            calls.append(stage)
+            return "{}"
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            run_dir(d, copy.deepcopy(split_fixture(AUDIT)))
+            for name in ("identity", "score", "synthesis", "pages", "actions"):
+                (d / f"{name}.json").unlink()                        # a fresh run: every stage still to write
+            data = json.loads((DEMO / "ledger.json").read_text())
+            data["items"][0]["id"] = "VE001"                         # E012-style: tables would print it as a word
+            (d / "ledger.json").write_text(json.dumps(data))
+            res = pipeline.run(d, "standard", fake=fake, render_pdf=False)
+        self.assertEqual(res["verdict"], "HOLD at ledger", res)
+        self.assertIn("VE001", res["hold_reason"])
+        self.assertEqual(calls, [])                                   # nothing was paid for
+        self.assertEqual(M.off_shape(["V-E001", "E-12", "E012", "e-12", "V_E012", ""]), ["E012", "V_E012", "e-12"])
+
     def test_the_demo_still_clears_G10_and_G11(self):
         c = checks(copy.deepcopy(AUDIT))
         self.assertEqual((c["G10"]["status"], c["G11"]["status"]), ("PASS", "PASS"))
@@ -296,6 +333,38 @@ class OverflowAdviceTests(unittest.TestCase):
         facts = next(b for b in p20["blocks"] if b.get("title", "").startswith("The five facts"))
         self.assertTrue(facts.get("compact"))
 
+    def test_a_photo_without_a_span_shares_its_row_as_in_the_browser(self):
+        blocks = [{"type": "photo", "src": "x.png"}, {"type": "prose", "span": 8, "body": "w " * 120},
+                  {"type": "bars", "span": 12, "items": []}]
+        self.assertEqual(render._grid_rows(blocks), [[0, 1], [2]])
+        self.assertEqual([components.span_of(b) for b in blocks], [4, 8, 12])
+        self.assertIn("grid-column: span 4", components.photo(blocks[0], types.SimpleNamespace(
+            asset_ok=lambda s: False, missing_assets=[], asset_url=lambda s: s)))
+        det = render._overflow_detail({"n": 9, "blocks": blocks}, {"over": 30, "h": 800, "own": [150, 400, 300]})
+        self.assertFalse(any("photo" in o for o in det["options"]), det)   # it sits beside the 400px prose
+
+    @unittest.skipUnless(have_browser(), "needs Playwright + Chromium")
+    def test_the_browser_measures_each_blocks_own_height_then_puts_its_style_back(self):
+        from playwright.sync_api import sync_playwright
+        html = ('<section class="page" data-n="9"><div class="body" style="display:grid;'
+                'grid-template-columns:repeat(12,1fr);height:300px;overflow:hidden">'
+                '<div style="grid-column:span 6;height:200px">tall</div>'
+                '<div style="grid-column:span 6"><p style="margin:0;height:40px">short</p></div>'
+                '<div style="grid-column:span 12;height:180px">next row</div></div></section>')
+        with sync_playwright() as p:
+            b = render.launch_chromium(p) if hasattr(render, "launch_chromium") else p.chromium.launch()
+            try:
+                pg = b.new_page()
+                pg.set_content(html)
+                m = pg.evaluate(render.MEASURE_JS)[0]
+                left = pg.evaluate("() => [...document.querySelectorAll('.body > *')].map(c => c.style.alignSelf)")
+            finally:
+                b.close()
+        self.assertEqual(m["kids"][:2], [200, 200])            # the row stretches the short block
+        self.assertEqual(m["own"][:2], [200, 40])              # its own height is what dropping it frees
+        self.assertTrue(m["overflow"] and m["over"] > 0, m)
+        self.assertEqual(left, ["", "", ""])                   # nothing measured is left on the page
+
     @unittest.skipUnless(have_browser(), "needs Playwright + Chromium")
     def test_a_real_render_reports_the_plan_swimlane_as_fixed(self):
         a = copy.deepcopy(AUDIT)
@@ -399,6 +468,35 @@ class QuietRoundTests(unittest.TestCase):
     def test_an_empty_fix_answer_is_an_answer(self):
         self.assertEqual(pipeline.check_fix({"pages": []}, LEDGER), [])
         self.assertTrue(pipeline.check_fix({"note": "nothing"}, LEDGER))
+
+    def test_but_not_when_a_FAIL_names_a_page_the_writer_owns(self):
+        probs = pipeline.check_fix({"pages": []}, LEDGER, frozenset({12, 18}))
+        self.assertEqual(len(probs), 1)
+        self.assertIn("FAIL on page 12, 18", probs[0])
+        good = copy.deepcopy(page(AUDIT, 12))
+        self.assertEqual(pipeline.check_fix({"pages": [good]}, LEDGER, frozenset({12, 18})), [])   # partial is fine
+
+    def test_an_empty_answer_to_a_page_FAIL_is_asked_again_inside_the_stage(self):
+        outs = copy.deepcopy(split_fixture(AUDIT))   # split_fixture shares the module-level AUDIT's objects
+        good12 = copy.deepcopy(next(p for p in outs["pages"]["pages"] if p["n"] == 12))
+        p12 = next(p for p in outs["pages"]["pages"] if p["n"] == 12)
+        p12["blocks"] = [b for b in p12["blocks"] if b["type"] not in M.VISUAL_BLOCKS]   # G40 on page 12
+        base = fake_from_fixture(str(DEMO / "audit.json"))
+        calls = []
+
+        def fake(stage, model, system, user):
+            if stage == "fix":
+                calls.append((model, user))
+                return json.dumps({"pages": [] if len(calls) == 1 else [good12]})
+            return base(stage, model, system, user)
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            run_dir(d, outs)
+            res = pipeline.run(d, "standard", fake=fake, render_pdf=False)
+        self.assertEqual(len(calls), 2, res)
+        self.assertEqual(calls[0][0], calls[1][0])            # the same model, told why, not a bigger one
+        self.assertIn("FAIL on page 12", calls[1][1])
+        self.assertEqual((res["fix_rounds"], res["verdict"]), (1, "READY"), res)
 
     def test_warnings_a_round_already_had_get_no_round_of_their_own(self):
         outs = copy.deepcopy(split_fixture(AUDIT))   # split_fixture shares the module-level AUDIT's objects
@@ -520,6 +618,79 @@ class EscalationTests(unittest.TestCase):
         res, fix_models, cheap, up = self._run(answer_up=False)
         self.assertEqual(fix_models, [cheap, up])
         self.assertEqual((res["fix_rounds"], res["verdict"]), (2, "HOLD"), res)
+
+    def test_an_overflow_only_on_the_code_built_page_buys_no_writer_and_no_rung_up(self):
+        on20 = {"from": "render", "id": "R02", "status": "FAIL",
+                "msg": "page 20 runs 2% (15px) past the page — every block on it is drawn by the renderer "
+                       "(table (230px)), so no page writer can make room on it"}
+        self.assertEqual((pipeline._front(on20), pipeline._back(on20), pipeline._acts(on20)), (False, False, False))
+        both = dict(on20, msg="page 18 runs 5% (40px) past the page — cut about 30 words; page 20 runs 2% (15px) past the page")
+        self.assertTrue(pipeline._back(both))
+        outs = copy.deepcopy(split_fixture(AUDIT))   # split_fixture shares the module-level AUDIT's objects
+        base = fake_from_fixture(str(DEMO / "audit.json"))
+        real, seen = pipeline._check_all, []
+
+        def check_all(run_dir_, ledger, tier, render_pdf):
+            audit, rep, _ = real(run_dir_, ledger, tier, False)
+            return audit, rep, {"gates": {"verdict": "HOLD", "checks": [dict(on20, name="No page overflows", hard=True)]}}
+
+        def fake(stage, model, system, user):
+            if '"fix_list"' in user:
+                seen.append((stage, model))
+            return base(stage, model, system, user)
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(pipeline, "_check_all", check_all):
+            d = pathlib.Path(d)
+            run_dir(d, outs)
+            res = pipeline.run(d, "standard", fake=fake, render_pdf=True)
+        self.assertEqual(seen, [])                             # no writer was asked, and none paid for
+        self.assertNotIn("fix_escalated", res)
+        self.assertEqual(res["verdict"], "HOLD", res)
+
+
+# --------------------------------------------------------------------------- 8. the manual provider
+class ManualProviderTests(unittest.TestCase):
+    """The muse tier answers pages, actions and fixes through files. Until Nov 10 each stage had
+    one answer file, so the action-register revision above (and a retry, page batches 2-4 and a
+    second fix round) read back the first answer instead of asking."""
+
+    def _ask(self, d, stage, user, check=lambda o: []):
+        with self.assertRaises(router.Pending):
+            router.run_stage(stage, user, "muse", d, check=check)
+
+    def test_a_revision_of_the_register_is_asked_not_replayed(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._ask(d, "actions", "draft the register")
+            [first] = (d / "prompts").glob("actions-*.md")
+            (d / "outputs" / f"{first.stem}.json").write_text('{"actions": []}')
+            self.assertTrue(router.run_stage("actions", "draft the register", "muse", d, check=lambda o: [])["ok"])
+            self._ask(d, "actions", "revise the register: fix_list G72")
+            self.assertEqual(len(list((d / "prompts").glob("actions-*.md"))), 2)
+
+    def test_a_retry_with_feedback_is_asked_afresh(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+
+            def check(o):
+                return [] if o.get("ok") else ["the reply must say ok"]
+            self._ask(d, "fix", "clear the list", check)
+            [first] = (d / "prompts").glob("fix-*.md")
+            (d / "outputs" / f"{first.stem}.json").write_text('{"ok": false}')
+            self._ask(d, "fix", "clear the list", check)
+            retry = [p for p in (d / "prompts").glob("fix-*.md") if p != first]
+            self.assertEqual(len(retry), 1)
+            self.assertIn("the reply must say ok", retry[0].read_text())
+
+    def test_a_restart_reuses_its_answers_and_each_page_batch_is_its_own_question(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._ask(d, "pages", "write pages 3-6")
+            [asked] = (d / "prompts").glob("pages-*.md")
+            (d / "outputs" / f"{asked.stem}.json").write_text('{"pages": []}')
+            for _ in range(2):
+                self.assertTrue(router.run_stage("pages", "write pages 3-6", "muse", d, check=lambda o: [])["ok"])
+            self._ask(d, "pages", "write pages 7-10")
+            self.assertEqual(len(list((d / "prompts").glob("pages-*.md"))), 2)
 
 
 if __name__ == "__main__":

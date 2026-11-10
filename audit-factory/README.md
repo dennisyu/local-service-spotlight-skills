@@ -36,7 +36,7 @@ chases later nothing had happened. **One runner owns an audit end to end.**
 | 10 Collect | **no collector code yet** — the runner researches with its own search and data tools (web search, Ahrefs, Knowledge Graph) following the card | the runner |
 | 20 Harvest | **no harvest code yet** — the runner (or cheap helpers it starts) turns captured sources into ledger rows following the card | the runner |
 | 30-70 Identity → actions | `factory20 run` calls each stage's model, checks the output, retries with the failure list, escalates one rung | code + routed models |
-| Gates, render, fix rounds | code: 40 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
+| Gates, render, fix rounds | code: 41 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
 | 80 Review | code calls the review model in a fresh context (final files only, no drafting history); S0/S1 sends fixes back and re-reviews | code + review model |
 | 90 Deliver | `factory20 basecamp` writes the to-do list; filing and the Basecamp post follow [stages/90-deliver.md](stages/90-deliver.md) | the runner |
 
@@ -69,9 +69,10 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
    Otherwise each provider's own key: `standard`, `muse` and `enterprise` need
    `ANTHROPIC_API_KEY`; `lean` also needs `OPENAI_API_KEY` (GPT-6.1 Terra) and `OPENROUTER_API_KEY`
    (DeepSeek), plus `GEMINI_API_KEY` if you run its harvest stage. A missing key holds the audit
-   and names the variable. No key? Use the manual provider: the runner writes `prompts/<stage>.md` and
-   reads `outputs/<stage>.json`, so an app session that can read and write files in the run
-   folder can answer each stage. Keys come from your own secret store; never put one in a file.
+   and names the variable. No key? Use the manual provider: the runner writes `prompts/<stage>-<hash>.md` and
+   reads `outputs/<stage>-<hash>.json`, one pair per distinct call (a retry, each page batch and
+   each fix round get their own; a restarted run finds the answers it has), so an app session
+   that can read and write files in the run folder can answer each stage. Keys come from your own secret store; never put one in a file.
 3. **Data accounts** for research (steps 10-20): a web search tool, a backlink and keyword tool
    (Ahrefs or similar), and Google's Knowledge Graph API. Budget about $0.50 of data per audit.
 4. **Your own fleet** in [config/agents.json](config/agents.json): which running agent picks up
@@ -181,16 +182,17 @@ failure list and escalates one rung if it still fails. Then it assembles, gates 
 runs up to three fix rounds (pages 1-2 go back to the findings model, pages 3-19 to the fix
 model, the action register to the actions model; each gate message says where its problem
 sits, so it reaches the writer who owns that text). A round that clears nothing ends the loop,
-except that a hard FAIL first gets one round one rung up the ladder, and warnings a round already
-had get no round of their own. It finishes with the
+except that a hard FAIL a writer owns first gets one round one rung up the ladder (page 20 is
+built by code, so nothing there qualifies), and warnings a round already had get no round of
+their own. A fix that returns no pages is an answer only when no FAIL names a page it owns. It finishes with the
 fresh-context review: `READY` needs zero S0/S1 findings. The
 verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY`).
 `--max-usd` overrides the tier's spending cap; reaching it holds the audit with the amount spent.
 
 ## Quality control
 
-1. **Gates (free, every draft):** 40 content gates (29 must pass on a real audit, 11 warn) — page
-   structure, cited ids that exist in the ledger and at least three per page, namesake leakage,
+1. **Gates (free, every draft):** 41 content gates (30 must pass on a real audit, 11 warn) — page
+   structure, ledger ids a table can cite, cited ids that exist in the ledger and at least three per page, namesake leakage,
    insight-card anatomy, the page-2 word budget, headline claims, buzzwords, density,
    specificity, a visual on every page, identity, score calibration, the action contract,
    approval before any client-facing change, privacy (including the brief's do-not-print list),
@@ -245,6 +247,6 @@ because it carries no time zone.
 | `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
-| `../tests/test_audit_factory_pilot.py` | 36 tests: what the Nov 10 pilot rebuilds found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack; 33 fail on the kit before the fix |
+| `../tests/test_audit_factory_pilot.py` | 46 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite; 43 fail on the kit before the fix |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

@@ -135,16 +135,21 @@ def check_review(obj, ledger):
     return probs
 
 
-def check_fix(obj, ledger):
+def check_fix(obj, ledger, must: frozenset | set = frozenset()):
     """A fix returns only the pages it changed, each a full page object for pages 3-19. An empty
-    list is an answer: nothing on pages 3-19 can clear the list (a ledger-level warning such as
-    G12). Rejecting it, as the kit did until Nov 10, bought a retry and then a bigger model to say
-    the same thing, or pushed the writer to swap in citations that do not support the claim."""
+    list is an answer when nothing on pages 3-19 can clear the list (a ledger-level warning such
+    as G12). Rejecting it, as the kit did until Nov 10, bought a retry and then a bigger model to
+    say the same thing, or pushed the writer to swap in citations that do not support the claim.
+    `must` holds the pages 3-19 that a FAIL in the list names: then an empty list is no answer,
+    and the writer hears so and tries again inside the stage instead of spending a whole round."""
     if not isinstance(obj.get("pages"), list):
         return ["return the pages you changed under 'pages' (an empty list if no page can clear it)"]
     pages = obj["pages"]
     bad = [p.get("n") for p in pages if p.get("n") not in range(3, 20)]
     probs = [f"fix may only return pages 3-19; got {bad}"] if bad else []
+    if not pages and must:
+        probs.append(f"the fix list holds a FAIL on page {', '.join(map(str, sorted(must)))}: return "
+                     "each such page changed so the FAIL clears")
     probs += [f"unknown evidence id {x}" for x in _ids_missing(pages, ledger)][:15]
     return probs
 
@@ -158,7 +163,7 @@ FRONT_GATES = {"G20", "G21", "G22", "G24"}
 ACTION_GATES = {"G60", "G61", "G62", "G63", "G64", "G65"}
 # Failures no fix-loop writer can clear (structure, identity and score stages, page count): a
 # bigger model on pages or the register would only pay for the same answer.
-NO_WRITER = {"G01", "G02", "G50", "G51", "G52", "G53", "G54", "R01"}
+NO_WRITER = {"G01", "G02", "G05", "G50", "G51", "G52", "G53", "G54", "R01"}
 NOT_THE_WRITERS = {"G81"}   # the preparer's photo comes from the brief and assets, not from a model
 # Pages 3-19 come back in four calls, not one. A real audit's pages run about 19,000 output
 # tokens (measured on the Nov 4 clean blind run), more than one reply may carry; four
@@ -235,9 +240,13 @@ def _acts(item: dict) -> bool:
 def _back(item: dict) -> bool:
     """Pages 3-19 belong to the fix model, including an item that also names a front page.
     An item that names no page and lives only in the register is not sent here: the fix model
-    returns pages and cannot clear it."""
-    if any(3 <= n <= 19 for n in _pages_named(item)):
+    returns pages and cannot clear it. Nor is one that names only page 20: code builds that page
+    whole, so no writer can change it, and a rung-up round on it would pay for nothing."""
+    named = _pages_named(item)
+    if any(3 <= n <= 19 for n in named):
         return True
+    if named and named <= {20}:
+        return False
     return not _front(item) and not _acts(item)
 
 
@@ -272,12 +281,13 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
             confidential=confidential, max_usd=max_usd, model=up("synthesis"))
         ok &= res["ok"]
     if rest:
+        must = frozenset(n for i in rest if i["status"] == "FAIL" for n in _pages_named(i) if 3 <= n <= 19)
         res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
             "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
                     "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block. "
                     "Blocks the renderer draws itself (the exam heatmap and scorebar, the plan swimlane, "
                     "the agents QR) are not in your page objects and cannot be changed: make room in your own.",
-            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger), cfg=cfg, fake=fake,
+            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger, must), cfg=cfg, fake=fake,
             confidential=confidential, max_usd=max_usd, model=up("fix"))
         if res["ok"]:
             cur = json.loads((run_dir / "pages.json").read_text())
@@ -366,6 +376,13 @@ def run(run_dir: str | pathlib.Path, tier: str = "standard", fake=None, render_p
 def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, review: bool,
          max_usd: float | None, out: dict) -> dict:
     ledger = Ledger.load(run_dir / "ledger.json")
+    odd = M.off_shape(r["id"] for r in ledger.rows)
+    if odd:   # G05 would hold the finished audit; say it before a single model call is paid for
+        out["verdict"] = "HOLD at ledger"
+        out["hold_reason"] = (f"ledger ids {odd[:10]} lack the id shape (V-E012, E-001) that a table cell "
+                              "cites by; rename them in the ledger and run again")
+        out["usd"] = router.spent(run_dir)
+        return out
     brief = json.loads((run_dir / "brief.json").read_text())
     confidential = bool(brief.get("do_not_print"))
     for st in ("identity", "score", "synthesis", "pages", "actions"):

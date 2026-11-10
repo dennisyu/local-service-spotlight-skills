@@ -65,19 +65,32 @@ _EDGE = "()[]{}<>.,;:!?\"'\u201c\u201d\u2018\u2019"
 def split_cell(v) -> tuple[list[str], str]:
     """One table cell from an evidence column: the ids it cites, and the rest of it as words.
     A token is an id only when it has the ledger's id shape once surrounding punctuation is
-    stripped; "see", "n/a", "(A5)", "-" and None stay text. The renderer draws the ids as chips
-    and the words as words; every check counts the ids, and only the ids."""
+    stripped; "see", "n/a", "(A5)", "-" and None stay text. Ids joined by a slash
+    ("V-E001/V-E002") are two ids, and a list cell is read item by item the same way. The
+    renderer draws the ids as chips and the words as words; every check counts the ids, and only
+    the ids. An evidence column holds ids, so an id-shaped word there ("COVID-19") is read as a
+    citation, and G10 says so when the ledger has no such row."""
     if v is None:
         return [], ""
-    parts = [str(x) for x in v if x is not None] if isinstance(v, list) else re.split(r"[,;\s]+", str(v).strip())
+    items = [x for x in v if x is not None] if isinstance(v, list) else [v]
+    parts = [t for x in items for t in re.split(r"[,;\s]+", str(x).strip())]
     ids, rest = [], []
     for t in parts:
         core = t.strip().strip(_EDGE)
+        pieces = [x.strip(_EDGE) for x in core.split("/")]
         if ID_SHAPE.match(core):
             ids.append(core)
+        elif len(pieces) > 1 and all(ID_SHAPE.match(x) for x in pieces):
+            ids += pieces
         elif t.strip():
             rest.append(t.strip())
     return ids, " ".join(rest)
+
+
+def off_shape(ids) -> list[str]:
+    """Ledger ids a table cell cannot cite: every evidence column is read by ID_SHAPE, so a row
+    whose id lacks it (E012, e-12, V_E012) would print as grey words, uncounted and unchecked."""
+    return sorted({str(i) for i in ids if str(i).strip() and not ID_SHAPE.match(str(i).strip())})
 
 
 def cell_ids(v) -> list[str]:
