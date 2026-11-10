@@ -381,7 +381,10 @@ penalty. Use the maintained shared audit run contract.
 
 - **No article ships as a wall of text.** Every published piece carries images — real
   photographs that carry meaning, supported by useful screenshots and diagrams,
-  not decorative stock. A diagram alone cannot meet the real-photo requirement.
+  not decorative stock. A diagram alone cannot meet the real-photo requirement, but a missing
+  fresh photo is not a reason to hold the article: reuse a real published photo that fits, or
+  publish with the diagram and log the gap (amendment of 2026-11-10 in
+  `every-public-page-has-real-imagery`).
 - **A diagram beats a paragraph** wherever the point is a structure, a sequence or a
   comparison.
 - **Use recognizable service or network icons when they help readers identify a
@@ -835,10 +838,12 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
   words and source/timestamp; captions must identify only verified people,
   activity and date (or leave the date unknown). Preserve source links and
   recorded permission; public availability alone is not a usage-rights grant.
-- If no suitable approved photograph exists, hold publication and record the
-  specific source gap and next action. Useful evidence-backed diagrams and
-  verified video posters supplement the photograph under `visuals-above-the-fold`;
-  they do not replace it. Do not manufacture evidence with image generation or stock.
+- **If no fresh photograph exists, publish anyway — do not hold the page**
+  (Dennis, 2026-11-10). Reuse a real photo already published on our properties
+  when it truthfully fits (same person, business or work, honest caption); if none
+  fits, publish with an evidence-backed diagram or verified video under
+  `visuals-above-the-fold` and log the photo gap as a follow-up on the page's task.
+  Never fill the gap with stock or generated imagery — leave it empty and logged.
 - Build QA must inventory every rendered content route and fail when any route
   lacks a source-verified meaningful real photograph. Keep a provenance allowlist or equivalent asset
   record so logos and decorative images cannot make the check pass. Mark at least
@@ -851,11 +856,17 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
   private manifest contract in [page-photo-proof](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/page-photo-proof.md),
   or an equivalent provenance-aware site validator. Run
   `scripts/page_photo_proof.py` against every static HTML route before release
-  and against the final served files after publication readback. Missing source,
-  changed bytes, omitted routes or missing independent review must HOLD.
+  and against the final served files after publication readback. For a page that adds a
+  new photo of an identifiable person, missing source or permission basis must
+  HOLD; every other finding is reported and logged, not a publication hold.
   Also inspect the rendered desktop and mobile page;
   a hidden, broken, or contextless image does not count.
-- **A publishing route must enforce this before its content write or release.**
+- **A publishing route must enforce this before its content write or release —
+  for pages that add a new photo of an identifiable person** (Dennis, 2026-11-10).
+  A write that adds no new image bytes (every image hash is already publicly served
+  on that domain or is in the write's retained preimage, as in a WordPress-to-Astro
+  migration) needs no fresh admission, screenshots or photo review: the publisher
+  records the hash comparison in its receipt and proceeds.
   Marker `PHOTO-PROVENANCE-PUBLISH-GATE-2026-11-05`. Use the canonical
   `scripts/publication_photo_gate.py` or an equivalent reviewed integration at
   the actual publisher's effect boundary. The publisher supplies its exact
@@ -887,6 +898,25 @@ rule. The source checker is an evidence-consistency tool, not a truth or
 permission certification; fresh-context source/content and rendered design
 review remain required. Distribution in a repository does not prove a site's
 build or publisher actually ran it.
+
+## Amendment — publish more, hold less (Dennis Yu, 2026-11-10)
+
+Dennis, 2026-11-10 ~22:10 +07: "yes, update the rule, since we want to publish more,
+not hold things up. not always will we have fresh photos." Where anything above
+conflicts, this governs:
+
+1. **Only one thing holds publication:** a page that adds a *new* photo of an
+   identifiable person (not previously published by us) without a recorded source
+   and permission basis. Fix that one photo or swap it for an already-published one;
+   the rest of the page is not held.
+2. **Migrations and republishes that add no new image bytes are not held** and need
+   no fresh render capture or photo review. Prove it with a hash comparison against
+   what the domain already serves (or the retained preimage) and put it in the receipt.
+3. **A page without a fresh photo is published**, using existing real photos where
+   they truthfully fit, otherwise a real diagram or video, with the gap logged.
+4. Unchanged: no stock or generated imagery, honest captions, never infer a person,
+   place or result from a photo, and the client-property and privacy rules elsewhere.
+   A real photo on every page stays the goal; it is no longer a gate.
 <!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
