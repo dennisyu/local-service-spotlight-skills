@@ -2,12 +2,12 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 48 of the 51 tests below fail on the kit as it
+for retries and bigger models they did not need. 49 of the 52 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 32 fail on the first version
-of this change (4f31005, which the first independent review read), 17 on the second (f91aa74,
-which the second review read), 8 on 823ff8b, which came before the replays showed 10 and 11,
-and 2 on 523018f, the version the graded replays ran on (12).
+demo's G10 and G11, the page footer, and the bound on words to cut. 33 fail on the first version
+of this change (4f31005, which the first independent review read), 18 on the second (f91aa74,
+which the second review read), 9 on 823ff8b, which came before the replays showed 10 and 11,
+3 on 523018f, the version the graded replays ran on (12), and 1 on 3c585f4.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -43,11 +43,13 @@ and 2 on 523018f, the version the graded replays ran on (12).
    now comes first. In three of the four replays page 18 ran over with a 206px timeline the
    writer added beside the renderer's swimlane, so the page card now says that pages 5, 17 and
    18 get their visual from the renderer.
-12. The graded replays (523018f) found two more. The person ledger's capture date read
+12. The graded replays (523018f) found three more. The person ledger's capture date read
    "2026-10-07 (spot re-checks to 2026-10-23)": the run accepted it, every stage was paid for,
    and then factory20 bundle refused the finished run for want of one date. The run now holds at
-   the ledger, by the bundle's own rule. And a bars block without max is scaled to its largest
+   the ledger, by the bundle's own rule. A bars block without max is scaled to its largest
    value, so rubric rows scored 4 of 10 printed as full bars; the page card now says what max is.
+   And the card's note that the renderer draws the visual on pages 5, 17 and 18 came out as
+   copy ("The renderer adds the ten-row heatmap above these notes"); G31 now fails it.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -765,6 +767,24 @@ class BarsScaleTests(unittest.TestCase):
         card = (router.STAGES_DIR / "60-pages.md").read_text()
         self.assertIn("`max` in bars is the top of the scale", card)
         self.assertIn("a row scored 4 of 10 prints as a full bar", card)
+
+
+# --------------------------------------------------------------------------- 12. production notes as copy
+class ProductionNoteTests(unittest.TestCase):
+    """Once the card told writers that pages 5, 17 and 18 get their visual from the renderer, three
+    of the four graded replays printed it: "The renderer adds the ten-row heatmap above these
+    notes", "The swimlane the renderer adds shows the same windows". The review marked it."""
+
+    def test_a_production_note_in_the_copy_fails_G31_and_reader_words_pass(self):
+        a = copy.deepcopy(AUDIT)
+        page(a, 5)["dek"] = "The renderer adds the ten-row heatmap above these notes."
+        c = checks(a)["G31"]
+        self.assertEqual(c["status"], "FAIL")
+        self.assertIn("the renderer", c["msg"])
+        page(a, 5)["dek"] = "The heatmap above shows each row; these notes say what moves it."
+        self.assertEqual(checks(a)["G31"]["status"], "PASS")
+        card = (router.STAGES_DIR / "60-pages.md").read_text()
+        self.assertIn('never "the renderer adds the heatmap"', card)
 
 
 # --------------------------------------------------------------------------- 8. the manual provider

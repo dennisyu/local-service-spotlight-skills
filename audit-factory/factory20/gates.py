@@ -37,6 +37,9 @@ BANNED = [
     "game changer", "unlock", "elevate", "seamless", "empower", "in today's", "digital landscape",
     "next level", "world-class", "best-in-class", "passionate about", "thought leader",
     "lorem ipsum", "placeholder", "tbd", "todo", "insert ", "[name]", "xx%",
+    # a production note, not reader text: the Nov 10 replays printed "The renderer adds the
+    # ten-row heatmap above these notes" in three of four audits after the card named it
+    "the renderer",
 ]
 GENERIC_ACCEPTANCE = re.compile(r"^(done|complete|completed|improved|better|launched|live|finished)\.?$", re.I)
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")

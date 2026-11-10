@@ -12,7 +12,8 @@ everything.** Never write HTML, CSS or markdown tables.
 - 2-4 blocks. **At least one visual block** (graph, bars, matrix, timeline, swimlane, ladder,
   flow, topic_wheel, photo, screenshot, heatmap, qr). Tables and prose do not count as visuals.
   Pages 5, 17 and 18 get theirs from the renderer (the exam heatmap, the agents QR, the plan
-  swimlane): add no visual of your own there, or the page runs over.
+  swimlane): add no visual of your own there, or the page runs over. That is a note for you,
+  not for the reader: write "the heatmap above", never "the renderer adds the heatmap".
 - A photo or screenshot uses a file listed under # ASSETS, and nothing else.
 - **≥ 3 evidence ids** cited inside the blocks, and ~260-380 words of reader text: captions,
   "So:" lines, table cells, card bodies. Depth comes from specifics, never from padding.
