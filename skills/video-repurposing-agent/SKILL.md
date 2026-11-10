@@ -1,6 +1,6 @@
 ---
 name: video-repurposing-agent
-description: Watch a YouTube channel, judge which new videos deserve repurposing, and turn winners into verified article packages on the right site — staged by default and published only under exact action authority. Use when a client or member wants real recordings feeding their Content Factory.
+description: Turn real YouTube uploads, phone footage and conference archives into source-backed article packages, clips and speaker-reel edits — staged by default and published only under exact action authority. Use for channel watching, conference capture, archive recovery or repurposing a founder's past footage.
 rule-scopes: published-html, design-review
 ---
 
@@ -12,6 +12,18 @@ worthwhile ones through transcript → article package → grade → stage. Publ
 cross-linking are separate approved states.
 
 The workflow separates channel watching, source-backed writing and independent review. Each stage has an explicit revision budget and records its actual output before the next stage proceeds.
+
+## Choose the source route
+
+- **Published YouTube uploads:** use the watch loop below.
+- **Phone footage, conference capture or scattered archives:** first read
+  [Conference capture and archive recovery](references/conference-and-archive.md).
+  It covers the full before/during/after sequence, angles, original-file intake,
+  evidence timecodes, a three-minute teaching edit and a separate speaker reel.
+  Rejoin the GCT, NEW vs ENHANCE, review and destination steps below.
+- Use the existing source inventory and task owner. Discovering a clip does not
+  establish that its original is downloaded, its edit is finished, or its result
+  is published. Preserve those states separately.
 
 ## The client card (fill once, reuse every run)
 One block per client/member — keep it in the project or a `client.json`:
