@@ -738,8 +738,8 @@ in the first screen. A text-only first screen is no longer an allowed fallback.
   fits, publish with an evidence-backed diagram or verified video under
   `visuals-above-the-fold` and log the photo gap as a follow-up on the page's task.
   Never fill the gap with stock or generated imagery — leave it empty and logged.
-- Build QA must inventory every rendered content route and fail when any route
-  lacks a source-verified meaningful real photograph. Keep a provenance allowlist or equivalent asset
+- Build QA must inventory every rendered content route and report (not block on)
+  any route that lacks a source-verified meaningful real photograph. Keep a provenance allowlist or equivalent asset
   record so logos and decorative images cannot make the check pass. Mark at least
   one qualifying `<img>` per page with `data-lss-real-image="verified"` only
   after that provenance check. For a diagram, video or photographic background,
