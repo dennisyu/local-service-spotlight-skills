@@ -52,7 +52,7 @@ measures how close to frontier quality it lands. Use the repository's
    Safety Retention endpoints only when the OpenRouter account is set to "ZDR only".
 
 The standard tier is estimated at about $5 per audit by the conservative planning budget, and at
-about $1.61 (standard) or $0.95 (`openrouter-lean`) for one pass from an existing ledger, counted
+about $1.61 (standard) or $0.99 (`openrouter-lean`) for one pass from an existing ledger, counted
 from a real audit's prompts and replies with the models' thinking included; the all-frontier run
 of Oct 23 measured about $280 at list price for research, writing and seven review rounds.
 These are estimates until the first live bill (measurements: `audit-factory/docs/CALIBRATION.md`).

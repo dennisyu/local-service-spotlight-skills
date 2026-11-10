@@ -9,7 +9,7 @@ DeepSeek), plain code and the runner do everything else. The design and the qual
 in code, so any model fills in the same proven template and is told exactly what to fix.
 Standard tier: **about $5 per audit** in API fees by the conservative planning estimate (stage
 budgets, research included). Counted from the prompts and replies of a real 20-page audit, one
-pass from an existing evidence ledger comes to about **$1.61 on standard and $0.95 on the
+pass from an existing evidence ledger comes to about **$1.61 on standard and $0.99 on the
 one-key OpenRouter tier** — estimates until the first live bill, which the pilot records.
 
 ## Why Claude's audits were better (and why that is fixable)
@@ -82,13 +82,13 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
 
 | Tier | Frontier model does | Everything else | Planning* | From a ledger† |
 |---|---|---|---:|---:|
-| `lean` | final review (Opus 5.5, 1 pass) | Gemini Flash-Lite, GPT-6.1 Terra, DeepSeek V4.1 Flash, Sonnet findings | ≈ $2.65 | ≈ $0.80 |
+| `lean` | final review (Opus 5.5, 1 pass) | Gemini Flash-Lite, GPT-6.1 Terra, DeepSeek V4.1 Flash, Sonnet findings | ≈ $2.75 | ≈ $0.84 |
 | `standard` | findings + review (Opus 5.5, ≤ 2 passes) | Haiku harvest and fixes, Sonnet identity/score/pages/actions | ≈ $5.40 ($4.70 batched) | ≈ $1.61 |
 | `muse` | findings + review (Opus 5.5) | pages and actions drafted in an app session's own subscription | ≈ $4.20 | ≈ $1.10 |
 | `enterprise` | findings + review (Fable 5.1, ≤ 3 passes) + a person's read | Opus drafting, Sonnet harvest | ≈ $17.80 | ≈ $3.82 |
 | `openrouter` | the standard tier's models, all through one OpenRouter key | — | ≈ $5.40 | ≈ $1.61 |
-| `openrouter-lean` | final review (Opus 5.5, 1 pass) | Sonnet identity, score and the eight findings; DeepSeek V4.1 Flash pages, actions and fixes — one key | ≈ $2.90 | ≈ $0.95 |
-| `openrouter-budget` | none — **experimental, not measured** | Grok 4.7 judgment, DeepSeek drafting, GPT-6.1 Sol review; Sonnet only if a cheaper model fails twice | ≈ $2.05 | ≈ $0.62 |
+| `openrouter-lean` | final review (Opus 5.5, 1 pass) | Sonnet identity, score and the eight findings; DeepSeek V4.1 Flash pages, actions and fixes — one key | ≈ $3.45 | ≈ $0.99 |
+| `openrouter-budget` | none — **experimental, not measured** | Grok 4.7 judgment, DeepSeek drafting, GPT-6.1 Sol review; Sonnet only if a cheaper model fails twice | ≈ $2.60 | ≈ $0.66 |
 | reference | the Oct 23 all-Claude Cowork run, measured tokens at list price | — | $281 ($301 with its website package) | — |
 
 *Planning estimate: the stage budgets in [config/routing.json](config/routing.json), research

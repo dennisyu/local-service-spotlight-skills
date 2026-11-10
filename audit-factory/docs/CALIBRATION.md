@@ -223,21 +223,32 @@ ledger:
 
 | Tier | Typical | Worst case |
 |---|---:|---:|
-| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.95 | $1.51 |
+| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.99 | $1.59 |
 | `openrouter` and `standard` (same models, one key or two) | $1.61 | $3.07 |
-| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.62 | $0.96 |
+| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.66 | $1.04 |
 
 Typical is one fix round, one review pass and a typical amount of thinking per call (1,000
 tokens at low effort, 3,000 at medium, 6,000 at high); worst case is three fix rounds, every
 review pass, every call thinking up to its full room (2,048 / 6,144 / 12,288 tokens) and 25%
 retries. On `openrouter-lean` the one Opus review is about half the typical cost ($0.52 of
-$0.95). Research (stages 10-20) is extra. These sit below the $2.45 the Sonnet blind test cost
+$0.99). Research (stages 10-20) is extra. These sit below the $2.45 the Sonnet blind test cost
 because that was an interactive session re-reading its files (8.0 million cache reads); the
 runner sends each stage's prompt once. **Not measured yet:** a live bill, and the
 quality of the one-key tiers. The first live run rebuilds the public demo on each one-key tier,
 then the clean blind ledger on `openrouter-lean`, scored by the same independent judge; its
 numbers replace this paragraph. The Oct 27 replay below is the evidence so far for cheap drafting
 through OpenRouter.
+
+**Nov 10, 2026: DeepSeek's price on OpenRouter went up.** The listing for DeepSeek V4.1 Flash went
+from $0.051 to $0.30 per million input tokens and from $0.41 to $1.20 per million output tokens;
+cached input fell from $0.022 to $0.006. `openrouter-check` failed in CI on it, and `--write`
+refreshed `routing.json` and saved `fixtures/openrouter/models-2026-11-10.json`. The table above
+uses the new price. One pass on `openrouter-lean` moves from $0.95 to $0.99: its DeepSeek calls
+mostly reread a cached prompt, and the Opus review is half the bill. The planning estimate moves
+from $2.91 to $3.45, because it counts DeepSeek's research harvest at the full input price. Also
+listed: a dated snapshot, `deepseek/deepseek-v4.1-flash-1017`, at $0.006 in and $0.50 out. Moving
+to it changes the model, so it needs its own quality check first. The route's "off-peak; peak
+doubles" note predates the new listing and is not verified against it.
 
 ## Score calibration evidence
 
