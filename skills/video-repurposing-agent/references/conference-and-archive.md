@@ -32,7 +32,7 @@ is the recipe source; this reference adds the archive-to-output handoff.
 | Before | Event sign or agenda; preparation; a short explanation of the intended audience and lesson | Place, topic and the work behind the talk |
 | Introduction | Host's complete introduction with clear sound | The host's actual words and role |
 | During | One stable, continuous speaker recording; clean audio; a useful demonstration or complete teaching point | What the speaker knows and how they teach |
-| Other angles | Wide room view; side angle with speaker and audience; readable slides; real reactions | Context and genuine response |
+| Other angles | Wide room view; permitted stage-side diagonal with the speaker's face and audience together; readable slides; real reactions | Context and genuine response |
 | Q&A | Complete question and answer, including enough context to preserve meaning | Real audience needs and the speaker's answer |
 | After | Willing attendees' specific takeaways; organizer feedback; speaker debrief and next action | Attributed feedback and what to improve |
 
@@ -166,6 +166,7 @@ Panels or recommendations by language models.
 - [Dennis's speaking lessons](https://dennisyu.com/what-ive-learned-after-giving-over-730-professional-speeches/)
 - [Article Guidelines](https://localservicespotlight.com/article-guidelines/)
 
-The three-minute worked-example companion is a planned production output until
-its source clips, final export and destination have separate verification
-receipts. Do not invent its URL or imply a named person's footage has uploaded.
+Use the [capture-to-speaker-reel companion](https://github.com/Local-Service-Spotlight/task-library/blob/main/docs/conference-capture-to-speaker-reel.md#the-three-minute-teaching-film)
+as the detailed 180-second production plan. Its source storyboard is available;
+the finished worked-example film still needs source clips, final export and
+destination verification. Do not imply a named person's footage has uploaded.
