@@ -5,6 +5,7 @@ lets a cheaper model produce a page that looks like the frontier one.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import pathlib
 import re
@@ -91,6 +92,20 @@ def off_shape(ids) -> list[str]:
     """Ledger ids a table cell cannot cite: every evidence column is read by ID_SHAPE, so a row
     whose id lacks it (E012, e-12, V_E012) would print as grey words, uncounted and unchecked."""
     return sorted({str(i) for i in ids if str(i).strip() and not ID_SHAPE.match(str(i).strip())})
+
+
+def iso_day(value) -> str | None:
+    """A real calendar date written YYYY-MM-DD, or None. The ledger's capture_date must be one:
+    the house-gate bundle dates every ledger row by it, and the pipeline checks it before any call
+    so a run is never paid for that its bundle would refuse. "2026-10-07 (spot re-checks to
+    2026-10-23)" is not one date; per-capture times belong in sources.jsonl."""
+    s = str(value or "")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+        return None
+    try:
+        return _dt.date.fromisoformat(s).isoformat()
+    except ValueError:
+        return None
 
 
 def cell_ids(v) -> list[str]:

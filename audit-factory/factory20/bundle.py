@@ -90,13 +90,7 @@ def _now() -> str:
 
 
 def _iso_date(value) -> str | None:
-    s = str(value or "")
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
-        return None
-    try:
-        return _dt.date.fromisoformat(s).isoformat()
-    except ValueError:
-        return None
+    return M.iso_day(value)        # one rule: the pipeline checks capture_date by it before any call
 
 
 def _tz_aware(value) -> bool:
@@ -281,7 +275,8 @@ def _ledger_evidence(ctx: dict) -> list[dict]:
     data, rows = ctx["ledger_data"], ctx["ledger"].rows
     captured = _iso_date(data.get("capture_date"))
     if not captured:
-        raise BundleError("ledger.json has no capture_date (YYYY-MM-DD); every source needs a date")
+        raise BundleError(f"ledger.json capture_date is {data.get('capture_date')!r}, not one date "
+                          "(YYYY-MM-DD); every source needs a date")
     raw = [(sec, r) for sec in LEDGER_SECTIONS for r in (data.get(sec) or [])]
     sources, out, seen = ctx["sources"], [], set()
     ctx["skipped_rows"] = 0

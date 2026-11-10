@@ -389,6 +389,14 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
                               "cites by; rename them in the ledger and run again")
         out["usd"] = router.spent(run_dir)
         return out
+    if not M.iso_day(ledger.capture_date):   # the bundle would refuse the finished run; say it now
+        out["verdict"] = "HOLD at ledger"
+        out["hold_reason"] = (f"ledger capture_date is {ledger.capture_date!r}, not one date (YYYY-MM-DD). "
+                              "The house-gate bundle dates every ledger row by it and refuses any other "
+                              "shape, so the finished audit could not be graded. Put the research cutoff "
+                              "date there; times of later re-checks go in sources.jsonl")
+        out["usd"] = router.spent(run_dir)
+        return out
     brief = json.loads((run_dir / "brief.json").read_text())
     confidential = bool(brief.get("do_not_print"))
     for st in ("identity", "score", "synthesis", "pages", "actions"):

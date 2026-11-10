@@ -2,11 +2,12 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 46 of the 49 tests below fail on the kit as it
+for retries and bigger models they did not need. 48 of the 51 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 30 fail on the first version
-of this change (4f31005, which the first independent review read), 15 on the second (f91aa74,
-which the second review read) and 6 on 823ff8b, which came before the replays showed 10 and 11.
+demo's G10 and G11, the page footer, and the bound on words to cut. 32 fail on the first version
+of this change (4f31005, which the first independent review read), 17 on the second (f91aa74,
+which the second review read), 8 on 823ff8b, which came before the replays showed 10 and 11,
+and 2 on 523018f, the version the graded replays ran on (12).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -42,6 +43,11 @@ which the second review read) and 6 on 823ff8b, which came before the replays sh
    now comes first. In three of the four replays page 18 ran over with a 206px timeline the
    writer added beside the renderer's swimlane, so the page card now says that pages 5, 17 and
    18 get their visual from the renderer.
+12. The graded replays (523018f) found two more. The person ledger's capture date read
+   "2026-10-07 (spot re-checks to 2026-10-23)": the run accepted it, every stage was paid for,
+   and then factory20 bundle refused the finished run for want of one date. The run now holds at
+   the ledger, by the bundle's own rule. And a bars block without max is scaled to its largest
+   value, so rubric rows scored 4 of 10 printed as full bars; the page card now says what max is.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -231,6 +237,32 @@ class TableEvidenceTests(unittest.TestCase):
         self.assertIn("VE001", res["hold_reason"])
         self.assertEqual(calls, [])                                   # nothing was paid for
         self.assertEqual(M.off_shape(["V-E001", "E-12", "E012", "e-12", "V_E012", ""]), ["E012", "V_E012", "e-12"])
+
+    def test_a_capture_date_the_bundle_cannot_read_holds_the_run_before_any_call(self):
+        # The pilot's person ledger said "2026-10-07 (spot re-checks to 2026-10-23)". Every stage ran
+        # and was paid for; then factory20 bundle refused the finished run for want of one date.
+        calls = []
+
+        def fake(stage, model, system, user):
+            calls.append(stage)
+            return "{}"
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            run_dir(d, copy.deepcopy(split_fixture(AUDIT)))
+            for name in ("identity", "score", "synthesis", "pages", "actions"):
+                (d / f"{name}.json").unlink()
+            data = json.loads((DEMO / "ledger.json").read_text())
+            data["capture_date"] = "2026-10-07 (spot re-checks to 2026-10-23)"
+            (d / "ledger.json").write_text(json.dumps(data))
+            res = pipeline.run(d, "standard", fake=fake, render_pdf=False)
+        self.assertEqual(res["verdict"], "HOLD at ledger", res)
+        self.assertIn("spot re-checks", res["hold_reason"])
+        self.assertEqual(calls, [])                                   # nothing was paid for
+        from factory20 import bundle                                  # one rule, two callers
+        for v, ok in (("2026-10-07", True), ("2026-02-30", False), ("2026-10-07 (spot re-checks to 2026-10-23)", False),
+                      ("10/07/2026", False), ("", False), (None, False)):
+            self.assertEqual(bool(M.iso_day(v)), ok, v)
+            self.assertEqual(bundle._iso_date(v), M.iso_day(v), v)
 
     def test_the_demo_still_clears_G10_and_G11(self):
         c = checks(copy.deepcopy(AUDIT))
@@ -711,6 +743,28 @@ class ImageTests(unittest.TestCase):
         self.assertEqual(rr["missing_images"], [{"page": 1, "src": "assets/invented.png"}])
         self.assertEqual(rr["assets_available"], ["assets/mock-gbp.png"])
         self.assertEqual(next(c for c in gates.gate_render(rr).checks if c["id"] == "R06")["status"], "FAIL")
+
+
+# --------------------------------------------------------------------------- 12. the scale of a bar chart
+class BarsScaleTests(unittest.TestCase):
+    """The person lean rebuild drew its ten Brand Authority rows as bars with no max. The renderer
+    scales such a chart to its largest value, so three rows scored 4 of 10 printed as full bars,
+    and the review called it an S1: the reader overrates his best rows."""
+
+    def _widths(self, b):
+        html = components.bars(b, render.Ctx(copy.deepcopy(AUDIT), LEDGER, DEMO))
+        return [float(w) for w in re.findall(r'<rect x="[\d.]+" y="[\d.]+" width="([\d.]+)"', html)]
+
+    def test_without_max_the_largest_value_fills_the_row_so_the_card_says_when_to_set_it(self):
+        rows = {"type": "bars", "span": 12, "title": "Brand Authority rows",
+                "items": [{"label": "Row 1", "value": 4}, {"label": "Row 9", "value": 1}]}
+        full, quarter = self._widths(rows)
+        self.assertAlmostEqual(quarter / full, 0.25, places=2)          # scaled to the largest value
+        out_of_ten = self._widths(dict(rows, max=10))
+        self.assertAlmostEqual(out_of_ten[0] / full, 0.4, places=2)    # 4 of 10 is 40% of the row
+        card = (router.STAGES_DIR / "60-pages.md").read_text()
+        self.assertIn("`max` in bars is the top of the scale", card)
+        self.assertIn("a row scored 4 of 10 prints as a full bar", card)
 
 
 # --------------------------------------------------------------------------- 8. the manual provider

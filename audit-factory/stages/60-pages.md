@@ -66,6 +66,9 @@ photo        {src:"assets/…", height?, caption, evidence}        # a real capt
 ```
 
 `value: null` in bars renders UNKNOWN hatching — never write 0 for something not measured.
+`max` in bars is the top of the scale. Set it whenever the values are scores or shares (a
+Brand Authority row is out of 10, a share out of 100) and say the scale in the title. Without
+it the longest bar is the largest value, so a row scored 4 of 10 prints as a full bar.
 
 ## Output (JSON only)
 

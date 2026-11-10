@@ -176,7 +176,9 @@ runs/<subject>/
 ```
 
 `python -m factory20 init runs/<subject> --ledger L --brief B` makes the folder;
-`python -m factory20 run runs/<subject> --tier standard` reuses any stage file already present,
+`python -m factory20 run runs/<subject> --tier standard` first checks the ledger. Ids a table
+cannot cite (G05), or a `capture_date` that is not one `YYYY-MM-DD` date (the house-gate bundle
+dates every row by it), hold the run at the ledger before anything is paid for. Then it reuses any stage file already present,
 calls each missing stage's model from `routing.json`, checks the output, retries once with the
 failure list and escalates one rung if it still fails. Then it assembles, gates and renders,
 runs up to three fix rounds (pages 1-2 go back to the findings model, pages 3-19 to the fix
@@ -247,6 +249,6 @@ because it carries no time zone.
 | `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
-| `../tests/test_audit_factory_pilot.py` | 49 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite, images that exist; 46 fail on the kit before the fix |
+| `../tests/test_audit_factory_pilot.py` | 51 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite and whose capture date the bundle can read, images that exist, a bar chart's scale; 48 fail on the kit before the fix |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |
