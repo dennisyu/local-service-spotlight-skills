@@ -36,7 +36,7 @@ chases later nothing had happened. **One runner owns an audit end to end.**
 | 10 Collect | **no collector code yet** — the runner researches with its own search and data tools (web search, Ahrefs, Knowledge Graph) following the card | the runner |
 | 20 Harvest | **no harvest code yet** — the runner (or cheap helpers it starts) turns captured sources into ledger rows following the card | the runner |
 | 30-70 Identity → actions | `factory20 run` calls each stage's model, checks the output, retries with the failure list, escalates one rung | code + routed models |
-| Gates, render, fix rounds | code: 41 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
+| Gates, render, fix rounds | code: 41 content gates, 6 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
 | 80 Review | code calls the review model in a fresh context (final files only, no drafting history); S0/S1 sends fixes back and re-reviews | code + review model |
 | 90 Deliver | `factory20 basecamp` writes the to-do list; filing and the Basecamp post follow [stages/90-deliver.md](stages/90-deliver.md) | the runner |
 
@@ -197,9 +197,9 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
    specificity, a visual on every page, identity, score calibration, the action contract,
    approval before any client-facing change, privacy (including the brief's do-not-print list),
    the install QR, and the preparer's name and face on page 1 (a warning on the synthetic demo,
-   a failure on a real audit) — plus 5 render gates (3 must pass, 2 warn) for page count,
-   overflow, fill, links and a decoded QR. Every message says
-   what to fix; an overflow says by how much and which card is tallest. `HOLD` never ships.
+   a failure on a real audit) — plus 6 render gates (4 must pass, 2 warn) for page count,
+   overflow, fill, links, a decoded QR and every image's file. Every message says
+   what to fix; an overflow says by how much and names the move that clears it. `HOLD` never ships.
 2. **One structured frontier review** ([stages/80-review.md](stages/80-review.md)) on the exact
    final files, in a fresh context that never saw the drafting: twelve judgment checks code cannot
    do, S0-S3 severity, a second pass only if S0/S1 was found. For enterprise audits and the pilot,
@@ -247,6 +247,6 @@ because it carries no time zone.
 | `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
-| `../tests/test_audit_factory_pilot.py` | 46 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite; 43 fail on the kit before the fix |
+| `../tests/test_audit_factory_pilot.py` | 49 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite, images that exist; 46 fail on the kit before the fix |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

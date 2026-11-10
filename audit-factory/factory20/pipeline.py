@@ -91,6 +91,12 @@ def prompt(stage: str, run: pathlib.Path, ledger: Ledger, extra: dict | None = N
     brief = json.loads((run / "brief.json").read_text()) if (run / "brief.json").exists() else {}
     head = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
             f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=stage in ('identity', 'score', 'synthesis'))}"]
+    if stage in ("synthesis", "pages", "fix"):
+        # The cards ask for "real captured image only", but until Nov 10 no writer was told which
+        # files exist, so all four pilot rebuilds put an invented screenshot on the cover.
+        head.append("# ASSETS (the only image files there are: a photo or screenshot block may use one of "
+                    "these and nothing else; with none listed, use another visual)\n"
+                    + json.dumps(render.assets_available(run, brief), ensure_ascii=False))
     decided = [f"# {name.upper()} (already decided — stay consistent)\n{(run / f'{name}.json').read_text()}"
                for name in ("identity", "score", "synthesis", "pages", "actions")
                if (run / f"{name}.json").exists() and name != stage]

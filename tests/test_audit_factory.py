@@ -445,6 +445,16 @@ class GateMutationCoverageTests(unittest.TestCase):
         got = {c["id"]: c["status"] for c in gates.gate_render(bad).checks}
         self.assertEqual((got["R01"], got["R03"], got["R04"]), ("FAIL", "WARN", "WARN"))
 
+    def test_R06_an_image_that_prints_as_an_empty_box(self):
+        good = {"pdf_pages": 20, "overflow_pages": [], "fill": {str(n): 0.8 for n in range(1, 21)}, "links": 120,
+                "missing_images": [], "assets_available": ["assets/mock-gbp.png"]}
+        self.assertEqual({c["id"]: c["status"] for c in gates.gate_render(good).checks}["R06"], "PASS")
+        bad = dict(good, missing_images=[{"page": 1, "src": "assets/cover-shot.png"}])
+        c = next(c for c in gates.gate_render(bad).checks if c["id"] == "R06")
+        self.assertEqual(c["status"], "FAIL")
+        self.assertIn("page 1 prints an empty IMAGE NEEDED box for assets/cover-shot.png", c["msg"])
+        self.assertIn("(assets/mock-gbp.png)", c["msg"])
+
     def test_every_gate_has_a_mutation(self):
         """Keeps the README's claim true: a new gate needs a test here or in GateNegativeTests."""
         import inspect

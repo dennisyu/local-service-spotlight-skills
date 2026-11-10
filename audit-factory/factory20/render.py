@@ -447,14 +447,14 @@ def _overflow_detail(page: dict, meas: dict) -> dict:
         enough = [(hs[i], j, blocks[i]) for i, j in mine if i not in keep and frees(i, hs[i]) >= over]
         if enough:
             hh, j, b = min(enough, key=lambda x: x[0])
-            options.append(f"dropping block {j} {b.get('type')} ({hh}px) alone would clear it")
+            options.append(f"drop block {j} {b.get('type')} ({hh}px) or move it to a later page")
     for i, j in mine:
         trows = blocks[i].get("rows") if blocks[i].get("type") == "table" else None
         if isinstance(trows, list) and len(trows) > 1:
             per_row = max((hs[i] - TABLE_HEAD) / len(trows), 1)
             k = int(-(-over // per_row))                     # ceiling
             if k < len(trows) and frees(i, round(k * per_row)) >= over:
-                options.append(f"so would cutting {k} row{'s' if k > 1 else ''} from block {j} table "
+                options.append(f"cut {k} row{'s' if k > 1 else ''} from block {j} table "
                                f"(about {round(per_row)}px a row)")
     return {"over_pct": round(over / h, 3), "over_px": over, "cut_words": cut_words, "tallest": tallest,
             "fixed": [f"{b.get('type')} ({hh}px)" for hh, b in fixed], "options": options[:3]}
@@ -499,9 +499,38 @@ def render(audit_path: str | pathlib.Path, ledger_path: str | pathlib.Path | Non
         "overflow_detail": {str(x["n"]): _overflow_detail(by_n.get(x["n"], {}), x) for x in m if x["overflow"]},
         "fill": {str(x["n"]): round(x["fill"], 3) for x in m}, "links": links,
         "missing_assets": sorted(set(ctx.missing_assets)),
+        "missing_images": missing_images(by_n.values(), ctx),
+        "assets_available": assets_available(audit_path.parent, audit.get("meta", {})),
         "qr_decoded": _decode_qr(out_pdf, audit),
     }
     return report
+
+
+IMAGE_FILES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
+
+
+def missing_images(pages, ctx: Ctx) -> list[dict]:
+    """Every photo or screenshot block whose file is not there, by page. Such a block prints an
+    "IMAGE NEEDED" box. In the Nov 10 pilot all four rebuilds put a made-up screenshot path on
+    the cover (the writer was never told which files exist) and passed every gate that way."""
+    out = []
+    for p in sorted((p for p in pages if isinstance(p.get("n"), int)), key=lambda p: p["n"]):
+        for b in p.get("blocks", []):
+            if b.get("type") in ("photo", "screenshot") and not ctx.asset_ok(b.get("src", "")):
+                out.append({"page": p["n"], "src": b.get("src") or "(no src)"})
+    return out
+
+
+def assets_available(base: pathlib.Path, meta: dict) -> list[str]:
+    """The image files a page may cite, as paths a block's src uses: everything under assets/
+    except the preparer's own photo, which is the cover's byline, not evidence."""
+    d = base / "assets"
+    pb = meta.get("prepared_by")
+    skip = {pb.get("photo")} if isinstance(pb, dict) else set()
+    if not d.is_dir():
+        return []
+    return sorted(s for s in (f.relative_to(base).as_posix() for f in d.rglob("*")
+                              if f.is_file() and f.suffix.lower() in IMAGE_FILES) if s not in skip)
 
 
 QR_UNCHECKED = "UNCHECKED"

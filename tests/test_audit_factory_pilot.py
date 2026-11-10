@@ -2,12 +2,11 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 43 of the 46 tests below fail on the kit as it
+for retries and bigger models they did not need. 46 of the 49 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 25 fail on the first version
-of this change (4f31005, which the first independent review read) and 9 on the second (f91aa74,
-which the second review read); the tenth test added after that review guards the browser
-measurement it confirmed by probe.
+demo's G10 and G11, the page footer, and the bound on words to cut. 30 fail on the first version
+of this change (4f31005, which the first independent review read), 15 on the second (f91aa74,
+which the second review read) and 6 on 823ff8b, which came before the replays showed 10 and 11.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -34,6 +33,15 @@ measurement it confirmed by probe.
    bought a rung-up round; a photo or QR without a span was placed in a row of its own; and a
    ledger id without the id shape (E012) left every table citation of it unread. Such a ledger
    now holds the run before any call (G05).
+10. Every replay put an invented screenshot on the cover. The cover card asks for a real
+   captured image, but no prompt listed the files that exist and no gate looked, so each PDF
+   printed an IMAGE NEEDED box on page 1 and passed. The page writers now get the list (under
+   # ASSETS) and R06 holds an empty image box.
+11. With the sure move in a parenthesis after "cut about N words", cheap fix models cut words
+   from one-line table rows round after round (page 18: 76, then 54, then 44px over); the move
+   now comes first. In three of the four replays page 18 ran over with a 206px timeline the
+   writer added beside the renderer's swimlane, so the page card now says that pages 5, 17 and
+   18 get their visual from the renderer.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -280,7 +288,7 @@ class OverflowAdviceTests(unittest.TestCase):
     def test_the_advice_never_offers_to_drop_the_findings_or_the_only_visual(self):
         p2 = page(render.expand(AUDIT, LEDGER), 2)
         d = render._overflow_detail(p2, {"over": 30, "h": 900, "own": [900] * len(p2["blocks"])})
-        self.assertFalse([o for o in d["options"] if o.startswith("dropping")], d["options"])
+        self.assertFalse([o for o in d["options"] if o.startswith("drop ")], d["options"])
         pg = {"n": 13, "type": "content_factory", "blocks": [
             {"type": "timeline", "span": 12, "events": []},
             {"type": "table", "span": 12, "columns": ["a"], "rows": [["x"]] * 20}]}
@@ -289,10 +297,10 @@ class OverflowAdviceTests(unittest.TestCase):
 
     def test_the_advice_names_a_move_that_clears_it_for_certain(self):
         d = render._overflow_detail(PLAN, {"over": 16, "h": 900, "own": [351, 206, 219]})
-        self.assertEqual(d["options"][0], "dropping block 1 timeline (206px) alone would clear it")
-        self.assertEqual(d["options"][1], "so would cutting 1 row from block 2 table (about 32px a row)")
+        self.assertEqual(d["options"][0], "drop block 1 timeline (206px) or move it to a later page")
+        self.assertEqual(d["options"][1], "cut 1 row from block 2 table (about 32px a row)")
         d = render._overflow_detail(PLAN, {"over": 110, "h": 900, "own": [351, 206, 219]})
-        self.assertIn("so would cutting 4 rows from block 2 table (about 32px a row)", d["options"])
+        self.assertIn("cut 4 rows from block 2 table (about 32px a row)", d["options"])
         d = render._overflow_detail(PLAN, {"over": 400, "h": 900, "own": [351, 206, 219]})
         self.assertEqual(d["options"], [])                       # nothing alone clears 400px; say so by silence
 
@@ -304,7 +312,7 @@ class OverflowAdviceTests(unittest.TestCase):
             {"type": "bars", "span": 6, "items": [{"label": "Row", "value": 3}]},
             {"type": "callout", "span": 6, "title": "What moves the number", "body": "Two rows."}]}
         d = render._overflow_detail(pg, {"over": 92, "h": 900, "own": [295, 161, 353, 180]})
-        self.assertEqual(d["options"], ["dropping block 1 bars (353px) alone would clear it"])
+        self.assertEqual(d["options"], ["drop block 1 bars (353px) or move it to a later page"])
         d = render._overflow_detail(pg, {"over": 200, "h": 900, "own": [295, 161, 353, 180]})
         self.assertEqual(d["options"], [])                     # 353 - 180 = 173 is not enough
 
@@ -314,7 +322,11 @@ class OverflowAdviceTests(unittest.TestCase):
                                  "links": 500, "qr_decoded": render.INSTALL_URL}, render.INSTALL_URL)
         msg = next(c for c in rep.checks if c["id"] == "R02")["msg"]
         self.assertIn("page 18 runs 12% (110px)", msg)
-        self.assertIn("dropping block 1 timeline (206px) alone would clear it", msg)
+        # the sure move leads; cutting words, which a one-line table row cannot use, comes after
+        self.assertIn("past the page. Either of these clears it for certain: drop block 1 timeline (206px) or "
+                      "move it to a later page; or cut 4 rows from block 2 table (about 32px a row). Otherwise cut "
+                      "about", msg)
+        self.assertLess(msg.index("drop block 1"), msg.index("words from your own blocks"))
         self.assertIn("your tallest: block 2 table", msg)
         self.assertIn("cannot change it: swimlane (351px)", msg)
 
@@ -645,6 +657,60 @@ class EscalationTests(unittest.TestCase):
         self.assertEqual(seen, [])                             # no writer was asked, and none paid for
         self.assertNotIn("fix_escalated", res)
         self.assertEqual(res["verdict"], "HOLD", res)
+
+
+# --------------------------------------------------------------------------- 10. images that exist
+class ImageTests(unittest.TestCase):
+    """All four pilot rebuilds put an invented screenshot path on the cover: the cards ask for a
+    real captured image, no prompt said which files exist, and no gate looked, so each PDF
+    printed an IMAGE NEEDED box on page 1 and passed."""
+
+    def test_the_page_writers_are_told_which_image_files_exist(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            run_dir(d, copy.deepcopy(split_fixture(AUDIT)))
+            shutil.copy(DEMO / "assets" / "mock-gbp.png", d / "assets" / "preparer.png")
+            brief = json.loads((d / "brief.json").read_text())
+            brief["prepared_by"] = dict(brief["prepared_by"], photo="assets/preparer.png")
+            (d / "brief.json").write_text(json.dumps(brief))
+            for stage in ("synthesis", "pages", "fix"):
+                p = pipeline.prompt(stage, d, LEDGER)
+                self.assertIn('# ASSETS', p)
+                self.assertIn('["assets/mock-gbp.png"]', p)          # the byline photo is not evidence
+            for stage in ("identity", "score", "actions"):
+                self.assertNotIn("# ASSETS", pipeline.prompt(stage, d, LEDGER))
+
+    def test_an_invented_image_holds_the_render_gate_and_goes_to_its_page_writer(self):
+        a = render.expand(copy.deepcopy(AUDIT), LEDGER)
+        page(a, 1)["blocks"] = [dict(b, src="assets/invented.png") if b.get("type") == "photo" else b
+                                for b in page(a, 1)["blocks"]]
+        page(a, 9)["blocks"].append({"type": "screenshot", "src": "assets/also-invented.png", "caption": "x"})
+        ctx = render.Ctx(a, LEDGER, DEMO)
+        gone = render.missing_images(a["pages"], ctx)
+        self.assertEqual(gone, [{"page": 1, "src": "assets/invented.png"}, {"page": 9, "src": "assets/also-invented.png"}])
+        self.assertEqual(render.assets_available(DEMO, a["meta"]), ["assets/mock-gbp.png"])
+        rep = gates.gate_render({"pdf_pages": 20, "overflow_pages": [], "fill": {}, "links": 99,
+                                 "missing_images": gone, "assets_available": ["assets/mock-gbp.png"]})
+        c = next(x for x in rep.checks if x["id"] == "R06")
+        self.assertEqual(c["status"], "FAIL")
+        item = {"from": "render", "id": "R06", "status": "FAIL", "msg": c["msg"]}
+        self.assertEqual((pipeline._front(item), pipeline._back(item)), (True, True))   # page 1 and page 9
+        one = dict(item, msg=c["msg"].split("; ")[0])
+        self.assertEqual((pipeline._front(one), pipeline._back(one)), (True, False))     # the cover alone
+
+    @unittest.skipUnless(have_browser(), "needs Playwright + Chromium")
+    def test_a_real_render_lists_the_empty_image_by_page(self):
+        a = copy.deepcopy(AUDIT)
+        page(a, 1)["blocks"] = [dict(b, src="assets/invented.png") if b.get("type") == "photo" else b
+                                for b in page(a, 1)["blocks"]]
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            shutil.copytree(DEMO / "assets", d / "assets")
+            (d / "audit.json").write_text(json.dumps(a))
+            rr = render.render(d / "audit.json", DEMO / "ledger.json", d / "audit.pdf")
+        self.assertEqual(rr["missing_images"], [{"page": 1, "src": "assets/invented.png"}])
+        self.assertEqual(rr["assets_available"], ["assets/mock-gbp.png"])
+        self.assertEqual(next(c for c in gates.gate_render(rr).checks if c["id"] == "R06")["status"], "FAIL")
 
 
 # --------------------------------------------------------------------------- 8. the manual provider

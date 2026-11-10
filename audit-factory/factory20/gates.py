@@ -429,10 +429,17 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
                 parts.append(f"page {n} runs {by} past the page, and every block on it is drawn by the renderer "
                              f"({', '.join(d['fixed'])}), so no page writer can make room on it")
                 continue
-            msg = (f"page {n} runs {by} past the page — cut about {d.get('cut_words', '?')} words from your own "
-                   f"blocks, or drop or move one of them")
-            if d.get("options"):
-                msg += f" ({'; '.join(d['options'])})"
+            # The move that clears the page comes first. In the Nov 10 pilot, with it in a parenthesis
+            # after "cut about N words", four cheap-model rounds cut words from one-line table rows
+            # (page 18: 76 -> 54 -> 44px over) and only the rung-up round took the move.
+            opts = d.get("options") or []
+            cut = f"cut about {d.get('cut_words', '?')} words from your own blocks"
+            if opts:
+                msg = (f"page {n} runs {by} past the page. {'Either of these' if len(opts) > 1 else 'This'} clears "
+                       f"it for certain: {'; or '.join(opts)}. Otherwise {cut}, though words cut from a table "
+                       "whose rows are one line each free no height")
+            else:
+                msg = f"page {n} runs {by} past the page — {cut}, or drop or move one of them"
             msg += f"; your tallest: {', '.join(d.get('tallest', []))}"
             if d.get("fixed"):
                 msg += (f"; also on this page, drawn by the renderer and not in your page object, so you cannot "
@@ -450,6 +457,14 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
           hard=False)
     R.add("R04", "PDF carries clickable source links", "render", render_report.get("links", 0) >= 30,
           f"only {render_report.get('links', 0)} link annotations", hard=False)
+    gone = render_report.get("missing_images")
+    if gone is not None:   # render reports from before Nov 10 do not list them
+        have = render_report.get("assets_available") or []
+        R.add("R06", "No image prints as an empty box", "render", not gone,
+              "; ".join(f"page {g['page']} prints an empty IMAGE NEEDED box for {g['src']}" for g in gone)
+              + ": no such file is in assets/. Point the block at a file that exists "
+              + (f"({', '.join(have)})" if have else "(there are none: use another visual)")
+              + " or replace it with another visual; never invent a file name")
     if expected_qr:
         got = render_report.get("qr_decoded")
         if isinstance(got, str) and got.startswith("UNCHECKED"):
