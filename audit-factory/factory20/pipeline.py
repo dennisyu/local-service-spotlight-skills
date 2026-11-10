@@ -136,10 +136,13 @@ def check_review(obj, ledger):
 
 
 def check_fix(obj, ledger):
-    """A fix returns only the pages it changed, each a full page object for pages 3-19."""
-    pages = obj.get("pages", [])
-    if not pages:
-        return ["return the pages you changed under 'pages' (at least one)"]
+    """A fix returns only the pages it changed, each a full page object for pages 3-19. An empty
+    list is an answer: nothing on pages 3-19 can clear the list (a ledger-level warning such as
+    G12). Rejecting it, as the kit did until Nov 10, bought a retry and then a bigger model to say
+    the same thing, or pushed the writer to swap in citations that do not support the claim."""
+    if not isinstance(obj.get("pages"), list):
+        return ["return the pages you changed under 'pages' (an empty list if no page can clear it)"]
+    pages = obj["pages"]
     bad = [p.get("n") for p in pages if p.get("n") not in range(3, 20)]
     probs = [f"fix may only return pages 3-19; got {bad}"] if bad else []
     probs += [f"unknown evidence id {x}" for x in _ids_missing(pages, ledger)][:15]
@@ -153,6 +156,9 @@ FRONT_GATES = {"G20", "G21", "G22", "G24"}
 # Gates on the action register. Until Nov 10 no fix path could revise the register, so an item
 # from these gates, or a privacy hit inside an action, stayed open through every fix round.
 ACTION_GATES = {"G60", "G61", "G62", "G63", "G64", "G65"}
+# Failures no fix-loop writer can clear (structure, identity and score stages, page count): a
+# bigger model on pages or the register would only pay for the same answer.
+NO_WRITER = {"G01", "G02", "G50", "G51", "G52", "G53", "G54", "R01"}
 NOT_THE_WRITERS = {"G81"}   # the preparer's photo comes from the brief and assets, not from a model
 # Pages 3-19 come back in four calls, not one. A real audit's pages run about 19,000 output
 # tokens (measured on the Nov 4 clean blind run), more than one reply may carry; four
@@ -215,14 +221,15 @@ def _front(item: dict) -> bool:
 
 
 def _acts(item: dict) -> bool:
-    """The action register belongs to the actions model: every action-gate item, and any item
-    located in the register (the gates name it as "action register A8"; a reviewer's `where`
-    may just say "register")."""
-    if item.get("from") == "gate" and item.get("id") in ACTION_GATES:
+    """The action register belongs to the actions model: every action-gate item, any gate item the
+    gates locate in the register ("action register A8"), and a review finding whose `where` names
+    the register or an action id. A review's free text is not read: "register the domain" is a
+    page finding."""
+    if item.get("from") == "review":
+        return bool(re.search(r"\bregister\b|\bactions?\b|\bA\d{1,3}\b", str(item.get("where") or ""), re.I))
+    if item.get("id") in ACTION_GATES:
         return True
-    text = f"{item.get('where') or ''} {item.get('msg') or ''}"
-    pattern = r"\bregister\b" if item.get("from") == "review" else r"action register"
-    return bool(re.search(pattern, text, re.I))
+    return bool(re.search(r"action register", str(item.get("msg") or ""), re.I))
 
 
 def _back(item: dict) -> bool:
@@ -234,36 +241,35 @@ def _back(item: dict) -> bool:
     return not _front(item) and not _acts(item)
 
 
-def _kept_action_ids(obj: dict, run_dir: pathlib.Path) -> list[str]:
-    """A revised register must keep every action id the pages already cite."""
-    cited = set()
-    for name in ("synthesis", "pages"):
-        f = run_dir / f"{name}.json"
-        if f.exists():
-            cited |= set(M.action_refs_in(json.loads(f.read_text()).get("pages", [])))
+def _kept_action_ids(obj: dict, current: dict) -> list[str]:
+    """A revised register keeps every action id it had. Pages print ids in fields and as plain
+    table text (an "Action" column), and the to-dos follow the ids, so an id is a stable key."""
     have = {a.get("id") for a in obj.get("actions", [])}
-    return [f"keep action {i}: a page cites it" for i in sorted(cited - have)]
+    return [f"keep action {i}: every id stays, because pages and to-dos already print it"
+            for i in sorted({a.get("id") for a in current.get("actions", [])} - have)]
 
 
 def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake, items: list[dict],
                  review: dict | None = None, confidential: bool = False, max_usd: float | None = None,
-                 rung_up: bool = False) -> bool:
+                 up_writers: frozenset = frozenset()) -> bool:
     """One fix round: the synthesis model revises pages 1-2, the fix model patches pages 3-19,
     the actions model revises the action register, and reviewer score adjustments go back into
     score.json (code re-checks them). A fix round obeys the same confidential guard and spending
-    cap as the first draft. rung_up=True runs the fix and actions writers one rung up the ladder
-    (the loop asks for that once, after a round that cleared nothing)."""
+    cap as the first draft. up_writers names the writers ("synthesis", "fix", "actions") that run
+    one rung up the ladder this round (the loop asks for that for one round, once, after a round
+    that left a FAIL those writers own)."""
     ok = True
     front = [i for i in items if _front(i)]
     rest = [i for i in items if _back(i)]
     acts = [i for i in items if _acts(i)]
-    up = (lambda st: router.next_rung(cfg, cfg["tiers"][tier]["models"][st], tier)) if rung_up else (lambda st: None)
+    def up(st: str) -> str | None:
+        return router.next_rung(cfg, cfg["tiers"][tier]["models"][st], tier) if st in up_writers else None
     if front:
         res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
             "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
             "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
             tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake,
-            confidential=confidential, max_usd=max_usd)
+            confidential=confidential, max_usd=max_usd, model=up("synthesis"))
         ok &= res["ok"]
     if rest:
         res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
@@ -281,11 +287,12 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
             (run_dir / "pages.json").write_text(json.dumps(cur, indent=1, ensure_ascii=False))
         ok &= res["ok"]
     if acts:
+        current = json.loads((run_dir / "actions.json").read_text())
         res = router.run_stage("actions", prompt("actions", run_dir, ledger, extra={
             "task": "Revise the action register so every item in fix_list is cleared. Return the whole "
                     "register under 'actions'; keep every action id and everything that already works.",
-            "fix_list": acts, "current_actions": json.loads((run_dir / "actions.json").read_text())}),
-            tier, run_dir, check=lambda o: check_actions(o, ledger) + _kept_action_ids(o, run_dir), cfg=cfg,
+            "fix_list": acts, "current_actions": current}),
+            tier, run_dir, check=lambda o: check_actions(o, ledger) + _kept_action_ids(o, current), cfg=cfg,
             fake=fake, confidential=confidential, max_usd=max_usd, model=up("actions"))
         ok &= res["ok"]
     if review and review.get("score_adjustments"):
@@ -377,26 +384,34 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
             out["usd"] = router.spent(run_dir)
             return out
     audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-    rounds, last, rung_up = 0, None, False
+    rounds, last, escalated = 0, None, False
     while rounds < MAX_FIX_ROUNDS:
         items = fix_list(rep, rr)
         open_now = sorted((i["from"], str(i["id"]), i["status"]) for i in items)
         if not items:
             break
+        if last is not None and all(i["status"] == "WARN" for i in items) and set(open_now) <= set(last):
+            break   # only warnings the last round already had: no round on them alone
+        up_writers: frozenset = frozenset()
         if open_now == last:
             # The last round cleared nothing. A warning alone is not worth more rounds (it often
             # sits in the ledger, beyond any writer), so stop. A FAIL holds the audit: until Nov 10
             # the loop stopped here too, leaving it on HOLD with rounds unspent when only the cheap
-            # model had tried. Now a FAIL gets one more round one rung up the ladder, once.
-            fix_up = router.next_rung(cfg, cfg["tiers"][tier]["models"]["fix"], tier)
-            if rung_up or fix_up is None or not any(i["status"] == "FAIL" for i in items):
+            # model had tried. Now, once per run, a FAIL a writer owns gets one round with that
+            # writer one rung up the ladder; the round after goes back to the tier's models.
+            owners = {w for i in items if i["status"] == "FAIL" and i["id"] not in NO_WRITER
+                      for w, owns in (("synthesis", _front), ("fix", _back), ("actions", _acts)) if owns(i)}
+            ups = {w: router.next_rung(cfg, cfg["tiers"][tier]["models"][w], tier) for w in owners}
+            if escalated or not any(ups.values()):
                 break
-            rung_up = True
-            out["fix_escalated_to"] = fix_up
+            escalated = True
+            up_writers = frozenset(w for w, m in ups.items() if m)
+            out["fix_escalated_to"] = ups.get("fix") or next(m for m in ups.values() if m)
+            out["fix_escalated"] = {w: m for w, m in ups.items() if m}
         last = open_now
         rounds += 1
         if not _apply_fixes(run_dir, ledger, tier, cfg, fake, items,
-                            confidential=confidential, max_usd=max_usd, rung_up=rung_up):
+                            confidential=confidential, max_usd=max_usd, up_writers=up_writers):
             break
         audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
     out["fix_rounds"] = rounds

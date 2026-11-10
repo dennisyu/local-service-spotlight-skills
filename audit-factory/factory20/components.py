@@ -145,7 +145,9 @@ def table(b, ctx):
         cells = []
         for i, v in enumerate(r):
             if i in ev_col:
-                cells.append(f"<td>{chips(M.cell_ids(v), ctx)}</td>")
+                ids, rest = M.split_cell(v)
+                words = f' <span class="mut">{md(rest)}</span>' if rest else ""
+                cells.append(f"<td>{chips(ids, ctx)}{words}</td>")
             elif i in st_col and str(v).upper() in STATE_CLASS:
                 cells.append(f"<td>{badge(str(v))}</td>")
             else:

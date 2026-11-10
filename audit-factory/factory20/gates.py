@@ -158,18 +158,16 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
               f"(cited on {_where_refs(dangling, pages, actions)})")
         cited = [ledger.get(r) for r in uniq if ledger.get(r)]
         wrong_person = [c["id"] for c in cited if c["kind"] == "ambiguous" or c["match"] in ("AMBIGUOUS", "NAMESAKE", "REJECTED")]
-        # ambiguous rows may be cited only on the identity page
+        # A namesake row may be cited where namesakes are the subject: the identity and risks
+        # pages, and the exams page and exam rows, whose entity score it can explain (the replay
+        # found a fair use there: an exam row cited the namesake to justify a score of 1).
+        # Anywhere else it reads as proof: a page-2 card, another page, an action. Citing it on
+        # the identity page as well never makes that use safe.
         id_page = M.page_by_type(audit, "identity") or {}
-        # A namesake row must be introduced on the identity or risks page before anything else
-        # cites it. Other citations are left to the reviewer (check 1): a low entity score or the
-        # entity page may rightly cite someone who shares the subject's name. (Tried Nov 10:
-        # flagging every citation outside those two pages held a real rebuild on an exam row that
-        # cited the namesake to explain a score of 1.)
         risks_page = M.page_by_type(audit, "risks") or {}
-        allowed = set(M.refs_in(id_page)) | set(M.refs_in(risks_page))
-        leak = sorted(set(wrong_person) - allowed)
-        leak_on = [p for p in pages if p is not id_page and p is not risks_page]
-        R.add("G11", "Namesake/ambiguous rows cited only on identity or risks pages", "evidence", not leak,
+        leak_on = [p for p in pages if p is not id_page and p is not risks_page and p.get("type") != "exams"]
+        leak = sorted(set(wrong_person) & (set(M.refs_in(leak_on)) | set(M.refs_in(actions))))
+        R.add("G11", "Namesake/ambiguous rows cited only on the identity, risks or exam pages", "evidence", not leak,
               f"ambiguous/namesake evidence used as proof: {leak[:10]} "
               f"(cited on {_where_refs(leak, leak_on, actions)})")
         with_url = sum(1 for c in cited if c["kind"] == "evidence" and c["url"].startswith("http"))
@@ -377,7 +375,8 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     act_text = (M.text_of(actions) + " " + _printed_urls(actions)).lower()
     hits_dnp += [("actions", j) for j, s in enumerate(dnp, 1) if s in act_text]
     R.add("G74", "Nothing on the brief's do-not-print list appears", "privacy", not hits_dnp,
-          "brief.do_not_print items found — " + ", ".join(f"item {j} on page {n}" for n, j in hits_dnp[:8])
+          "brief.do_not_print items found — " + ", ".join(f"item {j} in the action register" if n == "actions"
+                                                          else f"item {j} on page {n}" for n, j in hits_dnp[:8])
           + "; remove them and do not paraphrase them")
     if ledger is not None:
         risky = []
@@ -420,8 +419,12 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
     for n in over:
         d = detail.get(str(n)) or {}
         if d:
-            over = f"{round(100 * d.get('over_pct', 0))}%" + (f" ({d['over_px']}px)" if d.get("over_px") else "")
-            msg = (f"page {n} runs {over} past the page — cut about {d.get('cut_words', '?')} words from your own "
+            by = f"{round(100 * d.get('over_pct', 0))}%" + (f" ({d['over_px']}px)" if d.get("over_px") else "")
+            if not d.get("tallest") and d.get("fixed"):
+                parts.append(f"page {n} runs {by} past the page, and every block on it is drawn by the renderer "
+                             f"({', '.join(d['fixed'])}), so no page writer can make room on it")
+                continue
+            msg = (f"page {n} runs {by} past the page — cut about {d.get('cut_words', '?')} words from your own "
                    f"blocks, or drop or move one of them")
             if d.get("options"):
                 msg += f" ({'; '.join(d['options'])})"

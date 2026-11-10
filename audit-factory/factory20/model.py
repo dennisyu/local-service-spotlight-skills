@@ -56,10 +56,33 @@ def walk(obj) -> Iterator:
             yield from walk(v)
 
 
+# A ledger id: capitals and digits in hyphenated groups (E-012, V-E012, C-SPELL). Action ids (A5)
+# have no hyphen, so an action id written into an Evidence cell stays text, not a broken chip.
+ID_SHAPE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
+_EDGE = "()[]{}<>.,;:!?\"'\u201c\u201d\u2018\u2019"
+
+
+def split_cell(v) -> tuple[list[str], str]:
+    """One table cell from an evidence column: the ids it cites, and the rest of it as words.
+    A token is an id only when it has the ledger's id shape once surrounding punctuation is
+    stripped; "see", "n/a", "(A5)", "-" and None stay text. The renderer draws the ids as chips
+    and the words as words; every check counts the ids, and only the ids."""
+    if v is None:
+        return [], ""
+    parts = [str(x) for x in v if x is not None] if isinstance(v, list) else re.split(r"[,;\s]+", str(v).strip())
+    ids, rest = [], []
+    for t in parts:
+        core = t.strip().strip(_EDGE)
+        if ID_SHAPE.match(core):
+            ids.append(core)
+        elif t.strip():
+            rest.append(t.strip())
+    return ids, " ".join(rest)
+
+
 def cell_ids(v) -> list[str]:
-    """The evidence ids in one table cell, split exactly as the renderer splits them into chips."""
-    parts = v if isinstance(v, list) else re.split(r"[,\s]+", str(v).strip())
-    return [str(x).strip() for x in parts if str(x).strip()]
+    """The evidence ids one table cell cites (see split_cell)."""
+    return split_cell(v)[0]
 
 
 def evidence_columns(columns) -> list[int]:
@@ -84,11 +107,11 @@ def table_refs(d: dict) -> list[str]:
     return out
 
 
-def refs_in(obj) -> list[str]:
+def refs_in(obj, tables: bool = True) -> list[str]:
     """All evidence ids referenced anywhere inside obj, in first-seen order: every evidence /
-    refs / evidence_ids field, and every id in a table's evidence column (the renderer turns
-    those into chips, so the checks must see them; until Nov 10 they did not, and a page that
-    cited a dozen ids in its tables failed "cite at least 3 evidence ids")."""
+    refs / evidence_ids field, and (tables=True) every id in a table's evidence column. The
+    renderer turns those into chips, so the checks must see them; until Nov 10 they did not, and
+    a page that cited a dozen ids in its tables failed "cite at least 3 evidence ids"."""
     seen: dict[str, None] = {}
     for d in walk(obj):
         for k in EVID_KEYS:
@@ -99,8 +122,9 @@ def refs_in(obj) -> list[str]:
                 for x in v:
                     if isinstance(x, str) and x.strip():
                         seen.setdefault(x.strip(), None)
-        for x in table_refs(d):
-            seen.setdefault(x, None)
+        if tables:
+            for x in table_refs(d):
+                seen.setdefault(x, None)
     return list(seen)
 
 

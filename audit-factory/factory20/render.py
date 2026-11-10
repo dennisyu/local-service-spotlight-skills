@@ -308,7 +308,10 @@ def page_html(p: dict, ctx: Ctx, total: int) -> str:
     blocks = "".join(C.render_block(b, ctx) for b in p.get("blocks", []))
     if p.get("type") == "cover":
         blocks += _prepared_by(ctx)
-    refs = M.refs_in(p)
+    # The footer lists the page's evidence fields, as it always has; ids in a table's evidence
+    # column are already chips in that table, and adding them here can wrap the footer onto a
+    # second line and take the room out of the page body.
+    refs = M.refs_in(p, tables=False)
     evf = C.chips(refs, ctx) if refs else '<span class="mut">none</span>'
     conf = ctx.meta.get("confidentiality", f"Confidential — prepared for {subj}")
     headline = p.get("headline", "")
@@ -374,6 +377,21 @@ MEASURE_JS = """
 """
 
 
+def _grid_rows(blocks: list[dict]) -> list[list[int]]:
+    """Block indexes by grid row, as the browser places them: in order, a new row whenever the
+    next block's span no longer fits in the 12 columns."""
+    rows: list[list[int]] = []
+    used = 12
+    for i, b in enumerate(blocks):
+        span = min(max(int(b.get("span", 12) or 12), 1), 12)
+        if used + span > 12:
+            rows.append([])
+            used = 0
+        rows[-1].append(i)
+        used += span
+    return rows
+
+
 def _overflow_detail(page: dict, meas: dict) -> dict:
     """How far a page runs over and what to cut, in words a drafting model can act on.
 
@@ -387,37 +405,58 @@ def _overflow_detail(page: dict, meas: dict) -> dict:
     over = int(meas.get("over", 0))
     h = max(int(meas.get("h", 1)), 1)
     blocks = page.get("blocks", [])
-    heights = meas.get("own") or meas.get("kids") or []
-    fixed = [(hh, b) for hh, b in zip(heights, blocks) if b.get("auto")]
-    mine = [(hh, b) for hh, b in zip(heights, blocks) if not b.get("auto")]
-    mine_words = sum(M.words(M.text_of(b)) for _, b in mine)
-    room = max(h + over - sum(hh for hh, _ in fixed), 1)      # the height the writer's blocks take now
+    hs = [int(x) for x in (meas.get("own") or meas.get("kids") or [])][:len(blocks)]
+    blocks = blocks[:len(hs)]
+    rows = _grid_rows(blocks)
+    row_of = {i: r for r, ix in enumerate(rows) for i in ix}
+    fixed = [(hs[i], b) for i, b in enumerate(blocks) if b.get("auto")]
+    mine = [(i, j) for j, i in enumerate((i for i, b in enumerate(blocks) if not b.get("auto")), 1)]
+    mine_words = sum(M.words(M.text_of(blocks[i])) for i, _ in mine)
+    # the height the writer's blocks take now: everything but rows the renderer fills alone
+    code_rows = sum(max(hs[i] for i in ix) + GRID_GAP for ix in rows if all(blocks[i].get("auto") for i in ix))
+    room = max(h + over - code_rows, 1)
+    cut_words = min(mine_words, int(mine_words * over / room * 1.15) + 10) if mine else 0
     if meas.get("cards") and any(b.get("type") == "cards" for b in blocks):
-        items = [i for b in blocks if b.get("type") == "cards" for i in b.get("items", [])]
+        items = [it for b in blocks if b.get("type") == "cards" for it in b.get("items", [])]
         sized = sorted(zip(meas["cards"], range(1, len(items) + 1), items), key=lambda x: -x[0])
         tallest = [f"card {j} ({M.words(' '.join(str(it.get(k, '')) for k in ('title', 'body', 'so')))} words)"
                    for _, j, it in sized[:3]]
     else:
-        sized = sorted(((hh, j, b) for j, (hh, b) in enumerate(mine, 1)), key=lambda x: -x[0])
+        sized = sorted(((hs[i], j, blocks[i]) for i, j in mine), key=lambda x: -x[0])
         tallest = [f"block {j} {b.get('type')} ({hh}px, {M.words(M.text_of(b))} words)" for hh, j, b in sized[:2]]
+
     # Moves that clear it for certain, in pixels, because cutting words from a table whose rows
     # are one line each frees nothing. In the pilot, three rounds trimmed table cells on page 18
     # (69px over, then 38, 53, 16) while one 206px timeline beside the swimlane stayed put.
+    # A block frees height only if it sets its grid row's height: dropping a callout that sits
+    # beside a taller chart frees nothing (a first version of this advice suggested exactly that).
+    def frees(i: int, by: int) -> int:
+        """Height the page gets back if block i shrinks by `by` px (or goes, when by >= its height)."""
+        others = [hs[k] for k in rows[row_of[i]] if k != i]
+        if not others and by >= hs[i]:
+            return hs[i] + GRID_GAP                          # the whole row and its gap go
+        return max(0, hs[i] - max([hs[i] - by] + others))
+
+    visuals = [i for i, b in enumerate(blocks) if b.get("type") in M.VISUAL_BLOCKS]
+    keep = {i for i, b in enumerate(blocks) if b.get("type") == "cards"}         # page 2's findings
+    if len(visuals) == 1:
+        keep.add(visuals[0])                                 # the page's only visual (G40)
     options = []
-    enough = [(hh, j, b) for j, (hh, b) in enumerate(mine, 1) if hh + GRID_GAP >= over]
-    if enough:
-        hh, j, b = min(enough, key=lambda x: x[0])
-        options.append(f"dropping block {j} {b.get('type')} ({hh}px) alone would clear it")
-    for j, (hh, b) in enumerate(mine, 1):
-        rows = b.get("rows") if b.get("type") == "table" else None
-        if isinstance(rows, list) and len(rows) > 1:
-            per_row = max((hh - TABLE_HEAD) / len(rows), 1)
+    if page.get("n") not in (1, 2):                          # the front pages keep their shape
+        enough = [(hs[i], j, blocks[i]) for i, j in mine if i not in keep and frees(i, hs[i]) >= over]
+        if enough:
+            hh, j, b = min(enough, key=lambda x: x[0])
+            options.append(f"dropping block {j} {b.get('type')} ({hh}px) alone would clear it")
+    for i, j in mine:
+        trows = blocks[i].get("rows") if blocks[i].get("type") == "table" else None
+        if isinstance(trows, list) and len(trows) > 1:
+            per_row = max((hs[i] - TABLE_HEAD) / len(trows), 1)
             k = int(-(-over // per_row))                     # ceiling
-            if k < len(rows):
+            if k < len(trows) and frees(i, round(k * per_row)) >= over:
                 options.append(f"so would cutting {k} row{'s' if k > 1 else ''} from block {j} table "
                                f"(about {round(per_row)}px a row)")
-    return {"over_pct": round(over / h, 3), "over_px": over, "cut_words": int(mine_words * over / room * 1.15) + 10,
-            "tallest": tallest, "fixed": [f"{b.get('type')} ({hh}px)" for hh, b in fixed], "options": options[:3]}
+    return {"over_pct": round(over / h, 3), "over_px": over, "cut_words": cut_words, "tallest": tallest,
+            "fixed": [f"{b.get('type')} ({hh}px)" for hh, b in fixed], "options": options[:3]}
 
 
 GRID_GAP, TABLE_HEAD = 11, 24   # .body row gap and a table's title plus header row, in px

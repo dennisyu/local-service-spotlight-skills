@@ -181,7 +181,8 @@ failure list and escalates one rung if it still fails. Then it assembles, gates 
 runs up to three fix rounds (pages 1-2 go back to the findings model, pages 3-19 to the fix
 model, the action register to the actions model; each gate message says where its problem
 sits, so it reaches the writer who owns that text). A round that clears nothing ends the loop,
-except that a hard FAIL first gets one round one rung up the ladder. It finishes with the
+except that a hard FAIL first gets one round one rung up the ladder, and warnings a round already
+had get no round of their own. It finishes with the
 fresh-context review: `READY` needs zero S0/S1 findings. The
 verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY`).
 `--max-usd` overrides the tier's spending cap; reaching it holds the audit with the amount spent.
@@ -244,6 +245,6 @@ because it carries no time zone.
 | `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
-| `../tests/test_audit_factory_pilot.py` | 23 tests: what the Nov 10 pilot rebuilds found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, a receipt page with slack; 22 fail on the kit before the fix |
+| `../tests/test_audit_factory_pilot.py` | 36 tests: what the Nov 10 pilot rebuilds found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack; 33 fail on the kit before the fix |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |
