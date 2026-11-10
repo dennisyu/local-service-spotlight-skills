@@ -2,12 +2,13 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 51 of the 54 tests below fail on the kit as it
+for retries and bigger models they did not need. 53 of the 56 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 35 fail on the first version
-of this change (4f31005, which the first independent review read), 20 on the second (f91aa74,
-which the second review read), 11 on 823ff8b, which came before the replays showed 10 and 11,
-5 on 523018f, the version the graded replays ran on (12, 13), 3 on 3c585f4 and 2 on 690d255.
+demo's G10 and G11, the page footer, and the bound on words to cut. 37 fail on the first version
+of this change (4f31005, which the first independent review read), 22 on the second (f91aa74,
+which the second review read), 13 on 823ff8b, which came before the replays showed 10 and 11,
+7 on 523018f, the version the graded replays ran on (12-14), 5 on 3c585f4, 4 on 690d255 and 2
+on e5d07c3.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -54,6 +55,11 @@ which the second review read), 11 on 823ff8b, which came before the replays show
    review on a draft that could only end HOLD, then reported the render verdict from before the
    review. Such a draft now gets the fix rounds the run has left first, and no review if it
    still holds; the result reports the final files.
+14. The blind graders found two more. Page 20's chart title counted only the evidence rows
+   ("119 rows") above a chart of all 134. And one fix round revised the cover before the pages
+   it summarizes, so the cover kept a $21 ad test that the same round's page fix had made a $14
+   test on page 11. The title now counts every row; the page writer goes first, and the cover's
+   writer sees its pages.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -841,6 +847,44 @@ class ReviewFixTests(unittest.TestCase):
         res, calls = self._run(gate_round_clears=False, render_hold=True)
         self.assertEqual(calls.count("review"), 1, calls)        # no review on a draft that must HOLD
         self.assertEqual((res["render"], res["verdict"]), ("HOLD", "HOLD"), res)   # not the PASS from before
+
+
+class FixOrderTests(unittest.TestCase):
+    def test_the_front_pages_are_revised_after_the_pages_they_summarize(self):
+        # Nov 10, person standard replay: in one fix round the cover was revised first, against the
+        # old page 11 ($21 video test); the page fix then made page 11 a $14 two-post test, and the
+        # cover kept $21. The blind grader and the kit's second review both called it an S1.
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        fixed12 = copy.deepcopy(next(p for p in outs["pages"]["pages"] if p["n"] == 12))
+        fixed12["dek"] = "MARKER-FIXED-PAGE-12 " + (fixed12.get("dek") or "")
+        base = fake_from_fixture(str(DEMO / "audit.json"))
+        order, seen = [], {}
+
+        def fake(stage, model, system, user):
+            if '"fix_list"' in user:
+                order.append(stage)
+                seen[stage] = user
+                if stage == "fix":
+                    return json.dumps({"pages": [fixed12]})
+            return base(stage, model, system, user)
+        items = [{"from": "review", "id": "R1-01", "status": "FAIL", "page": 1, "msg": "the cover sizes the test"},
+                 {"from": "review", "id": "R1-02", "status": "FAIL", "page": 12, "msg": "page 12 sizes the test"}]
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            run_dir(d, outs)
+            pipeline._apply_fixes(d, LEDGER, "standard", cost.load_routing(), fake, items)
+        self.assertEqual(order[:2], ["fix", "synthesis"])
+        self.assertIn("MARKER-FIXED-PAGE-12", seen["synthesis"])   # the cover's writer sees the new page
+
+
+class ReceiptCountTests(unittest.TestCase):
+    def test_the_receipt_counts_every_ledger_row_its_chart_shows(self):
+        # Both person-subject graders marked page 20's "EVIDENCE LEDGER — 119 ROWS BY CLASS" as
+        # unsupported: the ledger has 134 rows, and the chart below the title shows all 134.
+        bars = next(b for b in render._receipt_blocks(copy.deepcopy(AUDIT), LEDGER) if b["type"] == "bars")
+        shown = sum(i["value"] for i in bars["items"])
+        self.assertEqual(shown, len(LEDGER.rows))
+        self.assertIn(f"{len(LEDGER.rows)} rows", bars["title"])
 
 
 # --------------------------------------------------------------------------- 8. the manual provider

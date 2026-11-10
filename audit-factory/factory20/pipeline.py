@@ -267,9 +267,9 @@ def _kept_action_ids(obj: dict, current: dict) -> list[str]:
 def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake, items: list[dict],
                  review: dict | None = None, confidential: bool = False, max_usd: float | None = None,
                  up_writers: frozenset = frozenset()) -> bool:
-    """One fix round: the synthesis model revises pages 1-2, the fix model patches pages 3-19,
-    the actions model revises the action register, and reviewer score adjustments go back into
-    score.json (code re-checks them). A fix round obeys the same confidential guard and spending
+    """One fix round: the fix model patches pages 3-19, then the synthesis model revises pages 1-2
+    with those pages in view, then the actions model revises the action register, and reviewer
+    score adjustments go back into score.json (code re-checks them). A fix round obeys the same confidential guard and spending
     cap as the first draft. up_writers names the writers ("synthesis", "fix", "actions") that run
     one rung up the ladder this round (the loop asks for that for one round, once, after a round
     that left a FAIL those writers own)."""
@@ -279,13 +279,9 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
     acts = [i for i in items if _acts(i)]
     def up(st: str) -> str | None:
         return router.next_rung(cfg, cfg["tiers"][tier]["models"][st], tier) if st in up_writers else None
-    if front:
-        res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
-            "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
-            "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
-            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake,
-            confidential=confidential, max_usd=max_usd, model=up("synthesis"))
-        ok &= res["ok"]
+    # Pages 3-19 first, pages 1-2 after: the front pages summarize the rest, and every writer sees
+    # the stage files already decided. With the summary first, a person replay's cover kept a
+    # $21 ad test that the same round's page fix changed to $14 on page 11 (Nov 10).
     if rest:
         must = frozenset(n for i in rest if i["status"] == "FAIL" for n in _pages_named(i) if 3 <= n <= 19)
         res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
@@ -301,6 +297,13 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
             by_n.update({p.get("n"): p for p in res["obj"].get("pages", [])})
             cur["pages"] = [by_n[n] for n in sorted(by_n)]
             (run_dir / "pages.json").write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+        ok &= res["ok"]
+    if front:
+        res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
+            "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
+            "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
+            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd, model=up("synthesis"))
         ok &= res["ok"]
     if acts:
         current = json.loads((run_dir / "actions.json").read_text())
