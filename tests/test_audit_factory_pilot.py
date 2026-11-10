@@ -2,12 +2,12 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 49 of the 52 tests below fail on the kit as it
+for retries and bigger models they did not need. 51 of the 54 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 33 fail on the first version
-of this change (4f31005, which the first independent review read), 18 on the second (f91aa74,
-which the second review read), 9 on 823ff8b, which came before the replays showed 10 and 11,
-3 on 523018f, the version the graded replays ran on (12), and 1 on 3c585f4.
+demo's G10 and G11, the page footer, and the bound on words to cut. 35 fail on the first version
+of this change (4f31005, which the first independent review read), 20 on the second (f91aa74,
+which the second review read), 11 on 823ff8b, which came before the replays showed 10 and 11,
+5 on 523018f, the version the graded replays ran on (12, 13), 3 on 3c585f4 and 2 on 690d255.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -50,6 +50,10 @@ which the second review read), 9 on 823ff8b, which came before the replays showe
    value, so rubric rows scored 4 of 10 printed as full bars; the page card now says what max is.
    And the card's note that the renderer draws the visual on pages 5, 17 and 18 came out as
    copy ("The renderer adds the ten-row heatmap above these notes"); G31 now fails it.
+13. A fix for the first review's findings ran page 19 40px over, and the kit paid for the second
+   review on a draft that could only end HOLD, then reported the render verdict from before the
+   review. Such a draft now gets the fix rounds the run has left first, and no review if it
+   still holds; the result reports the final files.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -785,6 +789,58 @@ class ProductionNoteTests(unittest.TestCase):
         self.assertEqual(checks(a)["G31"]["status"], "PASS")
         card = (router.STAGES_DIR / "60-pages.md").read_text()
         self.assertIn('never "the renderer adds the heatmap"', card)
+
+
+# --------------------------------------------------------------------------- 13. a review fix that breaks a gate
+class ReviewFixTests(unittest.TestCase):
+    """In the person standard replay a fix for the first review's findings ran page 19 40px over.
+    The kit went straight on to the second review, paid for it on a draft that could only end
+    HOLD, and its result still said render PASS (the verdict from before the review)."""
+
+    S1 = {"verdict": "NOT_READY", "findings": [{"id": "R1-01", "severity": "S1", "page": 12, "where": "cards",
+          "problem": "The page states an estimate as a count.", "fix": "Say it is an estimate.",
+          "evidence": ["V-E011"]}], "score_adjustments": [], "strongest": ["page 2"]}
+
+    def _run(self, gate_round_clears: bool, render_hold=False):
+        from factory20.testing import READY_REVIEW
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        good12 = copy.deepcopy(next(p for p in outs["pages"]["pages"] if p["n"] == 12))
+        broken12 = dict(copy.deepcopy(good12), blocks=[b for b in good12["blocks"] if b["type"] not in M.VISUAL_BLOCKS])
+        if render_hold:   # the review fix keeps a visual but runs the page over
+            broken12 = dict(copy.deepcopy(good12), dek=good12.get("dek", "") + " (too long)")
+        base = fake_from_fixture(str(DEMO / "audit.json"), review=[self.S1, READY_REVIEW])
+        calls = []
+
+        def fake(stage, model, system, user):
+            calls.append(stage)
+            if stage == "fix":
+                from_review = '"from": "review"' in user
+                return json.dumps({"pages": [good12 if (gate_round_clears and not from_review) else broken12]})
+            return base(stage, model, system, user)
+        real = pipeline._check_all
+
+        def check_all(run_dir_, ledger, tier, render_pdf):
+            audit, rep, _ = real(run_dir_, ledger, tier, False)
+            p12 = next(p for p in audit["pages"] if p["n"] == 12)
+            over = render_hold and "(too long)" in (p12.get("dek") or "")
+            checks = [{"id": "R02", "name": "No page overflows", "hard": True, "status": "FAIL" if over else "PASS",
+                       "msg": "page 12 runs 5% (40px) past the page. This clears it for certain: drop block 1" if over else ""}]
+            return audit, rep, {"gates": {"verdict": "HOLD" if over else "PASS", "checks": checks}}
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(pipeline, "_check_all", check_all):
+            d = pathlib.Path(d)
+            run_dir(d, outs)
+            res = pipeline.run(d, "standard", fake=fake, render_pdf=True)
+        return res, calls
+
+    def test_a_review_fix_that_breaks_a_gate_gets_a_gate_round_before_the_next_review(self):
+        res, calls = self._run(gate_round_clears=True)
+        self.assertEqual(calls.count("fix"), 2, calls)           # the review's fix, then the gate round
+        self.assertEqual((res["review_passes"], res["verdict"]), (2, "READY"), res)
+
+    def test_a_draft_that_still_holds_pays_for_no_second_review_and_says_so(self):
+        res, calls = self._run(gate_round_clears=False, render_hold=True)
+        self.assertEqual(calls.count("review"), 1, calls)        # no review on a draft that must HOLD
+        self.assertEqual((res["render"], res["verdict"]), ("HOLD", "HOLD"), res)   # not the PASS from before
 
 
 # --------------------------------------------------------------------------- 8. the manual provider

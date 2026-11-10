@@ -415,41 +415,47 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
             out["usd"] = router.spent(run_dir)
             return out
     audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-    rounds, last, escalated = 0, None, False
-    while rounds < MAX_FIX_ROUNDS:
-        items = fix_list(rep, rr)
-        open_now = sorted((i["from"], str(i["id"]), i["status"]) for i in items)
-        if not items:
-            break
-        if last is not None and all(i["status"] == "WARN" for i in items) and set(open_now) <= set(last):
-            break   # only warnings the last round already had: no round on them alone
-        up_writers: frozenset = frozenset()
-        if open_now == last:
-            # The last round cleared nothing. A warning alone is not worth more rounds (it often
-            # sits in the ledger, beyond any writer), so stop. A FAIL holds the audit: until Nov 10
-            # the loop stopped here too, leaving it on HOLD with rounds unspent when only the cheap
-            # model had tried. Now, once per run, a FAIL a writer owns gets one round with that
-            # writer one rung up the ladder; the round after goes back to the tier's models.
-            owners = {w for i in items if i["status"] == "FAIL" and i["id"] not in NO_WRITER
-                      for w, owns in (("synthesis", _front), ("fix", _back), ("actions", _acts)) if owns(i)}
-            ups = {w: router.next_rung(cfg, cfg["tiers"][tier]["models"][w], tier) for w in owners}
-            if escalated or not any(ups.values()):
+    loop = {"rounds": 0, "last": None, "escalated": False}
+
+    def gate_rounds(audit, rep, rr):
+        """Fix rounds on the gate and render lists, MAX_FIX_ROUNDS in the whole run."""
+        while loop["rounds"] < MAX_FIX_ROUNDS:
+            items = fix_list(rep, rr)
+            open_now = sorted((i["from"], str(i["id"]), i["status"]) for i in items)
+            last = loop["last"]
+            if not items:
                 break
-            escalated = True
-            up_writers = frozenset(w for w, m in ups.items() if m)
-            out["fix_escalated_to"] = ups.get("fix") or next(m for m in ups.values() if m)
-            out["fix_escalated"] = {w: m for w, m in ups.items() if m}
-        last = open_now
-        rounds += 1
-        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, items,
-                            confidential=confidential, max_usd=max_usd, up_writers=up_writers):
-            break
-        audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-    out["fix_rounds"] = rounds
-    out["gate"] = rep["verdict"]
-    if rr:
-        out["render"] = rr["gates"]["verdict"]
-    gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
+            if last is not None and all(i["status"] == "WARN" for i in items) and set(open_now) <= set(last):
+                break   # only warnings the last round already had: no round on them alone
+            up_writers: frozenset = frozenset()
+            if open_now == last:
+                # The last round cleared nothing. A warning alone is not worth more rounds (it often
+                # sits in the ledger, beyond any writer), so stop. A FAIL holds the audit: until Nov 10
+                # the loop stopped here too, leaving it on HOLD with rounds unspent when only the cheap
+                # model had tried. Now, once per run, a FAIL a writer owns gets one round with that
+                # writer one rung up the ladder; the round after goes back to the tier's models.
+                owners = {w for i in items if i["status"] == "FAIL" and i["id"] not in NO_WRITER
+                          for w, owns in (("synthesis", _front), ("fix", _back), ("actions", _acts)) if owns(i)}
+                ups = {w: router.next_rung(cfg, cfg["tiers"][tier]["models"][w], tier) for w in owners}
+                if loop["escalated"] or not any(ups.values()):
+                    break
+                loop["escalated"] = True
+                up_writers = frozenset(w for w, m in ups.items() if m)
+                out["fix_escalated_to"] = ups.get("fix") or next(m for m in ups.values() if m)
+                out["fix_escalated"] = {w: m for w, m in ups.items() if m}
+            loop["last"] = open_now
+            loop["rounds"] += 1
+            if not _apply_fixes(run_dir, ledger, tier, cfg, fake, items,
+                                confidential=confidential, max_usd=max_usd, up_writers=up_writers):
+                break
+            audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
+        return audit, rep, rr
+
+    def holds(rep, rr) -> bool:
+        return rep["verdict"] == "HOLD" or (rr is not None and rr["gates"]["verdict"] == "HOLD")
+
+    audit, rep, rr = gate_rounds(audit, rep, rr)
+    gates_ok = not holds(rep, rr)
     rv = None
     if review and gates_ok:
         passes = cfg["tiers"].get(tier, {}).get("review_passes", 1)
@@ -468,9 +474,20 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
             _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr, rv), review=rv,
                          confidential=confidential, max_usd=max_usd)
             audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-            gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
+            # A review fix can break a hard gate: in the Nov 10 replays a page fix ran page 19
+            # 40px over, and the next review was paid for on a draft that could only end HOLD.
+            # Such a draft gets the gate rounds the run has left first; if it still holds, no
+            # review can change the verdict, so none is paid for.
+            if holds(rep, rr):
+                audit, rep, rr = gate_rounds(audit, rep, rr)
+            gates_ok = not holds(rep, rr)
+            if not gates_ok:
+                break
         out["review"] = rv.get("verdict") if rv else None
-        out["gate"] = rep["verdict"]
+    out["fix_rounds"] = loop["rounds"]
+    out["gate"] = rep["verdict"]          # the final files' verdicts, not the ones before the review
+    if rr:
+        out["render"] = rr["gates"]["verdict"]
     log = json.loads((run_dir / "run.json").read_text()) if (run_dir / "run.json").exists() else {"attempts": []}
     out["usd"] = round(sum(a.get("usd", 0) for a in log["attempts"]), 4)
     if not gates_ok:

@@ -187,7 +187,9 @@ sits, so it reaches the writer who owns that text). A round that clears nothing 
 except that a hard FAIL a writer owns first gets one round one rung up the ladder (page 20 is
 built by code, so nothing there qualifies), and warnings a round already had get no round of
 their own. A fix that returns no pages is an answer only when no FAIL names a page it owns. It finishes with the
-fresh-context review: `READY` needs zero S0/S1 findings. The
+fresh-context review: `READY` needs zero S0/S1 findings. When a fix for a review's findings breaks
+a hard gate (a page that now runs over), the draft gets the fix rounds the run has left before the
+next review; if it still holds, no further review is paid for. The
 verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY`).
 `--max-usd` overrides the tier's spending cap; reaching it holds the audit with the amount spent.
 
@@ -249,6 +251,6 @@ because it carries no time zone.
 | `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
-| `../tests/test_audit_factory_pilot.py` | 52 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite and whose capture date the bundle can read, images that exist, a bar chart's scale, no production notes in the copy; 49 fail on the kit before the fix |
+| `../tests/test_audit_factory_pilot.py` | 54 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite and whose capture date the bundle can read, images that exist, a bar chart's scale, no production notes in the copy, gate rounds before a second review; 51 fail on the kit before the fix |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |
