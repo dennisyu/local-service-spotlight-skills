@@ -780,6 +780,33 @@ conflicts, this governs:
 4. Unchanged: no stock or generated imagery, honest captions, never infer a person,
    place or result from a photo, and the client-property and privacy rules elsewhere.
    A real photo on every page stays the goal; it is no longer a gate.
+
+**Precise terms (from independent review, 2026-11-10):**
+
+- **"New" is checked by hash, per domain.** An image is new to a site unless its
+  source bytes are already served on that domain. Putting a person's photo on a
+  different site, including another client's, needs a recorded permission basis for
+  that site.
+- **Compare source images, not built output.** Astro and other builds re-encode
+  images. Hash each image's source file before build-time conversion, and have the
+  receipt map each output file to its source hash.
+- **What counts as already published:** an image in the preimage counts only if a
+  published page referenced it when the preimage was taken. Unreferenced files in an
+  uploads folder do not count.
+- **Takedowns always block.** Every write checks its image hashes against
+  `fleet/website/PHOTO-TAKEDOWNS.md`. A match blocks the write, with or without the
+  exemption. Add a photo there when its subject asks for removal.
+- **What still enforces case 1:** the publisher's person-photo source and permission
+  check stays blocking. The page-level "has a verified photo" checks report (warn);
+  they never block.
+- **Interim path until the code is aligned:** for writes that add no new image bytes,
+  use the hash-checked install recorded in the Carroll receipt (preimage →
+  per-file verify → live read-back), with the hash comparison in the receipt. Do not
+  add skip flags to the gate tools or patch around them. The code change is the
+  gating item, due at Happy's Thu 2026-11-12 sweep.
+- **Migrations still get layout screenshots:** take desktop and mobile screenshots
+  after publishing and attach them to the receipt. They are a layout check, not a
+  photo gate, and they do not block.
 <!-- shared-rule:every-public-page-has-real-imagery:end -->
 
 <!-- shared-rule:basecamp-updates-stay-in-basecamp:start -->
