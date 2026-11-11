@@ -230,7 +230,7 @@ is not sent to the drafting model, because no model can redact pixels: the run h
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
 | `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
-| `../tests/test_audit_factory.py` | 98 tests: every gate has a failing mutation; the score box, swimlane packing and image privacy gate have geometry and OCR tests |
+| `../tests/test_audit_factory.py` | 101 tests: every gate has a failing mutation; the score box (including identity HOLD), swimlane packing and image privacy gate have geometry and OCR tests |
 | `../tests/test_audit_factory_openrouter.py` | 30 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

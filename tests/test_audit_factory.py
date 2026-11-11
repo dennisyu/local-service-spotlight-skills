@@ -237,6 +237,21 @@ class GateNegativeTests(unittest.TestCase):
     def test_G54_hand_typed_score(self):
         self.mutate(lambda a: self.page(a, 6).update(dek="Brand Authority is 61/100 by our count."), "G54")
 
+    def test_G54_no_typed_score_on_identity_hold(self):
+        # page 1's stat strip types 38/100, the arithmetic total; on HOLD no number may print
+        a = copy.deepcopy(AUDIT)
+        a["meta"]["identity"]["status"] = "HOLD"
+        g54 = gate(a)["G54"]
+        self.assertEqual(g54["status"], "FAIL")
+        self.assertIn("HOLD", g54["msg"])
+        self.assertIn("38", g54["msg"])
+        for p in a["pages"]:
+            for blk in M.walk(p):
+                for k, v in list(blk.items()):
+                    if isinstance(v, str) and "/100" in v:
+                        blk[k] = v.replace("38/100", "on hold")
+        self.assertEqual(gate(a)["G54"]["status"], "PASS")
+
     def test_G61_action_without_test(self):
         self.mutate(lambda a: a["actions"][0].update(acceptance_test="done"), "G61")
 
@@ -556,6 +571,29 @@ class HeatmapTests(unittest.TestCase):
         html_, res = self.heat(lambda a: a["meta"]["identity"].update(status="HOLD"))
         num, units = self.box(html_)
         self.assertFalse(re.search(r"\d", num + units), (num, units))
+
+    def test_identity_hold_hatches_every_row(self):
+        """Rubric: identity HOLD -> no number at all, so the rows show no score either."""
+        html_, res = self.heat(lambda a: a["meta"]["identity"].update(status="HOLD"))
+        self.assertEqual(res["status"], "HOLD")
+        self.assertEqual(html_.count('class="hatch"'), 100)               # ten rows x ten cells
+        self.assertNotIn('class="hc', html_)                              # no filled or empty score cells
+        labels = re.findall(r'class="tvb">([^<]*)</text>', html_)
+        self.assertEqual(labels, ["HOLD"] * 10)
+        ids = re.findall(r'<text x="([\d.]+)" y="[\d.]+" class="tid">([^<]*)</text>', html_)
+        xs = re.findall(r'<text x="([\d.]+)" y="[\d.]+" class="tvb">', html_)
+        width = float(re.search(r'viewBox="0 0 ([\d.]+)', html_).group(1))
+        self.assertEqual(len(ids), 10)                                    # evidence ids stay, clear of the word
+        for (x, text), w in zip(ids, xs):
+            self.assertGreaterEqual(float(x) - float(w), 40, text)        # "HOLD" is about 32px wide
+            self.assertLessEqual(float(x) + len(text) * C.MONO_EM * 7.6, width, text)
+        self.assertEqual(ids[0][1], "V-E010 V-E009 V-E001")              # all three ids still fit
+
+    def test_confirmed_identity_still_draws_the_scores(self):
+        html_, _ = self.heat()
+        self.assertEqual(re.findall(r'class="tvb">([^<]*)</text>', html_),
+                         [str(r["score"]) for r in AUDIT["exams"]["brand_authority"]["rows"]])
+        self.assertEqual(html_.count('class="hatch"'), 0)
 
     def test_unknown_row_ids_clear_the_word_and_stay_inside_the_chart(self):
         def f(a):

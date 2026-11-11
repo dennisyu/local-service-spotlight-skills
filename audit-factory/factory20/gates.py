@@ -340,9 +340,16 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
         typed = set(int(x) for x in re.findall(r"\b(\d{1,3})\s*/\s*100\b", text))
         sep = {int(re.sub(r"\D", "", str(x.get("value", "")) or "-1") or -1)
                for x in (audit.get("exams") or {}).get("separate", []) if re.search(r"\d", str(x.get("value", "")))}
-        stray = typed - {res["total"], res["known_subtotal"]} - sep
-        R.add("G54", "No hand-typed score that disagrees with the arithmetic", "exam", not stray,
-              f"text shows {sorted(stray)}/100 but the rows sum to {res['known_subtotal']}; let the renderer print scores")
+        if res["status"] == "HOLD":
+            # identity HOLD -> no number at all: the renderer hides the total and every row, so
+            # the text may not print the subtotal either
+            stray = typed - sep
+            msg = (f"text shows {sorted(stray)}/100 but identity is on HOLD, so Brand Authority has no number; "
+                   "remove it until identity is CONFIRMED")
+        else:
+            stray = typed - {res["total"], res["known_subtotal"]} - sep
+            msg = f"text shows {sorted(stray)}/100 but the rows sum to {res['known_subtotal']}; let the renderer print scores"
+        R.add("G54", "No hand-typed score that disagrees with the arithmetic", "exam", not stray, msg)
     else:
         R.add("G51", "Brand Authority exam present", "exam", False,
               "no exams.brand_authority; score the ten rows or set every row UNKNOWN", hard=False)

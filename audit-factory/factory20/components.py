@@ -264,7 +264,12 @@ def exam_total(res: dict) -> tuple[str, str]:
 
 
 def heatmap(b, ctx):
+    """The ten Brand Authority rows. An identity HOLD shows no number anywhere: every row is
+    hatched and labelled HOLD, because a row score for a person not yet confirmed to be the
+    subject would be a number about a namesake (rubric: identity HOLD -> no number at all)."""
     rows = ctx.exam_rows() if b.get("auto", True) and not b.get("rows") else b.get("rows", [])
+    res = ctx.exam_result()
+    hold = bool(res) and res["status"] == "HOLD"
     Wd = W(b, 12) - 150
     rowh, lab = 27, 230
     cell = max(14, int((Wd - lab - 140) / 10) - 3)
@@ -273,7 +278,7 @@ def heatmap(b, ctx):
         y = 4 + k * rowh
         g.append(f'<text x="{lab - 8}" y="{y + 17}" class="tl" text-anchor="end">{r.get("n", k + 1)}. {E(str(r.get("name", ""))[:38])}</text>')
         s_ = r.get("score")
-        known = isinstance(s_, (int, float))
+        known = isinstance(s_, (int, float)) and not hold
         for c in range(10):
             x = lab + c * (cell + 3)
             if known:
@@ -281,14 +286,15 @@ def heatmap(b, ctx):
             else:
                 g.append(f'<rect x="{x}" y="{y + 4}" width="{cell}" height="{rowh - 9}" class="hatch" rx="2"/>')
         xs = lab + 10 * (cell + 3) + 8
-        g.append(f'<text x="{xs}" y="{y + 18}" class="tvb">{E(str(s_ if known else "UNKNOWN"))}</text>')
-        # "UNKNOWN" is about 60px wide at 11px bold; a score is at most two digits
-        xid = xs + (30 if known else 70)
+        label = s_ if known else ("HOLD" if hold else "UNKNOWN")
+        g.append(f'<text x="{xs}" y="{y + 18}" class="tvb">{E(str(label))}</text>')
+        # clear the label: a score is at most two digits, "HOLD" is about 32px and "UNKNOWN"
+        # about 60px at 11px bold
+        xid = xs + (30 if known else 40 if hold else 70)
         ids = fit_ids(r.get("evidence"), Wd - xid - 2)
         if ids:
             g.append(f'<text x="{xid}" y="{y + 17}" class="tid">{E(ids)}</text>')
     H = 10 + len(rows) * rowh
-    res = ctx.exam_result()
     tot = ""
     if res:
         num, units = exam_total(res)
