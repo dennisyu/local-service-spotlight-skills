@@ -61,6 +61,26 @@ marketplace auto-update may need to be enabled, or a member may need to choose
 **Sync** or **Update**. An update is verified only after the account shows the new
 commit/version and a fresh chat passes an activation test.
 
+### Claude Code
+
+Claude Code 2.1.275 or later adds this marketplace and installs a bundle in one step:
+
+```text
+/plugin install lss-everything --marketplace dennisyu/local-service-spotlight-skills
+```
+
+To install one topical bundle from [Bundles](#bundles) instead:
+
+```text
+/plugin install authority-and-reputation --marketplace dennisyu/local-service-spotlight-skills
+/plugin install content-engine --marketplace dennisyu/local-service-spotlight-skills
+/plugin install client-operations --marketplace dennisyu/local-service-spotlight-skills
+/plugin install quality-and-standards --marketplace dennisyu/local-service-spotlight-skills
+```
+
+Then start a new chat and test it as described in
+[What was installed](#what-was-installed).
+
 ### Grok Build
 
 Review the repository, then install it with Grok Build's native plugin command:
@@ -134,10 +154,10 @@ Most people should install `lss-everything`.
 
 | Bundle | What it covers |
 |---|---|
-| `lss-everything` | All 38 skills |
+| `lss-everything` | All 51 skills |
 | `authority-and-reputation` | Personal-brand audit intake plus its installed authority/reputation lanes; use `lss-everything` for the full workflow |
 | `content-engine` | Articles, video, repurposing, and distribution |
-| `client-operations` | Onboarding, cadence, access, reporting including GA4, and audits |
+| `client-operations` | Onboarding, cadence, access, reporting including GA4 and Google Ads, and audits |
 | `quality-and-standards` | Agents-first reassignment, Nine Triangles, verification, QA, judgment, outbound closeout, and the registry |
 
 ## Reuse access across agents
