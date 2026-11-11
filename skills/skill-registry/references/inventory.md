@@ -12,7 +12,7 @@ another.
 |---|---|
 | Repository | `https://github.com/dennisyu/local-service-spotlight-skills` |
 | Marketplace manifest | `.claude-plugin/marketplace.json` |
-| Skills in `lss-everything` | 38 in this candidate; validator-derived from the manifest |
+| Skills in `lss-everything` | 51 in this candidate; validator-derived from the manifest |
 | Topical bundles | 4 |
 | Validation | Pull-request and main-branch GitHub workflow |
 | Contribution path | Branch → checks → review → merge |
@@ -35,13 +35,13 @@ make private relationship data public or guarantee an introduction.
 
 | Bundle | Skills available |
 |---|---:|
-| `lss-everything` | 38 |
-| `authority-and-reputation` | 9 |
-| `content-engine` | 7 |
-| `client-operations` | 13 |
+| `lss-everything` | 51 |
+| `authority-and-reputation` | 10 |
+| `content-engine` | 9 |
+| `client-operations` | 23 |
 | `quality-and-standards` | 9 |
 
-The four topical bundles partition the 38-skill master: every skill appears in exactly one
+The four topical bundles partition the 51-skill master: every skill appears in exactly one
 topical bundle. `lss-everything` remains the one complete install.
 
 ## Per-account installation register

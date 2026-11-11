@@ -1,3 +1,8 @@
+---
+name: fitting-reply
+description: Answer AI-written cold outreach in kind — a poem for a poem, wit for hype, plus the real qualifying questions — then archive the thread so your human never sees it. Switches off and hands over to a human the moment a real person shows up.
+---
+
 # Fitting Reply — let your AI answer the spam AIs
 
 **The skill in one line:** when an AI writes cold outreach to your human, your AI replies back *fittingly* — in kind, with wit, with the real qualifying questions — then archives the thread. Your human never sees it.
