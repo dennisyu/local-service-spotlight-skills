@@ -1,7 +1,7 @@
 ---
 {
   "title": "Every article has pictures",
-  "severity": "error",
+  "severity": "warn",
   "captured": "2026-08-16",
   "captured_from": "Dennis Yu, Mats and Leo, 2026-07-19 01:22:22: 'We have article guidelines. We always use picture. Every every article always has pictures.' Reinforced by Dennis Yu, Cowork session, 2026-08-15, on a client About page: it 'doesn't have pictures, videos, diagrams, colors, bold points, and things like that to be visually interesting.' Extended by Dennis Yu's Codex request on 2026-10-23 for recognizable service/network icons and helpful diagrams in the agent article cluster.",
   "applies_to": [
@@ -33,7 +33,10 @@
 
 - **No article ships as a wall of text.** Every published piece carries images — real
   photographs that carry meaning, supported by useful screenshots and diagrams,
-  not decorative stock. A diagram alone cannot meet the real-photo requirement.
+  not decorative stock. A diagram alone cannot meet the real-photo requirement, but a missing
+  fresh photo is not a reason to hold the article: reuse a real published photo that fits, or
+  publish with the diagram and log the gap (amendment of 2026-11-10 in
+  `every-public-page-has-real-imagery`).
 - **A diagram beats a paragraph** wherever the point is a structure, a sequence or a
   comparison.
 - **Use recognizable service or network icons when they help readers identify a
