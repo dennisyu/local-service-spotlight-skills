@@ -4,19 +4,26 @@ cost, router escalation, Basecamp export and the end-to-end pipeline (fake model
 Render tests skip when Playwright/Chromium is unavailable; everything else is stdlib +
 pypdf and runs in CI.
 """
+import base64
+import contextlib
 import copy
 import importlib.util
+import io
+import itertools
 import json
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[1] / "audit-factory"
 sys.path.insert(0, str(ROOT))
 
-from factory20 import basecamp, cost, gates, model as M, pipeline, render, router, score  # noqa: E402
+from factory20 import basecamp, cli, components as C, cost, gates, model as M, pipeline, render, router, score  # noqa: E402
+from factory20 import ocr as OCR  # noqa: E402
 from factory20.ledger import Ledger, blind_copy  # noqa: E402
 from factory20.testing import fake_from_fixture  # noqa: E402
 
@@ -298,6 +305,281 @@ class GateNegativeTests(unittest.TestCase):
     def test_G80_expansion_adds_qr(self):
         self.assertEqual(status(gate(copy.deepcopy(AUDIT)), "G80"), "PASS")
 
+    def test_G74_item_numbers_follow_the_brief(self):
+        a = copy.deepcopy(AUDIT)
+        self.page(a, 7)["blocks"][-1].setdefault("text", []).append("Investors valued it at $14M in March.")
+        full = render.expand(a, LEDGER)
+        # "ab" is too short to check, but it is still item 1, so the hit is item 2
+        checks = {c["id"]: c for c in gates.gate_audit(full, LEDGER, "standard", do_not_print=["ab", "$14M"]).checks}
+        self.assertIn("item 2 on page 7", checks["G74"]["msg"])
+
+
+# ---------------------------------------------------------------- G75: do-not-print inside images
+def fake_ocr(text, seen=None):
+    """An OCR engine that 'reads' the given text from any image, and records what it read."""
+    def read(path):
+        if seen is not None:
+            seen.append((pathlib.Path(path), pathlib.Path(path).read_bytes()))
+        return text
+    return read
+
+
+PANEL_TEXT = ("Nik Halik\nEntrepreneur\nSpouse: Jane\nHalik · Children: Ava Halik, Leo Halik\n"
+              "Born: Melbourne")
+
+
+class ImageDoNotPrintTests(unittest.TestCase):
+    """G74 reads text; a Google panel screenshot is pixels. On the 2026-11-11 Nik Halik audit
+    a page-1 screenshot showed private family names from brief.do_not_print and every gate
+    passed. G75 reads embedded images with OCR."""
+
+    def g75(self, audit=None, dnp=("Jane Halik",), engine=None, base=DEMO):
+        full = render.expand(audit or copy.deepcopy(AUDIT), LEDGER)
+        checks = {c["id"]: c for c in gates.gate_audit(full, LEDGER, "standard", do_not_print=list(dnp),
+                                                       asset_base=base, ocr_engine=engine).checks}
+        return checks["G75"]
+
+    def test_demo_embeds_a_screenshot_on_page_one(self):
+        self.assertIn((1, "assets/mock-gbp.png"), gates.embedded_images(AUDIT))
+
+    def test_passes_when_the_brief_has_no_list(self):
+        self.assertEqual(self.g75(dnp=(), engine=fake_ocr(PANEL_TEXT))["status"], "PASS")
+
+    def test_fails_on_a_private_name_read_in_a_screenshot(self):
+        seen = []
+        c = self.g75(engine=fake_ocr(PANEL_TEXT, seen))
+        self.assertEqual(c["status"], "FAIL")
+        self.assertTrue(c["hard"])
+        self.assertIn("item 1 in the image on page 1 (assets/mock-gbp.png)", c["msg"])
+        self.assertIn("redact", c["msg"])
+        self.assertNotIn("jane", c["msg"].lower())                  # gate.json travels further than the brief
+        self.assertEqual(seen[0][1], (DEMO / "assets" / "mock-gbp.png").read_bytes())
+        # the text gate cannot see it: the name is in the image, not in audit.json
+        full = render.expand(AUDIT, LEDGER)
+        g74 = {c["id"]: c for c in gates.gate_audit(full, LEDGER, "standard", do_not_print=["Jane Halik"]).checks}["G74"]
+        self.assertEqual(g74["status"], "PASS")
+
+    def test_a_hit_holds_the_audit(self):
+        full = render.expand(AUDIT, LEDGER)
+        rep = gates.gate_audit(full, LEDGER, "standard", do_not_print=["Ava Halik"], asset_base=DEMO,
+                               ocr_engine=fake_ocr(PANEL_TEXT))
+        self.assertEqual(rep.verdict, "HOLD")
+
+    def test_passes_when_the_screenshot_holds_nothing_private(self):
+        self.assertEqual(self.g75(engine=fake_ocr("Vega Roofing LLC 4.9 386 Google reviews"))["status"], "PASS")
+
+    def test_warns_without_an_ocr_engine(self):
+        with mock.patch.object(OCR, "engine", return_value=None):
+            c = self.g75()
+        self.assertEqual(c["status"], "WARN")
+        self.assertFalse(c["hard"])
+        self.assertIn("no OCR engine", c["msg"])
+        self.assertIn("tesseract", c["msg"].lower())
+        self.assertIn("crop or redact private fields in screenshots before use", c["msg"])
+
+    def test_an_unreadable_image_warns_and_is_never_passed(self):
+        def broken(path):
+            raise OCR.OcrError("psm 3: Error in pixReadStream")
+        c = self.g75(engine=broken)
+        self.assertEqual(c["status"], "WARN")
+        self.assertIn("unchecked", c["msg"])
+        self.assertIn("pixReadStream", c["msg"])
+
+    def test_a_missing_image_file_is_unchecked(self):
+        with tempfile.TemporaryDirectory() as d:
+            c = self.g75(engine=fake_ocr(PANEL_TEXT), base=pathlib.Path(d))
+        self.assertEqual(c["status"], "WARN")
+        self.assertIn("file not found", c["msg"])
+
+    def test_reads_inline_data_uri_images_and_the_preparers_photo(self):
+        a = copy.deepcopy(AUDIT)
+        png = (DEMO / "assets" / "mock-gbp.png").read_bytes()
+        p19 = next(p for p in a["pages"] if p["n"] == 19)
+        p19["blocks"].append({"type": "screenshot", "span": 4, "caption": "panel",
+                              "src": "data:image/png;base64," + base64.b64encode(png).decode()})
+        a["meta"]["prepared_by"]["photo"] = "assets/mock-gbp.png"
+        self.assertIn((1, "assets/mock-gbp.png"), gates.embedded_images(a)[-1:])
+        seen = []
+        c = self.g75(a, engine=fake_ocr("nothing private here", seen))
+        self.assertEqual(c["status"], "PASS")
+        self.assertEqual(len(seen), 3)                                # page-1 block, page-19 data URI, face
+        self.assertTrue(all(b == png for _, b in seen))
+        self.assertFalse(any(p.exists() for p, _ in seen if p.name.startswith("inline")))   # temp file removed
+        c = self.g75(a, engine=fake_ocr(PANEL_TEXT))
+        self.assertIn("page 19", c["msg"])
+
+    def test_remote_images_are_not_embedded_so_not_read(self):
+        a = copy.deepcopy(AUDIT)
+        for p in a["pages"]:
+            for b in p.get("blocks", []):
+                if b.get("type") in gates.IMAGE_BLOCKS:
+                    b["src"] = "https://example.com/panel.png"
+        self.assertEqual(self.g75(a, engine=fake_ocr(PANEL_TEXT))["status"], "PASS")
+
+    def test_matching_survives_ocr_noise(self):
+        self.assertTrue(OCR.contains("Spouse: JANE\nHalik", "Jane Halik"))           # case, line break, punctuation
+        self.assertTrue(OCR.contains("Spouse JaneHalik born", "Jane Halik"))          # merged words
+        self.assertTrue(OCR.contains("valued at $14M.", "$14M"))
+        self.assertFalse(OCR.contains("valued at $140M", "$14M"))                    # whole words only
+        self.assertFalse(OCR.contains("Bob Leeds", "Bo Lee"))                         # short items never squeezed
+        self.assertFalse(OCR.contains("anything", "  "))
+
+    def test_g75_is_not_sent_to_the_writer(self):
+        rep = {"checks": [{"id": "G75", "status": "FAIL", "msg": "x"}, {"id": "G75", "status": "WARN", "msg": "y"}]}
+        self.assertEqual(pipeline.fix_list(rep), [])
+
+    def test_cli_gate_reads_images_beside_the_audit(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            shutil.copy(DEMO / "audit.json", d / "audit.json")
+            shutil.copytree(DEMO / "assets", d / "assets")
+            (d / "brief.json").write_text(json.dumps({"do_not_print": ["Leo Halik"]}))
+            out = io.StringIO()
+            with mock.patch.object(OCR, "engine", return_value=fake_ocr(PANEL_TEXT)), contextlib.redirect_stdout(out):
+                code = cli.main(["gate", str(d / "audit.json"), "--ledger", str(DEMO / "ledger.json")])
+        self.assertEqual(code, 2)
+        self.assertIn("[FAIL] G75", out.getvalue())
+        self.assertNotIn("Leo", out.getvalue())
+
+    @unittest.skipUnless(shutil.which("tesseract"), "tesseract not installed")
+    def test_real_ocr_reads_the_demo_screenshot(self):
+        # "Tulsa, Oklahoma" is printed only inside the page-1 Google profile mock
+        self.assertEqual(self.g75(dnp=["Tulsa, Oklahoma"])["status"], "FAIL")
+        self.assertEqual(self.g75(dnp=["never-printed-xyz"])["status"], "PASS")
+
+
+# ---------------------------------------------------------------- renderer geometry (no browser)
+SVG_RECT = re.compile(r'<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*data-id="([^"]*)"')
+
+
+def ctx_for(audit):
+    return render.Ctx(render.expand(audit, LEDGER), LEDGER, DEMO)
+
+
+def bars_in(svg_html):
+    return [(m.group(5), float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
+            for m in SVG_RECT.finditer(svg_html)]
+
+
+def overlaps(a, b):
+    _, ax, ay, aw, ah = a
+    _, bx, by, bw, bh = b
+    return ax < bx + bw and bx < ax + aw and ay < by + bh and by < ay + ah
+
+
+class SwimlaneTests(unittest.TestCase):
+    """Bars once alternated two rows by register order, so a third action in the same window
+    was drawn on top of the first: A1, A6, A7, A9 and A18 vanished from the Nik Halik plan."""
+
+    def plan(self, actions):
+        a = copy.deepcopy(AUDIT)
+        a["actions"] = actions
+        return C.swimlane({"type": "swimlane", "span": 12}, ctx_for(a))
+
+    def action(self, aid, function, window, due):
+        return {**AUDIT["actions"][0], "id": aid, "function": function, "window": window, "due": due}
+
+    def assert_every_bar_visible(self, html_, ids):
+        bars = bars_in(html_)
+        self.assertEqual(sorted(b[0] for b in bars), sorted(ids))     # one rect per action, none missing
+        for a, b in itertools.combinations(bars, 2):
+            self.assertFalse(overlaps(a, b), f"{a[0]} overlaps {b[0]}")
+        w, h = (float(v) for v in re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', html_).groups())
+        for aid, x, y, bw, bh in bars:
+            self.assertTrue(0 <= x and x + bw <= w and y + bh <= h, f"{aid} is outside the chart")
+        return bars
+
+    def test_three_same_window_actions_in_one_lane_are_three_separate_rects(self):
+        start = AUDIT["meta"]["plan_start"]
+        acts = [self.action("A1", "Web", 7, start), self.action("A6", "Web", 7, start),
+                self.action("A7", "Web", 7, start), self.action("A9", "Outreach", 7, start)]
+        bars = self.assert_every_bar_visible(self.plan(acts), ["A1", "A6", "A7", "A9"])
+        web = sorted((b for b in bars if b[0] in ("A1", "A6", "A7")), key=lambda b: b[2])
+        self.assertEqual(len({b[2] for b in web}), 3)                  # three rows
+        self.assertEqual(len({b[1] for b in web}), 1)                  # one time window
+        a9 = next(b for b in bars if b[0] == "A9")
+        self.assertGreaterEqual(a9[2], web[-1][2] + web[-1][4])        # next lane starts below the third row
+
+    def test_lane_height_grows_with_its_rows(self):
+        start = AUDIT["meta"]["plan_start"]
+        acts = [self.action(f"A{k}", "Web", 7, start) for k in range(1, 6)] + [self.action("A6", "Social", 7, start)]
+        html_ = self.plan(acts)
+        bands = [float(h) for h in re.findall(r'height="([\d.]+)" class="laneband"', html_)]
+        self.assertEqual(bands[0], 8 + 13 * 5)                        # max(34, 8 + 13 * rows)
+        self.assert_every_bar_visible(html_, [f"A{k}" for k in range(1, 7)])
+
+    def test_alternating_colour_follows_the_row(self):
+        start = AUDIT["meta"]["plan_start"]
+        acts = [self.action("A1", "Web", 7, start), self.action("A2", "Social", 7, start)]
+        html_ = self.plan(acts)
+        self.assertNotIn('class="bar alt"', html_)                     # both sit in row 0 of their lane
+
+    def test_pack_rows_needs_a_two_pixel_gap(self):
+        self.assertEqual(C.pack_rows([(0, 30), (32, 60), (31, 50)]), [0, 0, 1])
+        self.assertEqual(C.pack_rows([(0, 30), (0, 30), (0, 30)]), [0, 1, 2])
+        self.assertEqual(C.pack_rows([]), [])
+
+    def test_demo_plan_hides_no_action(self):
+        html_ = C.swimlane({"type": "swimlane", "span": 12}, ctx_for(copy.deepcopy(AUDIT)))
+        self.assert_every_bar_visible(html_, [a["id"] for a in AUDIT["actions"]])
+
+
+class HeatmapTests(unittest.TestCase):
+    """The score box printed <subtotal>/100 even when rows were UNKNOWN, so the page showed
+    25/100 beside a verdict of '25 known of 90 checked'."""
+
+    def heat(self, mutate=None):
+        a = copy.deepcopy(AUDIT)
+        if mutate:
+            mutate(a)
+        ctx = ctx_for(a)
+        return C.heatmap({"type": "heatmap", "auto": True, "span": 12}, ctx), ctx.exam_result()
+
+    def box(self, html_):
+        m = re.search(r'<div class="et-v">([^<]*)<span>([^<]*)</span>', html_)
+        return m.group(1), m.group(2)
+
+    def test_complete_box_is_out_of_100(self):
+        html_, res = self.heat()
+        self.assertEqual(self.box(html_), ("38", "/100"))
+
+    def test_incomplete_box_counts_only_checked_points(self):
+        def f(a):
+            a["exams"]["brand_authority"]["rows"][2]["score"] = "UNKNOWN"
+        html_, res = self.heat(f)
+        self.assertEqual(res["status"], "INCOMPLETE")
+        self.assertEqual(self.box(html_), ("33", "/90 checked"))
+        self.assertNotIn("/100", html_)
+        self.assertIn("33 known of 90 checked", res["verdict"])        # box and verdict say the same thing
+
+    def test_identity_hold_prints_no_number(self):
+        html_, res = self.heat(lambda a: a["meta"]["identity"].update(status="HOLD"))
+        num, units = self.box(html_)
+        self.assertFalse(re.search(r"\d", num + units), (num, units))
+
+    def test_unknown_row_ids_clear_the_word_and_stay_inside_the_chart(self):
+        def f(a):
+            for k in (2, 5):
+                a["exams"]["brand_authority"]["rows"][k]["score"] = "UNKNOWN"
+        html_, _ = self.heat(f)
+        width = float(re.search(r'viewBox="0 0 ([\d.]+)', html_).group(1))
+        words = {float(y): float(x) for x, y in re.findall(r'<text x="([\d.]+)" y="([\d.]+)" class="tvb">UNKNOWN', html_)}
+        self.assertEqual(len(words), 2)
+        ids = re.findall(r'<text x="([\d.]+)" y="([\d.]+)" class="tid">([^<]*)</text>', html_)
+        self.assertEqual(len(ids), 10)
+        for x, y, text in ids:
+            x = float(x)
+            word_x = words.get(float(y) + 1)                           # the word sits 1px lower than its ids
+            if word_x is not None:
+                self.assertGreaterEqual(x - word_x, 70, text)
+            self.assertLessEqual(x + len(text) * C.MONO_EM * 7.6, width, text)   # never clipped by the viewBox
+
+    def test_fit_ids_drops_whole_ids_not_half_ids(self):
+        self.assertEqual(C.fit_ids(["V-E011", "V-E012", "V-E013"], 200), "V-E011 V-E012 V-E013")
+        self.assertEqual(C.fit_ids(["V-E011", "V-E012", "V-E013"], 62), "V-E011 V-E012")
+        self.assertEqual(C.fit_ids(["V-E011", "V-E012", "V-E013", "V-E014"], 500), "V-E011 V-E012 V-E013")
+        self.assertEqual(C.fit_ids(["V-E011"], 10), "")
+
 
 @unittest.skipUnless(have_browser(), "Playwright/Chromium not available")
 class RenderTests(unittest.TestCase):
@@ -524,6 +806,22 @@ class PipelineTests(unittest.TestCase):
             self._run_dir(d)
             res = pipeline.run(d, "lean", fake=fake_from_fixture(str(DEMO / "audit.json"), review=s1), render_pdf=False)
             self.assertEqual(res["verdict"], "HOLD", res)
+
+    def test_private_field_in_a_screenshot_holds_without_a_fix_round(self):
+        """No drafting model can redact pixels: the run holds, names G75, and spends nothing on fixes."""
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d, {"do_not_print": ["Jane Halik"]})
+            seen = []
+            with mock.patch.object(OCR, "engine", return_value=fake_ocr(PANEL_TEXT, seen)):
+                res = pipeline.run(d, "standard", fake=fake_from_fixture(str(DEMO / "audit.json")), render_pdf=False)
+            self.assertEqual(res["verdict"], "HOLD", res)
+            self.assertEqual(res["holding_gates"], ["G75"], res)
+            self.assertEqual(res["fix_rounds"], 0, res)
+            self.assertEqual(seen[0][1], (d / "assets" / "mock-gbp.png").read_bytes())   # read from the run folder
+            stages = {a["stage"] for a in json.loads((d / "run.json").read_text())["attempts"]}
+            self.assertNotIn("fix", stages)
+            self.assertNotIn("review", stages)                         # a HOLD never reaches the reviewer
 
     def test_confidential_brief_never_reaches_a_flagged_model(self):
         with tempfile.TemporaryDirectory() as d:

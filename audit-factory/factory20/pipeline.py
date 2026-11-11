@@ -150,7 +150,10 @@ CHECKS = {"identity": check_identity, "score": check_score, "synthesis": check_s
           "pages": check_pages, "actions": check_actions}
 MAX_FIX_ROUNDS = 3
 FRONT_GATES = {"G20", "G21", "G22", "G24"}
-NOT_THE_WRITERS = {"G81"}   # the preparer's photo comes from the brief and assets, not from a model
+# Not the writer's to fix: the preparer's photo comes from the brief and assets (G81), and a
+# private field inside a screenshot needs the image cropped or redacted, which no drafting
+# model can do (G75). A G75 FAIL holds the audit until the runner fixes the image file.
+NOT_THE_WRITERS = {"G81", "G75"}
 # Pages 3-19 come back in four calls, not one. A real audit's pages run about 19,000 output
 # tokens (measured on the Nov 4 clean blind run), more than one reply may carry; four
 # batches share the same cached prefix, so the split costs little and nothing is cut off.
@@ -262,7 +265,7 @@ def _check_all(run_dir: pathlib.Path, ledger: Ledger, tier: str, render_pdf: boo
     brief = json.loads((run_dir / "brief.json").read_text())
     rep = gates.gate_audit(full, ledger, tier if tier in gates.TIERS else "standard",
                            do_not_print=brief.get("do_not_print", []),
-                           allowed_phones=brief.get("allowed_phones", [])).summary()
+                           allowed_phones=brief.get("allowed_phones", []), asset_base=run_dir).summary()
     (run_dir / "gate.json").write_text(json.dumps(rep, indent=1))
     rr = None
     if render_pdf:
@@ -356,6 +359,11 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
     out["usd"] = round(sum(a.get("usd", 0) for a in log["attempts"]), 4)
     if not gates_ok:
         out["verdict"] = "HOLD"
+        # name what holds it, so a hold no writer can clear (a private field in a screenshot,
+        # the preparer's photo) is visible without opening gate.json
+        out["holding_gates"] = sorted({c["id"] for c in rep["checks"] if c["status"] == "FAIL"}
+                                      | {c["id"] for c in ((rr or {}).get("gates") or {}).get("checks", [])
+                                         if c["status"] == "FAIL"})
     elif not review:
         out["verdict"] = "REVIEW_READY"
     else:

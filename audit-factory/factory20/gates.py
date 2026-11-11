@@ -12,10 +12,13 @@ October audits clear every density/evidence gate; the thin cheap-lane drafts fai
 from __future__ import annotations
 
 import datetime as _dt
+import pathlib
 import re
+import shutil
 from collections import Counter
 
 from . import model as M
+from . import ocr as OCR
 from . import score as S
 from .ledger import Ledger
 
@@ -91,8 +94,85 @@ def _digits(s: str) -> str:
     return re.sub(r"\D", "", s)[-10:]
 
 
+IMAGE_BLOCKS = ("photo", "screenshot")
+
+
+def embedded_images(audit: dict) -> list[tuple[int, str]]:
+    """(page, src) for every image the renderer embeds: photo and screenshot blocks, and the
+    preparer's photo on the cover."""
+    out = []
+    for p in sorted(audit.get("pages", []), key=lambda x: x.get("n", 0)):
+        out += [(p.get("n"), b.get("src", "")) for b in p.get("blocks", []) if b.get("type") in IMAGE_BLOCKS]
+    face = ((audit.get("meta") or {}).get("prepared_by") or {}).get("photo")
+    cover = next((p for p in audit.get("pages", []) if p.get("type") == "cover"), None)
+    if face and cover:
+        out.append((cover.get("n"), face))
+    return out
+
+
+def _label(src: str) -> str:
+    """How a message names an image: its path, or 'an inline data: image' (never 60 chars of base64)."""
+    return "an inline data: image" if src.startswith("data:") else src[:80]
+
+
+def gate_images(R: Report, audit: dict, dnp: list[tuple[int, str]], asset_base, ocr_engine) -> None:
+    """G75: the do-not-print list inside screenshots and photos, read by OCR.
+
+    FAIL when an item is read in an image. WARN when there are images to check but no OCR
+    engine, or when an image could not be read: an unread image is not a checked image. PASS
+    when there is no list, no embedded image, or every image was read and is clean. The
+    message never repeats the item, only its number in brief.do_not_print."""
+    name = "Nothing on the do-not-print list shows inside a screenshot or photo (OCR)"
+    images = [(n, s) for n, s in embedded_images(audit) if s and not s.startswith(("http://", "https://"))]
+    if not dnp or not images:
+        R.add("G75", name, "privacy", True)
+        return
+    pages = ", ".join(str(n) for n in sorted({n for n, _ in images}))
+    eng = ocr_engine if ocr_engine is not None else OCR.engine()
+    if eng is None:
+        R.add("G75", name, "privacy", False,
+              f"{len(images)} embedded image(s) on page(s) {pages} were not read: no OCR engine is installed "
+              "(install Tesseract: apt install tesseract-ocr, or brew install tesseract). Until then open each "
+              "image and check it by eye against brief.do_not_print; crop or redact private fields in screenshots "
+              "before use", where="images", hard=False)
+        return
+    base = pathlib.Path(asset_base) if asset_base else None
+    hits, unread = [], []
+    for n, src in images:
+        path, why = OCR.materialise(src, base)
+        if path is None:
+            unread.append(f"page {n} ({_label(src)}): {why}")
+            continue
+        try:
+            text = eng(path)
+        except Exception as e:  # noqa: BLE001 — any engine failure leaves the image unchecked, never passed
+            unread.append(f"page {n} ({_label(src)}): {e}")
+            continue
+        finally:
+            if src.startswith("data:"):
+                shutil.rmtree(path.parent, ignore_errors=True)
+        hits += [(n, src, j) for j, s in dnp if OCR.contains(text, s)]
+    if hits:
+        R.add("G75", name, "privacy", False,
+              "brief.do_not_print items are visible inside images — "
+              + "; ".join(f"item {j} in the image on page {n} ({_label(src)})" for n, src, j in hits[:8])
+              + ". Crop or redact those fields in the image file (or use another image) and re-run the gates; "
+              "do not paraphrase them into a caption", where="images")
+    elif unread:
+        R.add("G75", name, "privacy", False,
+              f"{len(unread)} image(s) could not be read, so they are unchecked: " + "; ".join(unread[:6])
+              + ". Fix the file or check it by eye against brief.do_not_print", hard=False)
+    else:
+        R.add("G75", name, "privacy", True)
+
+
 def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard",
-               do_not_print: list[str] | None = None, allowed_phones: list[str] | None = None) -> Report:
+               do_not_print: list[str] | None = None, allowed_phones: list[str] | None = None,
+               asset_base: str | pathlib.Path | None = None, ocr_engine: OCR.OcrFn | None = None) -> Report:
+    """Content gates on an expanded audit.json.
+
+    asset_base is the folder image srcs resolve against (the audit's folder, as the renderer
+    uses); ocr_engine reads an image's text for G75 (default: Tesseract when installed)."""
     T = TIERS[tier]
     R = Report()
     pages = audit.get("pages", [])
@@ -322,16 +402,20 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     # The brief's do-not-print list: confidential numbers, embargoed titles, private names.
     # Cheap models leaked exactly these in the Oct 25 bake-off. The message never repeats
     # the strings, because gate.json travels further than the brief.
-    dnp = [s.strip().lower() for s in (do_not_print or []) if isinstance(s, str) and len(s.strip()) >= 3]
+    # Item numbers are positions in brief.do_not_print (1-based), so "item 2" is findable.
+    dnp = [(j, s.strip().lower()) for j, s in enumerate(do_not_print or [], 1)
+           if isinstance(s, str) and len(s.strip()) >= 3]
     hits_dnp = []
     for p in pages:
         pt = M.text_of(p).lower()
-        hits_dnp += [(p.get("n"), j) for j, s in enumerate(dnp, 1) if s in pt]
+        hits_dnp += [(p.get("n"), j) for j, s in dnp if s in pt]
     act_text = M.text_of(actions).lower()
-    hits_dnp += [("actions", j) for j, s in enumerate(dnp, 1) if s in act_text]
+    hits_dnp += [("actions", j) for j, s in dnp if s in act_text]
     R.add("G74", "Nothing on the brief's do-not-print list appears", "privacy", not hits_dnp,
           "brief.do_not_print items found — " + ", ".join(f"item {j} on page {n}" for n, j in hits_dnp[:8])
           + "; remove them and do not paraphrase them")
+    # G74 reads text only; a screenshot is pixels. G75 reads the images (Nik Halik, 2026-11-11).
+    gate_images(R, audit, dnp, asset_base, ocr_engine)
     if ledger is not None:
         risky = []
         for p in (pg for pg in pages if pg.get("n") in (1, 2)):

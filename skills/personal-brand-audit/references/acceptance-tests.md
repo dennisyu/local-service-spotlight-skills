@@ -108,6 +108,10 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   all affected pages.
 - [ ] Every page contains a meaningful approved real photo, source screenshot, data chart, or
   evidence-backed diagram with caption/evidence IDs.
+- [ ] Every embedded screenshot and photo was cropped or redacted of private fields (family
+  members, home address, personal contacts, anything on the brief's do-not-print list) before
+  use, and was OCR-checked against that list; text checks do not read pixels. A page-1 Google
+  panel screenshot leaked private family names this way on 2026-11-11.
 - [ ] No clipped text, overflow, accidental blank page, tiny unreadable type, broken glyph,
   low-resolution hero, obscured face, or chart legend mismatch appears.
 - [ ] Required fonts are embedded, hyperlinks are present, no page is empty/near-empty, and
