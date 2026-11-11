@@ -15,6 +15,7 @@
   bundle   <run-dir>                                   bundle a finished run for the house audit-quality gate
                                                        (exit 2 if the run is not finished or its records disagree)
   openrouter-check [--models FILE] [--write]           every OpenRouter route still listed, at the price we assume
+                                                     (or charged by 3 providers that are up)
 """
 from __future__ import annotations
 
@@ -193,19 +194,33 @@ def cmd_bundle(a) -> int:
 
 def cmd_openrouter_check(a) -> int:
     cfg = cost.load_routing()
-    models = openrouter.load_models(a.models) if a.models else openrouter.fetch_models()
-    rep = openrouter.check(cfg, models, a.tolerance)
-    print(f"OpenRouter routes in routing.json: {len(rep['rows'])} · models listed on OpenRouter: {len(models)}")
+    if a.models:
+        models, endpoints, failed = openrouter.load_models(a.models), openrouter.load_endpoints(a.models), []
+    else:
+        models = openrouter.fetch_models()
+        endpoints, failed = openrouter.fetch_all_endpoints(cfg)
+    rep = openrouter.check(cfg, models, a.tolerance, endpoints)
+    print(f"OpenRouter routes in routing.json: {len(rep['rows'])} · models listed on OpenRouter: {len(models)}"
+          + (f" · provider endpoints read for {len(endpoints)} routes" if endpoints is not None else ""))
     for r in rep["rows"]:
         state = "MISSING" if not r["listed"] else ("DRIFT" if r["drift"] else "ok")
         detail = "; ".join(f"{f} {d['ours']} -> {d['live']}" for f, d in r["drift"].items())
+        if r.get("headline"):
+            moved = "; ".join(f"{f} {d['ours']} -> {d['live']}" for f, d in r["headline"].items())
+            detail = (detail + " · " if detail else "") + \
+                f"headline {moved} is one provider's; {r['backing']} providers that are up charge ours"
+        elif r["drift"] and "backing" in r:
+            detail += f" ({r['backing']} providers that are up charge ours; {openrouter.MIN_BACKING} would vouch for it)"
         print(f"  [{state:7s}] {r['key']:34s} {detail}")
+    if failed:
+        print(f"endpoint lists that did not load (checked on the headline price alone): {', '.join(failed)}")
     if a.write and rep["drifted"]:
         changed = openrouter.write_prices(rep)
         print(f"updated {len(changed)} price lines in config/routing.json: {', '.join(changed)}")
-        rep = openrouter.check(cost.load_routing(), models, a.tolerance)
+        rep = openrouter.check(cost.load_routing(), models, a.tolerance, endpoints)
     if a.write:
-        print(f"saved {openrouter.save_snapshot(cost.load_routing(), models)} (the tests check the config against it)")
+        snap = openrouter.save_snapshot(cost.load_routing(), models, endpoints=endpoints)
+        print(f"saved {snap} (the tests check the config against it)")
     if rep["missing"]:
         print(f"routes no longer on OpenRouter: {', '.join(rep['missing'])}"
               + (f" (used by a tier: {', '.join(rep['missing_in_use'])})" if rep["missing_in_use"] else ""))
@@ -234,7 +249,7 @@ def main(argv=None) -> int:
     i.add_argument("--ledger"); i.add_argument("--brief"); i.add_argument("--assets")
     bd = sp.add_parser("bundle", help="bundle a finished run for docs/audit-quality/verify_bundle.py")
     bd.add_argument("run_dir")
-    o = sp.add_parser("openrouter-check"); o.add_argument("--models", help="saved copy of OpenRouter's models list (default: fetch it)")
+    o = sp.add_parser("openrouter-check"); o.add_argument("--models", help="saved copy of OpenRouter's models list, with its endpoints if saved (default: fetch both)")
     o.add_argument("--write", action="store_true", help="update drifted prices in config/routing.json")
     o.add_argument("--tolerance", type=float, default=0.10, help="allowed price drift before the check fails (default 10%%)")
     a = ap.parse_args(argv)

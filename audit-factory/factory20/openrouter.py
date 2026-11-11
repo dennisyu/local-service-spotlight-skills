@@ -5,6 +5,14 @@ still exist on OpenRouter, at the price the cost model assumes.
 spend) and compares it with config/routing.json. It fails when a route has disappeared or a
 price has drifted past the tolerance; `--write` updates the prices in place, keeping the
 file's one-model-per-line layout so the diff shows exactly what moved.
+
+The models list gives one headline price per model, and for a model many providers serve it
+is one provider's price. DeepSeek V4.1 Flash's headline moved three times between Nov 8 and
+Nov 11 (input $0.051, $0.30, $0.051) while most of its providers kept charging $0.30. So the
+check also reads each route's provider endpoints: when at least MIN_BACKING providers that are
+up charge the configured input, output and cached-input price, a different headline is
+reported but is not drift. Writing a one-provider headline into routing.json would shrink the
+call's max_price ceiling to the few providers at or under it.
 """
 from __future__ import annotations
 
@@ -17,6 +25,8 @@ import urllib.request
 from . import cost as K
 
 MODELS_URL = "https://openrouter.ai/api/v1/models"
+ENDPOINTS_URL = "https://openrouter.ai/api/v1/models/{route}/endpoints"
+MIN_BACKING = 3        # providers that are up and charge the configured price, so a headline move is not drift
 FIELDS = (("in", "prompt"), ("out", "completion"), ("cache_read", "input_cache_read"), ("cache_write", "input_cache_write"))
 
 
@@ -29,6 +39,36 @@ def fetch_models(url: str = MODELS_URL, timeout: int = 60) -> list[dict]:
 def load_models(path: str | pathlib.Path) -> list[dict]:
     d = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
     return d["data"] if isinstance(d, dict) else d
+
+
+def fetch_endpoints(route: str, timeout: int = 60) -> list[dict]:
+    req = urllib.request.Request(ENDPOINTS_URL.format(route=route), headers={"User-Agent": "lss-audit-factory/1.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return (json.loads(r.read().decode()).get("data") or {}).get("endpoints") or []
+
+
+def fetch_all_endpoints(cfg: dict, fetch=fetch_endpoints) -> tuple[dict, list[str]]:
+    """Every OpenRouter route's provider endpoints, and the routes whose list would not load
+    (those are checked against the headline price alone, as before)."""
+    out, failed = {}, []
+    for route in sorted({p.get("route") for p in cfg["prices"].values() if p.get("provider") == "openrouter"}):
+        try:
+            out[route] = fetch(route)
+        except Exception:  # noqa: BLE001 — a route whose endpoints will not load keeps the headline check
+            failed.append(route)
+    return out, failed
+
+
+def load_endpoints(path: str | pathlib.Path) -> dict | None:
+    """The endpoints saved beside a models snapshot (snapshots from before Nov 11 have none)."""
+    d = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    return d.get("endpoints") if isinstance(d, dict) else None
+
+
+def utc_today() -> str:
+    """The date a price was read, in UTC like OpenRouter and the CI runner: a session on Pacific
+    time wrote Nov 11's prices into Nov 10's file, over the one already there."""
+    return dt.datetime.now(dt.timezone.utc).date().isoformat()
 
 
 def _per_million(v) -> float | None:
@@ -66,8 +106,33 @@ def _lc_drift(ours: dict | None, live: dict | None, tolerance: float) -> bool:
     return False
 
 
-def check(cfg: dict, models: list[dict], tolerance: float = 0.10) -> dict:
-    """One row per OpenRouter route: listed or missing, and every price that drifted."""
+def backing(p: dict, endpoints: list[dict] | None, tolerance: float = 0.10) -> int:
+    """How many providers that are up charge the configured input, output and cached-input
+    price, each within the tolerance. An endpoint lists 0 for a cache it does not offer, so a
+    zero cached-input price neither counts for the configured one nor against it."""
+    n = 0
+    for e in endpoints or []:
+        if e.get("status") != 0:
+            continue
+        pricing = e.get("pricing") or {}
+        agree = True
+        for ours, theirs in FIELDS[:3]:
+            v = _per_million(pricing.get(theirs))
+            if ours == "cache_read" and not v:
+                continue
+            have = float(p.get(ours, 0) or 0)
+            if v is None or have == 0 or abs(v - have) / have > tolerance:
+                agree = False
+                break
+        n += agree
+    return n
+
+
+def check(cfg: dict, models: list[dict], tolerance: float = 0.10, endpoints: dict | None = None) -> dict:
+    """One row per OpenRouter route: listed or missing, and every price that drifted. With
+    `endpoints` ({route: OpenRouter's endpoint list}), a headline input, output or cached-input
+    price that differs from ours is not drift when MIN_BACKING providers that are up charge ours;
+    the row keeps it under "headline" with the count under "backing"."""
     live = {m["id"]: m for m in models}
     rows = []
     for key, p in cfg["prices"].items():
@@ -90,6 +155,11 @@ def check(cfg: dict, models: list[dict], tolerance: float = 0.10) -> dict:
                     continue
                 if have == 0 or abs(v - have) / max(have, 1e-12) > tolerance:
                     row["drift"][ours] = {"ours": have, "live": v}
+            moved = [f for f in ("in", "out", "cache_read") if f in row["drift"]]
+            if moved and endpoints is not None:
+                row["backing"] = backing(p, endpoints.get(route), tolerance)
+                if row["backing"] >= MIN_BACKING:
+                    row["headline"] = {f: row["drift"].pop(f) for f in moved}
             # a long-context tier is a price too: missing it lets a long prompt cost 5x the cap's figure
             live_lc = _live_long_context(m.get("pricing") or {})
             if live_lc:
@@ -115,16 +185,23 @@ def _fmt(v) -> str:
 SNAPSHOTS = K.ROOT / "fixtures" / "openrouter"
 
 
-def save_snapshot(cfg: dict, models: list[dict], today: str | None = None, folder: pathlib.Path = SNAPSHOTS) -> pathlib.Path:
+def save_snapshot(cfg: dict, models: list[dict], today: str | None = None, folder: pathlib.Path = SNAPSHOTS,
+                  endpoints: dict | None = None) -> pathlib.Path:
     """Keep the slice of OpenRouter's models list that the config relies on, dated, so tests can
-    check the config against what OpenRouter actually listed rather than against itself."""
-    today = today or dt.date.today().isoformat()
+    check the config against what OpenRouter actually listed rather than against itself. With
+    `endpoints`, each route's providers (name, status, prices) are kept too."""
+    today = today or utc_today()
     routes = {p.get("route") for p in cfg["prices"].values() if p.get("provider") == "openrouter"}
     keep = [{"id": m["id"], "pricing": m.get("pricing"), "reasoning": m.get("reasoning")} for m in models if m["id"] in routes]
+    snap = {"source": MODELS_URL, "read": today, "data": sorted(keep, key=lambda m: m["id"])}
+    if endpoints is not None:
+        snap["endpoints_source"] = ENDPOINTS_URL
+        snap["endpoints"] = {r: [{"provider_name": e.get("provider_name"), "tag": e.get("tag"), "status": e.get("status"),
+                                  "pricing": {k: (e.get("pricing") or {}).get(k) for _, k in FIELDS}}
+                                 for e in eps] for r, eps in sorted(endpoints.items()) if r in routes}
     folder.mkdir(parents=True, exist_ok=True)
     out = folder / f"models-{today}.json"
-    out.write_text(json.dumps({"source": MODELS_URL, "read": today, "data": sorted(keep, key=lambda m: m["id"])},
-                              indent=1) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(snap, indent=1) + "\n", encoding="utf-8")
     return out
 
 
@@ -137,7 +214,7 @@ def write_prices(report: dict, path: str | pathlib.Path = K.ROUTING, today: str 
     """Rewrite the drifted price lines in routing.json in place. Returns the keys changed."""
     path = pathlib.Path(path)
     text = path.read_text(encoding="utf-8")
-    today = today or dt.date.today().isoformat()
+    today = today or utc_today()
     changed = []
     for row in report["rows"]:
         if not row["drift"]:

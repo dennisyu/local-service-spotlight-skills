@@ -250,6 +250,18 @@ listed: a dated snapshot, `deepseek/deepseek-v4.1-flash-1017`, at $0.006 in and 
 to it changes the model, so it needs its own quality check first. The route's "off-peak; peak
 doubles" note predates the new listing and is not verified against it.
 
+**Nov 11, 2026: the headline moved back, and the check now asks the providers.** The listing for
+DeepSeek V4.1 Flash went to $0.051 in, $0.567 out and $0.018 cached, and `openrouter-check` failed
+in CI again. That headline is one provider's price. OpenRouter lists 36 endpoints for the route; 30
+were up, 7 of them at $0.30 and $1.20, and 5 of those at the configured $0.006 cached. Writing the
+headline into `routing.json` would have set each call's ceiling (the price plus 25% headroom) near
+$0.064 in and $0.71 out, which three providers meet. So the check now also reads each route's
+endpoints. A different headline input, output or cached price is current when at least three
+providers that are up charge the configured one; it is still drift when they do not, and a missing
+route, a changed effort list or a changed long-context tier still fails. The routing prices are
+unchanged. `fixtures/openrouter/models-2026-11-11.json` keeps the endpoints, and saved dates are
+now UTC, so a machine on Pacific time cannot write Nov 11's prices into Nov 10's file.
+
 ## Score calibration evidence
 
 The October 27 replay of a Claude-researched audit on DeepSeek V3.2 cost $0.018 and reproduced

@@ -8,8 +8,10 @@ key, the spending cap, the four page batches, and a full audit run on the one-ke
 """
 from __future__ import annotations
 
+import contextlib
 import copy
 import http.server
+import io
 import json
 import os
 import pathlib
@@ -440,24 +442,111 @@ class OpenRouterCheckTests(unittest.TestCase):
         return out
 
     def test_config_matches_the_latest_saved_openrouter_list(self):
-        """Not the config against itself: a dated copy of what OpenRouter actually listed."""
+        """Not the config against itself: a dated copy of what OpenRouter actually listed, with the
+        provider endpoints saved beside it."""
         snap = openrouter.latest_snapshot()
         self.assertIsNotNone(snap)
-        rep = openrouter.check(cost.load_routing(), openrouter.load_models(snap))
+        rep = openrouter.check(cost.load_routing(), openrouter.load_models(snap), endpoints=openrouter.load_endpoints(snap))
         self.assertTrue(rep["ok"], rep)
+
+    DS = "deepseek/deepseek-v4.1-flash"
+    # Nov 11: OpenRouter's headline for this route was one provider's price while most of its
+    # providers still charged the configured $0.30 in, $1.20 out and $0.006 cached
+    HEADLINE = {"prompt": "0.000000051", "completion": "0.000000567", "input_cache_read": "0.000000018"}
+
+    @staticmethod
+    def endpoints(*rows):
+        """One endpoint per (in, out, cache_read, status) row, prices per million tokens."""
+        return [{"provider_name": f"provider {i}", "status": status,
+                 "pricing": {"prompt": str(i_ / 1e6), "completion": str(o / 1e6), "input_cache_read": str(c / 1e6),
+                             "input_cache_write": "0"}}
+                for i, (i_, o, c, status) in enumerate(rows)]
+
+    def test_a_one_provider_headline_is_not_drift_when_three_providers_charge_ours(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        eps = {self.DS: self.endpoints(*[(0.30, 1.20, 0.006, 0)] * 3, (0.051, 0.567, 0.018, 0))}
+        self.assertEqual(openrouter.check(cost.load_routing(), models)["drifted"], [f"or:{self.DS}"])
+        rep = openrouter.check(cost.load_routing(), models, endpoints=eps)
+        self.assertTrue(rep["ok"], rep)
+        row = next(r for r in rep["rows"] if r["route"] == self.DS)
+        self.assertEqual(row["backing"], 3)
+        self.assertEqual(set(row["headline"]), {"in", "out", "cache_read"})
+        self.assertEqual(row["drift"], {})
+
+    def test_two_providers_down_providers_or_another_cache_price_do_not_vouch(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        for eps in ({self.DS: self.endpoints(*[(0.30, 1.20, 0.006, 0)] * 2)},
+                    {self.DS: self.endpoints(*[(0.30, 1.20, 0.006, -2)] * 3)},
+                    {self.DS: self.endpoints(*[(0.30, 1.20, 0.03, 0)] * 3)},
+                    {}):
+            rep = openrouter.check(cost.load_routing(), models, endpoints=eps)
+            self.assertEqual(rep["drifted"], [f"or:{self.DS}"], eps)
+
+    def test_a_cache_price_an_endpoint_lists_as_zero_neither_vouches_nor_objects(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        eps = {self.DS: self.endpoints(*[(0.30, 1.20, 0.0, 0)] * 3)}
+        self.assertTrue(openrouter.check(cost.load_routing(), models, endpoints=eps)["ok"])
+
+    def test_a_tampered_config_price_still_fails_with_endpoints(self):
+        cfg = copy.deepcopy(cost.load_routing())
+        cfg["prices"]["or:anthropic/claude-opus-5.5"]["in"] *= 100
+        snap = openrouter.latest_snapshot()
+        rep = openrouter.check(cfg, openrouter.load_models(snap), endpoints=openrouter.load_endpoints(snap))
+        self.assertEqual(rep["drifted"], ["or:anthropic/claude-opus-5.5"])
+
+    def test_a_snapshot_is_named_by_the_utc_date(self):
+        # Nov 11 01:20 UTC was still Nov 10 in Los Angeles, and the local date overwrote Nov 10's file
+        import datetime as _dt
+        import time
+        utc = _dt.datetime.now(_dt.timezone.utc)
+        zone = "Etc/GMT+12" if utc.hour < 12 else "Etc/GMT-14"     # a local date that is never the UTC one
+        before = os.environ.get("TZ")
+        os.environ["TZ"] = zone
+        time.tzset()
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                out = openrouter.save_snapshot(cost.load_routing(), [], folder=pathlib.Path(d))
+                today = openrouter.utc_today()
+        finally:
+            if before is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = before
+            time.tzset()
+        self.assertEqual(out.name, f"models-{today}.json")
+        self.assertEqual(today, _dt.datetime.now(_dt.timezone.utc).date().isoformat())
+
+    def test_the_command_reads_the_endpoints_saved_with_a_snapshot(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        eps = {self.DS: self.endpoints(*[(0.30, 1.20, 0.006, 0)] * 3)}
+        with tempfile.TemporaryDirectory() as d:
+            with_eps, without = pathlib.Path(d) / "with.json", pathlib.Path(d) / "without.json"
+            with_eps.write_text(json.dumps({"data": models, "endpoints": eps}), encoding="utf-8")
+            without.write_text(json.dumps({"data": models}), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(cli.main(["openrouter-check", "--models", str(with_eps)]), 0)
+                self.assertEqual(cli.main(["openrouter-check", "--models", str(without)]), 1)
+            self.assertIn("3 providers that are up charge ours", out.getvalue())
+
+    def saved(self):
+        """The latest saved copy of OpenRouter's list, and the provider endpoints saved with it."""
+        snap = openrouter.latest_snapshot()
+        return openrouter.load_models(snap), openrouter.load_endpoints(snap)
 
     def test_a_tampered_config_price_fails_against_the_saved_list(self):
         cfg = copy.deepcopy(cost.load_routing())
         cfg["prices"]["or:anthropic/claude-opus-5.5"]["in"] *= 100
-        rep = openrouter.check(cfg, openrouter.load_models(openrouter.latest_snapshot()))
+        models, eps = self.saved()
+        rep = openrouter.check(cfg, models, endpoints=eps)
         self.assertEqual(rep["drifted"], ["or:anthropic/claude-opus-5.5"])
 
     def test_a_changed_effort_list_is_drift(self):
-        models = openrouter.load_models(openrouter.latest_snapshot())
+        models, eps = self.saved()
         ds = next(m for m in models if m["id"] == "deepseek/deepseek-v4.1-flash")
         ds["reasoning"] = dict(ds["reasoning"], supported_efforts=["high", "low"])       # "none" withdrawn
-        rep = openrouter.check(cost.load_routing(), models)
-        self.assertIn("or:deepseek/deepseek-v4.1-flash", rep["drifted"])
+        rep = openrouter.check(cost.load_routing(), models, endpoints=eps)
+        self.assertEqual(rep["drifted"], ["or:deepseek/deepseek-v4.1-flash"])
+        self.assertEqual(set(next(r for r in rep["rows"] if r["route"] == ds["id"])["drift"]), {"efforts"})
 
     def test_a_removed_route_and_a_price_rise_both_fail(self):
         models = self.models(**{"x-ai/grok-4.7": None,
@@ -471,7 +560,8 @@ class OpenRouterCheckTests(unittest.TestCase):
     def test_a_missing_long_context_tier_is_drift_and_write_restores_it(self):
         cfg = copy.deepcopy(cost.load_routing())
         cfg["prices"]["or:anthropic/claude-haiku-5.5"].pop("long_context")
-        rep = openrouter.check(cfg, openrouter.load_models(openrouter.latest_snapshot()))
+        models, eps = self.saved()
+        rep = openrouter.check(cfg, models, endpoints=eps)
         self.assertEqual(rep["drifted"], ["or:anthropic/claude-haiku-5.5"])
         drift = next(r for r in rep["rows"] if r["key"] == "or:anthropic/claude-haiku-5.5")["drift"]["long_context"]
         self.assertEqual(drift["live"], {"over": 100000, "in": 0.5, "out": 2.5, "cache_read": 0.05, "cache_write": 0.625})
