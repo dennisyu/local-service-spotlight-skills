@@ -58,8 +58,9 @@ on e5d07c3.
 14. The blind graders found two more. Page 20's chart title counted only the evidence rows
    ("119 rows") above a chart of all 134. And one fix round revised the cover before the pages
    it summarizes, so the cover kept a $21 ad test that the same round's page fix had made a $14
-   test on page 11. The title now counts every row; the page writer goes first, and the cover's
-   writer sees its pages.
+   test on page 11. The chart now shows only the rows its title counts, and a caption names the
+   rest (the same lines as #121); the page writer goes first, and the cover's writer sees its
+   pages.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -878,13 +879,19 @@ class FixOrderTests(unittest.TestCase):
 
 
 class ReceiptCountTests(unittest.TestCase):
-    def test_the_receipt_counts_every_ledger_row_its_chart_shows(self):
+    def test_the_receipt_accounts_for_every_ledger_row(self):
         # Both person-subject graders marked page 20's "EVIDENCE LEDGER — 119 ROWS BY CLASS" as
-        # unsupported: the ledger has 134 rows, and the chart below the title shows all 134.
+        # unsupported: the ledger has 134 rows, and the chart below the title showed all 134.
+        # The chart now shows the rows its title counts, and its caption names the rest, as #121
+        # does with the same lines.
+        st = LEDGER.stats()
         bars = next(b for b in render._receipt_blocks(copy.deepcopy(AUDIT), LEDGER) if b["type"] == "bars")
         shown = sum(i["value"] for i in bars["items"])
-        self.assertEqual(shown, len(LEDGER.rows))
-        self.assertIn(f"{len(LEDGER.rows)} rows", bars["title"])
+        self.assertIn(f"{shown} rows", bars["title"])
+        caption = bars.get("caption", "")
+        for kept, n in (("namesake", st["ambiguous"]), ("conflict", st["conflicts"]), ("named unknown", st["unknowns"])):
+            self.assertRegex(caption, rf"\b{n} {kept}")
+        self.assertEqual(shown + st["ambiguous"] + st["conflicts"] + st["unknowns"], len(LEDGER.rows))
 
 
 # --------------------------------------------------------------------------- 8. the manual provider

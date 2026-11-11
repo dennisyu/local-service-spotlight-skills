@@ -132,14 +132,10 @@ def _receipt_blocks(a: dict, ledger: Ledger | None) -> list[dict]:
         st = ledger.stats()
         items = [{"label": k.replace("-", " ").lower(), "value": v} for k, v in
                  sorted(st["by_class"].items(), key=lambda x: -x[1])]
-        items += [{"label": "namesake / ambiguous rows (excluded)", "value": st["ambiguous"]},
-                  {"label": "conflict groups kept visible", "value": st["conflicts"]},
-                  {"label": "named unknowns", "value": st["unknowns"]}]
-        # the title counts every row the bars show: until Nov 10 it gave only the evidence rows
-        # (119), so both pilot graders read it against the ledger's 134 rows as a wrong count
-        total = st["evidence"] + st["ambiguous"] + st["conflicts"] + st["unknowns"]
-        blocks.append({"type": "bars", "span": 6, "title": f"Evidence ledger — {total} rows",
-                       "items": items})
+        blocks.append({"type": "bars", "span": 6, "title": f"Evidence ledger — {st['evidence']} rows by class",
+                       "items": items,
+                       "caption": f"Kept beside the ledger, not counted in the {st['evidence']}: {st['ambiguous']} namesake rows, "
+                                  f"{st['conflicts']} conflict groups, {st['unknowns']} named unknowns."})
         # five most-cited facts: what a stranger should check first
         counts: dict[str, int] = {}
         for p in a.get("pages", []):
