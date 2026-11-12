@@ -219,12 +219,18 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
 # "page 7" is one page; only the plural lists ("pages [2, 7]", "pages 1, 2 and 18") or ranges
 # ("pages 5-8"). A number never runs into a longer one ("page 100" is no page), and a joiner
 # counts only when a number follows it, so "page 7 and 12 words" is page 7.
-PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?!\d)(?:[-–](\d{1,2})(?!\w))?", re.I)
-PAGE_LIST = re.compile(r"\bpages\s+\[?((?:\d{1,2}(?!\d)(?:\s*(?:,|and|&|-|–|to)\s*(?=\d))?)+)", re.I)
+PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?![\d%])(?:[-–](\d{1,2})(?![\w%]))?", re.I)
+# A list item after a comma or "and" must end where a page number ends, so "p5, 3 cards" and
+# "pages 2 and 3 cards long" do not make pages of counts; a range end is never a percentage.
+_RANGE_END = r"(?:\s*(?:[-–]|to)\s*\d{1,2}(?![\w%]))?"
+_ITEM_END = r"(?=\s*(?:[,;:.()\]]|and\b|&|[-–]|to\b|$))"
+_PAGES = (r"(\d{1,2}(?![\d%])" + _RANGE_END +
+          r"(?:\s*(?:,|and|&)\s*\d{1,2}(?![\w%])" + _ITEM_END + _RANGE_END + r")*)")
+PAGE_LIST = re.compile(r"\bpages\s+\[?" + _PAGES, re.I)
 RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 # a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
-WHERE_PAGE = re.compile(r"\b(?:pp?|pg)\.?\s?((?:\d{1,2}(?!\d)(?:\s*(?:,|and|&|-|–)\s*(?=\d))?)+)", re.I)
-WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo))", re.I)
+WHERE_PAGE = re.compile(r"\b(?:pp?|pg)\.?\s?" + _PAGES, re.I)
+WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
 
 
 def _page_numbers(text: str, where: bool = False) -> set[int]:
@@ -286,8 +292,11 @@ def _score(item: dict) -> bool:
 
 # "exam row 4 'why'", "heatmap rows 4 and 7": a where field that names an exam row, not just the
 # word score ("p5 score callout" is page copy)
-EXAM_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority|score)\b[^;]{0,40}?\brows?\s+\d{1,2}\b|"
-                      r"\b(?:exams?|heatmap|brand\s+authority)\s+rows?\b", re.I)
+EXAM_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[^;]{0,40}?\brows?\s+\d{1,2}\b|"
+                      r"\b(?:exams?|heatmap|brand\s+authority|score)\s+rows?\b", re.I)
+# page copy a where segment can name beside the exam: "p5 callout under the heatmap" is the
+# callout's, not a row's ("exam table" is the exam itself)
+PAGE_COPY = re.compile(r"\b(?:callout|dek|headline|card|caption|note|title|(?<!exam\s)table)s?\b", re.I)
 
 
 def _back(item: dict) -> bool:
@@ -429,8 +438,14 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     # an exam row named without a quote, where the where field says it is the exam's ("exam row 4",
     # "Brand Authority row 4", "heatmap"); a callout on the exams page that calls row 4 generous is
     # page copy, and still the page writer's
-    if named_rows and (EXAM_ROW.search(where_txt) or re.search(r"\bheatmap\b", where_txt, re.I)):
-        rows |= {n for n in named_rows if 1 <= n <= 10}
+    by_name: set[int] = set()
+    for seg in re.split(r";", where_txt):
+        if PAGE_COPY.search(seg) or not (EXAM_ROW.search(seg) or re.search(r"\bheatmap\b", seg, re.I)):
+            continue
+        seg_rows = {int(n) for grp in re.findall(r"\brows? ((?:\d{1,2}(?:\s*(?:,|and|&)\s*)?)+)", seg, re.I)
+                    for n in re.findall(r"\d+", grp)}
+        by_name |= {n for n in (seg_rows or named_rows) if 1 <= n <= 10 and n not in rows}
+    rows |= by_name
     named_ids = {key for kind, key, _ in texts if kind == "action"
                  and re.search(rf"(?<![\w-]){re.escape(str(key))}(?![\w-])", f"{msg} {where_txt}")}
     spans = _sweeps(msg)
@@ -453,10 +468,13 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
         where.append(f"on {_pages_phrase(sorted(n for n in pages if 3 <= n <= 19))}")
     if found_acts:
         where.append("in " + ", ".join(sorted(found_acts, key=lambda a: (len(a), a))))
-    if rows:
-        where.append(f"in the reason of exam row{'s' if len(rows) > 1 else ''} {', '.join(map(str, sorted(rows)))}"
+    quoted_rows = sorted(rows - by_name)
+    if quoted_rows:
+        where.append(f"in the reason of exam row{'s' if len(quoted_rows) > 1 else ''} {', '.join(map(str, quoted_rows))}"
                      " (the score file; the page draws no reasons)")
-    note = (f" [The quoted words stand {'; '.join(where)}.]" if where else "") + \
+    named_note = (f" [It names the reason of exam row{'s' if len(by_name) > 1 else ''} "
+                  f"{', '.join(map(str, sorted(by_name)))} (the score file; the page draws no reasons).]" if by_name else "")
+    note = (f" [The quoted words stand {'; '.join(where)}.]" if where else "") + named_note + \
            (" [It covers pages it does not number: fix each of your pages that carries it.]" if spans else "")
     return {**item, "msg": msg + note, "route": route}
 

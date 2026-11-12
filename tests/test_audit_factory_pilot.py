@@ -2,15 +2,16 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 79 of the 83 tests below fail on the kit as it
+for retries and bigger models they did not need. 83 of the 87 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 63 fail on the first version of this change (4f31005, which the
-first independent review read), 49 on the second (f91aa74, which the second review read), 40 on
-823ff8b, which came before the replays showed 10 and 11, 34 on 523018f, the version the graded
-replays ran on (12-14), 32 on 3c585f4, 31 on 690d255, 29 on e5d07c3, 28 on 54e59a9, 27 on
-229cfc9, the version the Nov 12 rerun ran on (15), 13 on 6dbdae0, the first version of 15, which
-a third independent review read, and 4 on 9585620, which the same reviewer read again.
+used throughout routes nothing. 67 fail on the first version of this change (4f31005, which the
+first independent review read), 53 on the second (f91aa74, which the second review read), 44 on
+823ff8b, which came before the replays showed 10 and 11, 38 on 523018f, the version the graded
+replays ran on (12-14), 36 on 3c585f4, 35 on 690d255, 33 on e5d07c3, 32 on 54e59a9, 31 on
+229cfc9, the version the Nov 12 rerun ran on (15), 17 on 6dbdae0, the first version of 15, which
+a third independent review read, 6 on 9585620 and 3 on 68a7f4d, which the same reviewer read
+again and passed.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -86,7 +87,10 @@ a third independent review read, and 4 on 9585620, which the same reviewer read 
    unquoted exam rows read only from "exam row 4" (now also "exam, row 4", "Brand Authority row 4"
    and "heatmap"), the fallback calling the page writer for a register finding named in where, and
    a few page shapes ("Page 5-8", "p3, 4 and 5", "on the cover"); "everywhere" counts as a sweep in
-   a fix, not in a problem.
+   a fix, not in a problem. Its third read passed, with four smaller ones, also fixed: page copy
+   beside the heatmap ("p5 callout under the heatmap") stays the page writer's, a row named
+   without a quote is not called quoted, counts and percentages after a page ("p5, 3 cards",
+   "p5-10%") are not pages, and two parts gained tests.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -1203,6 +1207,50 @@ class ReviewRoutingTests(unittest.TestCase):
         self.assertTrue(pipeline._sweeps("The ask differs by page. Fix: One wording everywhere."))
         self.assertFalse(pipeline._sweeps("The claim is made everywhere online. Fix: cite one source."))
         self.assertFalse(pipeline._sweeps("Card 3 says the audit read all 20 pages of her site. Fix: say 12."))
+
+    # ------------------------------------------------ the third read of 68a7f4d (M1-M4)
+    def test_page_copy_beside_the_heatmap_stays_with_the_page_writer(self):
+        # M1: "p5 callout under the heatmap" is page copy, like the pinned "callout" case
+        item = self._review(5, "The callout calls row 4 strong, which the evidence does not show. Fix: say mixed.",
+                            "FAIL", where="p5 callout under the heatmap")
+        asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+        self.assertNotIn("score", asked)
+        self.assertGreater(len(asked["fix"]), 1, "page 5 must change")
+        table = self._review(7, "Row 3 has no source. Fix: add one.", where="p7 score table row 3")
+        self.assertFalse(pipeline._score(pipeline._located(table, self._demo_dir())))
+        both = self._review(5, "Row 4's reason is wrong, and the dek repeats it. Fix: fix both.", "FAIL",
+                            where="exam row 4; p12 dek")
+        asked, _ = self._apply([both], answers={"fix": {"pages": []}})
+        self.assertEqual(sorted(asked), ["fix", "score"])
+
+    def test_a_row_named_without_a_quote_is_not_called_quoted(self):
+        # M2
+        loc = pipeline._located(self._review(5, "Row 4's reason is not supported by V-E013. Fix: cite it.",
+                                             where="Brand Authority row 4"), self._demo_dir())
+        self.assertNotIn("quoted words", loc["msg"])
+        self.assertIn("names the reason of exam row 4", loc["msg"])
+
+    def test_counts_and_percentages_after_a_page_are_not_pages(self):
+        # M3
+        for text, want in (("p5, 3 cards", {5}), ("p12, 2 of 3 cards", {12}), ("p4 and 2 tables", {4}),
+                           ("p5-10% claim", {5}), ("p9 block on the cover of her book", {9}), ("p3, 4 and 5", {3, 4, 5}),
+                           ("pp 5, 8", {5, 8}), ("p5\u20138 tables", {5, 6, 7, 8})):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        for text, want in (("page 7-10% over", {7}), ("pages 3, 4, 18 and 19 (visual read needed)", {3, 4, 18, 19}),
+                           ("pages 5-8 repeat the chart", {5, 6, 7, 8}), ("pages 2 and 3 cards long", {2})):
+            self.assertEqual(pipeline._page_numbers(text), want, text)
+
+    def test_the_plan_page_cannot_change_the_register_and_rows_stop_at_ten(self):
+        # M4: the swimlane on the plan page draws the register, as the heatmap draws the rows
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        quote = "embed a live google review feed and pin six claim reviews"
+        self.assertNotIn(quote, json.dumps(outs["pages"]).lower() + json.dumps(outs["synthesis"]).lower())
+        item = self._review(18, f"The plan's bar says '{quote}' with no approver. Fix: add one.", "FAIL",
+                            where="p18 swimlane bar")
+        asked, _ = self._apply([item], outs)
+        self.assertEqual(sorted(asked), ["actions"])
+        row14 = self._review(5, "Row 14's reason is unsupported. Fix: cite it.", where="heatmap row 14")
+        self.assertTrue(pipeline._back(pipeline._located(row14, self._demo_dir())), "there is no exam row 14")
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())
