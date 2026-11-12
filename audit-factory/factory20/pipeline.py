@@ -221,11 +221,11 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
 # counts only when a number follows it, so "page 7 and 12 words" is page 7.
 PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?![\d%])(?:[-–](\d{1,2})(?![\w%]))?", re.I)
 # A range end is never a percentage ("p5-10% claim"). After "pages" or "pp" every list item is a
-# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"); after a single "p" a later item followed
-# by a count noun is a count ("p5, 3 cards", "p4 and 2 tables", "p12, 2 of 3 cards").
+# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"); after a single "p" a later item counts only
+# where a page number ends, before punctuation, a joiner or the end ("p3, 4 and 5"), so "p5, 3
+# cards", "p5 and 2 quotes" and "p12, 2 of 3 cards" are counts.
 _RANGE_END = r"(?:\s*(?:[-–]|to)\s*\d{1,2}(?![\w%]))?"
-_COUNTED = (r"(?!\s*(?:%|px\b|of\b|(?:cards?|tables?|rows?|words?|lines?|items?|blocks?|bars?|"
-            r"days?|weeks?|months?|years?|times|percent)\b))")
+_ITEM_END = r"(?=\s*(?:[,;:.()\]]|and\b|&|[-–]|to\b|$))"
 
 
 def _page_list(guard: str) -> str:
@@ -237,7 +237,7 @@ PAGE_LIST = re.compile(r"\bpages\s+\[?" + _page_list(""), re.I)
 RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 # a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
 WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _page_list(""), re.I)
-WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _page_list(_COUNTED), re.I)
+WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _page_list(_ITEM_END), re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
 
 
@@ -303,9 +303,10 @@ def _score(item: dict) -> bool:
 EXAM_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[^;]{0,40}?\brows?\s+\d{1,2}\b|"
                       r"\b(?:exams?|heatmap|brand\s+authority|score)\s+rows?\b", re.I)
 # page copy a where segment can name beside the exam: "p5 callout under the heatmap" is the
-# callout's, not a row's
-PAGE_COPY = re.compile(r"\b(?:callout|dek|headline|card|caption|note|title|table)s?\b", re.I)
-# ... unless the segment names the row outright: "exam row 4 note", "p5 heatmap, row 4 (title: ...)"
+# callout's, not a row's ("exam table" is the exam itself)
+PAGE_COPY = re.compile(r"\b(?:callout|dek|headline|card|caption|note|title|(?<!exam\s)table)s?\b", re.I)
+# a segment that names page copy and a row outright ("p5 callout beside heatmap row 4", "exam row 4
+# note") goes to both writers
 EXPLICIT_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[\s,]*(?:table\s+)?rows?\s+\d{1,2}\b", re.I)
 
 
@@ -449,10 +450,13 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     # "Brand Authority row 4", "heatmap"); a callout on the exams page that calls row 4 generous is
     # page copy, and still the page writer's
     by_name: set[int] = set()
+    both = False            # page copy that names an exam row ("p5 callout beside heatmap row 4")
     for seg in re.split(r";", where_txt):
-        if (PAGE_COPY.search(seg) and not EXPLICIT_ROW.search(seg)) or \
+        copy = bool(PAGE_COPY.search(seg))
+        if (copy and not EXPLICIT_ROW.search(seg)) or \
                 not (EXAM_ROW.search(seg) or re.search(r"\bheatmap\b", seg, re.I)):
             continue
+        both |= copy
         seg_rows = {int(n) for grp in re.findall(r"\brows? ((?:\d{1,2}(?:\s*(?:,|and|&)\s*)?)+)", seg, re.I)
                     for n in re.findall(r"\d+", grp)}
         by_name |= {n for n in (seg_rows or named_rows) if 1 <= n <= 10 and n not in rows}
@@ -462,7 +466,7 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     spans = _sweeps(msg)
     if not (pages or found_acts or rows or named_ids or spans):
         return item          # nothing placed: the page field, the pages named and where route it
-    off_page = bool(found_acts or rows) and not pages and not unsure
+    off_page = bool(found_acts or rows) and not pages and not unsure and not both
     # off the pages, the page field and the page that draws those rows or actions cannot change
     # them; any other page the finding names still gets it
     drawing = (drawn["row"] if rows else set()) | (drawn["action"] if found_acts else set())
