@@ -220,16 +220,24 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
 # ("pages 5-8"). A number never runs into a longer one ("page 100" is no page), and a joiner
 # counts only when a number follows it, so "page 7 and 12 words" is page 7.
 PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?![\d%])(?:[-–](\d{1,2})(?![\w%]))?", re.I)
-# A list item after a comma or "and" must end where a page number ends, so "p5, 3 cards" and
-# "pages 2 and 3 cards long" do not make pages of counts; a range end is never a percentage.
+# A range end is never a percentage ("p5-10% claim"). After "pages" or "pp" every list item is a
+# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"); after a single "p" a later item followed
+# by a count noun is a count ("p5, 3 cards", "p4 and 2 tables", "p12, 2 of 3 cards").
 _RANGE_END = r"(?:\s*(?:[-–]|to)\s*\d{1,2}(?![\w%]))?"
-_ITEM_END = r"(?=\s*(?:[,;:.()\]]|and\b|&|[-–]|to\b|$))"
-_PAGES = (r"(\d{1,2}(?![\d%])" + _RANGE_END +
-          r"(?:\s*(?:,|and|&)\s*\d{1,2}(?![\w%])" + _ITEM_END + _RANGE_END + r")*)")
-PAGE_LIST = re.compile(r"\bpages\s+\[?" + _PAGES, re.I)
+_COUNTED = (r"(?!\s*(?:%|px\b|of\b|(?:cards?|tables?|rows?|words?|lines?|items?|blocks?|bars?|"
+            r"days?|weeks?|months?|years?|times|percent)\b))")
+
+
+def _page_list(guard: str) -> str:
+    return (r"(\d{1,2}(?![\d%])" + _RANGE_END +
+            r"(?:\s*(?:,|and|&)\s*\d{1,2}(?![\w%])" + guard + _RANGE_END + r")*)")
+
+
+PAGE_LIST = re.compile(r"\bpages\s+\[?" + _page_list(""), re.I)
 RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 # a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
-WHERE_PAGE = re.compile(r"\b(?:pp?|pg)\.?\s?" + _PAGES, re.I)
+WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _page_list(""), re.I)
+WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _page_list(_COUNTED), re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
 
 
@@ -243,7 +251,7 @@ def _page_numbers(text: str, where: bool = False) -> set[int]:
         found |= {n for a, b in RANGE.findall(grp) for n in span(a, b)}
     found |= {int(n) for n in re.findall(r"\bp(\d{1,2}):", text)}
     if where:
-        for grp in WHERE_PAGE.findall(text):
+        for grp in WHERE_PAGES.findall(text) + WHERE_PAGE.findall(text):
             found |= {n for a, b in RANGE.findall(grp) for n in span(a, b)}
         if WHERE_COVER.search(text):
             found.add(1)
@@ -295,8 +303,10 @@ def _score(item: dict) -> bool:
 EXAM_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[^;]{0,40}?\brows?\s+\d{1,2}\b|"
                       r"\b(?:exams?|heatmap|brand\s+authority|score)\s+rows?\b", re.I)
 # page copy a where segment can name beside the exam: "p5 callout under the heatmap" is the
-# callout's, not a row's ("exam table" is the exam itself)
-PAGE_COPY = re.compile(r"\b(?:callout|dek|headline|card|caption|note|title|(?<!exam\s)table)s?\b", re.I)
+# callout's, not a row's
+PAGE_COPY = re.compile(r"\b(?:callout|dek|headline|card|caption|note|title|table)s?\b", re.I)
+# ... unless the segment names the row outright: "exam row 4 note", "p5 heatmap, row 4 (title: ...)"
+EXPLICIT_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[\s,]*(?:table\s+)?rows?\s+\d{1,2}\b", re.I)
 
 
 def _back(item: dict) -> bool:
@@ -440,7 +450,8 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     # page copy, and still the page writer's
     by_name: set[int] = set()
     for seg in re.split(r";", where_txt):
-        if PAGE_COPY.search(seg) or not (EXAM_ROW.search(seg) or re.search(r"\bheatmap\b", seg, re.I)):
+        if (PAGE_COPY.search(seg) and not EXPLICIT_ROW.search(seg)) or \
+                not (EXAM_ROW.search(seg) or re.search(r"\bheatmap\b", seg, re.I)):
             continue
         seg_rows = {int(n) for grp in re.findall(r"\brows? ((?:\d{1,2}(?:\s*(?:,|and|&)\s*)?)+)", seg, re.I)
                     for n in re.findall(r"\d+", grp)}

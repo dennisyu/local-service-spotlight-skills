@@ -2,16 +2,16 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 83 of the 87 tests below fail on the kit as it
+for retries and bigger models they did not need. 85 of the 89 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 67 fail on the first version of this change (4f31005, which the
-first independent review read), 53 on the second (f91aa74, which the second review read), 44 on
-823ff8b, which came before the replays showed 10 and 11, 38 on 523018f, the version the graded
-replays ran on (12-14), 36 on 3c585f4, 35 on 690d255, 33 on e5d07c3, 32 on 54e59a9, 31 on
-229cfc9, the version the Nov 12 rerun ran on (15), 17 on 6dbdae0, the first version of 15, which
-a third independent review read, 6 on 9585620 and 3 on 68a7f4d, which the same reviewer read
-again and passed.
+used throughout routes nothing. 69 fail on the first version of this change (4f31005, which the
+first independent review read), 55 on the second (f91aa74, which the second review read), 46 on
+823ff8b, which came before the replays showed 10 and 11, 40 on 523018f, the version the graded
+replays ran on (12-14), 38 on 3c585f4, 37 on 690d255, 35 on e5d07c3, 34 on 54e59a9, 33 on
+229cfc9, the version the Nov 12 rerun ran on (15), 19 on 6dbdae0, the first version of 15, which
+a third independent review read, 8 on 9585620, 4 on 68a7f4d (which the same reviewer passed) and
+3 on 4ab4d28.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -90,7 +90,10 @@ again and passed.
    a fix, not in a problem. Its third read passed, with four smaller ones, also fixed: page copy
    beside the heatmap ("p5 callout under the heatmap") stays the page writer's, a row named
    without a quote is not called quoted, counts and percentages after a page ("p5, 3 cards",
-   "p5-10%") are not pages, and two parts gained tests.
+   "p5-10%") are not pages, and two parts gained tests. Its fourth read found that the count guard
+   dropped the last page of a plain list ("Pages 5 and 10 both say ..."): after "pages" or "pp"
+   every list item is a page now, and only a single "p" list stops at a count ("p5, 3 cards"); an
+   explicit "exam row 4" also beats a "note" or "title" beside it.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -1237,7 +1240,7 @@ class ReviewRoutingTests(unittest.TestCase):
                            ("pp 5, 8", {5, 8}), ("p5\u20138 tables", {5, 6, 7, 8})):
             self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
         for text, want in (("page 7-10% over", {7}), ("pages 3, 4, 18 and 19 (visual read needed)", {3, 4, 18, 19}),
-                           ("pages 5-8 repeat the chart", {5, 6, 7, 8}), ("pages 2 and 3 cards long", {2})):
+                           ("pages 5-8 repeat the chart", {5, 6, 7, 8}), ("pages 2 and 3 cards long", {2, 3})):
             self.assertEqual(pipeline._page_numbers(text), want, text)
 
     def test_the_plan_page_cannot_change_the_register_and_rows_stop_at_ten(self):
@@ -1251,6 +1254,26 @@ class ReviewRoutingTests(unittest.TestCase):
         self.assertEqual(sorted(asked), ["actions"])
         row14 = self._review(5, "Row 14's reason is unsupported. Fix: cite it.", where="heatmap row 14")
         self.assertTrue(pipeline._back(pipeline._located(row14, self._demo_dir())), "there is no exam row 14")
+
+    # ------------------------------------------------ the final read of 4ab4d28 (P1, P2)
+    def test_a_plain_list_of_pages_keeps_its_last_page(self):
+        # P1: the count guard of 4ab4d28 dropped the last page of "Pages 5 and 10 both say ..."
+        for text, want in (("Pages 5 and 10 both say the same thing", {5, 10}), ("Pages 1, 5 and 18 ask for reviews", {1, 5, 18}),
+                           ("pages 3 and 4 are thin", {3, 4}), ("pages 5 & 10 use", {5, 10}),
+                           ("pages 11-13 and 15 show", {11, 12, 13, 15})):
+            self.assertEqual(pipeline._page_numbers(text), want, text)
+        for text, want in (("pp 5 and 10 deks", {5, 10}), ("pp. 5, 8 tables", {5, 8}), ("pages 5 and 10 KPI rows", {5, 10}),
+                           ("p5, 3 cards", {5})):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        item = self._review(1, "Pages 1 and 5 say she is the top roofer, unsupported. Fix: soften both.", "FAIL")
+        self.assertTrue(pipeline._back(pipeline._located(item, self._demo_dir())))
+
+    def test_an_explicit_exam_row_beats_a_note_or_title_beside_it(self):
+        # P2
+        for where in ("exam row 4 note", "p5 heatmap, row 4 (title: Reviews)"):
+            item = self._review(5, "Row 4's reason is unsupported. Fix: cite.", "FAIL", where=where)
+            asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+            self.assertEqual(sorted(asked), ["score"], where)
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())
