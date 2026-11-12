@@ -231,12 +231,12 @@ RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _PAGE_LIST, re.I)
 WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _PAGE_LIST, re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
-# what follows a later number in a single "p" list: a unit ("10 %", "14 px", "12 pt"), a time word
-# ("3 days", "2 seconds"), "of" ("2 of 3"), a compound ("3-card row") or a page-copy noun ("3 cards",
-# "2 quotes", "3 more")
+# what follows a later number in a single "p" list: a unit, which always counts ("10 %", "14 px", "12
+# pt", "3 of 4"); a bare "second" (mostly an ordinal); or a time word ("3 days", "2 week sprint"), a
+# bare "of", a compound ("3-card row") or a page-copy noun ("3 cards", "2 quotes", "3 more")
 COUNT_AFTER = re.compile(
-    r"\s*(?:(?P<unit>%|p[xt]s?\b|percent\b)"
-    r"|(?P<time>second|minute|hour|day|week|month|year|time)(?P<plural>s)?\b"
+    r"\s*(?:(?P<unit>%|p[xt]s?\b|percent\b|of\s+\d)"
+    r"|(?P<second>second)\b|(?:second|minute|hour|day|week|month|year|time)s?\b"
     r"|of\b|-[a-z]|(?:card|table|row|word|line|item|block|bar|chart|graph|quote|bullet|point|stat|sentence|"
     r"paragraph|link|image|photo|logo|mention|review|post|video|clip|section|tile|column|heading|step|chip|"
     r"source|kpi)s?\b|box(?:es)?\b|more\b)", re.I)
@@ -244,11 +244,11 @@ COUNT_AFTER = re.compile(
 
 def _a_count(m: re.Match | None, n: int, before: int) -> bool:
     """Whether a later number n of a single "p" list counts something instead of naming a page, from
-    m, COUNT_AFTER matched on the words after it. A unit always counts ("p5, 10 %", "p5 and 14 px").
-    Anything else counts only when n is no larger than the page before it ("p5, 3 cards", "p5, 3 card
-    titles", "p12, 2 of 3 cards"), so "p2 and 5 cards", "p2 and 5 days" and "p2 and 5 of the audit"
-    are two pages each: a lost page loses its writer, a routed extra one costs at most a call. A
-    singular time word counts only after 1, since it is mostly an ordinal or a modifier ("p5, 3
+    m, COUNT_AFTER matched on the words after it. A unit always counts ("p5, 10 %", "p5 and 14 px",
+    "p2, 3 of 4 cards"). Anything else counts only when n is no larger than the page before it ("p5,
+    3 cards", "p5, 3 card titles", "p18, 2 week sprint"), so "p2 and 5 cards", "p2 and 5 days" and
+    "p2 and 5 of the audit" are two pages each: a lost page loses its writer, a routed extra one
+    costs at most a call. A bare "second" counts only after 1, since it is mostly an ordinal ("p5, 3
     second paragraphs" is two pages; "p5, 1 second clip" is a count). Any other word keeps n a page
     ("p2 and 5 deks"). Still read as pages, by choice: a count on pages 1-2 ("p2, 3 cards"), whose
     number is nearly always larger; and the smaller page of an unordered list ("p12 and 2 sections")
@@ -259,7 +259,7 @@ def _a_count(m: re.Match | None, n: int, before: int) -> bool:
         return True
     if n > before:
         return False
-    if m["time"] and not m["plural"]:
+    if m["second"]:
         return n == 1
     return True
 

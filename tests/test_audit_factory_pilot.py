@@ -2,17 +2,17 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 94 of the 98 tests below fail on the kit as it
+for retries and bigger models they did not need. 95 of the 99 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 78 fail on the first version of this change (4f31005, which the
-first independent review read), 64 on the second (f91aa74, which the second review read), 55 on
-823ff8b, which came before the replays showed 10 and 11, 49 on 523018f, the version the graded
-replays ran on (12-14), 47 on 3c585f4, 46 on 690d255, 44 on e5d07c3, 43 on 54e59a9, 42 on
-229cfc9, the version the Nov 12 rerun ran on (15), 24 on 6dbdae0, the first version of 15, which
-a third independent review read, 13 on 9585620, 13 on 68a7f4d (which the same reviewer passed), 8
-on 4ab4d28, 8 on 8dc9b71, 5 on a64aa3f, 4 on 3184604 and 4 on eb69770 (the last four of which it
-also passed).
+used throughout routes nothing. 79 fail on the first version of this change (4f31005, which the
+first independent review read), 65 on the second (f91aa74, which the second review read), 56 on
+823ff8b, which came before the replays showed 10 and 11, 50 on 523018f, the version the graded
+replays ran on (12-14), 48 on 3c585f4, 47 on 690d255, 45 on e5d07c3, 44 on 54e59a9, 43 on
+229cfc9, the version the Nov 12 rerun ran on (15), 25 on 6dbdae0, the first version of 15, which
+a third independent review read, 14 on 9585620, 14 on 68a7f4d (which the same reviewer passed), 9
+on 4ab4d28, 9 on 8dc9b71, 6 on a64aa3f, 5 on 3184604, 5 on eb69770 and 1 on a6cfe29 (the last five
+of which it also passed).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -109,7 +109,10 @@ also passed).
    paragraphs" lost page 5, and its rule that a singular noun counts only after 1 made pages of
    "3 bar charts". Now only %, px, pt and percent always count; anything else after a number no
    larger than the page before it counts, a singular time word only after 1 ("second" is mostly
-   an ordinal); and a long where field is read in linear time.
+   an ordinal); and a long where field is read in linear time. Its ninth read passed, with three
+   smaller ones, also fixed: the singular rule now holds for "second" alone ("2 week sprint" is a
+   count), "of" and a number always counts ("3 of 4 cards"), and the speed test compares growth
+   instead of a wall clock, which failed once on a busy machine.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -1392,11 +1395,30 @@ class ReviewRoutingTests(unittest.TestCase):
 
     def test_a_long_where_field_reads_in_linear_time(self):
         # V4: eb69770 sliced the rest of the text for every later list item, so time grew with the
-        # square of the input (17 s at 2.6 MB); real where fields are short, but a reply can be long
-        text = "p5, 3 cards; " * 200_000
-        start = time.perf_counter()
-        self.assertEqual(pipeline._page_numbers(text, where=True), {5})
-        self.assertLess(time.perf_counter() - start, 5.0)
+        # square of the input (17 s at 2.6 MB); real where fields are short, but a reply can be long.
+        # W3: a wall-clock bound failed on a busy machine, so this compares four times the input with
+        # the best of three runs each: linear takes about 4 times as long, eb69770 over 10 times
+        def best(n: int) -> float:
+            text, runs = "p5, 3 cards; " * n, []
+            for _ in range(3):
+                start = time.perf_counter()
+                self.assertEqual(pipeline._page_numbers(text, where=True), {5})
+                runs.append(time.perf_counter() - start)
+            return min(runs)
+        self.assertLess(best(80_000) / best(20_000), 7)
+
+    # ------------------------------------------------ the ninth read of a6cfe29 (W1-W3)
+    def test_a_count_with_a_time_word_or_of_a_number_stays_a_count(self):
+        # W1: only "second" (mostly an ordinal) needs a 1 before it to count in the singular; "2 week
+        # sprint" is a count like "2 weeks". W2: "of" and a number ("3 of 4 cards") always counts; a bare
+        # "of" follows the order rule ("p2 and 5 of the audit" is two pages)
+        for text, want in (("p18, 2 week sprint", {18}), ("p18, 7 day sprint", {18}), ("p18, 3 month plan", {18}),
+                           ("p10, 2 hour response", {10}), ("p5, 2 time", {5}), ("p5, 3 second paragraphs", {3, 5}),
+                           ("p2, 3 of 4 cards", {2}), ("p1, 2 of 3 cards", {1}), ("p2 and 5 of 9", {2}),
+                           ("p2 and 5 of the audit", {2, 5}), ("p12, 2 of 3 cards", {12})):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        item = self._review(18, "The sprint has no owner. Fix: name one.", "FAIL", where="p18, 2 week sprint")
+        self.assertFalse(pipeline._front(pipeline._located(item, self._demo_dir())), "no front writer for a count")
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())
