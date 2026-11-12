@@ -53,6 +53,11 @@ unsupported number on pages 1-2 · S2 weak finding, vague action, inconsistency 
  "strongest": ["the 3 best things — keep them through any revision"]}
 ```
 
+In each problem, quote the exact words you fault ('...') and name every page they stand on
+("pages [5, 8, 10]"). The runner sends a finding to the writers that own those words: a page,
+the action register, or an exam row's reason, which lives in the score file (the heatmap draws
+only a row's name, score and evidence).
+
 READY needs zero S0/S1. The runner applies fixes, re-runs the gates and asks for a second pass
 only if any S0/S1 was found. Standard tier allows two passes; enterprise three. If S0/S1 remains
 after the last pass the audit is HOLD, and the project lead decides whether to fix by hand or

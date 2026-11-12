@@ -187,7 +187,11 @@ gate message says where its problem sits, so it reaches the writer who owns that
 except that a hard FAIL a writer owns first gets one round one rung up the ladder (page 20 is
 built by code, so nothing there qualifies), and warnings a round already had get no round of
 their own. A fix that returns no pages is an answer only when no FAIL names a page it owns. It finishes with the
-fresh-context review: `READY` needs zero S0/S1 findings. When a fix for a review's findings breaks
+fresh-context review: `READY` needs zero S0/S1 findings. A review's score adjustments land first; each
+finding then goes to every page its `where` field or text names, to every writer that owns the words it
+quotes (a page, the register, or an exam row's reason, which the score model rewrites with its score
+locked), to the fix model when it covers pages it does not number, and to the actions model when it
+names an action. When a fix for a review's findings breaks
 a hard gate (a page that now runs over), the draft gets the fix rounds the run has left before the
 next review; if it still holds, no further review is paid for. The
 verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY`).

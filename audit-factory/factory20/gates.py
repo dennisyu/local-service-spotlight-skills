@@ -40,6 +40,11 @@ BANNED = [
     # a production note, not reader text: the Nov 10 replays printed "The renderer adds the
     # ten-row heatmap above these notes" in three of four audits after the card named it
     "the renderer",
+    # and a page fixer that could not reach an exam row's reason wrote, on Nov 12, "The heatmap
+    # above still shows the earlier wording for these two rows until the score source is
+    # corrected; this note governs" (both blind graders marked it). Only the phrases no reader
+    # copy uses: "score source" can name where a score comes from.
+    "this note governs", "still shows the earlier",
 ]
 GENERIC_ACCEPTANCE = re.compile(r"^(done|complete|completed|improved|better|launched|live|finished)\.?$", re.I)
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")

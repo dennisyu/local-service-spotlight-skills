@@ -2,13 +2,14 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 53 of the 56 tests below fail on the kit as it
-was before this change (checked against 0e64f96, the head of #118); the other three guard the
-demo's G10 and G11, the page footer, and the bound on words to cut. 37 fail on the first version
-of this change (4f31005, which the first independent review read), 22 on the second (f91aa74,
-which the second review read), 13 on 823ff8b, which came before the replays showed 10 and 11,
-7 on 523018f, the version the graded replays ran on (12-14), 5 on 3c585f4, 4 on 690d255 and 2
-on e5d07c3.
+for retries and bigger models they did not need. 63 of the 67 tests below fail on the kit as it
+was before this change (checked against 0e64f96, the head of #118); the other four guard the
+demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
+used throughout routes nothing. 47 fail on the first version of this change (4f31005, which the
+first independent review read), 33 on the second (f91aa74, which the second review read), 24 on
+823ff8b, which came before the replays showed 10 and 11, 18 on 523018f, the version the graded
+replays ran on (12-14), 16 on 3c585f4, 15 on 690d255, 13 on e5d07c3, 12 on 54e59a9 and 11 on
+229cfc9, the version the Nov 12 rerun ran on (15).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -61,6 +62,17 @@ on e5d07c3.
    test on page 11. The chart now shows only the rows its title counts, and a caption names the
    rest (the same lines as #121); the page writer goes first, and the cover's writer sees its
    pages.
+15. The Nov 12 rerun on 229cfc9 passed the blind grading but held on two S1s that its first
+   review had found, because each finding reached the wrong writer. An exam row's reason lives in
+   score.json, which no fix writer could revise, so the page writer, told about page 5, printed a
+   note about its own page ("this note governs"), which G31 now fails. And a finding about four
+   pages, filed under page 1 with three of the others in its where field ("p5 ...; p10 ...; p18
+   ..."), reached only the cover's writer: where was read only for the register. A review finding
+   now goes to every page its where field or text names; to every writer that owns the words it
+   quotes (a page, the register, or an exam row's reason, which the score model revises with its
+   score locked), though a short term the audit uses throughout routes nothing; to the page writer
+   when it covers pages it does not number; and to the register when it names an action. The
+   reviewer's score adjustments now land before any writer reads the score.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -483,7 +495,8 @@ class RegisterFixTests(unittest.TestCase):
         on_page = it(7, "table 2", "Says to register the domain. Fix: say renew.")
         by_id = it(None, "A8", "A8 has no approval gate. Fix: make it AGENT_AFTER_APPROVAL.")
         named = it(None, "actions", "Two actions repeat each other. Fix: merge them.")
-        self.assertEqual((pipeline._back(verb), pipeline._acts(verb)), (True, False))
+        # an exam row's reason lives in score.json: its writer gets the finding, not the page writer (15)
+        self.assertEqual((pipeline._back(verb), pipeline._acts(verb), pipeline._score(verb)), (False, False, True))
         self.assertEqual((pipeline._back(on_page), pipeline._acts(on_page)), (True, False))
         for x in (by_id, named):
             self.assertEqual((pipeline._back(x), pipeline._acts(x)), (False, True), x["where"])
@@ -892,6 +905,149 @@ class ReceiptCountTests(unittest.TestCase):
         for kept, n in (("namesake", st["ambiguous"]), ("conflict", st["conflicts"]), ("named unknown", st["unknowns"])):
             self.assertRegex(caption, rf"\b{n} {kept}")
         self.assertEqual(shown + st["ambiguous"] + st["conflicts"] + st["unknowns"], len(LEDGER.rows))
+
+
+# --------------------------------------------------------------------------- 15. a review finding reaches the writer of its text
+class ReviewRoutingTests(unittest.TestCase):
+    """The person standard rerun on 229cfc9 (Nov 12) held on two S1s that its first review had
+    already found, because each finding reached the wrong writer. Exam rows 4 and 7 gave reasons
+    their evidence did not support, but a row's reason lives in score.json, which no fix writer
+    could edit; the page fixer, told about "page 5", printed a note about its own page instead ("The
+    heatmap above still shows the earlier wording for these two rows until the score source is
+    corrected; this note governs"). And "Four pages say we ask each client to 'repeat their words'
+    as a review", filed under page 1, reached only the cover's writer, so four pages and
+    the action it named kept the ask. Both blind graders marked both as S2; the second review, S1."""
+
+    QUOTE = "104 reviews naming her"          # in exam row 4's reason, on no page
+
+    def _apply(self, items, outs=None, review=None, answers=None):
+        outs = outs or copy.deepcopy(split_fixture(AUDIT))   # split_fixture shares the module-level AUDIT's objects
+        base = fake_from_fixture(str(DEMO / "audit.json"))
+        asked: dict[str, list[str]] = {}
+
+        def fake(stage, model, system, user):
+            if '"fix_list"' in user:
+                asked.setdefault(stage, []).append(user)
+                if answers and stage in answers:
+                    return json.dumps(answers[stage])
+            return base(stage, model, system, user)
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            run_dir(d, outs)
+            pipeline._apply_fixes(d, LEDGER, "standard", cost.load_routing(), fake, items, review=review)
+            files = {n: json.loads((d / f"{n}.json").read_text()) for n in ("score", "pages", "synthesis", "actions")}
+        return asked, files
+
+    @staticmethod
+    def _review(page, msg, status="WARN", where=""):
+        return {"from": "review", "id": "R1-01", "status": status, "page": page, "where": where, "msg": msg}
+
+    def test_a_quote_from_an_exam_reason_goes_to_the_score_writer_not_the_page_writer(self):
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        everywhere_else = json.dumps(outs["pages"]) + json.dumps(outs["synthesis"]) + json.dumps(outs["actions"])
+        self.assertNotIn(self.QUOTE, everywhere_else)
+        revised = copy.deepcopy(outs["score"])
+        row4 = next(r for r in revised["brand_authority"]["rows"] if r["n"] == 4)
+        row4["why"] = "386 reviews at 4.9 and BBB A+; the reviews that name her are counted once (V-E013)."
+        item = self._review(5, f"Row 4 says '{self.QUOTE}', but V-E013 counts them twice. Fix: count them once.")
+        asked, files = self._apply([item], outs, answers={"score": revised})
+        self.assertIn("score", asked)            # the writer that owns the reason revises it
+        self.assertNotIn("fix", asked)           # nothing on page 5 says it, so the page writer is not asked
+        rows = {r["n"]: r for r in files["score"]["brand_authority"]["rows"]}
+        self.assertEqual((rows[4]["why"], rows[4]["score"]), (row4["why"], 7))
+        self.assertIn("exam row 4", asked["score"][0])   # the writer is told where the quote stands
+
+    def test_the_score_writer_may_rewrite_a_reason_but_never_a_score(self):
+        cur = copy.deepcopy(split_fixture(AUDIT))["score"]
+        ok = copy.deepcopy(cur)
+        ok["brand_authority"]["rows"][3]["why"] = "A plainer reason that cites V-E011."
+        self.assertEqual(pipeline.check_score_revision(ok, cur, LEDGER), [])
+        bumped = copy.deepcopy(ok)
+        bumped["brand_authority"]["rows"][3]["score"] = 9
+        self.assertTrue(any("keep the score" in p for p in pipeline.check_score_revision(bumped, cur, LEDGER)))
+        made_up = copy.deepcopy(ok)
+        made_up["brand_authority"]["rows"][3]["why"] = "Per V-E999."
+        self.assertTrue(any("V-E999" in p for p in pipeline.check_score_revision(made_up, cur, LEDGER)))
+
+    ASK = "repeat their words on Google and Facebook"
+
+    def _cover_carries_the_ask(self, on_pages: str):
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        outs["synthesis"]["pages"][0]["dek"] += f" We ask each client to {self.ASK}."
+        for p in outs["pages"]["pages"]:
+            if p["n"] in (8, 10):
+                p["dek"] += on_pages
+        return outs
+
+    def test_a_quote_reaches_every_page_and_action_where_it_stands(self):
+        outs = self._cover_carries_the_ask(f" Ask each client to {self.ASK}.")
+        item = self._review(1, f"We ask each client to '{self.ASK}', and a review of a service is not a review of "
+                               "the book. Fix: Ask for recommendations; align A4's action text.", "FAIL")
+        asked, _ = self._apply([item], outs)
+        self.assertEqual(sorted(asked), ["actions", "fix", "synthesis"])
+        self.assertIn("pages [8, 10]", asked["fix"][0])  # the page writer is told where the words stand
+
+    def test_a_finding_over_pages_it_does_not_number_reaches_the_page_writer_where_they_paraphrase(self):
+        outs = self._cover_carries_the_ask(" Clients echo their words on Google and Facebook.")
+        item = self._review(1, f"Four pages say we ask each client to '{self.ASK}'. Fix: One wording everywhere.",
+                            "FAIL")
+        asked, _ = self._apply([item], outs)
+        self.assertIn("synthesis", asked)
+        self.assertIn("fix every page 3-19 that carries it", asked["fix"][0])
+
+    def test_the_pages_a_findings_where_lists_reach_the_page_writer(self):
+        # review 1 filed the S1 under page 1 and listed the rest in where; until Nov 12 only the
+        # register was read from where
+        it = self._review(1, "The cover asks clients for reviews. Fix: ask for recommendations.", "FAIL",
+                          where="'If you read only this' callout; p5 'What moves the number'; p10 Trust row; P18 A4 row")
+        self.assertEqual(pipeline._pages_named(it), {1, 5, 10, 18})
+        self.assertEqual((pipeline._front(it), pipeline._back(it)), (True, True))
+        self.assertEqual(pipeline._page_numbers("repetition across pages 1, 2, 3, 5 and 18; Pages [7, 9]; pages 11-13"),
+                         {1, 2, 3, 5, 7, 9, 11, 12, 13, 18})
+
+    def test_words_a_page_shares_with_a_rows_reason_are_the_pages_unless_the_row_is_named(self):
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        next(p for p in outs["pages"]["pages"] if p["n"] == 12)["dek"] += f" She has {self.QUOTE}."
+        asked, _ = self._apply([self._review(12, f"The dek says '{self.QUOTE}'. Fix: count them once.")], outs)
+        self.assertNotIn("score", asked)
+        asked, _ = self._apply([self._review(12, f"Row 4 and page 12 say '{self.QUOTE}'. Fix: count them once.")], outs)
+        self.assertEqual(sorted(asked), ["fix", "score"])
+
+    def test_a_short_term_the_audit_uses_throughout_routes_nothing(self):
+        # on Nov 12 his name and his title, quoted in three findings, sent each to every writer
+        asked, _ = self._apply([self._review(12, "The headline says 'the bare name' as if readers know it. "
+                                                 "Fix: say his plain name.")])
+        self.assertEqual(sorted(asked), ["fix"])
+
+    def test_quotes_come_from_the_problem_and_an_apostrophe_is_not_a_quote(self):
+        msg = ("Row 4 says 'two relationships independently corroborated', but the owner's sources are the hosts' "
+               "own pages. Fix: say 'one client appears on an outside organizer page'.")
+        self.assertEqual(pipeline._quoted({"msg": msg}), ["two relationships independently corroborated"])
+        self.assertEqual(pipeline._quoted({"msg": "Says “no ad of any kind has run” … Fix: soften."}),
+                         ["no ad of any kind has run"])
+
+    def test_a_score_adjustment_lands_before_the_page_writer_reads_the_score(self):
+        review = {"verdict": "READY_WITH_FIXES", "findings": [], "strongest": [],
+                  "score_adjustments": [{"row": 4, "from": 7, "to": 5, "why": "reviews counted twice"}]}
+        asked, files = self._apply([self._review(12, "Page 12 calls row 4 strong. Fix: say mixed.", "FAIL")],
+                                   review=review)
+        decided = re.search(r"# SCORE \(already decided[^\n]*\n(.*?)(?:\n\n# |\Z)", asked["fix"][0], re.S).group(1)
+        self.assertEqual(json.loads(decided)["brand_authority"]["rows"][3]["score"], 5)
+        self.assertEqual(files["score"]["brand_authority"]["rows"][3]["score"], 5)
+
+    def test_the_page_writer_is_told_a_rows_reason_is_not_on_its_page(self):
+        asked, _ = self._apply([self._review(12, "Page 12 is vague. Fix: name the audience.")])
+        self.assertIn("never write a note about how the page was made", asked["fix"][0])
+
+    def test_a_note_about_how_the_page_was_made_fails_G31(self):
+        a = copy.deepcopy(AUDIT)
+        page(a, 5)["dek"] = ("The heatmap above still shows the earlier wording for these two rows until the score "
+                             "source is corrected; this note governs.")
+        c = checks(a)["G31"]
+        self.assertEqual(c["status"], "FAIL")
+        self.assertIn("this note governs", c["msg"])
+        page(a, 5)["dek"] = "Two rows score 3: the proof is self-published, and the posts draw few reactions."
+        self.assertEqual(checks(a)["G31"]["status"], "PASS")
 
 
 # --------------------------------------------------------------------------- 8. the manual provider
