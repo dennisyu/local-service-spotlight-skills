@@ -2,17 +2,17 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 91 of the 95 tests below fail on the kit as it
+for retries and bigger models they did not need. 94 of the 98 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 75 fail on the first version of this change (4f31005, which the
-first independent review read), 61 on the second (f91aa74, which the second review read), 52 on
-823ff8b, which came before the replays showed 10 and 11, 46 on 523018f, the version the graded
-replays ran on (12-14), 44 on 3c585f4, 43 on 690d255, 41 on e5d07c3, 40 on 54e59a9, 39 on
-229cfc9, the version the Nov 12 rerun ran on (15), 23 on 6dbdae0, the first version of 15, which
-a third independent review read, 12 on 9585620, 10 on 68a7f4d (which the same reviewer passed), 7
-on 4ab4d28, 6 on 8dc9b71, 4 on a64aa3f and 3 on 3184604 (the last three of which it also
-passed).
+used throughout routes nothing. 78 fail on the first version of this change (4f31005, which the
+first independent review read), 64 on the second (f91aa74, which the second review read), 55 on
+823ff8b, which came before the replays showed 10 and 11, 49 on 523018f, the version the graded
+replays ran on (12-14), 47 on 3c585f4, 46 on 690d255, 44 on e5d07c3, 43 on 54e59a9, 42 on
+229cfc9, the version the Nov 12 rerun ran on (15), 24 on 6dbdae0, the first version of 15, which
+a third independent review read, 13 on 9585620, 13 on 68a7f4d (which the same reviewer passed), 8
+on 4ab4d28, 8 on 8dc9b71, 5 on a64aa3f, 4 on 3184604 and 4 on eb69770 (the last four of which it
+also passed).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -103,9 +103,13 @@ passed).
    5 cards" still lost page 5, and a later page that was really a count ("p2, 3 insight cards")
    became a page the writer had to change, so its honest empty answer was refused four times and
    the round failed. A later number larger than the page before it is now a page even before a
-   count word, a singular noun counts only after 1, a unit always counts ("5 days", "3-card
-   row"), more count words are known ("3 tiles", "2 sections"), and a single "p" list's later
-   pages are routed but never required.
+   count word, more count words are known ("3 tiles", "2 sections"), and a single "p" list's
+   later pages are routed but never required. Its eighth read passed, with four smaller ones:
+   that version let time words and compounds skip the order rule, so "p2 and 5 second
+   paragraphs" lost page 5, and its rule that a singular noun counts only after 1 made pages of
+   "3 bar charts". Now only %, px, pt and percent always count; anything else after a number no
+   larger than the page before it counts, a singular time word only after 1 ("second" is mostly
+   an ordinal); and a long where field is read in linear time.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -117,6 +121,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest import mock
@@ -1322,12 +1327,12 @@ class ReviewRoutingTests(unittest.TestCase):
     # ------------------------------------------------ the seventh read of 3184604 (U1-U3)
     def test_a_later_larger_page_before_a_count_word_is_still_a_page(self):
         # U1: "p2 and 5 cards" still lost page 5, because "cards" is a count word. A later number larger
-        # than the page before it is a page; a singular noun counts only after 1; a unit always counts
+        # than the page before it is a page (V1: whatever word follows, but %, px, pt and percent)
         for text, want in (("p2 and 5 cards", {2, 5}), ("p2 and 5 quotes", {2, 5}), ("p1 and 10 charts", {1, 10}),
-                           ("p2 and 12 chart captions", {2, 12}), ("p5, 3 card titles", {3, 5}),
+                           ("p2 and 12 chart captions", {2, 12}), ("p5, 3 card titles", {5}),
                            ("p5, 3 cards", {5}), ("p12, 2 of 3 cards", {12}), ("p5 and 2 quotes", {5}), ("p5, 1 card", {5}),
-                           ("p5, 10 %", {5}), ("p5 and 14 px", {5}), ("p2 and 5 days", {2}), ("p5, 3-card row", {5}),
-                           ("p5, 7-day sprint", {5}), ("p5-6 and 3 cards", {5, 6}), ("p5, 3, 4 cards", {3, 4, 5})):
+                           ("p5, 10 %", {5}), ("p5 and 14 px", {5}), ("p2 and 5 days", {2, 5}), ("p5, 3-card row", {5}),
+                           ("p5, 7-day sprint", {5, 7}), ("p5-6 and 3 cards", {5, 6}), ("p5, 3, 4 cards", {3, 4, 5})):
             self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
         for where in (False, True):   # after "pages" every item is a page, count word or not
             self.assertEqual(pipeline._page_numbers("pages 12 and 5 tables disagree", where=where), {5, 12})
@@ -1360,6 +1365,38 @@ class ReviewRoutingTests(unittest.TestCase):
                      "p5 and 3 KPIs", "p5, 4 headings", "p5, 3 steps", "p5, 2 chips", "p5, 3 sources", "p5, 3 pt",
                      "p5, 2 minutes"):
             self.assertEqual(pipeline._page_numbers(text, where=True), {5}, text)
+
+    # ------------------------------------------------ the eighth read of eb69770 (V1-V4)
+    def test_a_later_larger_page_before_a_time_word_or_compound_is_a_page(self):
+        # V1: eb69770 let units skip the order rule, so "p2 and 5 second paragraphs" lost page 5. Only %,
+        # px, pt and percent always count; a time word, "of" or a compound follows the order rule, and a
+        # singular time word counts only after 1 ("second paragraph" is an ordinal, "1 second" a count)
+        for text, want in (("p2 and 5 second paragraphs", {2, 5}), ("p5, 6 time stamps", {5, 6}),
+                           ("p5 and 6 hours of work", {5, 6}), ("p2 and 5-up grid", {2, 5}),
+                           ("p5 and 6 day labels", {5, 6}), ("p3 and 4 year-over-year charts", {3, 4}),
+                           ("p2 and 5 of the audit", {2, 5}), ("p5, 3 seconds", {5}), ("p5, 1 second clip", {5}),
+                           ("p5, 3 second paragraphs", {3, 5}), ("p2 and 5 percent", {2}), ("p5, 2 pts", {5})):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        loc = pipeline._located(self._review(2, "Both second paragraphs promise rankings. Fix: stop.", "FAIL",
+                                             where="p2 and 5 second paragraphs"), self._demo_dir())
+        self.assertTrue(pipeline._back(loc), "page 5's writer gets it")
+
+    def test_a_two_word_count_is_still_a_count(self):
+        # V2: eb69770's singular rule made pages of "3 bar charts" and "2 card titles"; a listed noun after
+        # a number no larger than the page before it is a count, singular or plural
+        for text in ("p5, 3 bar charts", "p5, 3 review quotes", "p5, 2 card titles", "p5 and 2 chart captions",
+                     "p5, 2 stat tiles"):
+            self.assertEqual(pipeline._page_numbers(text, where=True), {5}, text)
+        item = self._review(5, "Two card titles repeat. Fix: vary.", "FAIL", where="p5, 2 card titles")
+        self.assertFalse(pipeline._front(pipeline._located(item, self._demo_dir())), "no front writer for a count")
+
+    def test_a_long_where_field_reads_in_linear_time(self):
+        # V4: eb69770 sliced the rest of the text for every later list item, so time grew with the
+        # square of the input (17 s at 2.6 MB); real where fields are short, but a reply can be long
+        text = "p5, 3 cards; " * 200_000
+        start = time.perf_counter()
+        self.assertEqual(pipeline._page_numbers(text, where=True), {5})
+        self.assertLess(time.perf_counter() - start, 5.0)
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())

@@ -231,29 +231,37 @@ RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _PAGE_LIST, re.I)
 WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _PAGE_LIST, re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
-# what follows a later number in a single "p" list: a unit ("10 %", "14 px", "2 of 3", "5 days",
-# "3-card row") or a page-copy noun ("3 cards", "2 quotes", "3 more")
+# what follows a later number in a single "p" list: a unit ("10 %", "14 px", "12 pt"), a time word
+# ("3 days", "2 seconds"), "of" ("2 of 3"), a compound ("3-card row") or a page-copy noun ("3 cards",
+# "2 quotes", "3 more")
 COUNT_AFTER = re.compile(
-    r"\s*(?:(?P<unit>%|p[xt]s?\b|of\b|percent\b|times?\b|(?:second|minute|hour|day|week|month|year)s?\b|-[a-z])"
-    r"|(?:card|table|row|word|line|item|block|bar|chart|graph|quote|bullet|point|stat|sentence|paragraph|link|"
-    r"image|photo|logo|mention|review|post|video|clip|section|tile|column|heading|step|chip|source|kpi)(?P<s>s)?\b"
-    r"|box(?P<es>es)?\b|(?P<more>more)\b)", re.I)
+    r"\s*(?:(?P<unit>%|p[xt]s?\b|percent\b)"
+    r"|(?P<time>second|minute|hour|day|week|month|year|time)(?P<plural>s)?\b"
+    r"|of\b|-[a-z]|(?:card|table|row|word|line|item|block|bar|chart|graph|quote|bullet|point|stat|sentence|"
+    r"paragraph|link|image|photo|logo|mention|review|post|video|clip|section|tile|column|heading|step|chip|"
+    r"source|kpi)s?\b|box(?:es)?\b|more\b)", re.I)
 
 
-def _a_count(follow: str, n: int, before: int) -> bool:
-    """Whether a later number n of a single "p" list counts something instead of naming a page,
-    from the words after it. A unit always counts ("p5, 10 %", "p2 and 5 days"). A page-copy noun
-    counts only when n is no larger than the page before it ("p5, 3 cards", "p5 and 2 quotes"; but
-    "p2 and 5 cards" is two pages), and a singular one only after 1 ("p5, 1 card"; "p2 and 12 chart
-    captions" is two pages). Any other word keeps n a page ("p2 and 5 deks")."""
-    m = COUNT_AFTER.match(follow)
-    if not m:
+def _a_count(m: re.Match | None, n: int, before: int) -> bool:
+    """Whether a later number n of a single "p" list counts something instead of naming a page, from
+    m, COUNT_AFTER matched on the words after it. A unit always counts ("p5, 10 %", "p5 and 14 px").
+    Anything else counts only when n is no larger than the page before it ("p5, 3 cards", "p5, 3 card
+    titles", "p12, 2 of 3 cards"), so "p2 and 5 cards", "p2 and 5 days" and "p2 and 5 of the audit"
+    are two pages each: a lost page loses its writer, a routed extra one costs at most a call. A
+    singular time word counts only after 1, since it is mostly an ordinal or a modifier ("p5, 3
+    second paragraphs" is two pages; "p5, 1 second clip" is a count). Any other word keeps n a page
+    ("p2 and 5 deks"). Still read as pages, by choice: a count on pages 1-2 ("p2, 3 cards"), whose
+    number is nearly always larger; and the smaller page of an unordered list ("p12 and 2 sections")
+    is read as a count (eighth review read, V3)."""
+    if m is None:
         return False
     if m["unit"]:
         return True
     if n > before:
         return False
-    return bool(m["s"] or m["es"] or m["more"]) or n == 1
+    if m["time"] and not m["plural"]:
+        return n == 1
+    return True
 
 
 def _single_p(text: str) -> tuple[set[int], set[int]]:
@@ -270,7 +278,7 @@ def _single_p(text: str) -> tuple[set[int], set[int]]:
             a = int(it.group(1))
             b = int(it.group(2)) if it.group(2) else a
             pages = set(range(a, b + 1)) if a <= b else {a}
-            if k and _a_count(text[m.start(1) + it.end():], a, before):
+            if k and _a_count(COUNT_AFTER.match(text, m.start(1) + it.end()), a, before):   # no slice: linear
                 break
             (later if k else first).update(pages)
             before = max(pages)
