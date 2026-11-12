@@ -2,14 +2,15 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 63 of the 67 tests below fail on the kit as it
+for retries and bigger models they did not need. 75 of the 79 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 47 fail on the first version of this change (4f31005, which the
-first independent review read), 33 on the second (f91aa74, which the second review read), 24 on
-823ff8b, which came before the replays showed 10 and 11, 18 on 523018f, the version the graded
-replays ran on (12-14), 16 on 3c585f4, 15 on 690d255, 13 on e5d07c3, 12 on 54e59a9 and 11 on
-229cfc9, the version the Nov 12 rerun ran on (15).
+used throughout routes nothing. 59 fail on the first version of this change (4f31005, which the
+first independent review read), 45 on the second (f91aa74, which the second review read), 36 on
+823ff8b, which came before the replays showed 10 and 11, 30 on 523018f, the version the graded
+replays ran on (12-14), 28 on 3c585f4, 27 on 690d255, 25 on e5d07c3, 24 on 54e59a9, 23 on
+229cfc9, the version the Nov 12 rerun ran on (15), and 11 on 6dbdae0, the first version of 15,
+which a third independent review read.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -72,7 +73,14 @@ replays ran on (12-14), 16 on 3c585f4, 15 on 690d255, 13 on e5d07c3, 12 on 54e59
    quotes (a page, the register, or an exam row's reason, which the score model revises with its
    score locked), though a short term the audit uses throughout routes nothing; to the page writer
    when it covers pages it does not number; and to the register when it names an action. The
-   reviewer's score adjustments now land before any writer reads the score.
+   reviewer's score adjustments now land before any writer reads the score. The third review
+   found that the first version read its own sweep note back as "pages 3-19" (so an honest empty
+   answer was refused), dropped quotes with an apostrophe inside ('the owner's ...'), still forced
+   the page writer when a finding named the page the heatmap is drawn on, and lost the filed page
+   when a quote was skipped as a term; the pages a FAIL must change now come from where it was
+   placed. Six smaller ones are fixed too: page numbers read from word counts and years, sweeps on
+   "pages of her site", the word score taken for an exam row, a finding with only an action id in
+   passing, untested parts, and the receipt not counting score and register revisions as rework.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -993,7 +1001,7 @@ class ReviewRoutingTests(unittest.TestCase):
                             "FAIL")
         asked, _ = self._apply([item], outs)
         self.assertIn("synthesis", asked)
-        self.assertIn("fix every page 3-19 that carries it", asked["fix"][0])
+        self.assertIn("fix each of your pages that carries it", asked["fix"][0])
 
     def test_the_pages_a_findings_where_lists_reach_the_page_writer(self):
         # review 1 filed the S1 under page 1 and listed the rest in where; until Nov 12 only the
@@ -1025,6 +1033,134 @@ class ReviewRoutingTests(unittest.TestCase):
         self.assertEqual(pipeline._quoted({"msg": msg}), ["two relationships independently corroborated"])
         self.assertEqual(pipeline._quoted({"msg": "Says “no ad of any kind has run” … Fix: soften."}),
                          ["no ad of any kind has run"])
+        # an apostrophe inside a quoted word does not end the quote (independent review of 6dbdae0, F2)
+        self.assertEqual(pipeline._quoted({"msg": "Row 4 says 'The owner's reviews name her 104 times', but "
+                                                  "V-E013 counts twice. Fix: once."}),
+                         ["the owner's reviews name her 104 times"])
+        self.assertEqual(pipeline._quoted({"msg": "It says 'we don't promise rankings to anyone' and "
+                                                  "(‘she is the area’s most reviewed roofer’). Fix: x."}),
+                         ["we don't promise rankings to anyone", "she is the area's most reviewed roofer"])
+
+    # ------------------------------------------------ the independent review of the first version (F1-F9)
+    def test_a_finding_over_pages_it_does_not_number_may_find_none_to_change(self):
+        # F1: the sweep note was read back as "pages 3-19", so an honest empty answer was refused four times
+        asked, _ = self._apply([self._review(1, "Four pages promise rankings. Fix: stop.", "FAIL")],
+                               answers={"fix": {"pages": []}})
+        self.assertEqual(len(asked["fix"]), 1, "an empty sweep is an answer")
+
+    def test_a_fail_must_change_the_pages_its_quote_and_where_place_it_on(self):
+        # the pages a FAIL must return come from where it was placed, not from re-reading its message
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        next(p for p in outs["pages"]["pages"] if p["n"] == 12)["dek"] += " We guarantee first-page rankings."
+        item = self._review(1, "The page says 'we guarantee first-page rankings'. Fix: stop.", "FAIL", where="p14 table")
+        asked, _ = self._apply([item], outs, answers={"fix": {"pages": []}})
+        self.assertGreater(len(asked["fix"]), 1, "an empty answer to a FAIL on pages 12 and 14 is asked again")
+        self.assertIn("page 12, 14", asked["fix"][1])
+
+    def test_a_sweep_for_words_that_stand_only_in_a_row_forces_no_page(self):
+        # the quote stands only in row 4's reason, so the page writer sweeps but no page is required
+        item = self._review(5, f"Two pages and row 4 say '{self.QUOTE}'. Fix: count them once.", "FAIL")
+        asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+        self.assertEqual(len(asked["fix"]), 1, "an empty sweep is an answer")
+        self.assertIn("score", asked)
+
+    def test_a_row_reason_finding_that_names_the_heatmap_page_still_goes_to_the_score_writer_alone(self):
+        # F3: "p5 heatmap row 4" named the page the heatmap is drawn on, which cannot change a reason
+        item = self._review(5, f"Row 4 says '{self.QUOTE}', but counted twice. Fix: once.", "FAIL",
+                            where="p5 heatmap row 4")
+        asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+        self.assertEqual(sorted(asked), ["score"])
+
+    def test_a_term_or_a_quote_found_nowhere_keeps_the_filed_page(self):
+        # F4: a quote skipped as a term (or not found) leaves the page writer in; only found words move it
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        for p in outs["pages"]["pages"]:
+            if p["n"] in (5, 7, 9, 11):
+                p["dek"] += " The most reviewed roofer nearby."
+        term = self._review(5, f"Page text calls her 'most reviewed roofer nearby' while row 4 says '{self.QUOTE}'. "
+                               "Fix: align both.")
+        nowhere = self._review(5, f"Row 4 says '{self.QUOTE}' and the page says 'a sentence that stands nowhere at "
+                                  "all'. Fix: align both.")
+        for item in (term, nowhere):
+            asked, _ = self._apply([item], outs)
+            self.assertEqual(sorted(asked), ["fix", "score"], item["msg"])
+
+    def test_words_that_stand_in_an_action_reach_the_register_without_its_id(self):
+        # F9: the register was reached in the earlier test only because the fix text named A4
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        a4 = next(a for a in outs["actions"]["actions"] if a["id"] == "A4")
+        a4["action"] = "Collect reviews from every client within one week of each job"
+        item = self._review(None, "The plan says 'collect reviews from every client within one week' with no gate. "
+                                  "Fix: add Marisol's approval.")
+        asked, _ = self._apply([item], outs)
+        self.assertIn("actions", asked)
+
+    def test_an_action_named_only_in_passing_keeps_the_page_writer(self):
+        # F5: no page field, no located words, an id in the fix text: the old fallback still holds
+        loc = pipeline._located(self._review(None, "The plan never says who approves ad spend. Fix: add an approver "
+                                                   "line to the plan page, as A4 does."), self._demo_dir())
+        self.assertEqual((pipeline._back(loc), pipeline._acts(loc)), (True, True))
+        self.assertNotIn("Where it stands", loc["msg"])
+
+    def test_page_counts_about_something_else_are_not_a_sweep(self):
+        # F6
+        for msg in ("Card 3 says the audit read all 20 pages of her site. Fix: say 12.",
+                    "Card 3 claims every page of her site has schema. Fix: say the home page.",
+                    "The table counts several pages of reviews twice. Fix: once."):
+            self.assertFalse(pipeline.SPANS_PAGES.search(msg), msg)
+        self.assertTrue(pipeline.SPANS_PAGES.search("Four pages say we ask each client for a review."))
+
+    def test_page_numbers_are_read_only_where_they_name_pages(self):
+        # F7: joiners and longer numbers made pages out of word counts, years and pixels
+        cases = {"page 5 and 3 of the cards": {5}, "page 18 and 7 days": {18}, "page 7 and 12 words over": {7},
+                 "page 11 - 14px over": {11}, "page 5 to 9 words must be cut": {5}, "page 100": set(),
+                 "pages 3, 2026 is the year": {3}, "see Pages 3 To 5": {3, 4, 5}, "pages [5, 18]: a label": {5, 18},
+                 "found on page 7; action register A5": {7}, "pages 1, 2, 3, 5, 6, 8, 10 and 18": {1, 2, 3, 5, 6, 8, 10, 18},
+                 "Page 8 tells us to ask": {8}}
+        for text, want in cases.items():
+            self.assertEqual(pipeline._page_numbers(text), want, text)
+        where = {"pp. 5-8": {5, 6, 7, 8}, "pg 5": {5}, "p5–8 tables": {5, 6, 7, 8}, "cover headline; p2 card 1": {1, 2},
+                 "cover letter template in A7": set(), "Facebook cover line (E-151)": set(), "top 9 results": set()}
+        for text, want in where.items():
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+
+    def test_a_where_that_mentions_the_score_is_not_an_exam_row(self):
+        # F8
+        for where, want in (("p5 score callout", False), ("cover score", False), ("exam row 4 'why'", True),
+                            ("heatmap rows 4 and 7 (exams rows 4 and 7 'why')", True)):
+            self.assertEqual(pipeline._score(self._review(5, "x. Fix: y.", where=where)), want, where)
+
+    def test_the_score_revision_keeps_rows_whole_and_carries_new_evidence(self):
+        # F9: an empty reason, an invented row and the evidence the revision cites
+        cur = copy.deepcopy(split_fixture(AUDIT))["score"]
+        empty = copy.deepcopy(cur)
+        empty["brand_authority"]["rows"][3]["why"] = " "
+        self.assertTrue(any("reason is empty" in p for p in pipeline.check_score_revision(empty, cur, LEDGER)))
+        extra = copy.deepcopy(cur)
+        extra["brand_authority"]["rows"].append(dict(cur["brand_authority"]["rows"][0], n=11))
+        self.assertTrue(any("no such row" in p for p in pipeline.check_score_revision(extra, cur, LEDGER)))
+        revised = copy.deepcopy(cur)
+        row4 = revised["brand_authority"]["rows"][3]
+        row4["why"], row4["evidence"] = "Reviews counted once (V-E013).", ["V-E013", "V-E011", "V-E016"]
+        item = self._review(5, f"Row 4 says '{self.QUOTE}'. Fix: once.")
+        _, files = self._apply([item], answers={"score": revised})
+        self.assertEqual(files["score"]["brand_authority"]["rows"][3]["evidence"], ["V-E013", "V-E011", "V-E016"])
+
+    def test_the_receipt_counts_score_and_register_revisions_as_rework(self):
+        # F10: a score revision, or a register revision after its first draft, is a fix-round call
+        from factory20 import bundle
+        calls = [{"stage": st, "attempt": n, "seconds": 10} for st, n in (
+            ("identity", 1), ("score", 1), ("synthesis", 1), ("pages", 1), ("actions", 1), ("actions", 2),
+            ("fix", 1), ("actions", 1), ("review", 1), ("score", 1), ("fix", 1), ("synthesis", 1))]
+        t, _ = bundle._timing({"attempts": calls})
+        self.assertIn("1 retry attempts and 5 fix-round calls", t["retries_rework"]["method"])
+        self.assertEqual(t["retries_rework"]["value"], 60.0)
+
+    def _demo_dir(self) -> pathlib.Path:
+        d = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d, True)
+        run_dir(d, copy.deepcopy(split_fixture(AUDIT)))
+        return d
 
     def test_a_score_adjustment_lands_before_the_page_writer_reads_the_score(self):
         review = {"verdict": "READY_WITH_FIXES", "findings": [], "strongest": [],

@@ -216,20 +216,29 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
     return items
 
 
-PAGE_LIST = re.compile(r"\bpages? \[?((?:\d{1,2}(?:\s*(?:,|and|&|-|–|to)\s*)?)+)\]?", re.I)
+# "page 7" is one page; only the plural lists ("pages [2, 7]", "pages 1, 2 and 18") or ranges
+# ("pages 5-8"). A number never runs into a longer one ("page 100" is no page), and a joiner
+# counts only when a number follows it, so "page 7 and 12 words" is page 7.
+PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?!\d)", re.I)
+PAGE_LIST = re.compile(r"\bpages\s+\[?((?:\d{1,2}(?!\d)(?:\s*(?:,|and|&|-|–|to)\s*(?=\d))?)+)", re.I)
+RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
+# a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
+WHERE_PAGE = re.compile(r"\b(?:pp?|pg)\.?\s?(\d{1,2})(?!\d)(?:\s*[-–]\s*(\d{1,2})(?!\d))?", re.I)
+WHERE_COVER = re.compile(r"(?:^|[;,(]\s*)(?:the\s+)?cover\b(?!\s+(?:letter|image|photo))", re.I)
 
 
 def _page_numbers(text: str, where: bool = False) -> set[int]:
     """Page numbers a text names: "page 7", "Pages [2, 7]", "pages 5-8", "pages 1, 2 and 18", "p7:".
-    A review finding's where field also says "p16 headline" and "cover headline"."""
-    found: set[int] = set()
+    With where=True also the short forms a review's where field uses ("p16", "pp. 5-8", "cover")."""
+    found = {int(n) for n in PAGE_ONE.findall(text)}
     for grp in PAGE_LIST.findall(text):
-        for a, b in re.findall(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", grp):
+        for a, b in RANGE.findall(grp):
             found |= set(range(int(a), int(b) + 1)) if b and int(a) <= int(b) else {int(a)}
     found |= {int(n) for n in re.findall(r"\bp(\d{1,2}):", text)}
     if where:
-        found |= {int(n) for n in re.findall(r"\bp\.?\s?(\d{1,2})\b", text, re.I)}
-        if re.search(r"\bcover\b", text, re.I):
+        for a, b in WHERE_PAGE.findall(text):
+            found |= set(range(int(a), int(b) + 1)) if b and int(a) <= int(b) else {int(a)}
+        if WHERE_COVER.search(text):
             found.add(1)
     return {n for n in found if 1 <= n <= 20}
 
@@ -271,8 +280,12 @@ def _score(item: dict) -> bool:
     review finding against one went to the page writer, which printed a note about its own page."""
     if "route" in item:
         return item["route"]["score"]
-    return item.get("from") == "review" and bool(
-        re.search(r"\b(exam|heatmap|score)\b", str(item.get("where") or ""), re.I))
+    return item.get("from") == "review" and bool(EXAM_ROW.search(str(item.get("where") or "")))
+
+
+# "exam row 4 'why'", "heatmap rows 4 and 7": a where field that names an exam row, not just the
+# word score ("p5 score callout" is page copy)
+EXAM_ROW = re.compile(r"\b(?:exams?|heatmap|score)\s+rows?\b|\brows?\s+\d{1,2}\b[^;]*?(?:'why'|\bwhy\b|\breason)", re.I)
 
 
 def _back(item: dict) -> bool:
@@ -292,11 +305,13 @@ def _back(item: dict) -> bool:
 
 
 # A review finding quotes the words it faults. Quotes are read from its problem, never from its fix
-# (the fix quotes the new wording), and an apostrophe inside a word ("the owner's") is not a quote mark.
-QUOTE_RE = re.compile(r"(?<![\w'’])['‘]([^'‘’\n]{12,}?)['’](?!\w)|[\"“]([^\"“”\n]{12,}?)[\"”]")
-# "Four pages say ...", "everywhere": the finding covers pages it does not number.
-SPANS_PAGES = re.compile(r"\b(?:two|three|four|five|six|seven|eight|nine|ten|several|many|all|every|each|\d+)\s+"
-                         r"(?:other\s+)?pages\b|\beverywhere\b|\bevery page\b|\bacross (?:the )?pages\b", re.I)
+# (the fix quotes the new wording). An apostrophe inside a word ("the owner's") neither opens nor
+# ends a quote, so 'The owner's reviews ...' is read whole.
+QUOTE_RE = re.compile(r"(?<![\w'’])['‘]((?:[^'‘’\n]|(?<=\w)['’](?=\w)){12,}?)['’](?!\w)|[\"“]([^\"“”\n]{12,}?)[\"”]")
+# "Four pages say ...", "across the pages": the finding covers pages of this audit it does not
+# number. "all 20 pages of her site" is about something else.
+SPANS_PAGES = re.compile(r"\b(?:two|three|four|five|six|seven|eight|nine|ten|several|many|all|every|each|1?\d)\s+"
+                         r"(?:other\s+)?pages\b(?!\s+of\b)|\bevery page\b(?!\s+of\b)|\bacross (?:the )?pages\b", re.I)
 
 
 def _norm(s: str) -> str:
@@ -350,14 +365,18 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     finding under one page; on Nov 12 (person standard, 229cfc9) that sent "Row 4 says 'two
     relationships independently corroborated'" to the page writer, though the words were a row's
     reason in score.json, and "Four pages say we ask each client to 'repeat their words' as a
-    review" to the cover's writer alone. Each quote is looked up where it now stands
-    (pages 1-19, the register, the exam rows' reasons), and the pages and actions its where field
-    and text name count too; words like "four pages" add the page writer. A short quote that
-    stands in more than three places is a term the audit uses throughout (his name, a title), not
-    the words at fault: on the same run such terms sent three findings to every writer. Words a
-    row's reason shares with a page are the page's, unless the finding names that row. When every
-    quote stands only off the pages (a row's reason, the register) and nothing names a page, the
-    page field no longer sends the finding to the page writer. The writers are told where."""
+    review" to the cover's writer alone.
+
+    Each quote is looked up where it now stands (pages 1-19, the register, the exam rows'
+    reasons); the pages its where field and text name, and the actions they name, count too, and
+    words like "four pages" add the page writer for a sweep. A short quote that stands in more than
+    three places is a term the audit uses throughout (his name, a title), not the words at fault:
+    on the same run such terms sent three findings to every writer. Words a row's reason shares
+    with a page are the page's, unless the finding names that row. Only when every quote was found
+    and every one stands off the pages (a row's reason, the register) does the finding leave the
+    page writer, even if it names the page those rows are drawn on: that page cannot change them.
+    A finding nothing could place keeps the old fallback, the page writer. The writers are told
+    where, and route["must"] holds the pages a FAIL must change (never the sweep's)."""
     if item.get("from") != "review":
         return item
     msg = item.get("msg") or ""
@@ -367,42 +386,43 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     named_rows = {int(n) for grp in re.findall(r"\brows? ((?:\d{1,2}(?:\s*(?:,|and|&)\s*)?)+)", f"{problem} {where_txt}", re.I)
                   for n in re.findall(r"\d+", grp)}
     pages: set[int] = set()
-    acts: set[str] = set()
+    found_acts: set[str] = set()
     rows: set[int] = set()
-    missed = False
+    unsure = False              # a quote not found, or skipped as a term: the page field stays in
     for q in _quoted(item):
         hits = [(kind, key) for kind, key, text in texts if q in text]
-        if len(q.split()) < 6 and len(hits) > 3:
+        if not hits or (len(q.split()) < 6 and len(hits) > 3):
+            unsure = True
             continue
-        missed |= not hits
         on_a_page = any(kind == "page" for kind, _ in hits)
         for kind, key in hits:
             if kind == "row" and on_a_page and key not in named_rows:
                 continue
-            {"page": pages, "action": acts, "row": rows}[kind].add(key)
-    named = _pages_named({"msg": msg, "where": where_txt})          # not the page field
-    off_page = bool(acts or rows) and not pages and not missed and not named
-    acts |= {key for kind, key, _ in texts if kind == "action"
-             and re.search(rf"(?<![\w-]){re.escape(str(key))}(?![\w-])", f"{msg} {where_txt}")}
+            {"page": pages, "action": found_acts, "row": rows}[kind].add(key)
+    named_ids = {key for kind, key, _ in texts if kind == "action"
+                 and re.search(rf"(?<![\w-]){re.escape(str(key))}(?![\w-])", f"{msg} {where_txt}")}
     spans = bool(SPANS_PAGES.search(msg))
-    if not (pages or acts or rows or spans):
-        return item          # nothing found: the page field, the pages named and where route it
-    on = pages | named
+    if not (pages or found_acts or rows or named_ids or spans):
+        return item          # nothing placed: the page field, the pages named and where route it
+    off_page = bool(found_acts or rows) and not pages and not unsure
+    on = set() if off_page else pages | _pages_named({"msg": msg, "where": where_txt})
     if isinstance(item.get("page"), int) and not off_page:
         on.add(item["page"])
+    placed = bool(on or found_acts or rows)
     route = {"front": bool(on & {1, 2}) or item.get("id") in FRONT_GATES,
-             "back": spans or any(3 <= n <= 19 for n in on),
-             "acts": bool(acts) or _acts(item), "score": bool(rows) or _score(item)}
+             "back": spans or any(3 <= n <= 19 for n in on) or not placed,
+             "acts": bool(found_acts or named_ids) or _acts(item), "score": bool(rows) or _score(item),
+             "must": sorted(n for n in on if 3 <= n <= 19)}
     where = [f"on {_pages_phrase(sorted(n for n in pages if n <= 2))}"] if pages & {1, 2} else []
     if any(3 <= n <= 19 for n in pages):
         where.append(f"on {_pages_phrase(sorted(n for n in pages if 3 <= n <= 19))}")
-    if acts:
-        where.append("in " + ", ".join(sorted(acts, key=lambda a: (len(a), a))))
+    if found_acts:
+        where.append("in " + ", ".join(sorted(found_acts, key=lambda a: (len(a), a))))
     if rows:
         where.append(f"in the reason of exam row{'s' if len(rows) > 1 else ''} {', '.join(map(str, sorted(rows)))}"
                      " (the score file; the page draws no reasons)")
-    note = (f" [Where it stands: {'; '.join(where)}.]" if where else "") + \
-           (" [It spans pages it does not number: fix every page 3-19 that carries it.]" if spans else "")
+    note = (f" [The quoted words stand {'; '.join(where)}.]" if where else "") + \
+           (" [It covers pages it does not number: fix each of your pages that carries it.]" if spans else "")
     return {**item, "msg": msg + note, "route": route}
 
 
@@ -493,7 +513,9 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
     # the stage files already decided. With the summary first, a person replay's cover kept a
     # $21 ad test that the same round's page fix changed to $14 on page 11 (Nov 10).
     if rest:
-        must = frozenset(n for i in rest if i["status"] == "FAIL" for n in _pages_named(i) if 3 <= n <= 19)
+        # a located finding brings the pages it must change; its message also carries the sweep note
+        must = frozenset(n for i in rest if i["status"] == "FAIL"
+                         for n in (i["route"]["must"] if "route" in i else _pages_named(i)) if 3 <= n <= 19)
         res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
             "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
                     "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block. "

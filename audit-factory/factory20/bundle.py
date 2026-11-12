@@ -639,16 +639,21 @@ def _timing(ctx: dict) -> tuple[dict, float | None]:
                           "state": "MEASURED", "evidence_id": "RUN-call-log",
                           "method": f"Sum of the wall-clock seconds run.json logs for {len(calls)} model calls, made one "
                                     f"at a time; excludes local gate and render time.{stand_in}"}
-    drafted, retries, fixes, secs = False, 0, 0, 0.0
+    drafted, acted, retries, fixes, secs = False, False, 0, 0, 0.0
     for a in calls:
-        fix_round = a.get("stage") == "fix" or (a.get("stage") == "synthesis" and drafted)
+        st = a.get("stage")
         retry = (a.get("attempt") or 1) > 1
+        # the findings or score writer after the pages exist, or the register writer after its
+        # first draft, is revising: a fix-round call (the score revision dates from Nov 12)
+        fix_round = st == "fix" or (st in ("synthesis", "score") and drafted) or (st == "actions" and acted and not retry)
         retries, fixes = retries + retry, fixes + fix_round
         secs += float(a.get("seconds") or 0) if (retry or fix_round) else 0.0
-        drafted = drafted or a.get("stage") in ("pages", "actions", "review", "fix")
+        drafted = drafted or st in ("pages", "actions", "review", "fix")
+        acted = acted or st == "actions"
     t["retries_rework"] = {"value": round(secs, 1), "unit": "seconds", "state": "MEASURED", "evidence_id": "RUN-call-log",
                            "method": f"Seconds of the {retries} retry attempts and {fixes} fix-round calls in run.json "
-                                     f"(attempt above 1, stage fix, or synthesis after pages were drafted).{stand_in}"}
+                                     f"(attempt above 1, stage fix, a findings or score revision after pages were "
+                                     f"drafted, or a register revision).{stand_in}"}
     replied = [a for a in calls if "cost_source" in a]
     measured = bool(replied) and all(a["cost_source"] == "reported" for a in replied) and set(providers) <= API_PROVIDERS
     estimate = round(sum(a.get("usd") or 0 for a in calls), 4)
