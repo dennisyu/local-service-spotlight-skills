@@ -2,15 +2,15 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 75 of the 79 tests below fail on the kit as it
+for retries and bigger models they did not need. 79 of the 83 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 59 fail on the first version of this change (4f31005, which the
-first independent review read), 45 on the second (f91aa74, which the second review read), 36 on
-823ff8b, which came before the replays showed 10 and 11, 30 on 523018f, the version the graded
-replays ran on (12-14), 28 on 3c585f4, 27 on 690d255, 25 on e5d07c3, 24 on 54e59a9, 23 on
-229cfc9, the version the Nov 12 rerun ran on (15), and 11 on 6dbdae0, the first version of 15,
-which a third independent review read.
+used throughout routes nothing. 63 fail on the first version of this change (4f31005, which the
+first independent review read), 49 on the second (f91aa74, which the second review read), 40 on
+823ff8b, which came before the replays showed 10 and 11, 34 on 523018f, the version the graded
+replays ran on (12-14), 32 on 3c585f4, 31 on 690d255, 29 on e5d07c3, 28 on 54e59a9, 27 on
+229cfc9, the version the Nov 12 rerun ran on (15), 13 on 6dbdae0, the first version of 15, which
+a third independent review read, and 4 on 9585620, which the same reviewer read again.
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -81,6 +81,12 @@ which a third independent review read.
    placed. Six smaller ones are fixed too: page numbers read from word counts and years, sweeps on
    "pages of her site", the word score taken for an exam row, a finding with only an action id in
    passing, untested parts, and the receipt not counting score and register revisions as rework.
+   Its second read found the off-page rule too broad (a row-reason finding lost another page it
+   named in words; now only the page field and the page that draws the rows or actions drop out),
+   unquoted exam rows read only from "exam row 4" (now also "exam, row 4", "Brand Authority row 4"
+   and "heatmap"), the fallback calling the page writer for a register finding named in where, and
+   a few page shapes ("Page 5-8", "p3, 4 and 5", "on the cover"); "everywhere" counts as a sweep in
+   a fix, not in a problem.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -1155,6 +1161,48 @@ class ReviewRoutingTests(unittest.TestCase):
         t, _ = bundle._timing({"attempts": calls})
         self.assertIn("1 retry attempts and 5 fix-round calls", t["retries_rework"]["method"])
         self.assertEqual(t["retries_rework"]["value"], 60.0)
+
+    # ------------------------------------------------ the re-review of 9585620 (N1-N4)
+    def test_a_row_reason_finding_keeps_the_other_pages_it_names(self):
+        # N1: only the page that draws the rows (the exams page) and the page field leave the page writer
+        item = self._review(5, f"Row 4 says '{self.QUOTE}', and page 12 repeats the double count in other words. "
+                               "Fix: count once in both.", "FAIL")
+        asked, _ = self._apply([item])
+        self.assertEqual(sorted(asked), ["fix", "score"])
+        self.assertIn("page 12", asked["fix"][0])
+        item = self._review(5, f"Row 4 says '{self.QUOTE}'. Fix: count once.", "FAIL", where="exam row 4; p12 dek")
+        asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+        self.assertEqual(sorted(asked), ["fix", "score"])
+
+    def test_an_exam_row_named_in_where_goes_to_the_score_writer(self):
+        # N2: no exact quote, so the where field decides (a callout on the exams page stays page copy:
+        # test_audit_factory's test_review_finding_triggers_a_fix_and_second_pass)
+        for where in ("p5 exam table row 4", "Brand Authority row 4", "exam, row 4"):
+            item = self._review(5, "Row 4's reason is not supported by V-E013. Fix: cite it.", "FAIL", where=where)
+            asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+            self.assertEqual(sorted(asked), ["score"], where)
+        on_page_5 = self._review(5, "Row 4's reason is not supported by V-E013. Fix: cite it.", "FAIL", where="heatmap")
+        self.assertTrue(pipeline._score(pipeline._located(on_page_5, self._demo_dir())))
+        table = self._review(7, "The table's row 3 gives no reason. Fix: add one.", where="p7 table, row 3 gives no reason")
+        self.assertFalse(pipeline._score(pipeline._located(table, self._demo_dir())))
+
+    def test_a_register_finding_named_in_where_does_not_fall_back_to_the_page_writer(self):
+        # N3: the fallback is for an action id met only in the message
+        loc = pipeline._located(self._review(None, "A8 has no approval gate. Fix: make it AGENT_AFTER_APPROVAL.",
+                                             where="A8"), self._demo_dir())
+        self.assertEqual((pipeline._back(loc), pipeline._acts(loc)), (False, True))
+
+    def test_more_page_and_sweep_shapes(self):
+        # N4
+        self.assertEqual(pipeline._page_numbers("Page 5-8 repeat the same chart"), {5, 6, 7, 8})
+        self.assertEqual(pipeline._page_numbers("page 11 - 14px over"), {11})
+        for text, want in (("headline on the cover", {1}), ("p2 card 1 and the cover", {1, 2}), ("p3, 4 and 5", {3, 4, 5}),
+                           ("pp 5, 8", {5, 8}), ("the Facebook cover photo", set())):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        self.assertTrue(pipeline._sweeps("All pages of this audit promise rankings. Fix: stop."))
+        self.assertTrue(pipeline._sweeps("The ask differs by page. Fix: One wording everywhere."))
+        self.assertFalse(pipeline._sweeps("The claim is made everywhere online. Fix: cite one source."))
+        self.assertFalse(pipeline._sweeps("Card 3 says the audit read all 20 pages of her site. Fix: say 12."))
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())
