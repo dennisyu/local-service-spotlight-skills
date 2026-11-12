@@ -221,11 +221,14 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
 # counts only when a number follows it, so "page 7 and 12 words" is page 7.
 PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?![\d%])(?:[-–](\d{1,2})(?![\w%]))?", re.I)
 # A range end is never a percentage ("p5-10% claim"). After "pages" or "pp" every list item is a
-# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"); after a single "p" a later item counts only
-# where a page number ends, before punctuation, a joiner or the end ("p3, 4 and 5"), so "p5, 3
-# cards", "p5 and 2 quotes" and "p12, 2 of 3 cards" are counts.
+# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"). After a single "p" a later item is a count
+# only when a count word follows it ("p5, 3 cards", "p5 and 2 quotes", "p12, 2 of 3 cards");
+# anything else keeps it a page ("p2 and 5 deks"): a lost page loses its writer, an extra one
+# costs a call.
 _RANGE_END = r"(?:\s*(?:[-–]|to)\s*\d{1,2}(?![\w%]))?"
-_ITEM_END = r"(?=\s*(?:[,;:.()\]]|and\b|&|[-–]|to\b|$))"
+_COUNTED = (r"(?!\s*(?:%|px\b|of\b|(?:cards?|tables?|rows?|words?|lines?|items?|blocks?|bars?|charts?|"
+            r"graphs?|quotes?|bullets?|points?|stats?|sentences?|paragraphs?|links?|images?|photos?|"
+            r"logos?|mentions?|reviews?|posts?|videos?|clips?|days?|weeks?|months?|years?|times|percent)\b))")
 
 
 def _page_list(guard: str) -> str:
@@ -237,7 +240,7 @@ PAGE_LIST = re.compile(r"\bpages\s+\[?" + _page_list(""), re.I)
 RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 # a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
 WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _page_list(""), re.I)
-WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _page_list(_ITEM_END), re.I)
+WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _page_list(_COUNTED), re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
 
 

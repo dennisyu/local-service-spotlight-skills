@@ -2,16 +2,16 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 87 of the 91 tests below fail on the kit as it
+for retries and bigger models they did not need. 88 of the 92 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 71 fail on the first version of this change (4f31005, which the
-first independent review read), 57 on the second (f91aa74, which the second review read), 48 on
-823ff8b, which came before the replays showed 10 and 11, 42 on 523018f, the version the graded
-replays ran on (12-14), 40 on 3c585f4, 39 on 690d255, 37 on e5d07c3, 36 on 54e59a9, 35 on
-229cfc9, the version the Nov 12 rerun ran on (15), 20 on 6dbdae0, the first version of 15, which
-a third independent review read, 9 on 9585620, 7 on 68a7f4d (which the same reviewer passed), 4
-on 4ab4d28 and 3 on 8dc9b71 (which it also passed).
+used throughout routes nothing. 72 fail on the first version of this change (4f31005, which the
+first independent review read), 58 on the second (f91aa74, which the second review read), 49 on
+823ff8b, which came before the replays showed 10 and 11, 43 on 523018f, the version the graded
+replays ran on (12-14), 41 on 3c585f4, 40 on 690d255, 38 on e5d07c3, 37 on 54e59a9, 36 on
+229cfc9, the version the Nov 12 rerun ran on (15), 21 on 6dbdae0, the first version of 15, which
+a third independent review read, 10 on 9585620, 7 on 68a7f4d (which the same reviewer passed), 5
+on 4ab4d28, 3 on 8dc9b71 and 2 on a64aa3f (both of which it also passed).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -95,8 +95,11 @@ on 4ab4d28 and 3 on 8dc9b71 (which it also passed).
    every list item is a page now, and only a single "p" list stops at a count ("p5, 3 cards"); an
    explicit "exam row 4" beside a "note" or "title" is no longer switched off. Its fifth read
    passed, with two smaller ones, also fixed: page copy that names an exam row ("p5 callout beside
-   heatmap row 4") goes to both writers, and after a single "p" a later number counts only where
-   a page number ends ("p5, 3 charts" and "p5 and 2 quotes" are counts).
+   heatmap row 4") goes to both writers, and after a single "p" a later number followed by a count
+   word is a count ("p5, 3 charts", "p5 and 2 quotes"). Its sixth read passed, with one smaller
+   one: the first version of that guard also dropped "p2 and 5 deks"; a later number now stays a
+   page unless a count word follows it, since a lost page loses its writer and an extra one costs
+   a call.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -1291,12 +1294,23 @@ class ReviewRoutingTests(unittest.TestCase):
         self.assertEqual(sorted(asked), ["fix", "score"])
         self.assertGreater(len(asked["fix"]), 1, "page 5 must change")
 
-    def test_a_single_p_list_reads_a_later_number_only_where_a_page_number_ends(self):
+    def test_a_single_p_list_stops_at_a_count(self):
         # Q2: after a single "p", "3 charts" and "2 quotes" are counts; "pp" lists stay pages by design
+        # an unknown word after a later number counts it as a page (T1: a lost page loses a writer, an
+        # extra page costs one call), so "p2, 3 insight cards" reads pages 2 and 3
         for text, want in (("p5, 3 charts", {5}), ("p5 and 2 quotes", {5}), ("p5, 3 bullets", {5}),
-                           ("p2, 3 insight cards", {2}), ("p3, 4 and 5", {3, 4, 5}), ("p3, 4; p9 dek", {3, 4, 9}),
+                           ("p2, 3 insight cards", {2, 3}), ("p3, 4 and 5", {3, 4, 5}), ("p3, 4; p9 dek", {3, 4, 9}),
                            ("pp. 5, 8 tables", {5, 8})):
             self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+
+    def test_a_single_p_list_keeps_a_page_named_before_its_block(self):
+        # T1 (sixth read): the a64aa3f guard dropped the 5 of "p2 and 5 deks"
+        for text, want in (("p5 and 10 deks", {5, 10}), ("p5, 10 and 18 headlines", {5, 10, 18}),
+                           ("p5 & 10 callouts", {5, 10}), ("p5 and 6 dek", {5, 6})):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        loc = pipeline._located(self._review(2, "Both deks promise rankings. Fix: stop.", "FAIL", where="p2 and 5 deks"),
+                                self._demo_dir())
+        self.assertEqual((pipeline._front(loc), pipeline._back(loc)), (True, True))
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())
