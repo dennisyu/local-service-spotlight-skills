@@ -186,7 +186,9 @@ model, which sees the pages it summarizes, then the action register to the actio
 gate message says where its problem sits, so it reaches the writer who owns that text). A round that clears nothing ends the loop,
 except that a hard FAIL a writer owns first gets one round one rung up the ladder (page 20 is
 built by code, so nothing there qualifies), and warnings a round already had get no round of
-their own. A fix that returns no pages is an answer only when no FAIL names a page it owns. It finishes with the
+their own. A fix that returns no pages is an answer only when no FAIL names a page it owns (the
+later numbers of a `where` list like "p2 and 5 cards" are routed but not required, since some are
+counts). It finishes with the
 fresh-context review: `READY` needs zero S0/S1 findings. A review's score adjustments land first; each
 finding then goes to every page its `where` field or text names, to every writer that owns the words it
 quotes (a page, the register, or an exam row's reason, which the score model rewrites with its score

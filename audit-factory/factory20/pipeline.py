@@ -221,32 +221,66 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
 # counts only when a number follows it, so "page 7 and 12 words" is page 7.
 PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?![\d%])(?:[-–](\d{1,2})(?![\w%]))?", re.I)
 # A range end is never a percentage ("p5-10% claim"). After "pages" or "pp" every list item is a
-# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"). After a single "p" a later item is a count
-# only when a count word follows it ("p5, 3 cards", "p5 and 2 quotes", "p12, 2 of 3 cards");
-# anything else keeps it a page ("p2 and 5 deks"): a lost page loses its writer, an extra one
-# costs a call.
+# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"). After a single "p" a later item may be a
+# count ("p5, 3 cards"); _single_p decides, and such a page is routed but never required.
 _RANGE_END = r"(?:\s*(?:[-–]|to)\s*\d{1,2}(?![\w%]))?"
-_COUNTED = (r"(?!\s*(?:%|px\b|of\b|(?:cards?|tables?|rows?|words?|lines?|items?|blocks?|bars?|charts?|"
-            r"graphs?|quotes?|bullets?|points?|stats?|sentences?|paragraphs?|links?|images?|photos?|"
-            r"logos?|mentions?|reviews?|posts?|videos?|clips?|days?|weeks?|months?|years?|times|percent)\b))")
-
-
-def _page_list(guard: str) -> str:
-    return (r"(\d{1,2}(?![\d%])" + _RANGE_END +
-            r"(?:\s*(?:,|and|&)\s*\d{1,2}(?![\w%])" + guard + _RANGE_END + r")*)")
-
-
-PAGE_LIST = re.compile(r"\bpages\s+\[?" + _page_list(""), re.I)
+_PAGE_LIST = r"(\d{1,2}(?![\d%])" + _RANGE_END + r"(?:\s*(?:,|and|&)\s*\d{1,2}(?![\w%])" + _RANGE_END + r")*)"
+PAGE_LIST = re.compile(r"\bpages\s+\[?" + _PAGE_LIST, re.I)
 RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
 # a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
-WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _page_list(""), re.I)
-WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _page_list(_COUNTED), re.I)
+WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _PAGE_LIST, re.I)
+WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _PAGE_LIST, re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
+# what follows a later number in a single "p" list: a unit ("10 %", "14 px", "2 of 3", "5 days",
+# "3-card row") or a page-copy noun ("3 cards", "2 quotes", "3 more")
+COUNT_AFTER = re.compile(
+    r"\s*(?:(?P<unit>%|p[xt]s?\b|of\b|percent\b|times?\b|(?:second|minute|hour|day|week|month|year)s?\b|-[a-z])"
+    r"|(?:card|table|row|word|line|item|block|bar|chart|graph|quote|bullet|point|stat|sentence|paragraph|link|"
+    r"image|photo|logo|mention|review|post|video|clip|section|tile|column|heading|step|chip|source|kpi)(?P<s>s)?\b"
+    r"|box(?P<es>es)?\b|(?P<more>more)\b)", re.I)
 
 
-def _page_numbers(text: str, where: bool = False) -> set[int]:
+def _a_count(follow: str, n: int, before: int) -> bool:
+    """Whether a later number n of a single "p" list counts something instead of naming a page,
+    from the words after it. A unit always counts ("p5, 10 %", "p2 and 5 days"). A page-copy noun
+    counts only when n is no larger than the page before it ("p5, 3 cards", "p5 and 2 quotes"; but
+    "p2 and 5 cards" is two pages), and a singular one only after 1 ("p5, 1 card"; "p2 and 12 chart
+    captions" is two pages). Any other word keeps n a page ("p2 and 5 deks")."""
+    m = COUNT_AFTER.match(follow)
+    if not m:
+        return False
+    if m["unit"]:
+        return True
+    if n > before:
+        return False
+    return bool(m["s"] or m["es"] or m["more"]) or n == 1
+
+
+def _single_p(text: str) -> tuple[set[int], set[int]]:
+    """The pages a single "p" or "pg" list names in a where field, as (first, later): "p2 and 5
+    deks" is ({2}, {5}). A later item that counts something ends the list ("p5, 3 cards" is ({5},
+    set())). Only the first is certain, so a later page is routed but not required: required, a
+    count read as page 3 ("p2, 3 insight cards") refused the writer's honest empty answer four
+    times and failed the round (Nov 12, seventh review read)."""
+    first: set[int] = set()
+    later: set[int] = set()
+    for m in WHERE_PAGE.finditer(text):
+        before = 0
+        for k, it in enumerate(RANGE.finditer(m.group(1))):
+            a = int(it.group(1))
+            b = int(it.group(2)) if it.group(2) else a
+            pages = set(range(a, b + 1)) if a <= b else {a}
+            if k and _a_count(text[m.start(1) + it.end():], a, before):
+                break
+            (later if k else first).update(pages)
+            before = max(pages)
+    return first, later
+
+
+def _page_numbers(text: str, where: bool = False, sure: bool = False) -> set[int]:
     """Page numbers a text names: "page 7", "Pages [2, 7]", "pages 5-8", "pages 1, 2 and 18", "p7:".
-    With where=True also the short forms a review's where field uses ("p16", "pp. 5-8", "cover")."""
+    With where=True also the short forms a review's where field uses ("p16", "pp. 5-8", "cover");
+    with sure=True, of a single "p" list only its first page (see _single_p)."""
     def span(a: str, b: str) -> set[int]:
         return set(range(int(a), int(b) + 1)) if b and int(a) <= int(b) else {int(a)}
     found = {n for a, b in PAGE_ONE.findall(text) for n in span(a, b)}
@@ -254,8 +288,10 @@ def _page_numbers(text: str, where: bool = False) -> set[int]:
         found |= {n for a, b in RANGE.findall(grp) for n in span(a, b)}
     found |= {int(n) for n in re.findall(r"\bp(\d{1,2}):", text)}
     if where:
-        for grp in WHERE_PAGES.findall(text) + WHERE_PAGE.findall(text):
+        for grp in WHERE_PAGES.findall(text):
             found |= {n for a, b in RANGE.findall(grp) for n in span(a, b)}
+        first, later = _single_p(text)
+        found |= first if sure else first | later
         if WHERE_COVER.search(text):
             found.add(1)
     return {n for n in found if 1 <= n <= 20}
@@ -266,6 +302,16 @@ def _pages_named(item: dict) -> set[int]:
     pages a review finding's where field lists. Until Nov 12 the where field was read only for the
     register, so "p5 'What moves the number'; p10 Trust row; p18 Days 1-7" reached none of them."""
     found = _page_numbers(item.get("msg") or "") | _page_numbers(str(item.get("where") or ""), where=True)
+    if isinstance(item.get("page"), int):
+        found.add(item["page"])
+    return {n for n in found if 1 <= n <= 20}
+
+
+def _pages_required(item: dict) -> set[int]:
+    """The pages an open item names for certain, which a FAIL must change: _pages_named without the
+    later items of a single "p" list, which may be counts. A required page with nothing to fix
+    makes the writer fail; a routed one costs at most one more writer call."""
+    found = _page_numbers(item.get("msg") or "") | _page_numbers(str(item.get("where") or ""), where=True, sure=True)
     if isinstance(item.get("page"), int):
         found.add(item["page"])
     return {n for n in found if 1 <= n <= 20}
@@ -423,7 +469,8 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     rows or actions (the exams page, the plan page), which cannot change them; any other page it
     names still gets it. A finding nothing could place keeps the old fallback, the page writer,
     unless its where field already names the register. The writers are told where, and
-    route["must"] holds the pages a FAIL must change (never the sweep's)."""
+    route["must"] holds the pages a FAIL must change (never the sweep's, nor a single "p" list's
+    later pages, which may be counts)."""
     if item.get("from") != "review":
         return item
     msg = item.get("msg") or ""
@@ -447,6 +494,7 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
                 continue
             {"page": pages, "action": found_acts, "row": rows}[kind].add(key)
     named_pages = _pages_named({"msg": msg, "where": where_txt})          # not the page field
+    sure_pages = _pages_required({"msg": msg, "where": where_txt})
     field = item["page"] if isinstance(item.get("page"), int) else None
     drawn = _drawn(run_dir)
     # an exam row named without a quote, where the where field says it is the exam's ("exam row 4",
@@ -474,13 +522,15 @@ def _located(item: dict, run_dir: pathlib.Path) -> dict:
     # them; any other page the finding names still gets it
     drawing = (drawn["row"] if rows else set()) | (drawn["action"] if found_acts else set())
     on = pages | (named_pages - drawing if off_page else named_pages)
+    required = pages | (sure_pages - drawing if off_page else sure_pages)   # not a single "p" list's later pages
     if field is not None and not off_page:
         on.add(field)
+        required.add(field)
     placed = bool(on or found_acts or rows)
     route = {"front": bool(on & {1, 2}) or item.get("id") in FRONT_GATES,
              "back": spans or any(3 <= n <= 19 for n in on) or (not placed and not _acts(item)),
              "acts": bool(found_acts or named_ids) or _acts(item), "score": bool(rows) or _score(item),
-             "must": sorted(n for n in on if 3 <= n <= 19)}
+             "must": sorted(n for n in required if 3 <= n <= 19)}
     where = [f"on {_pages_phrase(sorted(n for n in pages if n <= 2))}"] if pages & {1, 2} else []
     if any(3 <= n <= 19 for n in pages):
         where.append(f"on {_pages_phrase(sorted(n for n in pages if 3 <= n <= 19))}")
@@ -586,7 +636,7 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
     if rest:
         # a located finding brings the pages it must change; its message also carries the sweep note
         must = frozenset(n for i in rest if i["status"] == "FAIL"
-                         for n in (i["route"]["must"] if "route" in i else _pages_named(i)) if 3 <= n <= 19)
+                         for n in (i["route"]["must"] if "route" in i else _pages_required(i)) if 3 <= n <= 19)
         res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
             "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
                     "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block. "

@@ -2,16 +2,17 @@
 
 The pilot rebuilt two finished audits at the standard and lean tiers, every model call answered
 by a fresh model on the stage's tier. These defects kept runs from finishing, or made them pay
-for retries and bigger models they did not need. 88 of the 92 tests below fail on the kit as it
+for retries and bigger models they did not need. 91 of the 95 tests below fail on the kit as it
 was before this change (checked against 0e64f96, the head of #118); the other four guard the
 demo's G10 and G11, the page footer, the bound on words to cut, and the rule in 15 that a term
-used throughout routes nothing. 72 fail on the first version of this change (4f31005, which the
-first independent review read), 58 on the second (f91aa74, which the second review read), 49 on
-823ff8b, which came before the replays showed 10 and 11, 43 on 523018f, the version the graded
-replays ran on (12-14), 41 on 3c585f4, 40 on 690d255, 38 on e5d07c3, 37 on 54e59a9, 36 on
-229cfc9, the version the Nov 12 rerun ran on (15), 21 on 6dbdae0, the first version of 15, which
-a third independent review read, 10 on 9585620, 7 on 68a7f4d (which the same reviewer passed), 5
-on 4ab4d28, 3 on 8dc9b71 and 2 on a64aa3f (both of which it also passed).
+used throughout routes nothing. 75 fail on the first version of this change (4f31005, which the
+first independent review read), 61 on the second (f91aa74, which the second review read), 52 on
+823ff8b, which came before the replays showed 10 and 11, 46 on 523018f, the version the graded
+replays ran on (12-14), 44 on 3c585f4, 43 on 690d255, 41 on e5d07c3, 40 on 54e59a9, 39 on
+229cfc9, the version the Nov 12 rerun ran on (15), 23 on 6dbdae0, the first version of 15, which
+a third independent review read, 12 on 9585620, 10 on 68a7f4d (which the same reviewer passed), 7
+on 4ab4d28, 6 on 8dc9b71, 4 on a64aa3f and 3 on 3184604 (the last three of which it also
+passed).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -98,8 +99,13 @@ on 4ab4d28, 3 on 8dc9b71 and 2 on a64aa3f (both of which it also passed).
    heatmap row 4") goes to both writers, and after a single "p" a later number followed by a count
    word is a count ("p5, 3 charts", "p5 and 2 quotes"). Its sixth read passed, with one smaller
    one: the first version of that guard also dropped "p2 and 5 deks"; a later number now stays a
-   page unless a count word follows it, since a lost page loses its writer and an extra one costs
-   a call.
+   page unless a count word follows it. Its seventh read passed, with three smaller ones: "p2 and
+   5 cards" still lost page 5, and a later page that was really a count ("p2, 3 insight cards")
+   became a page the writer had to change, so its honest empty answer was refused four times and
+   the round failed. A later number larger than the page before it is now a page even before a
+   count word, a singular noun counts only after 1, a unit always counts ("5 days", "3-card
+   row"), more count words are known ("3 tiles", "2 sections"), and a single "p" list's later
+   pages are routed but never required.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -1296,8 +1302,9 @@ class ReviewRoutingTests(unittest.TestCase):
 
     def test_a_single_p_list_stops_at_a_count(self):
         # Q2: after a single "p", "3 charts" and "2 quotes" are counts; "pp" lists stay pages by design
-        # an unknown word after a later number counts it as a page (T1: a lost page loses a writer, an
-        # extra page costs one call), so "p2, 3 insight cards" reads pages 2 and 3
+        # an unknown word after a later number keeps it a page (T1: a lost page loses its writer; an
+        # extra one is routed, not required, so it costs at most one call), so "p2, 3 insight cards"
+        # reads pages 2 and 3
         for text, want in (("p5, 3 charts", {5}), ("p5 and 2 quotes", {5}), ("p5, 3 bullets", {5}),
                            ("p2, 3 insight cards", {2, 3}), ("p3, 4 and 5", {3, 4, 5}), ("p3, 4; p9 dek", {3, 4, 9}),
                            ("pp. 5, 8 tables", {5, 8})):
@@ -1311,6 +1318,48 @@ class ReviewRoutingTests(unittest.TestCase):
         loc = pipeline._located(self._review(2, "Both deks promise rankings. Fix: stop.", "FAIL", where="p2 and 5 deks"),
                                 self._demo_dir())
         self.assertEqual((pipeline._front(loc), pipeline._back(loc)), (True, True))
+
+    # ------------------------------------------------ the seventh read of 3184604 (U1-U3)
+    def test_a_later_larger_page_before_a_count_word_is_still_a_page(self):
+        # U1: "p2 and 5 cards" still lost page 5, because "cards" is a count word. A later number larger
+        # than the page before it is a page; a singular noun counts only after 1; a unit always counts
+        for text, want in (("p2 and 5 cards", {2, 5}), ("p2 and 5 quotes", {2, 5}), ("p1 and 10 charts", {1, 10}),
+                           ("p2 and 12 chart captions", {2, 12}), ("p5, 3 card titles", {3, 5}),
+                           ("p5, 3 cards", {5}), ("p12, 2 of 3 cards", {12}), ("p5 and 2 quotes", {5}), ("p5, 1 card", {5}),
+                           ("p5, 10 %", {5}), ("p5 and 14 px", {5}), ("p2 and 5 days", {2}), ("p5, 3-card row", {5}),
+                           ("p5, 7-day sprint", {5}), ("p5-6 and 3 cards", {5, 6}), ("p5, 3, 4 cards", {3, 4, 5})):
+            self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
+        for where in (False, True):   # after "pages" every item is a page, count word or not
+            self.assertEqual(pipeline._page_numbers("pages 12 and 5 tables disagree", where=where), {5, 12})
+        loc = pipeline._located(self._review(2, "Both cards promise rankings. Fix: stop.", "FAIL", where="p2 and 5 cards"),
+                                self._demo_dir())
+        self.assertEqual((pipeline._front(loc), pipeline._back(loc)), (True, True))
+
+    def test_a_page_read_from_a_later_single_p_item_is_routed_but_not_required(self):
+        # U2: "p2, 3 insight cards" also reads page 3, so page 3's writer is asked; but page 3 was also
+        # required, so an honest empty answer was refused four times and the round failed. A later item
+        # of a single "p" list may be a count: it is routed, not required
+        item = self._review(2, "The three insight cards repeat one claim. Fix: vary.", "FAIL", where="p2, 3 insight cards")
+        self.assertEqual((pipeline._pages_named(item), pipeline._pages_required(item)), ({2, 3}, {2}))
+        asked, _ = self._apply([item], answers={"fix": {"pages": []}})
+        self.assertEqual(len(asked["fix"]), 1, "page 3 may have nothing to change")
+        # the page a quote stands on, the page field and the list's first page stay required
+        outs = copy.deepcopy(split_fixture(AUDIT))
+        next(p for p in outs["pages"]["pages"] if p["n"] == 12)["dek"] += " We guarantee first-page rankings."
+        item = self._review(1, "The dek says 'we guarantee first-page rankings'. Fix: stop.", "FAIL", where="p14 and 16 deks")
+        asked, _ = self._apply([item], outs, answers={"fix": {"pages": []}})
+        self.assertGreater(len(asked["fix"]), 1, "pages 12 and 14 must change")
+        self.assertIn("on page 12, 14: return", asked["fix"][1])
+        item = self._review(14, "The dek says 'we guarantee first-page rankings'. Fix: stop.", "FAIL")
+        asked, _ = self._apply([item], outs, answers={"fix": {"pages": []}})
+        self.assertIn("on page 12, 14: return", asked["fix"][1], "the page the reviewer filed it under")
+
+    def test_more_count_words_after_a_single_p(self):
+        # U3: count words the list lacked read as extra pages
+        for text in ("p5 and 3 more", "p5, 2 sections", "p5 and 4 boxes", "p5, 3 tiles", "p5, 2 columns",
+                     "p5 and 3 KPIs", "p5, 4 headings", "p5, 3 steps", "p5, 2 chips", "p5, 3 sources", "p5, 3 pt",
+                     "p5, 2 minutes"):
+            self.assertEqual(pipeline._page_numbers(text, where=True), {5}, text)
 
     def _demo_dir(self) -> pathlib.Path:
         d = pathlib.Path(tempfile.mkdtemp())
