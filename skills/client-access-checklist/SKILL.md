@@ -5,6 +5,7 @@ author: Dennis Yu — Local Service Spotlight
 references:
   - https://blitzmetrics.com/verify-client-sites-google-search-console/
   - https://blitzmetrics.com/digital-plumbing/
+  - https://blitzmetrics.com/bing-webmaster-tools-checklist/
   - https://www.bing.com/webmasters/help/add-and-verify-site-12184f8b
 ---
 
