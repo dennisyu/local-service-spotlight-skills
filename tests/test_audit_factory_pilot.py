@@ -11,8 +11,8 @@ first independent review read), 65 on the second (f91aa74, which the second revi
 replays ran on (12-14), 48 on 3c585f4, 47 on 690d255, 45 on e5d07c3, 44 on 54e59a9, 43 on
 229cfc9, the version the Nov 12 rerun ran on (15), 25 on 6dbdae0, the first version of 15, which
 a third independent review read, 14 on 9585620, 14 on 68a7f4d (which the same reviewer passed), 9
-on 4ab4d28, 9 on 8dc9b71, 6 on a64aa3f, 5 on 3184604, 5 on eb69770 and 1 on a6cfe29 (the last five
-of which it also passed).
+on 4ab4d28, 9 on 8dc9b71, 6 on a64aa3f, 5 on 3184604, 5 on eb69770, 1 on a6cfe29 and 1 on af98ec9
+(the last six of which it also passed).
 
 1. A card built on REPORTED evidence failed G21: REPORTED is a ledger state, not a card badge.
 2. Ids in a table's Evidence column became chips in the PDF but no check counted them, so a
@@ -112,7 +112,10 @@ of which it also passed).
    an ordinal); and a long where field is read in linear time. Its ninth read passed, with three
    smaller ones, also fixed: the singular rule now holds for "second" alone ("2 week sprint" is a
    count), "of" and a number always counts ("3 of 4 cards"), and the speed test compares growth
-   instead of a wall clock, which failed once on a busy machine.
+   instead of a wall clock, which failed once on a busy machine. Its tenth read passed, with two
+   smaller ones, also fixed: "of 20" is the page total, so "p3 and 12 of 20" keeps page 12; and
+   the growth test could still fail under bursty load, so it now counts the characters the parser
+   copies, with no clock at all.
 
 Render tests skip when Playwright/Chromium is unavailable; the rest are stdlib.
 """
@@ -124,7 +127,6 @@ import re
 import shutil
 import sys
 import tempfile
-import time
 import types
 import unittest
 from unittest import mock
@@ -1393,19 +1395,22 @@ class ReviewRoutingTests(unittest.TestCase):
         item = self._review(5, "Two card titles repeat. Fix: vary.", "FAIL", where="p5, 2 card titles")
         self.assertFalse(pipeline._front(pipeline._located(item, self._demo_dir())), "no front writer for a count")
 
-    def test_a_long_where_field_reads_in_linear_time(self):
+    def test_a_long_where_field_is_read_without_copying_it_per_item(self):
         # V4: eb69770 sliced the rest of the text for every later list item, so time grew with the
         # square of the input (17 s at 2.6 MB); real where fields are short, but a reply can be long.
-        # W3: a wall-clock bound failed on a busy machine, so this compares four times the input with
-        # the best of three runs each: linear takes about 4 times as long, eb69770 over 10 times
-        def best(n: int) -> float:
-            text, runs = "p5, 3 cards; " * n, []
-            for _ in range(3):
-                start = time.perf_counter()
-                self.assertEqual(pipeline._page_numbers(text, where=True), {5})
-                runs.append(time.perf_counter() - start)
-            return min(runs)
-        self.assertLess(best(80_000) / best(20_000), 7)
+        # W3 and X1: a wall clock, then a growth ratio, each failed on a busy machine, so this counts
+        # the characters the parser copies out of the text instead: none now, and 26 million for this
+        # 26,000-character field at eb69770. No clock, so no machine can make it pass or fail
+        class Counted(str):
+            copied = 0
+
+            def __getitem__(self, key):
+                part = str.__getitem__(self, key)
+                Counted.copied += len(part)
+                return part
+        text = Counted("p5, 3 cards; " * 2000)
+        self.assertEqual(pipeline._page_numbers(text, where=True), {5})
+        self.assertLess(Counted.copied, len(text))
 
     # ------------------------------------------------ the ninth read of a6cfe29 (W1-W3)
     def test_a_count_with_a_time_word_or_of_a_number_stays_a_count(self):
@@ -1415,7 +1420,10 @@ class ReviewRoutingTests(unittest.TestCase):
         for text, want in (("p18, 2 week sprint", {18}), ("p18, 7 day sprint", {18}), ("p18, 3 month plan", {18}),
                            ("p10, 2 hour response", {10}), ("p5, 2 time", {5}), ("p5, 3 second paragraphs", {3, 5}),
                            ("p2, 3 of 4 cards", {2}), ("p1, 2 of 3 cards", {1}), ("p2 and 5 of 9", {2}),
-                           ("p2 and 5 of the audit", {2, 5}), ("p12, 2 of 3 cards", {12})):
+                           ("p2 and 5 of the audit", {2, 5}), ("p12, 2 of 3 cards", {12}),
+                           # X2: "of 20" is the page total, so "12 of 20" names page 12
+                           ("p3 and 12 of 20", {3, 12}), ("p2, 5 of 20", {2, 5}), ("p2 and 5 of 20 pages", {2, 5}),
+                           ("p12, 2 of 20 cards", {12}), ("p2, 5 of 200", {2})):
             self.assertEqual(pipeline._page_numbers(text, where=True), want, text)
         item = self._review(18, "The sprint has no owner. Fix: name one.", "FAIL", where="p18, 2 week sprint")
         self.assertFalse(pipeline._front(pipeline._located(item, self._demo_dir())), "no front writer for a count")

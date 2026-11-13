@@ -232,10 +232,11 @@ WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _PAGE_LIST, re.I)
 WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _PAGE_LIST, re.I)
 WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
 # what follows a later number in a single "p" list: a unit, which always counts ("10 %", "14 px", "12
-# pt", "3 of 4"); a bare "second" (mostly an ordinal); or a time word ("3 days", "2 week sprint"), a
-# bare "of", a compound ("3-card row") or a page-copy noun ("3 cards", "2 quotes", "3 more")
+# pt", "3 of 4", but not "of 20", the page total: "p3 and 12 of 20" names page 12); a bare "second"
+# (mostly an ordinal); or a time word ("3 days", "2 week sprint"), a bare "of", a compound ("3-card
+# row") or a page-copy noun ("3 cards", "2 quotes", "3 more")
 COUNT_AFTER = re.compile(
-    r"\s*(?:(?P<unit>%|p[xt]s?\b|percent\b|of\s+\d)"
+    r"\s*(?:(?P<unit>%|p[xt]s?\b|percent\b|of\s+(?!20\b)\d)"
     r"|(?P<second>second)\b|(?:second|minute|hour|day|week|month|year|time)s?\b"
     r"|of\b|-[a-z]|(?:card|table|row|word|line|item|block|bar|chart|graph|quote|bullet|point|stat|sentence|"
     r"paragraph|link|image|photo|logo|mention|review|post|video|clip|section|tile|column|heading|step|chip|"
