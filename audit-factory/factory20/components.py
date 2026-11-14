@@ -84,14 +84,15 @@ def _micro(v, ctx):
         a, c = v.get("a", {}), v.get("b", {})
         av, cv = float(a.get("value") or 0), float(c.get("value") or 0)
         mx = max(av, cv, 1e-9)
-        wa, wc = max(2, 100 * av / mx), max(2, 100 * cv / mx)
+        wa = 0 if av == 0 else max(2, 100 * av / mx)
+        wc = 0 if cv == 0 else max(2, 100 * cv / mx)
         return (f'<div class="pair"><div class="pr"><span class="pl">{md(a.get("label", ""))}</span>'
                 f'<span class="pb" style="width:{wa:.1f}%"></span><span class="pv">{E(str(a.get("display", a.get("value", ""))))}</span></div>'
                 f'<div class="pr"><span class="pl">{md(c.get("label", ""))}</span>'
                 f'<span class="pb alt" style="width:{wc:.1f}%"></span><span class="pv">{E(str(c.get("display", c.get("value", ""))))}</span></div></div>')
     if v.get("type") == "doors":
         return '<div class="doors">' + "".join(
-            f'<span class="door {"ok" if d.get("ok") else "no"}">{md(d.get("label", ""))}</span>'
+            f'<span class="door {"ok" if d.get("ok") is True else ("warn" if d.get("ok") == "warn" else "no")}">{md(d.get("label", ""))}</span>'
             for d in v.get("items", [])) + "</div>"
     return ""
 
@@ -224,13 +225,14 @@ def bars(b, ctx):
         g.append(f'<text x="{lab - 8}" y="{y + 16}" class="tl" text-anchor="end">{E(str(i.get("label", ""))[:int(lab / 5.6)])}</text>')
         v = i.get("value")
         if isinstance(v, (int, float)):
-            w = max(2.0, (Wd - lab - 74) * float(v) / mx)
+            w = 0.0 if float(v) == 0 else max(2.0, (Wd - lab - 74) * float(v) / mx)
             cls = "bar alt" if i.get("highlight") else "bar"
-            g.append(f'<rect x="{lab}" y="{y + 3}" width="{w:.1f}" height="{rowh - 8}" class="{cls}" rx="2"/>')
+            if w > 0:
+                g.append(f'<rect x="{lab}" y="{y + 3}" width="{w:.1f}" height="{rowh - 8}" class="{cls}" rx="2"/>')
             g.append(f'<text x="{lab + w + 6}" y="{y + 16}" class="tv">{E(str(i.get("display", v)))}</text>')
         else:
             g.append(f'<rect x="{lab}" y="{y + 3}" width="{Wd - lab - 74}" height="{rowh - 8}" class="hatch" rx="2"/>')
-            g.append(f'<text x="{lab + 8}" y="{y + 16}" class="tu">UNKNOWN — not measured</text>')
+            g.append(f'<text x="{lab + 8}" y="{y + 16}" class="tu">{E(str(i.get("display") or "UNKNOWN — not measured"))}</text>')
     H = 12 + len(items) * rowh
     return f'<div class="blk bars" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{_caption(b, ctx)}</div>'
 
@@ -243,7 +245,7 @@ def heatmap(b, ctx):
     g = []
     for k, r in enumerate(rows):
         y = 4 + k * rowh
-        g.append(f'<text x="{lab - 8}" y="{y + 17}" class="tl" text-anchor="end">{r.get("n", k + 1)}. {E(str(r.get("name", ""))[:38])}</text>')
+        g.append(f'<text x="{lab - 8}" y="{y + 17}" class="tl" text-anchor="end">{r.get("n", k + 1)}. {E(str(r.get("label") or r.get("name", ""))[:38])}</text>')
         s_ = r.get("score")
         for c in range(10):
             x = lab + c * (cell + 3)
@@ -252,7 +254,8 @@ def heatmap(b, ctx):
             else:
                 g.append(f'<rect x="{x}" y="{y + 4}" width="{cell}" height="{rowh - 9}" class="hatch" rx="2"/>')
         xs = lab + 10 * (cell + 3) + 8
-        g.append(f'<text x="{xs}" y="{y + 18}" class="tvb">{E(str(s_ if isinstance(s_, (int, float)) else "UNKNOWN"))}</text>')
+        sv = (f"{s_}*" if r.get("provisional") else str(s_)) if isinstance(s_, (int, float)) else "UNKNOWN"
+        g.append(f'<text x="{xs}" y="{y + 18}" class="tvb">{E(sv)}</text>')
         ev = r.get("evidence") or []
         g.append(f'<text x="{xs + 30}" y="{y + 17}" class="tid">{E(" ".join(ev[:3]))}</text>')
     H = 10 + len(rows) * rowh
@@ -271,11 +274,13 @@ def scorebar(b, ctx):
     return f'<div class="blk scorebar" {_span(b)}>{_title(b) or "<div class=btitle>Separate exams — never averaged</div>"}<div class="sxg">{tiles}</div></div>'
 
 
-EDGE_STYLE = {"repeat": "", "collab": "", "interview": "6 3", "testimonial": "2 3", "employment": "",
+EDGE_STYLE = {"repeat": "", "collab": "", "interview": "6 3", "testimonial": "0.1 6", "employment": "",
               "co-presence": "1 4", "proposed": "8 5", "conflict": "3 3", "link": ""}
 
 
 def graph(b, ctx):
+    """Radial graph. Boxes are pushed apart until none overlap (fix 2026-11-10), edge labels sit on the
+    part of the edge outside both boxes, 'repeat' edges draw thick, and the legend lists only what is drawn."""
     nodes = b.get("nodes", [])
     center = b.get("center") or {"id": "center", "label": ctx.subject}
     Wd = W(b, 12)
@@ -286,40 +291,97 @@ def graph(b, ctx):
     inner = nodes if n <= 10 else nodes[: (n + 1) // 2]
     outer = [] if n <= 10 else nodes[(n + 1) // 2:]
     for ring, rset in ((0, inner), (1, outer)):
-        rx, ry = (Wd * 0.34, H * 0.37) if ring == 0 else (Wd * 0.46, H * 0.46)
+        rx, ry = (Wd * 0.36, H * 0.39) if ring == 0 else (Wd * 0.46, H * 0.46)
         for k, nd in enumerate(rset):
             a = -math.pi / 2 + 2 * math.pi * k / max(len(rset), 1) + (0.3 if ring else 0)
             pos[nd.get("id")] = (cx + rx * math.cos(a), cy + ry * math.sin(a))
-    g = []
-    for e in b.get("edges", []):
-        f, t = pos.get(e.get("from")), pos.get(e.get("to"))
-        if not f or not t:
-            continue
-        dash = EDGE_STYLE.get(e.get("type", "link"), "")
-        cls = "edge conflict" if e.get("type") == "conflict" else ("edge proposed" if e.get("type") == "proposed" else "edge")
-        g.append(f'<line x1="{f[0]:.1f}" y1="{f[1]:.1f}" x2="{t[0]:.1f}" y2="{t[1]:.1f}" class="{cls}" stroke-dasharray="{dash}"/>')
-        if e.get("label"):
-            mx, my = (f[0] * 0.45 + t[0] * 0.55), (f[1] * 0.45 + t[1] * 0.55)
-            g.append(f'<rect x="{mx - 3.2 * len(str(e["label"])[:22]) - 3:.1f}" y="{my - 8:.1f}" width="{6.4 * len(str(e["label"])[:22]) + 6:.1f}" height="11" rx="2" class="elbg"/>')
-            g.append(f'<text x="{mx:.1f}" y="{my:.1f}" class="el" text-anchor="middle">{E(str(e["label"])[:22])}</text>')
+    box = {}
     for nd in [center] + nodes:
-        x, y = pos.get(nd.get("id"), (cx, cy))
-        st = STATE_CLASS.get(str(nd.get("state", "OBSERVED")).upper(), "obs")
         is_c = nd is center
         lines = _wrap(str(nd.get("label", "")), 18 if not is_c else 16)[:3]
-        bw = max(len(L) for L in lines) * (6.2 if not is_c else 7.4) + 18
-        bh = 12 + 12.5 * len(lines) + (11 if nd.get("sub") else 0)
-        x = min(max(x, bw / 2 + 2), Wd - bw / 2 - 2)
-        y = min(max(y, bh / 2 + 2), H - bh / 2 - 2)
+        sub = str(nd.get("sub") or "")[:34]
+        bw = max(max(len(L) for L in lines) * (6.2 if not is_c else 7.4), len(sub) * 4.3) + 18
+        bh = 12 + 12.5 * len(lines) + (11 if sub else 0)
+        x, y = pos.get(nd.get("id"), (cx, cy))
+        box[nd.get("id")] = [x, y, bw, bh, lines, sub, is_c, nd]
+    def clamp(bx):
+        bx[0] = min(max(bx[0], bx[2] / 2 + 2), Wd - bx[2] / 2 - 2)
+        bx[1] = min(max(bx[1], bx[3] / 2 + 2), H - bx[3] / 2 - 2)
+    for bx in box.values():
+        clamp(bx)
+    ids = list(box)
+    for _ in range(200):
+        moved = False
+        for i in range(len(ids)):
+            for j in range(i + 1, len(ids)):
+                A_, B_ = box[ids[i]], box[ids[j]]
+                ox = (A_[2] + B_[2]) / 2 + 6 - abs(A_[0] - B_[0])
+                oy = (A_[3] + B_[3]) / 2 + 5 - abs(A_[1] - B_[1])
+                if ox <= 0 or oy <= 0:
+                    continue
+                moved = True
+                wa, wb = (0.0, 1.0) if A_[6] else ((1.0, 0.0) if B_[6] else (0.5, 0.5))
+                first_x = ox / max(A_[2] + B_[2], 1) < oy / max(A_[3] + B_[3], 1)
+                for axis in ((0, 1) if first_x else (1, 0)):
+                    ox = (A_[2] + B_[2]) / 2 + 6 - abs(A_[0] - B_[0])
+                    oy = (A_[3] + B_[3]) / 2 + 5 - abs(A_[1] - B_[1])
+                    if ox <= 0 or oy <= 0:
+                        break
+                    if axis == 0:
+                        d = ox if A_[0] >= B_[0] else -ox
+                        A_[0] += d * wa; B_[0] -= d * wb
+                    else:
+                        d = oy if A_[1] >= B_[1] else -oy
+                        A_[1] += d * wa; B_[1] -= d * wb
+                    clamp(A_); clamp(B_)
+        if not moved:
+            break
+    def inside(px, py, bx, pad=3):
+        return abs(px - bx[0]) <= bx[2] / 2 + pad and abs(py - bx[1]) <= bx[3] / 2 + pad
+    g, used = [], set()
+    for e in b.get("edges", []):
+        fb, tb = box.get(e.get("from")), box.get(e.get("to"))
+        if not fb or not tb:
+            continue
+        et = e.get("type", "link")
+        used.add(et)
+        dash = EDGE_STYLE.get(et, "")
+        cls = "edge conflict" if et == "conflict" else ("edge proposed" if et == "proposed" else "edge")
+        sw = (' style="stroke-width:2.8"' if et == "repeat" else (' style="stroke:#a3a9b5"' if et == "link" else
+              (' style="stroke-width:2.4;stroke-linecap:round"' if et == "testimonial" else "")))
+        g.append(f'<line x1="{fb[0]:.1f}" y1="{fb[1]:.1f}" x2="{tb[0]:.1f}" y2="{tb[1]:.1f}" class="{cls}" stroke-dasharray="{dash}"{sw}/>')
+        if e.get("label"):
+            lab_ = str(e["label"])[:24]
+            ts = [k / 40 for k in range(41)]
+            free = [t for t in ts if not inside(fb[0] + (tb[0] - fb[0]) * t, fb[1] + (tb[1] - fb[1]) * t, fb)
+                    and not inside(fb[0] + (tb[0] - fb[0]) * t, fb[1] + (tb[1] - fb[1]) * t, tb)]
+            t = (free[0] + free[-1]) / 2 if free else 0.55
+            mx, my = fb[0] + (tb[0] - fb[0]) * t, fb[1] + (tb[1] - fb[1]) * t + 3
+            g.append(f'<rect x="{mx - 3.2 * len(lab_) - 3:.1f}" y="{my - 8:.1f}" width="{6.4 * len(lab_) + 6:.1f}" height="11" rx="2" class="elbg"/>')
+            g.append(f'<text x="{mx:.1f}" y="{my:.1f}" class="el" text-anchor="middle">{E(lab_)}</text>')
+    states = set()
+    for x, y, bw, bh, lines, sub, is_c, nd in box.values():
+        st = STATE_CLASS.get(str(nd.get("state", "OBSERVED")).upper(), "obs")
+        if not is_c:
+            states.add(st)
         g.append(f'<rect x="{x - bw / 2:.1f}" y="{y - bh / 2:.1f}" width="{bw:.1f}" height="{bh:.1f}" rx="5" class="node n-{st}{" center" if is_c else ""}"/>')
         for k, L in enumerate(lines):
             g.append(f'<text x="{x:.1f}" y="{y - bh / 2 + 16 + 12.5 * k:.1f}" class="nl{" cl" if is_c else ""}" text-anchor="middle">{E(L)}</text>')
-        if nd.get("sub"):
-            g.append(f'<text x="{x:.1f}" y="{y + bh / 2 - 6:.1f}" class="ns" text-anchor="middle">{E(str(nd["sub"])[:30])}</text>')
-    legend = ('<div class="legend"><span class="lg obs">observed</span><span class="lg inf">inferred</span>'
-              '<span class="lg unk">unknown / namesake</span><span class="lg ln">— repeat or work tie</span>'
-              '<span class="lg ln">‒ ‒ interview</span><span class="lg ln">··· co-presence, not a relationship</span>'
-              '<span class="lg ln">gold — proposed</span></div>')
+        if sub:
+            g.append(f'<text x="{x:.1f}" y="{y + bh / 2 - 6:.1f}" class="ns" text-anchor="middle">{E(sub)}</text>')
+    if b.get("legend"):
+        items = "".join(f'<span class="lg ln">{md(t)}</span>' for t in b["legend"])
+    else:
+        items = "".join(f'<span class="lg {c}">{t}</span>' for c, t in (("obs", "observed"), ("inf", "inferred"), ("unk", "unknown / namesake")) if c in states)
+        names = {"repeat": "━ repeated work tie", "collab": "— work tie", "employment": "— company record", "link": "grey — record or listing",
+                 "interview": "‒ ‒ interview", "testimonial": "· · quote", "co-presence": "··· co-presence, not a relationship",
+                 "proposed": "gold ‒ ‒ proposed", "conflict": "red ‒ ‒ broken or wrong"}
+        seen = []
+        for et in ("repeat", "collab", "employment", "link", "interview", "testimonial", "co-presence", "proposed", "conflict"):
+            if et in used and names[et] not in seen:
+                seen.append(names[et])
+        items += "".join(f'<span class="lg ln">{t}</span>' for t in seen)
+    legend = f'<div class="legend">{items}</div>'
     return f'<div class="blk graph" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{legend}{_caption(b, ctx)}</div>'
 
 
@@ -341,45 +403,91 @@ def timeline(b, ctx):
     Wd, H = W(b), int(b.get("height", 190))
     n = max(len(ev), 1)
     g = [f'<line x1="16" y1="{H / 2}" x2="{Wd - 16}" y2="{H / 2}" class="axis"/>']
+    states = set()
     for k, e in enumerate(ev):
         x = 44 + (Wd - 88) * (k / (n - 1) if n > 1 else 0.5)
         up = k % 2 == 0
         st = STATE_CLASS.get(str(e.get("state", "OBSERVED")).upper(), "obs")
+        states.add(st)
         g.append(f'<line x1="{x:.1f}" y1="{H / 2}" x2="{x:.1f}" y2="{H / 2 + (-18 if up else 18)}" class="grid"/>')
         g.append(f'<circle cx="{x:.1f}" cy="{H / 2}" r="6" class="dot n-{st}"/>')
         y0 = H / 2 - 64 if up else H / 2 + 32
-        g.append(f'<text x="{x:.1f}" y="{y0:.1f}" class="td" text-anchor="middle">{E(str(e.get("date", "")))}</text>')
-        for j, L in enumerate(_wrap(str(e.get("label", "")), 22)[:3]):
-            g.append(f'<text x="{x:.1f}" y="{y0 + 13 + 11.5 * j:.1f}" class="tl2" text-anchor="middle">{E(L)}</text>')
-    return f'<div class="blk timeline" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{_caption(b, ctx)}</div>'
+        lines = [str(e.get("date", ""))] + _wrap(str(e.get("label", "")), 22)[:3]
+        half = max(len(L) for L in lines) * 2.6 + 4
+        if x - half < 2:
+            tx, anc = 2, "start"
+        elif x + half > Wd - 2:
+            tx, anc = Wd - 2, "end"
+        else:
+            tx, anc = x, "middle"
+        g.append(f'<text x="{tx:.1f}" y="{y0:.1f}" class="td" text-anchor="{anc}">{E(lines[0])}</text>')
+        for j, L in enumerate(lines[1:]):
+            g.append(f'<text x="{tx:.1f}" y="{y0 + 13 + 11.5 * j:.1f}" class="tl2" text-anchor="{anc}">{E(L)}</text>')
+    leg = ""
+    if len(states) > 1 and not b.get("no_legend"):
+        leg = '<div class="legend"><span class="lg obs">on record</span><span class="lg inf">planned or proposed</span></div>'
+    return f'<div class="blk timeline" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{leg}{_caption(b, ctx)}</div>'
 
 
 def swimlane(b, ctx):
+    # Interval-packed lanes: every action gets its own visible bar (fix 2026-11-10: the old
+    # two-sub-row stacking drew the third bar in a row on top of the first). Colour = executor.
     items = b.get("items") or ctx.plan_items()
     lanes = []
     for it in items:
         if it["lane"] not in lanes:
             lanes.append(it["lane"])
     horizon = int(b.get("horizon_days", 90))
-    Wd, lab, laneh = W(b), 132, 34
-    H = 30 + laneh * max(len(lanes), 1)
+    Wd, lab = W(b), 132
     x = lambda d: lab + (Wd - lab - 12) * min(d, horizon) / horizon
-    g = []
-    for li in range(len(lanes)):
-        if li % 2 == 0:
-            g.append(f'<rect x="0" y="{22 + li * laneh}" width="{Wd}" height="{laneh}" class="laneband"/>')
-    for d, name in ((0, "Today"), (7, "Day 7"), (30, "Day 30"), (60, "Day 60"), (90, "Day 90")):
-        g.append(f'<line x1="{x(d):.1f}" y1="16" x2="{x(d):.1f}" y2="{H}" class="grid"/>')
-        g.append(f'<text x="{x(d):.1f}" y="12" class="td" text-anchor="middle">{name}</text>')
-    for li, ln in enumerate(lanes):
-        y = 22 + li * laneh
-        g.append(f'<text x="{lab - 8}" y="{y + 21}" class="tl" text-anchor="end">{E(ln[:22])}</text>')
-        row = [i for i in items if i["lane"] == ln]
-        for k, it in enumerate(row):
+    packed = {}
+    for ln in lanes:
+        rows_end = []
+        place = []
+        for it in sorted([i for i in items if i["lane"] == ln], key=lambda i: (i.get("start", 0), i.get("end", 7))):
             s0, e0 = it.get("start", 0), max(it.get("end", 7), it.get("start", 0) + 4)
-            yy = y + 4 + (k % 2) * 13
-            g.append(f'<rect x="{x(s0):.1f}" y="{yy}" width="{max(x(e0) - x(s0), 30):.1f}" height="12" rx="2" class="bar{" alt" if k % 2 else ""}"/>')
-            g.append(f'<text x="{x(s0) + 4:.1f}" y="{yy + 9}" class="sl2{" dk" if k % 2 else ""}">{E(str(it.get("id", "")))}</text>')
+            px0, px1 = x(s0), x(s0) + max(x(e0) - x(s0), 30)
+            if str(it.get("executor", "")).upper() == "HUMAN" and it.get("due") is not None and it["due"] - s0 <= 4:
+                it = dict(it, diamond=True)
+                px0 = x(it["due"]) - 5
+                px1 = px0 + 12 + 6 * len(str(it.get("id", "")))
+            for r, end in enumerate(rows_end):
+                if px0 >= end + 3:
+                    rows_end[r] = px1; place.append((it, r, px0, px1)); break
+            else:
+                rows_end.append(px1); place.append((it, len(rows_end) - 1, px0, px1))
+        packed[ln] = (place, max(len(rows_end), 1))
+    ys, y = {}, 22
+    for ln in lanes:
+        ys[ln] = y; y += 8 + 13 * packed[ln][1]
+    H = y + 22
+    g = []
+    for li, ln in enumerate(lanes):
+        if li % 2 == 0:
+            g.append(f'<rect x="0" y="{ys[ln]}" width="{Wd}" height="{8 + 13 * packed[ln][1]}" class="laneband"/>')
+    for d, name in ((0, b.get("today_label", "Today")), (7, "Day 7"), (30, "Day 30"), (60, "Day 60"), (90, "Day 90")):
+        g.append(f'<line x1="{x(d):.1f}" y1="16" x2="{x(d):.1f}" y2="{H - 22}" class="grid"/>')
+        g.append(f'<text x="{x(d):.1f}" y="12" class="td" text-anchor="{"end" if d >= horizon else "middle"}">{name}</text>')
+    for ln in lanes:
+        yb = ys[ln]
+        g.append(f'<text x="{lab - 8}" y="{yb + 4 + 6.5 * packed[ln][1] + 4}" class="tl" text-anchor="end">{E(ln[:22])}</text>')
+        for it, r, px0, px1 in packed[ln][0]:
+            yy = yb + 4 + 13 * r
+            ex_ = str(it.get("executor", "")).upper()
+            human = ex_ == "HUMAN"
+            cls = "bar alt" if human else ("bar ro" if ex_ == "AGENT" else "bar")
+            human = human or ex_ == "AGENT"
+            if it.get("diamond"):
+                cxd, cyd = px0 + 5, yy + 6
+                g.append(f'<path d="M{cxd - 6:.1f} {cyd} L{cxd:.1f} {cyd - 6} L{cxd + 6:.1f} {cyd} L{cxd:.1f} {cyd + 6} Z" class="bar alt"/>')
+                g.append(f'<text x="{cxd + 9:.1f}" y="{yy + 9}" class="sl2 dk">{E(str(it.get("id", "")))}</text>')
+                continue
+            g.append(f'<rect x="{px0:.1f}" y="{yy}" width="{px1 - px0:.1f}" height="12" rx="2" class="{cls}"/>')
+            g.append(f'<text x="{px0 + 4:.1f}" y="{yy + 9}" class="sl2{" dk" if human else ""}">{E(str(it.get("id", "")))}</text>')
+    ly = H - 8
+    g.append(f'<rect x="{lab}" y="{ly - 8}" width="10" height="8" class="bar"/><text x="{lab + 14}" y="{ly}" class="tl">agent, after approval</text>')
+    g.append(f'<rect x="{lab + 140}" y="{ly - 8}" width="10" height="8" class="bar ro"/><text x="{lab + 154}" y="{ly}" class="tl">agent, read-only</text>')
+    g.append(f'<rect x="{lab + 262}" y="{ly - 8}" width="10" height="8" class="bar alt"/><text x="{lab + 276}" y="{ly}" class="tl">only a person can do it (◆ = a dated decision)</text>')
     return f'<div class="blk swim" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{_caption(b, ctx)}</div>'
 
 

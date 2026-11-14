@@ -41,7 +41,7 @@ def have_browser():
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
-            p.chromium.launch().close()
+            render.launch_chromium(p).close()
         return True
     except Exception:
         return False
