@@ -1,0 +1,1263 @@
+{
+ "source": "https://openrouter.ai/api/v1/models",
+ "read": "2026-11-11",
+ "data": [
+  {
+   "id": "anthropic/claude-fable-5.1",
+   "pricing": {
+    "prompt": "0.00001",
+    "completion": "0.00005",
+    "web_search": "0.01",
+    "input_cache_read": "0.00000025",
+    "input_cache_write": "0.0000125",
+    "input_cache_write_1h": "0.00002"
+   },
+   "reasoning": {
+    "mandatory": true,
+    "supported_efforts": [
+     "max",
+     "xhigh",
+     "high",
+     "medium",
+     "low"
+    ],
+    "default_effort": "high"
+   }
+  },
+  {
+   "id": "anthropic/claude-haiku-5.5",
+   "pricing": {
+    "prompt": "0.0000001",
+    "completion": "0.0000005",
+    "web_search": "0.01",
+    "input_cache_read": "0.00000001",
+    "input_cache_write": "0.000000125",
+    "input_cache_write_1h": "0.0000002",
+    "overrides": [
+     {
+      "min_prompt_tokens": 100000,
+      "prompt": "0.0000005",
+      "completion": "0.0000025",
+      "input_cache_read": "0.00000005",
+      "input_cache_write": "0.000000625",
+      "input_cache_write_1h": "0.000001"
+     }
+    ]
+   },
+   "reasoning": {
+    "mandatory": false,
+    "supported_efforts": [
+     "max",
+     "xhigh",
+     "high",
+     "medium",
+     "low",
+     "none"
+    ],
+    "default_effort": "medium"
+   }
+  },
+  {
+   "id": "anthropic/claude-opus-5.5",
+   "pricing": {
+    "prompt": "0.000004",
+    "completion": "0.00002",
+    "web_search": "0.01",
+    "input_cache_read": "0.0000002",
+    "input_cache_write": "0.000005",
+    "input_cache_write_1h": "0.000008"
+   },
+   "reasoning": {
+    "mandatory": true,
+    "supported_efforts": [
+     "max",
+     "xhigh",
+     "high",
+     "medium",
+     "low"
+    ],
+    "default_effort": "high"
+   }
+  },
+  {
+   "id": "anthropic/claude-sonnet-5.5",
+   "pricing": {
+    "prompt": "0.000002",
+    "completion": "0.00001",
+    "web_search": "0.01",
+    "input_cache_read": "0.0000001",
+    "input_cache_write": "0.0000025",
+    "input_cache_write_1h": "0.000004"
+   },
+   "reasoning": {
+    "mandatory": true,
+    "supported_efforts": [
+     "max",
+     "xhigh",
+     "high",
+     "medium",
+     "low"
+    ],
+    "default_effort": "high"
+   }
+  },
+  {
+   "id": "deepseek/deepseek-v3.2",
+   "pricing": {
+    "prompt": "0.00000026",
+    "completion": "0.00000038",
+    "input_cache_read": "0.00000013"
+   },
+   "reasoning": {
+    "mandatory": false,
+    "default_enabled": false
+   }
+  },
+  {
+   "id": "deepseek/deepseek-v4.1-flash",
+   "pricing": {
+    "prompt": "0.000000051",
+    "completion": "0.000000567",
+    "input_cache_read": "0.000000018"
+   },
+   "reasoning": {
+    "mandatory": false,
+    "default_enabled": true,
+    "supported_efforts": [
+     "max",
+     "high",
+     "low",
+     "none"
+    ],
+    "default_effort": "high"
+   }
+  },
+  {
+   "id": "openai/gpt-6.1-sol",
+   "pricing": {
+    "prompt": "0.000002",
+    "completion": "0.00001",
+    "web_search": "0.01",
+    "input_cache_read": "0.0000001",
+    "input_cache_write": "0.0000025",
+    "overrides": [
+     {
+      "min_prompt_tokens": 272000,
+      "prompt": "0.000004",
+      "completion": "0.000015",
+      "input_cache_read": "0.0000002",
+      "input_cache_write": "0.000005"
+     }
+    ]
+   },
+   "reasoning": {
+    "mandatory": true,
+    "default_enabled": true,
+    "supported_efforts": [
+     "max",
+     "xhigh",
+     "high",
+     "medium",
+     "low"
+    ],
+    "default_effort": "medium"
+   }
+  },
+  {
+   "id": "qwen/qwen3.8-flash",
+   "pricing": {
+    "prompt": "0.00000015",
+    "completion": "0.00000047",
+    "input_cache_read": "0.000000016"
+   },
+   "reasoning": {
+    "mandatory": false,
+    "default_enabled": true,
+    "supports_max_tokens": true
+   }
+  },
+  {
+   "id": "x-ai/grok-4.7",
+   "pricing": {
+    "prompt": "0.000002",
+    "completion": "0.000006",
+    "web_search": "0.005",
+    "input_cache_read": "0.0000005",
+    "overrides": [
+     {
+      "min_prompt_tokens": 200000,
+      "prompt": "0.000004",
+      "completion": "0.000012",
+      "input_cache_read": "0.000001"
+     }
+    ]
+   },
+   "reasoning": {
+    "mandatory": true,
+    "default_enabled": true,
+    "supported_efforts": [
+     "xhigh",
+     "high",
+     "medium",
+     "low"
+    ],
+    "default_effort": "high"
+   }
+  }
+ ],
+ "endpoints_source": "https://openrouter.ai/api/v1/models/{route}/endpoints",
+ "endpoints": {
+  "anthropic/claude-fable-5.1": [
+   {
+    "provider_name": "Azure",
+    "tag": "azure",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00001",
+     "completion": "0.00005",
+     "input_cache_read": "0.00000025",
+     "input_cache_write": "0.0000125"
+    }
+   },
+   {
+    "provider_name": "Anthropic",
+    "tag": "anthropic",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00001",
+     "completion": "0.00005",
+     "input_cache_read": "0.00000025",
+     "input_cache_write": "0.0000125"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00001",
+     "completion": "0.00005",
+     "input_cache_read": "0.00000025",
+     "input_cache_write": "0.0000125"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00001",
+     "completion": "0.00005",
+     "input_cache_read": "0.00000025",
+     "input_cache_write": "0.0000125"
+    }
+   }
+  ],
+  "anthropic/claude-haiku-5.5": [
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000001",
+     "completion": "0.0000005",
+     "input_cache_read": "0.00000001",
+     "input_cache_write": "0.000000125"
+    }
+   },
+   {
+    "provider_name": "Claude Platform on AWS",
+    "tag": "claude-on-aws",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000001",
+     "completion": "0.0000005",
+     "input_cache_read": "0.00000001",
+     "input_cache_write": "0.000000125"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000001",
+     "completion": "0.0000005",
+     "input_cache_read": "0.00000001",
+     "input_cache_write": "0.000000125"
+    }
+   },
+   {
+    "provider_name": "Anthropic",
+    "tag": "anthropic",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000001",
+     "completion": "0.0000005",
+     "input_cache_read": "0.00000001",
+     "input_cache_write": "0.000000125"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000001",
+     "completion": "0.0000005",
+     "input_cache_read": "0.00000001",
+     "input_cache_write": "0.000000125"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/europe",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000011",
+     "completion": "0.00000055",
+     "input_cache_read": "0.000000011",
+     "input_cache_write": "0.0000001375"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000011",
+     "completion": "0.00000055",
+     "input_cache_read": "0.000000011",
+     "input_cache_write": "0.0000001375"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000011",
+     "completion": "0.00000055",
+     "input_cache_read": "0.000000011",
+     "input_cache_write": "0.0000001375"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/us-east-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000011",
+     "completion": "0.00000055",
+     "input_cache_read": "0.000000011",
+     "input_cache_write": "0.0000001375"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/eu-west-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000011",
+     "completion": "0.00000055",
+     "input_cache_read": "0.000000011",
+     "input_cache_write": "0.0000001375"
+    }
+   }
+  ],
+  "anthropic/claude-opus-5.5": [
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.00002",
+     "input_cache_read": "0.0000002",
+     "input_cache_write": "0.000005"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.00002",
+     "input_cache_read": "0.0000002",
+     "input_cache_write": "0.000005"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.00002",
+     "input_cache_read": "0.0000002",
+     "input_cache_write": "0.000005"
+    }
+   },
+   {
+    "provider_name": "Claude Platform on AWS",
+    "tag": "claude-on-aws",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.00002",
+     "input_cache_read": "0.0000002",
+     "input_cache_write": "0.000005"
+    }
+   },
+   {
+    "provider_name": "Anthropic",
+    "tag": "anthropic",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.00002",
+     "input_cache_read": "0.0000002",
+     "input_cache_write": "0.000005"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/eu-west-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000044",
+     "completion": "0.000022",
+     "input_cache_read": "0.00000022",
+     "input_cache_write": "0.0000055"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/us-east-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000044",
+     "completion": "0.000022",
+     "input_cache_read": "0.00000022",
+     "input_cache_write": "0.0000055"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000044",
+     "completion": "0.000022",
+     "input_cache_read": "0.00000022",
+     "input_cache_write": "0.0000055"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000044",
+     "completion": "0.000022",
+     "input_cache_read": "0.00000022",
+     "input_cache_write": "0.0000055"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/europe",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000044",
+     "completion": "0.000022",
+     "input_cache_read": "0.00000022",
+     "input_cache_write": "0.0000055"
+    }
+   },
+   {
+    "provider_name": "Anthropic",
+    "tag": "anthropic/fast",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000008",
+     "completion": "0.00004",
+     "input_cache_read": "0.0000004",
+     "input_cache_write": "0.00001"
+    }
+   }
+  ],
+  "anthropic/claude-sonnet-5.5": [
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Claude Platform on AWS",
+    "tag": "claude-on-aws",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Anthropic",
+    "tag": "anthropic",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/eu-west-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/us-east-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/europe",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   }
+  ],
+  "deepseek/deepseek-v3.2": [
+   {
+    "provider_name": "GMICloud",
+    "tag": "gmicloud/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000002088",
+     "completion": "0.0000003096",
+     "input_cache_read": "0.0000000216",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "SiliconFlow",
+    "tag": "siliconflow/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000259",
+     "completion": "0.0000008",
+     "input_cache_read": "0.00000014",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "DeepInfra",
+    "tag": "deepinfra/fp4",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000026",
+     "completion": "0.00000038",
+     "input_cache_read": "0.00000013",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "AtlasCloud",
+    "tag": "atlas-cloud/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000026",
+     "completion": "0.00000038",
+     "input_cache_read": "0.00000013",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Baidu",
+    "tag": "baidu/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000028",
+     "completion": "0.00000042",
+     "input_cache_read": "0.000000028",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "DigitalOcean",
+    "tag": "digitalocean",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.00000096",
+     "input_cache_read": "0.00000009",
+     "input_cache_write": null
+    }
+   }
+  ],
+  "deepseek/deepseek-v4.1-flash": [
+   {
+    "provider_name": "Relace",
+    "tag": "relace/fp4",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000006",
+     "completion": "0.0000005",
+     "input_cache_read": "0.000000005",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Morph",
+    "tag": "morph/fp8",
+    "status": -2,
+    "pricing": {
+     "prompt": "0.000000022",
+     "completion": "0.0000004",
+     "input_cache_read": "0.000000004",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "PrimeIntellect",
+    "tag": "primeintellect",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000039",
+     "completion": "0.0000012",
+     "input_cache_read": "0.0000000012",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Wafer",
+    "tag": "wafer/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000051",
+     "completion": "0.000000567",
+     "input_cache_read": "0.000000018",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "OpenInference",
+    "tag": "open-inference/fp4",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000007",
+     "completion": "0.0000008",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "InferenceNet",
+    "tag": "inference-net/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000103",
+     "completion": "0.0000006",
+     "input_cache_read": "0.000000008",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "InferenceNet",
+    "tag": "inference-net/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000103",
+     "completion": "0.0000006",
+     "input_cache_read": "0.000000008",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "DeepInfra",
+    "tag": "deepinfra/fp8/flex",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000112",
+     "completion": "0.000000336",
+     "input_cache_read": "0.00000000336",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Reka",
+    "tag": "reka",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000012",
+     "completion": "0.00000064",
+     "input_cache_read": "0.000000008",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "CoreWeave",
+    "tag": "coreweave/fp8",
+    "status": -2,
+    "pricing": {
+     "prompt": "0.00000013",
+     "completion": "0.00000065",
+     "input_cache_read": "0.000000002",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "AtlasCloud",
+    "tag": "atlas-cloud/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000135",
+     "completion": "0.00000054",
+     "input_cache_read": "0.0000000135",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "DeepInfra",
+    "tag": "deepinfra/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000014",
+     "completion": "0.00000042",
+     "input_cache_read": "0.0000000042",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "StreamLake",
+    "tag": "streamlake/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000147",
+     "completion": "0.000000588",
+     "input_cache_read": "0.00000000294",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "GMICloud",
+    "tag": "gmicloud/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000018",
+     "completion": "0.00000072",
+     "input_cache_read": "0.0000000036",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Wafer",
+    "tag": "wafer/mxfp4",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000019",
+     "completion": "0.00000065",
+     "input_cache_read": "0.000000012",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Cohere",
+    "tag": "cohere/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000195",
+     "completion": "0.00000066",
+     "input_cache_read": "0.000000003",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Novita",
+    "tag": "novita/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000195",
+     "completion": "0.00000078",
+     "input_cache_read": "0.0000000039",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "DeepInfra",
+    "tag": "deepinfra/fp8/priority",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000021",
+     "completion": "0.00000063",
+     "input_cache_read": "0.0000000063",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Fireworks",
+    "tag": "fireworks/spot",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000021",
+     "completion": "0.00000084",
+     "input_cache_read": "0.0000000042",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Alibaba",
+    "tag": "alibaba",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000021",
+     "completion": "0.00000084",
+     "input_cache_read": "0.000000021",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Mancer 2",
+    "tag": "mancer/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000002125",
+     "completion": "0.00000075",
+     "input_cache_read": "0.00000005",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "DigitalOcean",
+    "tag": "digitalocean",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000000225",
+     "completion": "0.0000009",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Makora",
+    "tag": "makora/fp8",
+    "status": -2,
+    "pricing": {
+     "prompt": "0.00000026",
+     "completion": "0.00000117",
+     "input_cache_read": "0.0000000058",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Crusoe",
+    "tag": "crusoe/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000029",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000007",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Google",
+    "tag": "google-vertex/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.00000003",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Baidu",
+    "tag": "baidu/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "BaseTen",
+    "tag": "baseten/us",
+    "status": -5,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000007",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Together",
+    "tag": "together",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "SiliconFlow",
+    "tag": "siliconflow/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Modal",
+    "tag": "modal",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.00000003",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "BaseTen",
+    "tag": "baseten",
+    "status": -5,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000007",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Parasail",
+    "tag": "parasail/fp8",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Fireworks",
+    "tag": "fireworks",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.000000006",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Venice",
+    "tag": "venice/fp8",
+    "status": -2,
+    "pricing": {
+     "prompt": "0.0000003",
+     "completion": "0.0000012",
+     "input_cache_read": "0.0000000075",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Parasail",
+    "tag": "parasail/fast",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000045",
+     "completion": "0.0000018",
+     "input_cache_read": "0.000000009",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Fireworks",
+    "tag": "fireworks/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000045",
+     "completion": "0.0000018",
+     "input_cache_read": "0.000000009",
+     "input_cache_write": null
+    }
+   }
+  ],
+  "openai/gpt-6.1-sol": [
+   {
+    "provider_name": "OpenAI",
+    "tag": "openai/flex",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000001",
+     "completion": "0.000005",
+     "input_cache_read": "0.00000005",
+     "input_cache_write": "0.00000125"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure",
+    "status": -5,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "OpenAI",
+    "tag": "openai",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.00001",
+     "input_cache_read": "0.0000001",
+     "input_cache_write": "0.0000025"
+    }
+   },
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/us-east-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/eu",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "Azure",
+    "tag": "azure/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.000011",
+     "input_cache_read": "0.00000011",
+     "input_cache_write": "0.00000275"
+    }
+   },
+   {
+    "provider_name": "OpenAI",
+    "tag": "openai/fast",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.00002",
+     "input_cache_read": "0.0000002",
+     "input_cache_write": "0.000005"
+    }
+   },
+   {
+    "provider_name": "OpenAI",
+    "tag": "openai/ultrafast",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000012",
+     "completion": "0.00006",
+     "input_cache_read": "0.0000006",
+     "input_cache_write": "0.000015"
+    }
+   }
+  ],
+  "qwen/qwen3.8-flash": [
+   {
+    "provider_name": "Alibaba",
+    "tag": "alibaba/us-east-1",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000015",
+     "completion": "0.00000047",
+     "input_cache_read": "0.000000016",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "Alibaba",
+    "tag": "alibaba",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.00000015",
+     "completion": "0.00000047",
+     "input_cache_read": "0.000000016",
+     "input_cache_write": "0.0000002"
+    }
+   }
+  ],
+  "x-ai/grok-4.7": [
+   {
+    "provider_name": "Amazon Bedrock",
+    "tag": "amazon-bedrock/global",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.000006",
+     "input_cache_read": "0.0000005",
+     "input_cache_write": "0"
+    }
+   },
+   {
+    "provider_name": "xAI",
+    "tag": "xai/zdr",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.000006",
+     "input_cache_read": "0.0000005",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "xAI",
+    "tag": "xai",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000002",
+     "completion": "0.000006",
+     "input_cache_read": "0.0000005",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "xAI",
+    "tag": "xai/zdr/us",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.0000022",
+     "completion": "0.0000066",
+     "input_cache_read": "0.00000055",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "xAI",
+    "tag": "xai/zdr/priority",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.000012",
+     "input_cache_read": "0.000001",
+     "input_cache_write": null
+    }
+   },
+   {
+    "provider_name": "xAI",
+    "tag": "xai/priority",
+    "status": 0,
+    "pricing": {
+     "prompt": "0.000004",
+     "completion": "0.000012",
+     "input_cache_read": "0.000001",
+     "input_cache_write": null
+    }
+   }
+  ]
+ }
+}

@@ -37,6 +37,14 @@ BANNED = [
     "game changer", "unlock", "elevate", "seamless", "empower", "in today's", "digital landscape",
     "next level", "world-class", "best-in-class", "passionate about", "thought leader",
     "lorem ipsum", "placeholder", "tbd", "todo", "insert ", "[name]", "xx%",
+    # a production note, not reader text: the Nov 10 replays printed "The renderer adds the
+    # ten-row heatmap above these notes" in three of four audits after the card named it
+    "the renderer",
+    # and a page fixer that could not reach an exam row's reason wrote, on Nov 12, "The heatmap
+    # above still shows the earlier wording for these two rows until the score source is
+    # corrected; this note governs" (both blind graders marked it). Only the phrases no reader
+    # copy uses: "score source" can name where a score comes from.
+    "this note governs", "still shows the earlier",
 ]
 GENERIC_ACCEPTANCE = re.compile(r"^(done|complete|completed|improved|better|launched|live|finished)\.?$", re.I)
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -91,6 +99,34 @@ def _digits(s: str) -> str:
     return re.sub(r"\D", "", s)[-10:]
 
 
+def _urls_of(obj) -> str:
+    return " ".join(d["url"] for d in M.walk(obj) if isinstance(d.get("url"), str))
+
+
+def _where_text(found, pages: list[dict], actions: list[dict]) -> str:
+    """Where each found string sits: 'page 4; page 19; action register A8'. The fix loop reads
+    this to send the item to the writer who owns that text (pages 1-2 the synthesis model,
+    pages 3-19 the fix model, the register the actions model)."""
+    lows = [str(f).lower() for f in found if str(f).strip()]
+    spots = [f"page {p.get('n')}" for p in pages
+             if any(f in (M.text_of(p) + " " + _urls_of(p)).lower() for f in lows)]
+    ids = [str(a.get("id", "?")) for a in actions
+           if any(f in (M.text_of(a) + " " + _urls_of(a)).lower() for f in lows)]
+    if ids:
+        spots.append("action register " + ", ".join(ids[:8]))
+    return "; ".join(spots) or "unlocated"
+
+
+def _where_refs(refs, pages: list[dict], actions: list[dict]) -> str:
+    """Where each evidence id is cited, in the same form as _where_text."""
+    want = set(refs)
+    spots = [f"page {p.get('n')}" for p in pages if want & set(M.refs_in(p))]
+    ids = [str(a.get("id", "?")) for a in actions if want & set(M.refs_in(a))]
+    if ids:
+        spots.append("action register " + ", ".join(ids[:8]))
+    return "; ".join(spots) or "unlocated"
+
+
 def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard",
                do_not_print: list[str] | None = None, allowed_phones: list[str] | None = None) -> Report:
     T = TIERS[tier]
@@ -119,6 +155,11 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
                       if b.get("type") not in M.ALL_BLOCKS]
     R.add("G04", "Only known block types", "structure", not unknown_blocks,
           f"unknown block types {unknown_blocks}; use one of {sorted(M.ALL_BLOCKS)}")
+    if ledger is not None:
+        odd = M.off_shape(r["id"] for r in ledger.rows)
+        R.add("G05", "Every ledger id can be cited in a table", "structure", not odd,
+              f"ledger ids {odd[:10]} lack the id shape (V-E012, E-001); a table cell reads ids by that "
+              "shape, so these print as plain words that no check counts. Rename them in the ledger")
 
     # ---------- G10 evidence linkage ----------
     all_refs = M.refs_in(pages) + M.refs_in(actions) + M.refs_in(audit.get("exams", {}))
@@ -126,15 +167,22 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     if ledger is not None:
         dangling = sorted(r for r in uniq if not ledger.has(r))
         R.add("G10", "Every evidence ref exists in the ledger", "evidence", not dangling,
-              f"{len(dangling)} refs not in ledger: {dangling[:12]} — cite real ledger ids only")
+              f"{len(dangling)} refs not in ledger: {dangling[:12]} — cite real ledger ids only "
+              f"(cited on {_where_refs(dangling, pages, actions)})")
         cited = [ledger.get(r) for r in uniq if ledger.get(r)]
         wrong_person = [c["id"] for c in cited if c["kind"] == "ambiguous" or c["match"] in ("AMBIGUOUS", "NAMESAKE", "REJECTED")]
-        # ambiguous rows may be cited only on the identity page
+        # A namesake row may be cited where namesakes are the subject: the identity and risks
+        # pages, and the exams page and exam rows, whose entity score it can explain (the replay
+        # found a fair use there: an exam row cited the namesake to justify a score of 1).
+        # Anywhere else it reads as proof: a page-2 card, another page, an action. Citing it on
+        # the identity page as well never makes that use safe.
         id_page = M.page_by_type(audit, "identity") or {}
-        allowed = set(M.refs_in(id_page)) | set(M.refs_in(M.page_by_type(audit, "risks") or {}))
-        leak = sorted(set(wrong_person) - allowed)
+        risks_page = M.page_by_type(audit, "risks") or {}
+        leak_on = [p for p in pages if p is not id_page and p is not risks_page and p.get("type") != "exams"]
+        leak = sorted(set(wrong_person) & (set(M.refs_in(leak_on)) | set(M.refs_in(actions))))
         R.add("G11", "Namesake/ambiguous rows cited only on identity or risks pages", "evidence", not leak,
-              f"ambiguous/namesake evidence used as proof: {leak[:10]}")
+              f"ambiguous/namesake evidence used as proof: {leak[:10]} "
+              f"(cited on {_where_refs(leak, leak_on, actions)})")
         with_url = sum(1 for c in cited if c["kind"] == "evidence" and c["url"].startswith("http"))
         ev_cited = sum(1 for c in cited if c["kind"] == "evidence")
         share = with_url / ev_cited if ev_cited else 0
@@ -155,7 +203,7 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     for i, c in enumerate(cards, 1):
         probs = []
         if c.get("badge") not in M.BADGES:
-            probs.append("badge")
+            probs.append(f"badge {c.get('badge')!r} is not one of {', '.join(sorted(M.BADGES))}")
         if M.words(c.get("title", "")) < 4:
             probs.append("title<4 words")
         if M.words(c.get("body", "")) < 25:
@@ -257,10 +305,13 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
         soft = [f for f in flags if f["level"] == "WARN"]
         R.add("G53", "Each row records its anchor reason", "exam", not soft,
               "; ".join(f"row {f['row']}: {f['msg']}" for f in soft[:6]), hard=False)
-        typed = set(int(x) for x in re.findall(r"\b(\d{1,3})\s*/\s*100\b", text))
+        # "61/100", "61 of 100" and "61 out of 100" are all a score out of 100. Only a complete
+        # exam has one: with identity HOLD there is no number, and an incomplete exam's subtotal
+        # is out of what was checked, never out of 100.
+        typed = set(int(x) for x in re.findall(r"\b(\d{1,3})\s*(?:/|of|out of)\s*100\b", text, re.I))
         sep = {int(re.sub(r"\D", "", str(x.get("value", "")) or "-1") or -1)
                for x in (audit.get("exams") or {}).get("separate", []) if re.search(r"\d", str(x.get("value", "")))}
-        stray = typed - {res["total"], res["known_subtotal"]} - sep
+        stray = typed - ({res["total"]} if res["status"] == "COMPLETE" else set()) - sep
         R.add("G54", "No hand-typed score that disagrees with the arithmetic", "exam", not stray,
               f"text shows {sorted(stray)}/100 but the rows sum to {res['known_subtotal']}; let the renderer print scores")
     else:
@@ -308,29 +359,37 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
           "and name who approves in human_gate, or set pre_approved to the recorded approval")
 
     # ---------- G70 privacy and claims ----------
-    emails = sorted({e for e in EMAIL.findall(text) if e.lower() not in ALLOWED_EMAILS})
+    # Everything the client receives is scanned: page text, the action register (it ships as a
+    # CSV and as to-dos), and every address a block prints, such as a QR code's URL.
+    def _printed_urls(obj) -> str:
+        return " ".join(d["url"] for d in M.walk(obj) if isinstance(d.get("url"), str))
+    shipped = " ".join([text, M.text_of(actions), _printed_urls(pages), _printed_urls(actions)])
+    emails = sorted({e for e in EMAIL.findall(shipped) if e.lower() not in ALLOWED_EMAILS})
     R.add("G70", "No personal email addresses in the client edition", "privacy", not emails,
-          f"remove {emails}")
+          f"remove {emails} (found on {_where_text(emails, pages, actions)})" if emails else "")
     # A local business's own listed numbers are fair game (name-address-phone checks need them);
     # list them in brief.allowed_phones. Any other number is a private one.
     ok_phones = {_digits(p) for p in (allowed_phones or [])}
-    phones = [p for p in PHONE.findall(text) if _digits(p) not in ok_phones]
+    phones = [p for p in PHONE.findall(shipped) if _digits(p) not in ok_phones]
     R.add("G71", "No phone numbers except the business's own listed numbers", "privacy", not phones,
-          f"remove {phones[:5]}, or add the business's own listed numbers to brief.allowed_phones")
-    sec = sorted(set(m.lower() for m in SECRETS.findall(text)))
-    R.add("G72", "No credentials or internal agent receipts", "privacy", not sec, f"remove {sec}")
+          f"remove {phones[:5]} (found on {_where_text(phones[:5], pages, actions)}), or add the business's "
+          "own listed numbers to brief.allowed_phones" if phones else "")
+    sec = sorted(set(m.lower() for m in SECRETS.findall(shipped)))
+    R.add("G72", "No credentials or internal agent receipts", "privacy", not sec,
+          f"remove {sec} (found on {_where_text(sec, pages, actions)})" if sec else "")
     # The brief's do-not-print list: confidential numbers, embargoed titles, private names.
     # Cheap models leaked exactly these in the Oct 25 bake-off. The message never repeats
     # the strings, because gate.json travels further than the brief.
     dnp = [s.strip().lower() for s in (do_not_print or []) if isinstance(s, str) and len(s.strip()) >= 3]
     hits_dnp = []
     for p in pages:
-        pt = M.text_of(p).lower()
+        pt = (M.text_of(p) + " " + _printed_urls(p)).lower()
         hits_dnp += [(p.get("n"), j) for j, s in enumerate(dnp, 1) if s in pt]
-    act_text = M.text_of(actions).lower()
+    act_text = (M.text_of(actions) + " " + _printed_urls(actions)).lower()
     hits_dnp += [("actions", j) for j, s in enumerate(dnp, 1) if s in act_text]
     R.add("G74", "Nothing on the brief's do-not-print list appears", "privacy", not hits_dnp,
-          "brief.do_not_print items found — " + ", ".join(f"item {j} on page {n}" for n, j in hits_dnp[:8])
+          "brief.do_not_print items found — " + ", ".join(f"item {j} in the action register" if n == "actions"
+                                                          else f"item {j} on page {n}" for n, j in hits_dnp[:8])
           + "; remove them and do not paraphrase them")
     if ledger is not None:
         risky = []
@@ -373,8 +432,27 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
     for n in over:
         d = detail.get(str(n)) or {}
         if d:
-            parts.append(f"page {n} runs {round(100 * d.get('over_pct', 0))}% past the page — cut about "
-                         f"{d.get('cut_words', '?')} words or shrink a visual; tallest: {', '.join(d.get('tallest', []))}")
+            by = f"{round(100 * d.get('over_pct', 0))}%" + (f" ({d['over_px']}px)" if d.get("over_px") else "")
+            if not d.get("tallest") and d.get("fixed"):
+                parts.append(f"page {n} runs {by} past the page, and every block on it is drawn by the renderer "
+                             f"({', '.join(d['fixed'])}), so no page writer can make room on it")
+                continue
+            # The move that clears the page comes first. In the Nov 10 pilot, with it in a parenthesis
+            # after "cut about N words", four cheap-model rounds cut words from one-line table rows
+            # (page 18: 76 -> 54 -> 44px over) and only the rung-up round took the move.
+            opts = d.get("options") or []
+            cut = f"cut about {d.get('cut_words', '?')} words from your own blocks"
+            if opts:
+                msg = (f"page {n} runs {by} past the page. {'Either of these' if len(opts) > 1 else 'This'} clears "
+                       f"it for certain: {'; or '.join(opts)}. Otherwise {cut}, though words cut from a table "
+                       "whose rows are one line each free no height")
+            else:
+                msg = f"page {n} runs {by} past the page — {cut}, or drop or move one of them"
+            msg += f"; your tallest: {', '.join(d.get('tallest', []))}"
+            if d.get("fixed"):
+                msg += (f"; also on this page, drawn by the renderer and not in your page object, so you cannot "
+                        f"change it: {', '.join(d['fixed'])}")
+            parts.append(msg)
         else:
             parts.append(f"page {n} overflows")
     R.add("R02", "No page overflows (text cut off)", "render", not over,
@@ -387,6 +465,14 @@ def gate_render(render_report: dict, expected_qr: str | None = None) -> Report:
           hard=False)
     R.add("R04", "PDF carries clickable source links", "render", render_report.get("links", 0) >= 30,
           f"only {render_report.get('links', 0)} link annotations", hard=False)
+    gone = render_report.get("missing_images")
+    if gone is not None:   # render reports from before Nov 10 do not list them
+        have = render_report.get("assets_available") or []
+        R.add("R06", "No image prints as an empty box", "render", not gone,
+              "; ".join(f"page {g['page']} prints an empty IMAGE NEEDED box for {g['src']}" for g in gone)
+              + ": no such file is in assets/. Point the block at a file that exists "
+              + (f"({', '.join(have)})" if have else "(there are none: use another visual)")
+              + " or replace it with another visual; never invent a file name")
     if expected_qr:
         got = render_report.get("qr_decoded")
         if isinstance(got, str) and got.startswith("UNCHECKED"):

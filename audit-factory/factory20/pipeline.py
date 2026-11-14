@@ -91,6 +91,12 @@ def prompt(stage: str, run: pathlib.Path, ledger: Ledger, extra: dict | None = N
     brief = json.loads((run / "brief.json").read_text()) if (run / "brief.json").exists() else {}
     head = [f"# BRIEF\n{json.dumps(brief, ensure_ascii=False, indent=1)}",
             f"# EVIDENCE LEDGER (pack)\n{ledger.pack(include_notes=stage in ('identity', 'score', 'synthesis'))}"]
+    if stage in ("synthesis", "pages", "fix"):
+        # The cards ask for "real captured image only", but until Nov 10 no writer was told which
+        # files exist, so all four pilot rebuilds put an invented screenshot on the cover.
+        head.append("# ASSETS (the only image files there are: a photo or screenshot block may use one of "
+                    "these and nothing else; with none listed, use another visual)\n"
+                    + json.dumps(render.assets_available(run, brief), ensure_ascii=False))
     decided = [f"# {name.upper()} (already decided — stay consistent)\n{(run / f'{name}.json').read_text()}"
                for name in ("identity", "score", "synthesis", "pages", "actions")
                if (run / f"{name}.json").exists() and name != stage]
@@ -135,13 +141,21 @@ def check_review(obj, ledger):
     return probs
 
 
-def check_fix(obj, ledger):
-    """A fix returns only the pages it changed, each a full page object for pages 3-19."""
-    pages = obj.get("pages", [])
-    if not pages:
-        return ["return the pages you changed under 'pages' (at least one)"]
+def check_fix(obj, ledger, must: frozenset | set = frozenset()):
+    """A fix returns only the pages it changed, each a full page object for pages 3-19. An empty
+    list is an answer when nothing on pages 3-19 can clear the list (a ledger-level warning such
+    as G12). Rejecting it, as the kit did until Nov 10, bought a retry and then a bigger model to
+    say the same thing, or pushed the writer to swap in citations that do not support the claim.
+    `must` holds the pages 3-19 that a FAIL in the list names: then an empty list is no answer,
+    and the writer hears so and tries again inside the stage instead of spending a whole round."""
+    if not isinstance(obj.get("pages"), list):
+        return ["return the pages you changed under 'pages' (an empty list if no page can clear it)"]
+    pages = obj["pages"]
     bad = [p.get("n") for p in pages if p.get("n") not in range(3, 20)]
     probs = [f"fix may only return pages 3-19; got {bad}"] if bad else []
+    if not pages and must:
+        probs.append(f"the fix list holds a FAIL on page {', '.join(map(str, sorted(must)))}: return "
+                     "each such page changed so the FAIL clears")
     probs += [f"unknown evidence id {x}" for x in _ids_missing(pages, ledger)][:15]
     return probs
 
@@ -150,6 +164,12 @@ CHECKS = {"identity": check_identity, "score": check_score, "synthesis": check_s
           "pages": check_pages, "actions": check_actions}
 MAX_FIX_ROUNDS = 3
 FRONT_GATES = {"G20", "G21", "G22", "G24"}
+# Gates on the action register. Until Nov 10 no fix path could revise the register, so an item
+# from these gates, or a privacy hit inside an action, stayed open through every fix round.
+ACTION_GATES = {"G60", "G61", "G62", "G63", "G64", "G65"}
+# Failures no fix-loop writer can clear (structure, identity and score stages, page count): a
+# bigger model on pages or the register would only pay for the same answer.
+NO_WRITER = {"G01", "G02", "G05", "G50", "G51", "G52", "G53", "G54", "R01"}
 NOT_THE_WRITERS = {"G81"}   # the preparer's photo comes from the brief and assets, not from a model
 # Pages 3-19 come back in four calls, not one. A real audit's pages run about 19,000 output
 # tokens (measured on the Nov 4 clean blind run), more than one reply may carry; four
@@ -191,46 +211,402 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
                   if c["status"] != "PASS" and not c["msg"].startswith("QR not checked")]
     if review:
         items += [{"from": "review", "id": f.get("id"), "status": "FAIL" if f.get("severity") in ("S0", "S1") else "WARN",
-                   "page": f.get("page"), "msg": f"{f.get('problem', '')} Fix: {f.get('fix', '')}"}
+                   "page": f.get("page"), "where": f.get("where"), "msg": f"{f.get('problem', '')} Fix: {f.get('fix', '')}"}
                   for f in review.get("findings", []) if f.get("severity") in ("S0", "S1", "S2")]
     return items
 
 
-def _front(item: dict) -> bool:
-    if item.get("id") in FRONT_GATES or item.get("page") in (1, 2):
+# "page 7" is one page; only the plural lists ("pages [2, 7]", "pages 1, 2 and 18") or ranges
+# ("pages 5-8"). A number never runs into a longer one ("page 100" is no page), and a joiner
+# counts only when a number follows it, so "page 7 and 12 words" is page 7.
+PAGE_ONE = re.compile(r"\bpage\s+(\d{1,2})(?![\d%])(?:[-–](\d{1,2})(?![\w%]))?", re.I)
+# A range end is never a percentage ("p5-10% claim"). After "pages" or "pp" every list item is a
+# page ("Pages 5 and 10 both say", "pp. 5, 8 tables"). After a single "p" a later item may be a
+# count ("p5, 3 cards"); _single_p decides, and such a page is routed but never required.
+_RANGE_END = r"(?:\s*(?:[-–]|to)\s*\d{1,2}(?![\w%]))?"
+_PAGE_LIST = r"(\d{1,2}(?![\d%])" + _RANGE_END + r"(?:\s*(?:,|and|&)\s*\d{1,2}(?![\w%])" + _RANGE_END + r")*)"
+PAGE_LIST = re.compile(r"\bpages\s+\[?" + _PAGE_LIST, re.I)
+RANGE = re.compile(r"(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?", re.I)
+# a review finding's where field also says "p16 headline", "pp. 5-8", "pg 5" and "cover headline"
+WHERE_PAGES = re.compile(r"\bpp\.?\s?" + _PAGE_LIST, re.I)
+WHERE_PAGE = re.compile(r"\b(?:p|pg)\.?\s?" + _PAGE_LIST, re.I)
+WHERE_COVER = re.compile(r"(?:(?:^|[;,(]\s*)|\bthe\s+)cover\b(?!\s+(?:letter|image|photo|of)\b)", re.I)
+# what follows a later number in a single "p" list: a unit, which always counts ("10 %", "14 px", "12
+# pt", "3 of 4", but not "of 20", the page total: "p3 and 12 of 20" names page 12); a bare "second"
+# (mostly an ordinal); or a time word ("3 days", "2 week sprint"), a bare "of", a compound ("3-card
+# row") or a page-copy noun ("3 cards", "2 quotes", "3 more")
+COUNT_AFTER = re.compile(
+    r"\s*(?:(?P<unit>%|p[xt]s?\b|percent\b|of\s+(?!20\b)\d)"
+    r"|(?P<second>second)\b|(?:second|minute|hour|day|week|month|year|time)s?\b"
+    r"|of\b|-[a-z]|(?:card|table|row|word|line|item|block|bar|chart|graph|quote|bullet|point|stat|sentence|"
+    r"paragraph|link|image|photo|logo|mention|review|post|video|clip|section|tile|column|heading|step|chip|"
+    r"source|kpi)s?\b|box(?:es)?\b|more\b)", re.I)
+
+
+def _a_count(m: re.Match | None, n: int, before: int) -> bool:
+    """Whether a later number n of a single "p" list counts something instead of naming a page, from
+    m, COUNT_AFTER matched on the words after it. A unit always counts ("p5, 10 %", "p5 and 14 px",
+    "p2, 3 of 4 cards"). Anything else counts only when n is no larger than the page before it ("p5,
+    3 cards", "p5, 3 card titles", "p18, 2 week sprint"), so "p2 and 5 cards", "p2 and 5 days" and
+    "p2 and 5 of the audit" are two pages each: a lost page loses its writer, a routed extra one
+    costs at most a call. A bare "second" counts only after 1, since it is mostly an ordinal ("p5, 3
+    second paragraphs" is two pages; "p5, 1 second clip" is a count). Any other word keeps n a page
+    ("p2 and 5 deks"). Still read as pages, by choice: a count on pages 1-2 ("p2, 3 cards"), whose
+    number is nearly always larger; and the smaller page of an unordered list ("p12 and 2 sections")
+    is read as a count (eighth review read, V3)."""
+    if m is None:
+        return False
+    if m["unit"]:
         return True
-    return bool(re.search(r"\bpages? \[?([12])\b|\bpage 2\b|\bp[12]:", item.get("msg") or ""))
+    if n > before:
+        return False
+    if m["second"]:
+        return n == 1
+    return True
+
+
+def _single_p(text: str) -> tuple[set[int], set[int]]:
+    """The pages a single "p" or "pg" list names in a where field, as (first, later): "p2 and 5
+    deks" is ({2}, {5}). A later item that counts something ends the list ("p5, 3 cards" is ({5},
+    set())). Only the first is certain, so a later page is routed but not required: required, a
+    count read as page 3 ("p2, 3 insight cards") refused the writer's honest empty answer four
+    times and failed the round (Nov 12, seventh review read)."""
+    first: set[int] = set()
+    later: set[int] = set()
+    for m in WHERE_PAGE.finditer(text):
+        before = 0
+        for k, it in enumerate(RANGE.finditer(m.group(1))):
+            a = int(it.group(1))
+            b = int(it.group(2)) if it.group(2) else a
+            pages = set(range(a, b + 1)) if a <= b else {a}
+            if k and _a_count(COUNT_AFTER.match(text, m.start(1) + it.end()), a, before):   # no slice: linear
+                break
+            (later if k else first).update(pages)
+            before = max(pages)
+    return first, later
+
+
+def _page_numbers(text: str, where: bool = False, sure: bool = False) -> set[int]:
+    """Page numbers a text names: "page 7", "Pages [2, 7]", "pages 5-8", "pages 1, 2 and 18", "p7:".
+    With where=True also the short forms a review's where field uses ("p16", "pp. 5-8", "cover");
+    with sure=True, of a single "p" list only its first page (see _single_p)."""
+    def span(a: str, b: str) -> set[int]:
+        return set(range(int(a), int(b) + 1)) if b and int(a) <= int(b) else {int(a)}
+    found = {n for a, b in PAGE_ONE.findall(text) for n in span(a, b)}
+    for grp in PAGE_LIST.findall(text):
+        found |= {n for a, b in RANGE.findall(grp) for n in span(a, b)}
+    found |= {int(n) for n in re.findall(r"\bp(\d{1,2}):", text)}
+    if where:
+        for grp in WHERE_PAGES.findall(text):
+            found |= {n for a, b in RANGE.findall(grp) for n in span(a, b)}
+        first, later = _single_p(text)
+        found |= first if sure else first | later
+        if WHERE_COVER.search(text):
+            found.add(1)
+    return {n for n in found if 1 <= n <= 20}
+
+
+def _pages_named(item: dict) -> set[int]:
+    """Every page number an open item names: its page field, the pages its message names, and the
+    pages a review finding's where field lists. Until Nov 12 the where field was read only for the
+    register, so "p5 'What moves the number'; p10 Trust row; p18 Days 1-7" reached none of them."""
+    found = _page_numbers(item.get("msg") or "") | _page_numbers(str(item.get("where") or ""), where=True)
+    if isinstance(item.get("page"), int):
+        found.add(item["page"])
+    return {n for n in found if 1 <= n <= 20}
+
+
+def _pages_required(item: dict) -> set[int]:
+    """The pages an open item names for certain, which a FAIL must change: _pages_named without the
+    later items of a single "p" list, which may be counts. A required page with nothing to fix
+    makes the writer fail; a routed one costs at most one more writer call."""
+    found = _page_numbers(item.get("msg") or "") | _page_numbers(str(item.get("where") or ""), where=True, sure=True)
+    if isinstance(item.get("page"), int):
+        found.add(item["page"])
+    return {n for n in found if 1 <= n <= 20}
+
+
+def _front(item: dict) -> bool:
+    """Pages 1-2 belong to the synthesis model."""
+    if "route" in item:
+        return item["route"]["front"]
+    return item.get("id") in FRONT_GATES or bool(_pages_named(item) & {1, 2})
+
+
+def _acts(item: dict) -> bool:
+    """The action register belongs to the actions model: every action-gate item, any gate item the
+    gates locate in the register ("action register A8"), and a review finding whose `where` names
+    the register or an action id, or that _located finds in the register. A review's other free
+    text is not read: "register the domain" is a page finding."""
+    if "route" in item:
+        return item["route"]["acts"]
+    if item.get("from") == "review":
+        return bool(re.search(r"\bregister\b|\bactions?\b|\bA\d{1,3}\b", str(item.get("where") or ""), re.I))
+    if item.get("id") in ACTION_GATES:
+        return True
+    return bool(re.search(r"action register", str(item.get("msg") or ""), re.I))
+
+
+def _score(item: dict) -> bool:
+    """An exam row's reason belongs to the score model: it lives in score.json, and the page only
+    draws the row's name, score and evidence ids. Until Nov 12 nothing could revise a reason, so a
+    review finding against one went to the page writer, which printed a note about its own page."""
+    if "route" in item:
+        return item["route"]["score"]
+    return item.get("from") == "review" and bool(EXAM_ROW.search(str(item.get("where") or "")))
+
+
+# "exam row 4 'why'", "heatmap rows 4 and 7": a where field that names an exam row, not just the
+# word score ("p5 score callout" is page copy)
+EXAM_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[^;]{0,40}?\brows?\s+\d{1,2}\b|"
+                      r"\b(?:exams?|heatmap|brand\s+authority|score)\s+rows?\b", re.I)
+# page copy a where segment can name beside the exam: "p5 callout under the heatmap" is the
+# callout's, not a row's ("exam table" is the exam itself)
+PAGE_COPY = re.compile(r"\b(?:callout|dek|headline|card|caption|note|title|(?<!exam\s)table)s?\b", re.I)
+# a segment that names page copy and a row outright ("p5 callout beside heatmap row 4", "exam row 4
+# note") goes to both writers
+EXPLICIT_ROW = re.compile(r"\b(?:exams?|heatmap|brand\s+authority)\b[\s,]*(?:table\s+)?rows?\s+\d{1,2}\b", re.I)
+
+
+def _back(item: dict) -> bool:
+    """Pages 3-19 belong to the fix model, including an item that also names a front page.
+    An item that names no page and lives only in the register or an exam row is not sent here:
+    the fix model returns pages and cannot clear it. Nor is one that names only page 20: code
+    builds that page whole, so no writer can change it, and a rung-up round on it would pay for
+    nothing."""
+    if "route" in item:
+        return item["route"]["back"]
+    named = _pages_named(item)
+    if any(3 <= n <= 19 for n in named):
+        return True
+    if named and named <= {20}:
+        return False
+    return not _front(item) and not _acts(item) and not _score(item)
+
+
+# A review finding quotes the words it faults. Quotes are read from its problem, never from its fix
+# (the fix quotes the new wording). An apostrophe inside a word ("the owner's") neither opens nor
+# ends a quote, so 'The owner's reviews ...' is read whole.
+QUOTE_RE = re.compile(r"(?<![\w'’])['‘]((?:[^'‘’\n]|(?<=\w)['’](?=\w)){12,}?)['’](?!\w)|[\"“]([^\"“”\n]{12,}?)[\"”]")
+# "Four pages say ...", "across the pages": the finding covers pages of this audit it does not
+# number. "all 20 pages of her site" is about something else.
+_ELSEWHERE = (r"(?!\s+of\s+(?:(?:her|his|the|their|its|this|that|a)\s+)?"
+              r"(?:site|website|web\s*site|reviews?|results|google|search|book|blog)\b)")
+SPANS_PAGES = re.compile(r"\b(?:two|three|four|five|six|seven|eight|nine|ten|several|many|all|every|each|1?\d)\s+"
+                         r"(?:other\s+)?pages\b" + _ELSEWHERE + r"|\bevery page\b" + _ELSEWHERE +
+                         r"|\bacross (?:the )?pages\b", re.I)
+
+
+def _sweeps(msg: str) -> bool:
+    """A finding covers pages it does not number: "Four pages say ...", or a fix that says
+    "everywhere" (in the problem, "everywhere" is as likely to mean the web)."""
+    fix = msg.split(" Fix: ", 1)[1] if " Fix: " in msg else ""
+    return bool(SPANS_PAGES.search(msg) or re.search(r"\beverywhere\b", fix, re.I))
+
+
+def _drawn(run_dir: pathlib.Path) -> dict[str, set[int]]:
+    """The pages code draws from another writer's file: the exams page (its heatmap shows the score
+    file's rows) and the plan page (its swimlane shows the register)."""
+    p = run_dir / "pages.json"
+    pages = json.loads(p.read_text()).get("pages", []) if p.exists() else []
+    return {"row": {x["n"] for x in pages if x.get("type") == "exams"},
+            "action": {x["n"] for x in pages if x.get("type") == "plan"}}
+
+
+def _norm(s: str) -> str:
+    s = s.replace("**", "").translate(str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', " ": " "}))
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def _strings(o) -> list[str]:
+    if isinstance(o, str):
+        return [o]
+    if isinstance(o, dict):
+        return [s for v in o.values() for s in _strings(v)]
+    if isinstance(o, list):
+        return [s for v in o for s in _strings(v)]
+    return []
+
+
+def _quoted(item: dict) -> list[str]:
+    """The words a review finding quotes from the audit, normalized, each at least three words and
+    12 characters; a quote cut with an ellipsis counts as its pieces."""
+    problem = (item.get("msg") or "").split(" Fix: ", 1)[0]
+    out: list[str] = []
+    for m in QUOTE_RE.finditer(problem):
+        for frag in re.split(r"\.\.\.|…", m.group(1) or m.group(2)):
+            frag = _norm(frag).strip(" .,;:")
+            if len(frag) >= 12 and len(frag.split()) >= 3 and frag not in out:
+                out.append(frag)
+    return out
+
+
+def _texts(run_dir: pathlib.Path) -> list[tuple[str, object, str]]:
+    """Every text a fix-loop writer owns, normalized: ("page", n) for pages 1-19, ("action", id)
+    for the register, ("row", n) for each Brand Authority row's reason."""
+    def load(name: str) -> dict:
+        p = run_dir / f"{name}.json"
+        return json.loads(p.read_text()) if p.exists() else {}
+    out = [("page", p["n"], _norm(" ".join(_strings(p))))
+           for src in (load("synthesis"), load("pages")) for p in src.get("pages", []) if isinstance(p.get("n"), int)]
+    out += [("action", a["id"], _norm(" ".join(_strings(a)))) for a in load("actions").get("actions", []) if a.get("id")]
+    sc = load("score")
+    out += [("row", r.get("n"), _norm(str(r.get("why") or ""))) for r in sc.get("brand_authority", sc).get("rows", [])]
+    return out
+
+
+def _pages_phrase(ns: list[int]) -> str:
+    return f"page {ns[0]}" if len(ns) == 1 else f"pages [{', '.join(map(str, ns))}]"
+
+
+def _located(item: dict, run_dir: pathlib.Path) -> dict:
+    """Send a review finding to every writer that owns the words it faults. The reviewer files a
+    finding under one page; on Nov 12 (person standard, 229cfc9) that sent "Row 4 says 'two
+    relationships independently corroborated'" to the page writer, though the words were a row's
+    reason in score.json, and "Four pages say we ask each client to 'repeat their words' as a
+    review" to the cover's writer alone.
+
+    Each quote is looked up where it now stands (pages 1-19, the register, the exam rows'
+    reasons); the pages its where field and text name, and the actions they name, count too, and
+    words like "four pages" add the page writer for a sweep. A short quote that stands in more than
+    three places is a term the audit uses throughout (his name, a title), not the words at fault:
+    on the same run such terms sent three findings to every writer. Words a row's reason shares
+    with a page are the page's, unless the finding names that row. An exam row named without a
+    quote counts when the where field says exam, heatmap or Brand Authority beside it. When every
+    quote was found and every one stands off the pages
+    (a row's reason, the register), the finding leaves its page field and the page that draws those
+    rows or actions (the exams page, the plan page), which cannot change them; any other page it
+    names still gets it. A finding nothing could place keeps the old fallback, the page writer,
+    unless its where field already names the register. The writers are told where, and
+    route["must"] holds the pages a FAIL must change (never the sweep's, nor a single "p" list's
+    later pages, which may be counts)."""
+    if item.get("from") != "review":
+        return item
+    msg = item.get("msg") or ""
+    where_txt = str(item.get("where") or "")
+    problem = msg.split(" Fix: ", 1)[0]
+    texts = _texts(run_dir)
+    named_rows = {int(n) for grp in re.findall(r"\brows? ((?:\d{1,2}(?:\s*(?:,|and|&)\s*)?)+)", f"{problem} {where_txt}", re.I)
+                  for n in re.findall(r"\d+", grp)}
+    pages: set[int] = set()
+    found_acts: set[str] = set()
+    rows: set[int] = set()
+    unsure = False              # a quote not found, or skipped as a term: the page field stays in
+    for q in _quoted(item):
+        hits = [(kind, key) for kind, key, text in texts if q in text]
+        if not hits or (len(q.split()) < 6 and len(hits) > 3):
+            unsure = True
+            continue
+        on_a_page = any(kind == "page" for kind, _ in hits)
+        for kind, key in hits:
+            if kind == "row" and on_a_page and key not in named_rows:
+                continue
+            {"page": pages, "action": found_acts, "row": rows}[kind].add(key)
+    named_pages = _pages_named({"msg": msg, "where": where_txt})          # not the page field
+    sure_pages = _pages_required({"msg": msg, "where": where_txt})
+    field = item["page"] if isinstance(item.get("page"), int) else None
+    drawn = _drawn(run_dir)
+    # an exam row named without a quote, where the where field says it is the exam's ("exam row 4",
+    # "Brand Authority row 4", "heatmap"); a callout on the exams page that calls row 4 generous is
+    # page copy, and still the page writer's
+    by_name: set[int] = set()
+    both = False            # page copy that names an exam row ("p5 callout beside heatmap row 4")
+    for seg in re.split(r";", where_txt):
+        copy = bool(PAGE_COPY.search(seg))
+        if (copy and not EXPLICIT_ROW.search(seg)) or \
+                not (EXAM_ROW.search(seg) or re.search(r"\bheatmap\b", seg, re.I)):
+            continue
+        both |= copy
+        seg_rows = {int(n) for grp in re.findall(r"\brows? ((?:\d{1,2}(?:\s*(?:,|and|&)\s*)?)+)", seg, re.I)
+                    for n in re.findall(r"\d+", grp)}
+        by_name |= {n for n in (seg_rows or named_rows) if 1 <= n <= 10 and n not in rows}
+    rows |= by_name
+    named_ids = {key for kind, key, _ in texts if kind == "action"
+                 and re.search(rf"(?<![\w-]){re.escape(str(key))}(?![\w-])", f"{msg} {where_txt}")}
+    spans = _sweeps(msg)
+    if not (pages or found_acts or rows or named_ids or spans):
+        return item          # nothing placed: the page field, the pages named and where route it
+    off_page = bool(found_acts or rows) and not pages and not unsure and not both
+    # off the pages, the page field and the page that draws those rows or actions cannot change
+    # them; any other page the finding names still gets it
+    drawing = (drawn["row"] if rows else set()) | (drawn["action"] if found_acts else set())
+    on = pages | (named_pages - drawing if off_page else named_pages)
+    required = pages | (sure_pages - drawing if off_page else sure_pages)   # not a single "p" list's later pages
+    if field is not None and not off_page:
+        on.add(field)
+        required.add(field)
+    placed = bool(on or found_acts or rows)
+    route = {"front": bool(on & {1, 2}) or item.get("id") in FRONT_GATES,
+             "back": spans or any(3 <= n <= 19 for n in on) or (not placed and not _acts(item)),
+             "acts": bool(found_acts or named_ids) or _acts(item), "score": bool(rows) or _score(item),
+             "must": sorted(n for n in required if 3 <= n <= 19)}
+    where = [f"on {_pages_phrase(sorted(n for n in pages if n <= 2))}"] if pages & {1, 2} else []
+    if any(3 <= n <= 19 for n in pages):
+        where.append(f"on {_pages_phrase(sorted(n for n in pages if 3 <= n <= 19))}")
+    if found_acts:
+        where.append("in " + ", ".join(sorted(found_acts, key=lambda a: (len(a), a))))
+    quoted_rows = sorted(rows - by_name)
+    if quoted_rows:
+        where.append(f"in the reason of exam row{'s' if len(quoted_rows) > 1 else ''} {', '.join(map(str, quoted_rows))}"
+                     " (the score file; the page draws no reasons)")
+    named_note = (f" [It names the reason of exam row{'s' if len(by_name) > 1 else ''} "
+                  f"{', '.join(map(str, sorted(by_name)))} (the score file; the page draws no reasons).]" if by_name else "")
+    note = (f" [The quoted words stand {'; '.join(where)}.]" if where else "") + named_note + \
+           (" [It covers pages it does not number: fix each of your pages that carries it.]" if spans else "")
+    return {**item, "msg": msg + note, "route": route}
+
+
+def _ids_unknown_in(text: str, ledger: Ledger) -> list[str]:
+    """Ids written into prose that look like this ledger's ids but are not in it."""
+    families = {r["id"].rsplit("-", 1)[0] for r in ledger.rows if "-" in str(r.get("id"))}
+    return sorted({t for t in re.findall(r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+\b", text)
+                   if t.rsplit("-", 1)[0] in families and not ledger.has(t)})
+
+
+def check_score_revision(obj, current, ledger) -> list[str]:
+    """A review round may rewrite a Brand Authority row's reason and evidence, never its score: a
+    score changes only through the reviewer's score_adjustments, which code applies. Problems the
+    current file already has are not the reviser's."""
+    before = set(check_score(current, ledger))
+    probs = [p for p in check_score(obj, ledger) if p not in before]
+    old = {r.get("n"): r for r in current.get("brand_authority", current).get("rows", [])}
+    for r in obj.get("brand_authority", obj).get("rows", []):
+        was = old.get(r.get("n"))
+        if was is None:
+            probs.append(f"row {r.get('n')}: there is no such row")
+            continue
+        if r.get("score") != was.get("score"):
+            probs.append(f"row {r.get('n')}: keep the score {was.get('score')}; a score changes only through the "
+                         "reviewer's score_adjustments")
+        if not str(r.get("why") or "").strip():
+            probs.append(f"row {r.get('n')}: the reason is empty")
+        probs += [f"row {r.get('n')}: unknown evidence id {x} in the reason" for x in _ids_unknown_in(str(r.get("why") or ""), ledger)]
+    return probs
+
+
+def _kept_action_ids(obj: dict, current: dict) -> list[str]:
+    """A revised register keeps every action id it had. Pages print ids in fields and as plain
+    table text (an "Action" column), and the to-dos follow the ids, so an id is a stable key."""
+    have = {a.get("id") for a in obj.get("actions", [])}
+    return [f"keep action {i}: every id stays, because pages and to-dos already print it"
+            for i in sorted({a.get("id") for a in current.get("actions", [])} - have)]
 
 
 def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake, items: list[dict],
-                 review: dict | None = None, confidential: bool = False, max_usd: float | None = None) -> bool:
-    """One fix round: the synthesis model revises pages 1-2, the fix model patches pages 3-19,
-    and reviewer score adjustments go back into score.json (code re-checks them). A fix round
-    obeys the same confidential guard and spending cap as the first draft."""
+                 review: dict | None = None, confidential: bool = False, max_usd: float | None = None,
+                 up_writers: frozenset = frozenset()) -> bool:
+    """One fix round, upstream first, so each writer sees the stage files already decided: the
+    reviewer's score adjustments go into score.json (code applies them), the score model revises
+    the exam rows' reasons, the fix model patches pages 3-19, the synthesis model revises pages 1-2
+    with those pages in view, and the actions model revises the action register. Each review
+    finding goes to the writers that own the words it quotes (_located). A fix round obeys the same
+    confidential guard and spending cap as the first draft. up_writers names the writers
+    ("synthesis", "fix", "actions") that run one rung up the ladder this round (the loop asks for
+    that for one round, once, after a round that left a FAIL those writers own)."""
     ok = True
-    front = [i for i in items if _front(i)]
-    rest = [i for i in items if not _front(i)]
-    if front:
-        res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
-            "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
-            "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
-            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake,
-            confidential=confidential, max_usd=max_usd)
-        ok &= res["ok"]
-    if rest:
-        res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
-            "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
-                    "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block.",
-            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger), cfg=cfg, fake=fake,
-            confidential=confidential, max_usd=max_usd)
-        if res["ok"]:
-            cur = json.loads((run_dir / "pages.json").read_text())
-            by_n = {p.get("n"): p for p in cur.get("pages", [])}
-            by_n.update({p.get("n"): p for p in res["obj"].get("pages", [])})
-            cur["pages"] = [by_n[n] for n in sorted(by_n)]
-            (run_dir / "pages.json").write_text(json.dumps(cur, indent=1, ensure_ascii=False))
-        ok &= res["ok"]
     if review and review.get("score_adjustments"):
+        # Before any writer: until Nov 12 these landed after the pages were revised, so a page
+        # writer described a row's old score in the same round that changed it.
         sc = json.loads((run_dir / "score.json").read_text())
         ba = sc.get("brand_authority", sc)
         for adj in review["score_adjustments"]:
@@ -239,6 +615,70 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
                     row["score"] = adj["to"]
                     row["why"] = f"{row.get('why', '')} (review: {adj.get('why', '')})".strip()
         (run_dir / "score.json").write_text(json.dumps(sc, indent=1, ensure_ascii=False))
+    items = [_located(i, run_dir) for i in items]
+    rows = [i for i in items if _score(i)]
+    front = [i for i in items if _front(i)]
+    rest = [i for i in items if _back(i)]
+    acts = [i for i in items if _acts(i)]
+    def up(st: str) -> str | None:
+        return router.next_rung(cfg, cfg["tiers"][tier]["models"][st], tier) if st in up_writers else None
+    if rows:
+        current = json.loads((run_dir / "score.json").read_text())
+        res = router.run_stage("score", prompt("score", run_dir, ledger, extra={
+            "task": "Revise the reason ('why') of each Brand Authority row that fix_list faults, so every item "
+                    "clears. Return the whole score file in your card's output shape. Keep every score: a score "
+                    "changes only through the reviewer's score_adjustments, which code applies.",
+            "fix_list": rows, "current_score": current}), tier, run_dir,
+            check=lambda o: check_score_revision(o, current, ledger), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd, write=False)
+        if res["ok"]:
+            new = {r.get("n"): r for r in res["obj"].get("brand_authority", res["obj"]).get("rows", [])}
+            for r in current.get("brand_authority", current).get("rows", []):
+                if r.get("n") in new:
+                    r["why"] = new[r["n"]].get("why", r.get("why"))
+                    r["evidence"] = new[r["n"]].get("evidence", r.get("evidence"))
+            (run_dir / "score.json").write_text(json.dumps(current, indent=1, ensure_ascii=False))
+        ok &= res["ok"]
+    # Pages 3-19 first, pages 1-2 after: the front pages summarize the rest, and every writer sees
+    # the stage files already decided. With the summary first, a person replay's cover kept a
+    # $21 ad test that the same round's page fix changed to $14 on page 11 (Nov 10).
+    if rest:
+        # a located finding brings the pages it must change; its message also carries the sweep note
+        must = frozenset(n for i in rest if i["status"] == "FAIL"
+                         for n in (i["route"]["must"] if "route" in i else _pages_required(i)) if 3 <= n <= 19)
+        res = router.run_stage("fix", prompt("fix", run_dir, ledger, extra={
+            "task": "Clear every item in fix_list. Return ONLY the pages you changed, each as a full page "
+                    "object (pages 3-19), under 'pages'. Never shrink type: cut words or move a block. "
+                    "Blocks the renderer draws itself (the exam heatmap and scorebar, the plan swimlane, "
+                    "the agents QR) are not in your page objects and cannot be changed: make room in your own. "
+                    "The heatmap draws each row's name, score and evidence ids, not its reason; the score "
+                    "writer revises reasons. Write only what a reader needs: never write a note about how "
+                    "the page was made or what another file still says.",
+            "fix_list": rest}), tier, run_dir, check=lambda o: check_fix(o, ledger, must), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd, model=up("fix"))
+        if res["ok"]:
+            cur = json.loads((run_dir / "pages.json").read_text())
+            by_n = {p.get("n"): p for p in cur.get("pages", [])}
+            by_n.update({p.get("n"): p for p in res["obj"].get("pages", [])})
+            cur["pages"] = [by_n[n] for n in sorted(by_n)]
+            (run_dir / "pages.json").write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+        ok &= res["ok"]
+    if front:
+        res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
+            "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
+            "fix_list": front, "current_synthesis": json.loads((run_dir / "synthesis.json").read_text())}),
+            tier, run_dir, check=lambda o: check_synthesis(o, ledger), cfg=cfg, fake=fake,
+            confidential=confidential, max_usd=max_usd, model=up("synthesis"))
+        ok &= res["ok"]
+    if acts:
+        current = json.loads((run_dir / "actions.json").read_text())
+        res = router.run_stage("actions", prompt("actions", run_dir, ledger, extra={
+            "task": "Revise the action register so every item in fix_list is cleared. Return the whole "
+                    "register under 'actions'; keep every action id and everything that already works.",
+            "fix_list": acts, "current_actions": current}),
+            tier, run_dir, check=lambda o: check_actions(o, ledger) + _kept_action_ids(o, current), cfg=cfg,
+            fake=fake, confidential=confidential, max_usd=max_usd, model=up("actions"))
+        ok &= res["ok"]
     return ok
 
 
@@ -301,6 +741,21 @@ def run(run_dir: str | pathlib.Path, tier: str = "standard", fake=None, render_p
 def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, review: bool,
          max_usd: float | None, out: dict) -> dict:
     ledger = Ledger.load(run_dir / "ledger.json")
+    odd = M.off_shape(r["id"] for r in ledger.rows)
+    if odd:   # G05 would hold the finished audit; say it before a single model call is paid for
+        out["verdict"] = "HOLD at ledger"
+        out["hold_reason"] = (f"ledger ids {odd[:10]} lack the id shape (V-E012, E-001) that a table cell "
+                              "cites by; rename them in the ledger and run again")
+        out["usd"] = router.spent(run_dir)
+        return out
+    if not M.iso_day(ledger.capture_date):   # the bundle would refuse the finished run; say it now
+        out["verdict"] = "HOLD at ledger"
+        out["hold_reason"] = (f"ledger capture_date is {ledger.capture_date!r}, not one date (YYYY-MM-DD). "
+                              "The house-gate bundle dates every ledger row by it and refuses any other "
+                              "shape, so the finished audit could not be graded. Put the research cutoff "
+                              "date there; times of later re-checks go in sources.jsonl")
+        out["usd"] = router.spent(run_dir)
+        return out
     brief = json.loads((run_dir / "brief.json").read_text())
     confidential = bool(brief.get("do_not_print"))
     for st in ("identity", "score", "synthesis", "pages", "actions"):
@@ -319,18 +774,47 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
             out["usd"] = router.spent(run_dir)
             return out
     audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-    rounds = 0
-    while fix_list(rep, rr) and rounds < MAX_FIX_ROUNDS:
-        rounds += 1
-        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr),
-                            confidential=confidential, max_usd=max_usd):
-            break
-        audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-    out["fix_rounds"] = rounds
-    out["gate"] = rep["verdict"]
-    if rr:
-        out["render"] = rr["gates"]["verdict"]
-    gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
+    loop = {"rounds": 0, "last": None, "escalated": False}
+
+    def gate_rounds(audit, rep, rr):
+        """Fix rounds on the gate and render lists, MAX_FIX_ROUNDS in the whole run."""
+        while loop["rounds"] < MAX_FIX_ROUNDS:
+            items = fix_list(rep, rr)
+            open_now = sorted((i["from"], str(i["id"]), i["status"]) for i in items)
+            last = loop["last"]
+            if not items:
+                break
+            if last is not None and all(i["status"] == "WARN" for i in items) and set(open_now) <= set(last):
+                break   # only warnings the last round already had: no round on them alone
+            up_writers: frozenset = frozenset()
+            if open_now == last:
+                # The last round cleared nothing. A warning alone is not worth more rounds (it often
+                # sits in the ledger, beyond any writer), so stop. A FAIL holds the audit: until Nov 10
+                # the loop stopped here too, leaving it on HOLD with rounds unspent when only the cheap
+                # model had tried. Now, once per run, a FAIL a writer owns gets one round with that
+                # writer one rung up the ladder; the round after goes back to the tier's models.
+                owners = {w for i in items if i["status"] == "FAIL" and i["id"] not in NO_WRITER
+                          for w, owns in (("synthesis", _front), ("fix", _back), ("actions", _acts)) if owns(i)}
+                ups = {w: router.next_rung(cfg, cfg["tiers"][tier]["models"][w], tier) for w in owners}
+                if loop["escalated"] or not any(ups.values()):
+                    break
+                loop["escalated"] = True
+                up_writers = frozenset(w for w, m in ups.items() if m)
+                out["fix_escalated_to"] = ups.get("fix") or next(m for m in ups.values() if m)
+                out["fix_escalated"] = {w: m for w, m in ups.items() if m}
+            loop["last"] = open_now
+            loop["rounds"] += 1
+            if not _apply_fixes(run_dir, ledger, tier, cfg, fake, items,
+                                confidential=confidential, max_usd=max_usd, up_writers=up_writers):
+                break
+            audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
+        return audit, rep, rr
+
+    def holds(rep, rr) -> bool:
+        return rep["verdict"] == "HOLD" or (rr is not None and rr["gates"]["verdict"] == "HOLD")
+
+    audit, rep, rr = gate_rounds(audit, rep, rr)
+    gates_ok = not holds(rep, rr)
     rv = None
     if review and gates_ok:
         passes = cfg["tiers"].get(tier, {}).get("review_passes", 1)
@@ -349,9 +833,20 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
             _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr, rv), review=rv,
                          confidential=confidential, max_usd=max_usd)
             audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-            gates_ok = rep["verdict"] != "HOLD" and (rr is None or rr["gates"]["verdict"] != "HOLD")
+            # A review fix can break a hard gate: in the Nov 10 replays a page fix ran page 19
+            # 40px over, and the next review was paid for on a draft that could only end HOLD.
+            # Such a draft gets the gate rounds the run has left first; if it still holds, no
+            # review can change the verdict, so none is paid for.
+            if holds(rep, rr):
+                audit, rep, rr = gate_rounds(audit, rep, rr)
+            gates_ok = not holds(rep, rr)
+            if not gates_ok:
+                break
         out["review"] = rv.get("verdict") if rv else None
-        out["gate"] = rep["verdict"]
+    out["fix_rounds"] = loop["rounds"]
+    out["gate"] = rep["verdict"]          # the final files' verdicts, not the ones before the review
+    if rr:
+        out["render"] = rr["gates"]["verdict"]
     log = json.loads((run_dir / "run.json").read_text()) if (run_dir / "run.json").exists() else {"attempts": []}
     out["usd"] = round(sum(a.get("usd", 0) for a in log["attempts"]), 4)
     if not gates_ok:

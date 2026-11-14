@@ -8,8 +8,10 @@ key, the spending cap, the four page batches, and a full audit run on the one-ke
 """
 from __future__ import annotations
 
+import contextlib
 import copy
 import http.server
+import io
 import json
 import os
 import pathlib
@@ -137,7 +139,9 @@ class OpenRouterHTTPTests(unittest.TestCase):
         self.assertEqual(req["headers"]["authorization"], "Bearer test-key-not-a-secret")
         self.assertEqual(req["headers"]["x-title"], router.APP_TITLE)
         self.assertEqual(body["model"], "anthropic/claude-sonnet-5.5")
-        self.assertEqual(body["provider"], {"data_collection": "deny"})          # no zdr unless confidential
+        self.assertEqual(set(body["provider"]), {"data_collection", "max_price"})  # no zdr unless confidential
+        self.assertEqual(body["provider"]["data_collection"], "deny")
+        self.assertEqual(body["provider"]["max_price"], {"prompt": 2.5, "completion": 12.5})  # Sonnet's list price x 1.25
         self.assertNotIn("temperature", body)                                    # Claude 5.5 takes none
         self.assertEqual(body["max_tokens"], 12000)
         self.assertEqual(body["messages"][0]["content"][0]["cache_control"], {"type": "ephemeral"})
@@ -149,7 +153,9 @@ class OpenRouterHTTPTests(unittest.TestCase):
 
     def test_confidential_call_asks_for_zero_retention_endpoints_only(self):
         router.call("or:anthropic/claude-opus-5.5", "card", "user", self.cfg, confidential=True)
-        self.assertEqual(self.mock.requests[-1]["body"]["provider"], {"data_collection": "deny", "zdr": True})
+        prov = self.mock.requests[-1]["body"]["provider"]
+        self.assertEqual((prov["data_collection"], prov["zdr"]), ("deny", True))
+        self.assertIn("max_price", prov)
 
     def test_open_model_gets_plain_text_json_mode_and_temperature(self):
         user = "BRIEF" + router.CACHE_MARK + "the task"
@@ -217,7 +223,8 @@ class OpenRouterHTTPTests(unittest.TestCase):
             self.assertEqual(res["verdict"], "READY", res)
             bodies = [r["body"] for r in self.mock.requests]
             self.assertFalse(any("deepseek" in b["model"] for b in bodies), {b["model"] for b in bodies})
-            self.assertTrue(all(b["provider"] == {"data_collection": "deny", "zdr": True} for b in bodies))
+            self.assertTrue(all(b["provider"]["data_collection"] == "deny" and b["provider"]["zdr"] is True
+                                and "max_price" in b["provider"] for b in bodies))
 
     def test_out_of_credits_holds_the_audit_with_the_reason(self):
         self.mock.script = [(402, {}, {"error": {"message": "Insufficient credits", "code": 402}})]
@@ -230,21 +237,50 @@ class OpenRouterHTTPTests(unittest.TestCase):
             self.assertEqual(len(self.mock.requests), 1)                          # no retry, no escalation
 
     def test_spending_cap_is_never_crossed(self):
-        """Every call is charged its full worst case at list price, the most a real call can cost.
-        The run must stop before the call that could cross the cap, never after it."""
-        def worst(body):
-            p = ROUTE_PRICE[body["model"]]
-            chars = len(json.dumps(body["messages"], ensure_ascii=False))
-            return (chars / router.CHARS_PER_TOKEN_FLOOR * max(p["in"], p["cache_write"]) + body["max_tokens"] * p["out"]) / 1e6
-        self.mock.cost = worst
-        with tempfile.TemporaryDirectory() as d:
-            d = run_dir(pathlib.Path(d))
-            res = pipeline.run(d, "openrouter-lean", render_pdf=False, max_usd=0.60)
-            self.assertEqual(res["verdict"], "HOLD", res)
-            self.assertIn("spending cap", res["hold_reason"])
-            self.assertIn("could cost up to", res["hold_reason"])
-            self.assertLessEqual(res["usd"], 0.60)
-            self.assertGreater(len(self.mock.requests), 0)
+        """The stand-in is the worst provider OpenRouter could pick: it counts every byte of the
+        prompt as a token, adds framing tokens, spends the whole reply limit, and charges the
+        highest rate the request allows (its max_price; with none it charges three times the list
+        price, as a pricier provider could). Its arithmetic is its own, not the router's, so a
+        bound that undercounts tokens or a missing price ceiling makes this test fail."""
+        def most_a_provider_could_charge(body):
+            text = "".join(MockOpenRouter.text_of(m["content"]) for m in body["messages"])
+            tokens = len(text.encode("utf-8")) + 64 * len(body["messages"])
+            listed = ROUTE_PRICE[body["model"]]
+            ceiling = body.get("provider", {}).get("max_price")
+            rate_in = ceiling["prompt"] if ceiling else 3 * listed["in"]
+            rate_out = ceiling["completion"] if ceiling else 3 * listed["out"]
+            rate_in = max(rate_in, listed.get("cache_write", 0) * (rate_in / listed["in"] if listed["in"] else 1))
+            return (tokens * rate_in + body["max_tokens"] * rate_out) / 1e6
+        self.mock.cost = most_a_provider_could_charge
+        for cap in (0.60, 1.50):
+            with self.subTest(cap=cap), tempfile.TemporaryDirectory() as d:
+                d = run_dir(pathlib.Path(d))
+                res = pipeline.run(d, "openrouter-lean", render_pdf=False, max_usd=cap)
+                self.assertEqual(res["verdict"], "HOLD", res)
+                self.assertIn("could cost up to", res["hold_reason"])
+                self.assertLessEqual(res["usd"], cap)
+                self.assertGreater(len(self.mock.requests), 0)
+            self.mock.requests.clear()
+
+    def test_worst_case_counts_every_prompt_byte_as_a_token(self):
+        """The input half of the bound, alone: no reply budget to hide an undercount behind. A
+        prompt of URLs, ids and accented names tokenizes far worse than prose; it can never be
+        more tokens than bytes, so the bound must cover that, at the highest rate it allows."""
+        user = ("https://example.com/a?id=V-E011&q=r\u00e9sum\u00e9 \u2014 " * 3000)
+        for model in ("or:anthropic/claude-opus-5.5", "or:deepseek/deepseek-v4.1-flash", "claude-haiku-5-5"):
+            n_bytes = len(("card" + user).encode("utf-8"))
+            rates = router.ceiling_rates(self.cfg, model, n_bytes)
+            floor = n_bytes * max(rates["in"], rates["cache_write"]) / 1e6
+            self.assertGreaterEqual(router.worst_case_usd(self.cfg, model, "card", user, 0), floor, model)
+
+    def test_the_price_ceiling_follows_the_long_context_tier(self):
+        """A prompt long enough to reach Haiku's long-context tier is sent with that tier's ceiling,
+        so a provider may charge the long-context rate but never more than the cap assumed."""
+        router.call("or:anthropic/claude-haiku-5.5", "card", "x" * 150_000, self.cfg, max_tokens=4000)
+        ceiling = self.mock.requests[-1]["body"]["provider"]["max_price"]
+        self.assertEqual(ceiling, {"prompt": 0.625, "completion": 3.125})
+        router.call("or:anthropic/claude-haiku-5.5", "card", "short prompt", self.cfg, max_tokens=4000)
+        self.assertEqual(self.mock.requests[-1]["body"]["provider"]["max_price"], {"prompt": 0.125, "completion": 0.625})
 
     def test_a_cap_below_the_first_call_spends_nothing(self):
         with tempfile.TemporaryDirectory() as d:
@@ -394,31 +430,123 @@ class OpenRouterCheckTests(unittest.TestCase):
         out = []
         for p in cfg["prices"].values():
             if p.get("provider") == "openrouter":
-                out.append({"id": p["route"], "pricing": {"prompt": str(p["in"] / 1e6), "completion": str(p["out"] / 1e6),
-                                                          "input_cache_read": str(p["cache_read"] / 1e6)}})
+                pricing = {"prompt": str(p["in"] / 1e6), "completion": str(p["out"] / 1e6),
+                           "input_cache_read": str(p["cache_read"] / 1e6)}
+                if p.get("long_context"):      # OpenRouter lists a long-context tier as an override
+                    lc = p["long_context"]
+                    pricing["overrides"] = [{"min_prompt_tokens": lc["over"], **{theirs: str(lc[ours] / 1e6)
+                                             for ours, theirs in openrouter.FIELDS if ours in lc}}]
+                out.append({"id": p["route"], "pricing": pricing})
         for route, pricing in over.items():
             out = [m for m in out if m["id"] != route] + ([{"id": route, "pricing": pricing}] if pricing else [])
         return out
 
     def test_config_matches_the_latest_saved_openrouter_list(self):
-        """Not the config against itself: a dated copy of what OpenRouter actually listed."""
+        """Not the config against itself: a dated copy of what OpenRouter actually listed, with the
+        provider endpoints saved beside it."""
         snap = openrouter.latest_snapshot()
         self.assertIsNotNone(snap)
-        rep = openrouter.check(cost.load_routing(), openrouter.load_models(snap))
+        rep = openrouter.check(cost.load_routing(), openrouter.load_models(snap), endpoints=openrouter.load_endpoints(snap))
         self.assertTrue(rep["ok"], rep)
+
+    DS = "deepseek/deepseek-v4.1-flash"
+    # Nov 11: OpenRouter's headline for this route was one provider's price while most of its
+    # providers still charged the configured $0.30 in, $1.20 out and $0.006 cached
+    HEADLINE = {"prompt": "0.000000051", "completion": "0.000000567", "input_cache_read": "0.000000018"}
+
+    @staticmethod
+    def endpoints(*rows):
+        """One endpoint per (in, out, cache_read, status) row, prices per million tokens."""
+        return [{"provider_name": f"provider {i}", "status": status,
+                 "pricing": {"prompt": str(i_ / 1e6), "completion": str(o / 1e6), "input_cache_read": str(c / 1e6),
+                             "input_cache_write": "0"}}
+                for i, (i_, o, c, status) in enumerate(rows)]
+
+    def test_a_one_provider_headline_is_not_drift_when_three_providers_charge_ours(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        eps = {self.DS: self.endpoints(*[(0.30, 1.20, 0.006, 0)] * 3, (0.051, 0.567, 0.018, 0))}
+        self.assertEqual(openrouter.check(cost.load_routing(), models)["drifted"], [f"or:{self.DS}"])
+        rep = openrouter.check(cost.load_routing(), models, endpoints=eps)
+        self.assertTrue(rep["ok"], rep)
+        row = next(r for r in rep["rows"] if r["route"] == self.DS)
+        self.assertEqual(row["backing"], 3)
+        self.assertEqual(set(row["headline"]), {"in", "out", "cache_read"})
+        self.assertEqual(row["drift"], {})
+
+    def test_two_providers_down_providers_or_another_cache_price_do_not_vouch(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        for eps in ({self.DS: self.endpoints(*[(0.30, 1.20, 0.006, 0)] * 2)},
+                    {self.DS: self.endpoints(*[(0.30, 1.20, 0.006, -2)] * 3)},
+                    {self.DS: self.endpoints(*[(0.30, 1.20, 0.03, 0)] * 3)},
+                    {}):
+            rep = openrouter.check(cost.load_routing(), models, endpoints=eps)
+            self.assertEqual(rep["drifted"], [f"or:{self.DS}"], eps)
+
+    def test_a_cache_price_an_endpoint_lists_as_zero_neither_vouches_nor_objects(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        eps = {self.DS: self.endpoints(*[(0.30, 1.20, 0.0, 0)] * 3)}
+        self.assertTrue(openrouter.check(cost.load_routing(), models, endpoints=eps)["ok"])
+
+    def test_a_tampered_config_price_still_fails_with_endpoints(self):
+        cfg = copy.deepcopy(cost.load_routing())
+        cfg["prices"]["or:anthropic/claude-opus-5.5"]["in"] *= 100
+        snap = openrouter.latest_snapshot()
+        rep = openrouter.check(cfg, openrouter.load_models(snap), endpoints=openrouter.load_endpoints(snap))
+        self.assertEqual(rep["drifted"], ["or:anthropic/claude-opus-5.5"])
+
+    def test_a_snapshot_is_named_by_the_utc_date(self):
+        # Nov 11 01:20 UTC was still Nov 10 in Los Angeles, and the local date overwrote Nov 10's file
+        import datetime as _dt
+        import time
+        utc = _dt.datetime.now(_dt.timezone.utc)
+        zone = "Etc/GMT+12" if utc.hour < 12 else "Etc/GMT-14"     # a local date that is never the UTC one
+        before = os.environ.get("TZ")
+        os.environ["TZ"] = zone
+        time.tzset()
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                out = openrouter.save_snapshot(cost.load_routing(), [], folder=pathlib.Path(d))
+                today = openrouter.utc_today()
+        finally:
+            if before is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = before
+            time.tzset()
+        self.assertEqual(out.name, f"models-{today}.json")
+        self.assertEqual(today, _dt.datetime.now(_dt.timezone.utc).date().isoformat())
+
+    def test_the_command_reads_the_endpoints_saved_with_a_snapshot(self):
+        models = self.models(**{self.DS: self.HEADLINE})
+        eps = {self.DS: self.endpoints(*[(0.30, 1.20, 0.006, 0)] * 3)}
+        with tempfile.TemporaryDirectory() as d:
+            with_eps, without = pathlib.Path(d) / "with.json", pathlib.Path(d) / "without.json"
+            with_eps.write_text(json.dumps({"data": models, "endpoints": eps}), encoding="utf-8")
+            without.write_text(json.dumps({"data": models}), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(cli.main(["openrouter-check", "--models", str(with_eps)]), 0)
+                self.assertEqual(cli.main(["openrouter-check", "--models", str(without)]), 1)
+            self.assertIn("3 providers that are up charge ours", out.getvalue())
+
+    def saved(self):
+        """The latest saved copy of OpenRouter's list, and the provider endpoints saved with it."""
+        snap = openrouter.latest_snapshot()
+        return openrouter.load_models(snap), openrouter.load_endpoints(snap)
 
     def test_a_tampered_config_price_fails_against_the_saved_list(self):
         cfg = copy.deepcopy(cost.load_routing())
         cfg["prices"]["or:anthropic/claude-opus-5.5"]["in"] *= 100
-        rep = openrouter.check(cfg, openrouter.load_models(openrouter.latest_snapshot()))
+        models, eps = self.saved()
+        rep = openrouter.check(cfg, models, endpoints=eps)
         self.assertEqual(rep["drifted"], ["or:anthropic/claude-opus-5.5"])
 
     def test_a_changed_effort_list_is_drift(self):
-        models = openrouter.load_models(openrouter.latest_snapshot())
+        models, eps = self.saved()
         ds = next(m for m in models if m["id"] == "deepseek/deepseek-v4.1-flash")
         ds["reasoning"] = dict(ds["reasoning"], supported_efforts=["high", "low"])       # "none" withdrawn
-        rep = openrouter.check(cost.load_routing(), models)
-        self.assertIn("or:deepseek/deepseek-v4.1-flash", rep["drifted"])
+        rep = openrouter.check(cost.load_routing(), models, endpoints=eps)
+        self.assertEqual(rep["drifted"], ["or:deepseek/deepseek-v4.1-flash"])
+        self.assertEqual(set(next(r for r in rep["rows"] if r["route"] == ds["id"])["drift"]), {"efforts"})
 
     def test_a_removed_route_and_a_price_rise_both_fail(self):
         models = self.models(**{"x-ai/grok-4.7": None,
@@ -428,6 +556,26 @@ class OpenRouterCheckTests(unittest.TestCase):
         self.assertIn("or:x-ai/grok-4.7", rep["missing"])
         self.assertIn("or:x-ai/grok-4.7", rep["missing_in_use"])
         self.assertEqual(rep["drifted"], ["or:anthropic/claude-opus-5.5"])
+
+    def test_a_missing_long_context_tier_is_drift_and_write_restores_it(self):
+        cfg = copy.deepcopy(cost.load_routing())
+        cfg["prices"]["or:anthropic/claude-haiku-5.5"].pop("long_context")
+        models, eps = self.saved()
+        rep = openrouter.check(cfg, models, endpoints=eps)
+        self.assertEqual(rep["drifted"], ["or:anthropic/claude-haiku-5.5"])
+        drift = next(r for r in rep["rows"] if r["key"] == "or:anthropic/claude-haiku-5.5")["drift"]["long_context"]
+        self.assertEqual(drift["live"], {"over": 100000, "in": 0.5, "out": 2.5, "cache_read": 0.05, "cache_write": 0.625})
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / "routing.json"
+            text = cost.ROUTING.read_text(encoding="utf-8")
+            line = next(l for l in text.splitlines() if l.lstrip().startswith('"or:anthropic/claude-haiku-5.5"'))
+            entry = json.loads(line.split(": ", 1)[1].rstrip(","))
+            entry.pop("long_context")
+            path.write_text(text.replace(line, line.split(": ", 1)[0] + ": " + json.dumps(entry, ensure_ascii=False) + ","),
+                            encoding="utf-8")
+            self.assertEqual(openrouter.write_prices(rep, path, today="2026-11-04"), ["or:anthropic/claude-haiku-5.5"])
+            restored = json.loads(path.read_text(encoding="utf-8"))["prices"]["or:anthropic/claude-haiku-5.5"]
+            self.assertEqual(restored["long_context"], drift["live"])
 
     def test_write_updates_only_the_drifted_line(self):
         models = self.models(**{"anthropic/claude-opus-5.5": {"prompt": "0.000008", "completion": "0.00002",

@@ -9,6 +9,8 @@ import html
 import math
 import re
 
+from . import model as M
+
 E = html.escape
 STATE_CLASS = {"OBSERVED": "obs", "INFERRED": "inf", "UNKNOWN": "unk", "PROPOSED": "inf", "REPORTED": "inf"}
 
@@ -51,8 +53,25 @@ def badge(state: str) -> str:
     return f'<span class="badge b-{STATE_CLASS.get(s, "unk")}">{E(s)}</span>'
 
 
-def _span(b, default=12) -> str:
-    return f'style="grid-column: span {int(b.get("span", default))}"'
+# A block without a span takes its type's default: photos, screenshots and the QR sit four
+# columns wide, everything else the full twelve. The overflow advice reads the same table
+# (span_of), so it places blocks in the rows the browser does.
+DEFAULT_SPAN = {"photo": 4, "screenshot": 4, "qr": 4}
+
+
+def span_of(b) -> int:
+    """The grid columns a block takes, 1 to 12, as the browser lays it out."""
+    d = DEFAULT_SPAN.get(b.get("type"), 12)
+    try:
+        sp = int(b.get("span", d) or d)
+    except (TypeError, ValueError):
+        sp = d
+    return min(max(sp, 1), 12)
+
+
+def _span(b) -> str:
+    d = DEFAULT_SPAN.get(b.get("type"), 12)
+    return f'style="grid-column: span {int(b.get("span", d))}"'
 
 
 def _title(b) -> str:
@@ -135,7 +154,7 @@ def finding_map(b, ctx):
 
 def table(b, ctx):
     cols = b.get("columns", [])
-    ev_col = {i for i, c in enumerate(cols) if str(c).lower() in ("evidence", "refs", "source ids", "evidence ids")}
+    ev_col = set(M.evidence_columns(cols))   # the same rule refs_in uses, so every chip is checked
     st_col = {i for i, c in enumerate(cols) if str(c).lower() in ("state", "status")}
     head = "".join(f"<th>{md(str(c))}</th>" for c in cols)
     body = []
@@ -143,8 +162,9 @@ def table(b, ctx):
         cells = []
         for i, v in enumerate(r):
             if i in ev_col:
-                ids = v if isinstance(v, list) else re.split(r"[,\s]+", str(v).strip())
-                cells.append(f"<td>{chips([x for x in ids if x], ctx)}</td>")
+                ids, rest = M.split_cell(v)
+                words = f' <span class="mut">{md(rest)}</span>' if rest else ""
+                cells.append(f"<td>{chips(ids, ctx)}{words}</td>")
             elif i in st_col and str(v).upper() in STATE_CLASS:
                 cells.append(f"<td>{badge(str(v))}</td>")
             else:
@@ -192,7 +212,7 @@ def photo(b, ctx):
         ctx.missing_assets.append(src or "(no src)")
         img = f'<div class="noimg">IMAGE NEEDED<br><span>{E(src or b.get("caption", ""))}</span></div>'
     h = int(b.get("height", 150))
-    return (f'<figure class="blk photo" {_span(b, 4)}><div class="frame" style="height:{h}px">{img}</div>'
+    return (f'<figure class="blk photo" {_span(b)}><div class="frame" style="height:{h}px">{img}</div>'
             f'{_caption(b, ctx)}</figure>')
 
 
@@ -257,10 +277,19 @@ def heatmap(b, ctx):
         g.append(f'<text x="{xs + 30}" y="{y + 17}" class="tid">{E(" ".join(ev[:3]))}</text>')
     H = 10 + len(rows) * rowh
     res = ctx.exam_result()
-    tot = (f'<div class="examtot"><div class="et-v">{E(str(res["total"] if res["total"] is not None else res["known_subtotal"]))}'
-           f'<span>/100</span></div><div class="et-s">{E(res["verdict"])}</div>'
+    tot = (f'<div class="examtot"><div class="et-v">{_exam_figure(res)}</div><div class="et-s">{E(res["verdict"])}</div>'
            f'<div class="et-p">Pass line {res["pass_line"]} · ten equal rows · never averaged with other exams</div></div>') if res else ""
     return f'<div class="blk heatmap" {_span(b)}>{_title(b)}<div class="hmwrap">{_svg(Wd, H, "".join(g))}{tot}</div>{_caption(b, ctx)}</div>'
+
+
+def _exam_figure(res: dict) -> str:
+    """The big number in the exam box. Only a complete exam prints a score out of 100: an
+    incomplete one prints what it knows out of what it checked, and identity HOLD prints none."""
+    if res["total"] is not None:
+        return f'{E(str(res["total"]))}<span>/100</span>'
+    if res["status"] == "INCOMPLETE":
+        return f'{E(str(res["known_subtotal"]))}<span> of {10 * res["known_rows"]} checked</span>'
+    return '\u2014<span> no score</span>'
 
 
 def scorebar(b, ctx):
@@ -475,7 +504,7 @@ def qr(b, ctx):
         svg = segno.make(url, error="m").svg_inline(scale=4, border=3, dark="#111111", omitsize=True)
     except Exception:  # segno missing: the printed URL still works
         svg = '<div class="noimg">QR</div>'
-    return (f'<div class="blk qr" {_span(b, 4)}><div class="qrimg">{svg}</div>'
+    return (f'<div class="blk qr" {_span(b)}><div class="qrimg">{svg}</div>'
             f'<div class="qrurl"><a href="{E(url)}">{E(url)}</a></div><div class="cap">{md(b.get("caption", "Scan to install the agents"))}</div></div>')
 
 

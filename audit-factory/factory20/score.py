@@ -1,7 +1,9 @@
 """Brand Authority v1.0/1.1 arithmetic and calibration, in code so no tier can bend it.
 
 Rules encoded from references/brand-authority-rubric.md:
-  * ten rows, 0-10 each, equal weight, pass line 80; headline = arithmetic sum;
+  * ten rows, 0-10 each, equal weight, pass line 80; headline = arithmetic sum. The pass line is
+    PASS_LINE, never a number the writing model put in audit.json (a model that wrote 30
+    would otherwise turn a 38/100 into a PASS);
   * any UNKNOWN row -> INCOMPLETE, known subtotal shown, no pass verdict, never rescaled;
   * identity HOLD -> no number at all;
   * 7-8 needs strong, current, independently corroborated evidence (>= 2 independent rows);
@@ -47,10 +49,10 @@ def compute(exam: dict, identity_status: str = "CONFIRMED") -> dict:
         verdict = f"INCOMPLETE — {subtotal} known of {10 * len(known)} checked; no pass verdict"
     else:
         status, total = "COMPLETE", subtotal
-        verdict = "PASS" if subtotal >= exam.get("pass_line", PASS_LINE) else "BELOW PASS LINE"
+        verdict = "PASS" if subtotal >= PASS_LINE else "BELOW PASS LINE"
     return {"status": status, "total": total, "known_subtotal": subtotal,
             "known_rows": len(known), "unknown_rows": len(unknown), "verdict": verdict,
-            "pass_line": exam.get("pass_line", PASS_LINE)}
+            "pass_line": PASS_LINE}
 
 
 def calibration_flags(exam: dict, ledger: Ledger | None) -> list[dict]:

@@ -10,8 +10,9 @@ Providers
   openrouter  OpenAI-compatible chat  OPENROUTER_API_KEY   one key for Claude, DeepSeek, GPT, Grok, Gemini
   openai      Chat Completions        OPENAI_API_KEY
   gemini      generateContent         GEMINI_API_KEY
-  manual      writes prompts/<stage>.md and waits for outputs/<stage>.json — for an app
-              session (Muse, ChatGPT, Claude.ai) running the factory itself
+  manual      writes prompts/<stage>-<hash>.md and waits for outputs/<stage>-<hash>.json, one
+              pair per distinct call — for an app session (Muse, ChatGPT, Claude.ai) running
+              the factory itself
   fake        deterministic stub for tests
 
 Privacy on OpenRouter. Every call asks only for providers that do not collect user data
@@ -28,11 +29,17 @@ effort (deep for judgment, none or low for drafting) and its token limit is the 
 budget plus room for that effort.
 
 Cost. The cost recorded for each OpenRouter call is the charge OpenRouter reports in the
-reply. The spending cap is checked before every call against that call's worst case, so a
-run never crosses it.
+reply (OpenRouter returns it on every response). The spending cap is checked before every
+call against that call's worst case: every prompt byte counted as a token (a token is never
+shorter than one byte), the whole reply limit spent, and the highest rate the call can be
+charged. That rate includes a long-context tier when the prompt can reach it, and on
+OpenRouter it is the ceiling the call itself sends as provider.max_price (the listed price
+plus max_price_headroom), so no provider can charge more than the cap assumed. A call that
+could cross the cap is never made.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import pathlib
@@ -57,7 +64,8 @@ MODERATION = re.compile(r"moderat|flagged", re.I)   # a 403 for flagged input is
 MAX_RETRIES = 4
 DEFAULT_MAX_OUT = 16000
 DEFAULT_MODEL_MAX_OUT = 64000
-CHARS_PER_TOKEN_FLOOR = 3.0          # worst-case token count for the spending cap (JSON runs ~3.5-4)
+FRAMING_TOKENS = 512                 # role markers and other per-call tokens a provider adds around the text
+MAX_PRICE_HEADROOM = 1.25            # default; config may set "max_price_headroom"
 # Prompts mark where their stable prefix ends (brief + ledger, then earlier stage files).
 # Stages that call the same prefix more than once (page batches, fix rounds, review passes)
 # ask Claude to cache up to each mark; every other provider just gets the joined text.
@@ -86,6 +94,16 @@ def _claude_user(user: str, cache: bool):
 
 class Pending(Exception):
     """A manual stage is waiting for its output file."""
+
+
+def manual_name(stage: str, model: str, body: str) -> str:
+    """A manual call's file name: its stage and a hash of the model and the exact prompt. Until
+    Nov 10 every call of a stage shared outputs/<stage>.json, so a retry with feedback, page
+    batches 2-4, a second fix round and an action-register revision all read back the first
+    answer. Each distinct call now gets its own file, and a restarted run finds the answers it
+    already has."""
+    digest = hashlib.sha256((model + "\n" + body).encode("utf-8")).hexdigest()
+    return f"{stage}-{digest[:10]}"
 
 
 class ProviderError(Exception):
@@ -165,17 +183,42 @@ def token_budget(p: dict, answer: int, effort: str | None) -> int:
     return min(answer + EFFORT_ROOM.get(effort or "none", 0), cap)
 
 
+def prompt_token_bound(system: str, user: str) -> int:
+    """More tokens than the prompt can possibly be. Byte-level tokenizers never emit a token
+    shorter than one byte, so a prompt has at most one token per UTF-8 byte, plus framing."""
+    return len(system.encode("utf-8")) + len(_flat(user).encode("utf-8")) + FRAMING_TOKENS
+
+
+def headroom(cfg: dict) -> float:
+    return float(cfg.get("max_price_headroom", MAX_PRICE_HEADROOM))
+
+
+def ceiling_rates(cfg: dict, model: str, prompt_tokens: float) -> dict:
+    """The highest per-million rates one call of this size can be charged: the long-context tier
+    when the prompt can reach it, raised by the max_price headroom on OpenRouter (where the
+    call sends that ceiling, so a pricier provider is never chosen)."""
+    p = K.price(cfg, model, prompt_tokens)
+    h = headroom(cfg) if p.get("provider") == "openrouter" else 1.0
+    return {k: float(p.get(k, 0) or 0) * h for k in ("in", "out", "cache_read", "cache_write")}
+
+
+def max_price(cfg: dict, model: str, prompt_tokens: float) -> dict:
+    """provider.max_price for an OpenRouter call, in dollars per million tokens."""
+    r = ceiling_rates(cfg, model, prompt_tokens)
+    return {"prompt": round(r["in"], 6), "completion": round(r["out"], 6)}
+
+
 def worst_case_usd(cfg: dict, model: str, system: str, user: str, max_tokens: int) -> float:
-    """An upper bound for one call at list price: every prompt character counted as a third of a
-    token, no cache discount, and the whole reply limit spent."""
-    p = cfg["prices"][model]
-    n_in = (len(system) + len(_flat(user))) / CHARS_PER_TOKEN_FLOOR
-    return round((n_in * max(p["in"], p.get("cache_write", 0)) + max_tokens * p["out"]) / 1e6, 6)
+    """An upper bound for one call: every prompt byte a token, every prompt token at the higher of
+    the input and cache-write ceiling, and the whole reply limit spent at the output ceiling."""
+    n_in = prompt_token_bound(system, user)
+    r = ceiling_rates(cfg, model, n_in)
+    return round((n_in * max(r["in"], r["cache_write"]) + max_tokens * r["out"]) / 1e6, 6)
 
 
 # ------------------------------------------------------------------ providers
 def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, confidential: bool,
-                cache: bool = False, effort: str | None = None) -> dict:
+                cache: bool = False, effort: str | None = None, ceiling: dict | None = None) -> dict:
     key = _env_key("OPENROUTER_API_KEY")
     base = os.environ.get("OPENROUTER_BASE_URL", OPENROUTER_BASE).rstrip("/")
     route = p.get("route", model)
@@ -187,7 +230,8 @@ def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, co
         user_content = _flat(user)
     body = {"model": route, "max_tokens": max_tokens,
             "messages": [sys_msg, {"role": "user", "content": user_content}],
-            "provider": {"data_collection": "deny", **({"zdr": True} if confidential else {})}}
+            "provider": {"data_collection": "deny", **({"zdr": True} if confidential else {}),
+                         **({"max_price": ceiling} if ceiling else {})}}
     if effort:
         body["reasoning"] = {"effort": effort}
     if p.get("temperature") is not None:     # newer Claude and GPT models take no temperature
@@ -225,7 +269,8 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAUL
         return {"text": text, "usage": {"in": len(flat) // 4, "out": len(text) // 4, "cache_read": 0, "cache_write": 0},
                 "model": model, "provider": "fake", "truncated": False}
     if prov == "openrouter":
-        return _openrouter(p, model, system, user, max_tokens, confidential, cache, effort)
+        return _openrouter(p, model, system, user, max_tokens, confidential, cache, effort,
+                           ceiling=max_price(cfg, model, prompt_token_bound(system, user)))
     user = _flat(user) if prov != "anthropic" else user
     truncated = False
     if prov == "anthropic":
@@ -265,20 +310,23 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAUL
         assert run_dir is not None, "manual provider needs a run folder"
         (run_dir / "prompts").mkdir(parents=True, exist_ok=True)
         (run_dir / "outputs").mkdir(parents=True, exist_ok=True)
-        out = run_dir / "outputs" / f"{stage}.json"
+        body = f"# SYSTEM\n\n{system}\n\n# USER\n\n{_flat(user)}\n"
+        name = manual_name(stage, model, body)
+        out = run_dir / "outputs" / f"{name}.json"
         if out.exists():
             return {"text": out.read_text(encoding="utf-8"), "usage": {"in": 0, "out": 0, "cache_read": 0, "cache_write": 0},
                     "model": model, "provider": "manual", "truncated": False}
-        (run_dir / "prompts" / f"{stage}.md").write_text(f"# SYSTEM\n\n{system}\n\n# USER\n\n{user}\n", encoding="utf-8")
-        raise Pending(f"answer {run_dir / 'prompts' / (stage + '.md')} and save the JSON to {out}")
+        (run_dir / "prompts" / f"{name}.md").write_text(body, encoding="utf-8")
+        raise Pending(f"answer {run_dir / 'prompts' / (name + '.md')} and save the JSON to {out}")
     else:
         raise ValueError(f"no provider for {model}")
     return {"text": text, "usage": usage, "model": model, "provider": prov, "truncated": truncated}
 
 
 def usd(cfg: dict, model: str, usage: dict) -> float:
-    """List-price cost of one call from its token counts (USD)."""
-    p = cfg["prices"][model]
+    """List-price cost of one call from its token counts (USD), at the long-context rates when
+    the prompt reached that tier."""
+    p = K.price(cfg, model, usage.get("in", 0))
     fresh = max(usage["in"] - usage.get("cache_read", 0) - usage.get("cache_write", 0), 0)
     return round((fresh * p["in"] + usage.get("cache_read", 0) * p["cache_read"]
                   + usage.get("cache_write", 0) * p["cache_write"] + usage["out"] * p["out"]) / 1e6, 5)
@@ -329,8 +377,9 @@ def spent(run_dir: pathlib.Path) -> float:
 
 def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=None, cfg: dict | None = None,
               fake=None, max_escalations: int = 1, confidential: bool = False, max_usd: float | None = None,
-              write: bool = True) -> dict:
+              write: bool = True, model: str | None = None) -> dict:
     """Run one stage: call, parse, check; retry once with the error, then escalate one rung.
+    model overrides the tier's model for this stage (the fix loop's one-rung-up round uses it).
 
     check(obj) -> list of problems (empty = accepted). Every attempt is logged with tokens
     and cost to run.json before anything else happens, so the per-audit attribution is
@@ -344,7 +393,7 @@ def run_stage(stage_id: str, user: str, tier: str, run_dir: pathlib.Path, check=
     st = next(s for s in cfg["stages"] if s["id"] == stage_id)
     system = (STAGES_DIR / st["card"]).read_text(encoding="utf-8")
     answer = int(st.get("max_out", DEFAULT_MAX_OUT))
-    model = safe_model(cfg, cfg["tiers"][tier]["models"][stage_id], confidential, tier)
+    model = safe_model(cfg, model or cfg["tiers"][tier]["models"][stage_id], confidential, tier)
     log_path = run_dir / "run.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {"tier": tier, "attempts": []}
     escalations, prompt, boosted = 0, user, False

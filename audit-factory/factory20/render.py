@@ -106,7 +106,7 @@ def expand(audit: dict, ledger: Ledger | None) -> dict:
                 p.setdefault("blocks", []).insert(0, {"type": "heatmap", "auto": True, "span": 12,
                                                       "title": "Brand Authority — ten rows, each scored only after it was checked"})
             if "scorebar" not in types and a.get("exams", {}).get("separate"):
-                p["blocks"].insert(1, {"type": "scorebar", "span": 12})
+                p["blocks"].insert(1, {"type": "scorebar", "auto": True, "span": 12})
             ex = a["exams"]["brand_authority"]
             p.setdefault("evidence", [])
             for r in ex.get("rows", []):
@@ -117,10 +117,12 @@ def expand(audit: dict, ledger: Ledger | None) -> dict:
             p.setdefault("blocks", []).insert(0, {"type": "swimlane", "auto": True, "span": 12,
                                                   "title": "Who does what, when — every bar is an action in the register"})
         if t == "agents" and "qr" not in types:
-            p.setdefault("blocks", []).append({"type": "qr", "url": install, "span": 3,
+            p.setdefault("blocks", []).append({"type": "qr", "auto": True, "url": install, "span": 3,
                                                "caption": "Scan to install the agents this plan routes work to."})
         if t == "receipt":
-            p.setdefault("blocks", []).extend(_receipt_blocks(a, ledger))
+            # every block code adds carries auto: True, so overflow advice can tell the writer
+            # which space on the page is not theirs to cut
+            p.setdefault("blocks", []).extend({**b, "auto": True} for b in _receipt_blocks(a, ledger))
     return a
 
 
@@ -130,11 +132,10 @@ def _receipt_blocks(a: dict, ledger: Ledger | None) -> list[dict]:
         st = ledger.stats()
         items = [{"label": k.replace("-", " ").lower(), "value": v} for k, v in
                  sorted(st["by_class"].items(), key=lambda x: -x[1])]
-        items += [{"label": "namesake / ambiguous rows (excluded)", "value": st["ambiguous"]},
-                  {"label": "conflict groups kept visible", "value": st["conflicts"]},
-                  {"label": "named unknowns", "value": st["unknowns"]}]
         blocks.append({"type": "bars", "span": 6, "title": f"Evidence ledger — {st['evidence']} rows by class",
-                       "items": items})
+                       "items": items,
+                       "caption": f"Kept beside the ledger, not counted in the {st['evidence']}: {st['ambiguous']} namesake rows, "
+                                  f"{st['conflicts']} conflict groups, {st['unknowns']} named unknowns."})
         # five most-cited facts: what a stranger should check first
         counts: dict[str, int] = {}
         for p in a.get("pages", []):
@@ -143,8 +144,11 @@ def _receipt_blocks(a: dict, ledger: Ledger | None) -> list[dict]:
         top = [r for r, _ in sorted(counts.items(), key=lambda x: -x[1]) if ledger.get(r)
                and ledger.get(r)["kind"] == "evidence"][:5]
         rows = [[r, ledger.get(r)["claim"][:70], ledger.get(r)["source"][:40], ledger.get(r)["state"]] for r in top]
+        # compact, like the crosswalk beside it: page 20 is all code-built, so no writer can make room
+        # on it, and which five facts lead changes with every edit elsewhere (Nov 10: 15px over)
         blocks.append({"type": "table", "span": 6, "title": "The five facts this audit leans on most — check these first",
-                       "columns": ["Evidence", "Claim", "Source", "State"], "rows": rows, "evidence": top})
+                       "columns": ["Evidence", "Claim", "Source", "State"], "rows": rows, "evidence": top,
+                       "compact": True})
     cover = {t: [] for t in M.PAGE_TYPES}
     for p in a.get("pages", []):
         for t in [p.get("type")] + list(p.get("covers") or []):
@@ -303,7 +307,10 @@ def page_html(p: dict, ctx: Ctx, total: int) -> str:
     blocks = "".join(C.render_block(b, ctx) for b in p.get("blocks", []))
     if p.get("type") == "cover":
         blocks += _prepared_by(ctx)
-    refs = M.refs_in(p)
+    # The footer lists the page's evidence fields, as it always has; ids in a table's evidence
+    # column are already chips in that table, and adding them here can wrap the footer onto a
+    # second line and take the room out of the page body.
+    refs = M.refs_in(p, tables=False)
     evf = C.chips(refs, ctx) if refs else '<span class="mut">none</span>'
     conf = ctx.meta.get("confidentiality", f"Confidential — prepared for {subj}")
     headline = p.get("headline", "")
@@ -353,31 +360,106 @@ MEASURE_JS = """
   let maxB = br.top;
   for (const c of body.children) { const r = c.getBoundingClientRect(); if (r.bottom > maxB) maxB = r.bottom; }
   const kids = [...body.children].map(c => Math.round(c.getBoundingClientRect().height));
+  // each block's own height: a grid row stretches the blocks beside each other to the taller
+  // one, so measure with align-self:start, then put every style back before anything else
+  const keep = [...body.children].map(c => c.style.alignSelf);
+  [...body.children].forEach(c => { c.style.alignSelf = 'start'; });
+  const own = [...body.children].map(c => Math.round(c.getBoundingClientRect().height));
+  [...body.children].forEach((c, i) => { c.style.alignSelf = keep[i]; });
   // a card's own content height (grid rows stretch both cards of a row to the taller one)
   const cards = [...body.querySelectorAll('.card')].map(c =>
     Math.round([...c.children].reduce((s, k) => s + k.getBoundingClientRect().height, 0)));
   return { n: +p.dataset.n, overflow: body.scrollHeight > body.clientHeight + 2,
-           over: Math.max(0, body.scrollHeight - body.clientHeight), h: body.clientHeight, kids, cards,
+           over: Math.max(0, body.scrollHeight - body.clientHeight), h: body.clientHeight, kids, own, cards,
            fill: Math.min(1, (maxB - br.top) / Math.max(1, br.height)) };
 })
 """
 
 
+def _grid_rows(blocks: list[dict]) -> list[list[int]]:
+    """Block indexes by grid row, as the browser places them: in order, a new row whenever the
+    next block's span no longer fits in the 12 columns. A block without a span takes its
+    renderer's default (a photo or the QR four columns), not twelve."""
+    rows: list[list[int]] = []
+    used = 12
+    for i, b in enumerate(blocks):
+        span = C.span_of(b)
+        if used + span > 12:
+            rows.append([])
+            used = 0
+        rows[-1].append(i)
+        used += span
+    return rows
+
+
 def _overflow_detail(page: dict, meas: dict) -> dict:
-    """How far a page runs over and what to cut, in words a drafting model can act on."""
-    pct = meas.get("over", 0) / max(meas.get("h", 1), 1)
-    words = M.words(M.text_of(page))
+    """How far a page runs over and what to cut, in words a drafting model can act on.
+
+    `page` is the expanded page, so it holds the blocks the renderer adds itself (exam heatmap
+    and scorebar, plan swimlane, agents QR, receipt). The writer never sees those and cannot
+    change them, so they are reported apart as fixed space; the writer's own blocks are
+    numbered as in its page object; the words to cut are estimated from its own blocks only.
+    Heights are each block's own height, not the height its grid row stretched it to. Until
+    Nov 10 the advice named the plan swimlane as "block 1" to cut, and two models in a row
+    trimmed tables that were never the problem."""
+    over = int(meas.get("over", 0))
+    h = max(int(meas.get("h", 1)), 1)
     blocks = page.get("blocks", [])
-    tallest = []
+    hs = [int(x) for x in (meas.get("own") or meas.get("kids") or [])][:len(blocks)]
+    blocks = blocks[:len(hs)]
+    rows = _grid_rows(blocks)
+    row_of = {i: r for r, ix in enumerate(rows) for i in ix}
+    fixed = [(hs[i], b) for i, b in enumerate(blocks) if b.get("auto")]
+    mine = [(i, j) for j, i in enumerate((i for i, b in enumerate(blocks) if not b.get("auto")), 1)]
+    mine_words = sum(M.words(M.text_of(blocks[i])) for i, _ in mine)
+    # the height the writer's blocks take now: everything but rows the renderer fills alone
+    code_rows = sum(max(hs[i] for i in ix) + GRID_GAP for ix in rows if all(blocks[i].get("auto") for i in ix))
+    room = max(h + over - code_rows, 1)
+    cut_words = min(mine_words, int(mine_words * over / room * 1.15) + 10) if mine else 0
     if meas.get("cards") and any(b.get("type") == "cards" for b in blocks):
-        items = [i for b in blocks if b.get("type") == "cards" for i in b.get("items", [])]
+        items = [it for b in blocks if b.get("type") == "cards" for it in b.get("items", [])]
         sized = sorted(zip(meas["cards"], range(1, len(items) + 1), items), key=lambda x: -x[0])
         tallest = [f"card {j} ({M.words(' '.join(str(it.get(k, '')) for k in ('title', 'body', 'so')))} words)"
                    for _, j, it in sized[:3]]
     else:
-        sized = sorted(zip(meas.get("kids", []), range(1, len(blocks) + 1), blocks), key=lambda x: -x[0])
-        tallest = [f"block {j} {b.get('type')} ({h}px, {M.words(M.text_of(b))} words)" for h, j, b in sized[:2]]
-    return {"over_pct": round(pct, 3), "cut_words": int(words * pct * 1.15) + 10, "tallest": tallest}
+        sized = sorted(((hs[i], j, blocks[i]) for i, j in mine), key=lambda x: -x[0])
+        tallest = [f"block {j} {b.get('type')} ({hh}px, {M.words(M.text_of(b))} words)" for hh, j, b in sized[:2]]
+
+    # Moves that clear it for certain, in pixels, because cutting words from a table whose rows
+    # are one line each frees nothing. In the pilot, three rounds trimmed table cells on page 18
+    # (69px over, then 38, 53, 16) while one 206px timeline beside the swimlane stayed put.
+    # A block frees height only if it sets its grid row's height: dropping a callout that sits
+    # beside a taller chart frees nothing (a first version of this advice suggested exactly that).
+    def frees(i: int, by: int) -> int:
+        """Height the page gets back if block i shrinks by `by` px (or goes, when by >= its height)."""
+        others = [hs[k] for k in rows[row_of[i]] if k != i]
+        if not others and by >= hs[i]:
+            return hs[i] + GRID_GAP                          # the whole row and its gap go
+        return max(0, hs[i] - max([hs[i] - by] + others))
+
+    visuals = [i for i, b in enumerate(blocks) if b.get("type") in M.VISUAL_BLOCKS]
+    keep = {i for i, b in enumerate(blocks) if b.get("type") == "cards"}         # page 2's findings
+    if len(visuals) == 1:
+        keep.add(visuals[0])                                 # the page's only visual (G40)
+    options = []
+    if page.get("n") not in (1, 2):                          # the front pages keep their shape
+        enough = [(hs[i], j, blocks[i]) for i, j in mine if i not in keep and frees(i, hs[i]) >= over]
+        if enough:
+            hh, j, b = min(enough, key=lambda x: x[0])
+            options.append(f"drop block {j} {b.get('type')} ({hh}px) or move it to a later page")
+    for i, j in mine:
+        trows = blocks[i].get("rows") if blocks[i].get("type") == "table" else None
+        if isinstance(trows, list) and len(trows) > 1:
+            per_row = max((hs[i] - TABLE_HEAD) / len(trows), 1)
+            k = int(-(-over // per_row))                     # ceiling
+            if k < len(trows) and frees(i, round(k * per_row)) >= over:
+                options.append(f"cut {k} row{'s' if k > 1 else ''} from block {j} table "
+                               f"(about {round(per_row)}px a row)")
+    return {"over_pct": round(over / h, 3), "over_px": over, "cut_words": cut_words, "tallest": tallest,
+            "fixed": [f"{b.get('type')} ({hh}px)" for hh, b in fixed], "options": options[:3]}
+
+
+GRID_GAP, TABLE_HEAD = 11, 24   # .body row gap and a table's title plus header row, in px
 
 
 def render(audit_path: str | pathlib.Path, ledger_path: str | pathlib.Path | None, out_pdf: str | pathlib.Path,
@@ -416,9 +498,38 @@ def render(audit_path: str | pathlib.Path, ledger_path: str | pathlib.Path | Non
         "overflow_detail": {str(x["n"]): _overflow_detail(by_n.get(x["n"], {}), x) for x in m if x["overflow"]},
         "fill": {str(x["n"]): round(x["fill"], 3) for x in m}, "links": links,
         "missing_assets": sorted(set(ctx.missing_assets)),
+        "missing_images": missing_images(by_n.values(), ctx),
+        "assets_available": assets_available(audit_path.parent, audit.get("meta", {})),
         "qr_decoded": _decode_qr(out_pdf, audit),
     }
     return report
+
+
+IMAGE_FILES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
+
+
+def missing_images(pages, ctx: Ctx) -> list[dict]:
+    """Every photo or screenshot block whose file is not there, by page. Such a block prints an
+    "IMAGE NEEDED" box. In the Nov 10 pilot all four rebuilds put a made-up screenshot path on
+    the cover (the writer was never told which files exist) and passed every gate that way."""
+    out = []
+    for p in sorted((p for p in pages if isinstance(p.get("n"), int)), key=lambda p: p["n"]):
+        for b in p.get("blocks", []):
+            if b.get("type") in ("photo", "screenshot") and not ctx.asset_ok(b.get("src", "")):
+                out.append({"page": p["n"], "src": b.get("src") or "(no src)"})
+    return out
+
+
+def assets_available(base: pathlib.Path, meta: dict) -> list[str]:
+    """The image files a page may cite, as paths a block's src uses: everything under assets/
+    except the preparer's own photo, which is the cover's byline, not evidence."""
+    d = base / "assets"
+    pb = meta.get("prepared_by")
+    skip = {pb.get("photo")} if isinstance(pb, dict) else set()
+    if not d.is_dir():
+        return []
+    return sorted(s for s in (f.relative_to(base).as_posix() for f in d.rglob("*")
+                              if f.is_file() and f.suffix.lower() in IMAGE_FILES) if s not in skip)
 
 
 QR_UNCHECKED = "UNCHECKED"
