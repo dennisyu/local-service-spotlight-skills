@@ -127,10 +127,15 @@ on one key, and `openrouter-lean` is the few-dollar tier. What the kit does on e
   drafting — and leaves room for that thinking in the reply limit, because Sonnet and Opus 5.5
   always think and thinking is billed as output; a reply cut off at its limit gets one retry
   with twice the room;
-- records the charge OpenRouter reports in the reply, not an estimate, in `run.json`;
+- records the charge OpenRouter reports in the reply (it returns one on every response), not an
+  estimate, in `run.json`;
+- sends a price ceiling (`provider.max_price`): the listed price, at its long-context tier when the
+  prompt can reach it, plus 25% headroom (`max_price_headroom`), so no provider charges more than
+  the spending cap assumed; a call no provider can serve under it fails and escalates;
 - retries rate limits and server errors (honouring `Retry-After`), stops at once on a bad key or
-  empty credits, and never crosses the spending cap: a call whose worst case would cross it is not
-  made, and the held audit says why;
+  empty credits, and never crosses the spending cap: before each call it adds that call's worst
+  case (every prompt byte a token, the whole reply limit, the ceiling rate) to what the run has
+  spent, and a call that could cross the cap is not made; the held audit says why;
 - writes pages 3-19 in four calls that share a cached prefix, because a real audit's pages run
   about 19,000 output tokens, more than one reply should carry.
 
@@ -197,11 +202,35 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
    disagreement becomes a gate or a card change. The first calibration uses three anchor audits
    whose grades are already agreed, which is the reviewer calibration the house audit rule asks for.
 
+## Grade a finished run with the house audit-quality gate
+
+```bash
+python -m factory20 bundle runs/<subject>          # needs audit.pdf; exit 2 if the run's records disagree
+python3 ../docs/audit-quality/verify_bundle.py --root runs/<subject>    # add --mode exercise for the demo
+```
+
+`bundle` writes, inside the run folder, `uaqg-receipt.json` (the tier receipt; `run.json` stays the
+call log), `bundle-manifest.json`, and a capture envelope under `uaqg/` for every ledger row and run
+record. It first re-runs the free gates and re-reads the PDF, and refuses a run whose `gate.json` or
+render report no longer describes the final files. **What it proves:** which bytes were graded
+(change one byte of `audit.pdf` or of any capture and verification fails), and exactly what the run
+did not check. **What it does not prove:** that the audit is right. Only identity is filled by a
+factory gate (G50 and G11, re-run on the final `audit.json`); the other 14 required checks stay
+UNKNOWN beside a record of what is missing. Reviewer calibration stays `NOT_RUN`, the six quality
+ratings stay empty (the Brand Authority score rates the business, not the audit), and the factory's
+own review is recorded but does not count as the independent review: it never sees the PDF pages
+and is not bound to a hash. A cost is `MEASURED` only when the provider reported every charge. So the
+gate holds every bundle today, the demo in production mode because it is synthetic, and in exercise
+mode, like a real run, on those named gaps; a person closes them. A ledger row whose URL has exactly
+one capture in the stage-10 `sources.jsonl` is bound to that file and its `captured_at`; otherwise
+its capture is the row itself, dated only by the ledger's `capture_date`, which the gate flags
+because it carries no time zone.
+
 ## Files
 
 | Path | What |
 |---|---|
-| `factory20/` | ledger, scoring, gates, renderer, components, cost, router, pipeline, OpenRouter check, Basecamp export, CLI |
+| `factory20/` | ledger, scoring, gates, renderer, components, cost, router, pipeline, OpenRouter check, Basecamp export, house-gate bundle, CLI |
 | `stages/` | the ten stage cards any model can follow |
 | `config/routing.json` | prices, stage budgets, tier → model routing, escalation ladder, confidential flags |
 | `config/agents.json` | which running agent picks up each function's to-dos, and who chases them |
@@ -209,7 +238,8 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
 | `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
-| `../tests/test_audit_factory.py` | 72 tests: every gate has a failing mutation |
-| `../tests/test_audit_factory_openrouter.py` | 30 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
+| `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
+| `../tests/test_audit_factory_openrouter.py` | 33 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could |
+| `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

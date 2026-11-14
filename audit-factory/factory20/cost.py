@@ -46,12 +46,19 @@ def load_routing(path: str | pathlib.Path | None = None) -> dict:
     return json.loads(pathlib.Path(path or ROUTING).read_text(encoding="utf-8"))
 
 
-def price(cfg: dict, model: str, prompt_per_call: float = 0) -> dict:
-    p = dict(cfg["prices"][model])
+def price_entry(entry: dict, prompt_tokens: float = 0) -> dict:
+    """The rates that apply to one call of this size. A long-context tier starts at its
+    threshold: OpenRouter lists it as min_prompt_tokens, so a prompt of exactly that size
+    already pays the higher rate."""
+    p = dict(entry)
     lc = p.get("long_context")
-    if lc and prompt_per_call > lc["over"]:
+    if lc and prompt_tokens >= lc["over"]:
         p.update({k: v for k, v in lc.items() if k != "over"})
     return p
+
+
+def price(cfg: dict, model: str, prompt_per_call: float = 0) -> dict:
+    return price_entry(cfg["prices"][model], prompt_per_call)
 
 
 def stage_cost(cfg: dict, stage: dict, model: str, batch: bool = False) -> dict:
@@ -110,7 +117,7 @@ def measured_cost(tier: str, cfg: dict | None = None, fix_rounds: int = 1, revie
     think = EFFORT_ROOM if worst_thinking else EFFORT_TYPICAL
     for sid, s in prof.items():
         model = t["models"][sid]
-        p = cfg["prices"][model]
+        p = price(cfg, model, s["in"])
         reps = {"review": review_passes, "fix": fix_rounds}.get(sid, 1)
         n = s["calls"] * reps
         pre = s.get("cached_prefix", 0)

@@ -29,7 +29,7 @@ not check is `"score": "UNKNOWN"`, never 0 or 1.
 ## Output (JSON)
 
 ```json
-{"brand_authority": {"rubric": "brand-authority@1.1", "pass_line": 80, "rows": [
+{"brand_authority": {"rubric": "brand-authority@1.1", "rows": [
   {"n": 4, "score": 7, "why": "386 reviews at 4.9, BBB A+, 104 reviews naming her — strong and current.",
    "evidence": ["V-E011", "V-E016", "V-E013"]}
 ]}, "separate": [

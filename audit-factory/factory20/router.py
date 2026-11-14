@@ -28,8 +28,13 @@ effort (deep for judgment, none or low for drafting) and its token limit is the 
 budget plus room for that effort.
 
 Cost. The cost recorded for each OpenRouter call is the charge OpenRouter reports in the
-reply. The spending cap is checked before every call against that call's worst case, so a
-run never crosses it.
+reply (OpenRouter returns it on every response). The spending cap is checked before every
+call against that call's worst case: every prompt byte counted as a token (a token is never
+shorter than one byte), the whole reply limit spent, and the highest rate the call can be
+charged. That rate includes a long-context tier when the prompt can reach it, and on
+OpenRouter it is the ceiling the call itself sends as provider.max_price (the listed price
+plus max_price_headroom), so no provider can charge more than the cap assumed. A call that
+could cross the cap is never made.
 """
 from __future__ import annotations
 
@@ -57,7 +62,8 @@ MODERATION = re.compile(r"moderat|flagged", re.I)   # a 403 for flagged input is
 MAX_RETRIES = 4
 DEFAULT_MAX_OUT = 16000
 DEFAULT_MODEL_MAX_OUT = 64000
-CHARS_PER_TOKEN_FLOOR = 3.0          # worst-case token count for the spending cap (JSON runs ~3.5-4)
+FRAMING_TOKENS = 512                 # role markers and other per-call tokens a provider adds around the text
+MAX_PRICE_HEADROOM = 1.25            # default; config may set "max_price_headroom"
 # Prompts mark where their stable prefix ends (brief + ledger, then earlier stage files).
 # Stages that call the same prefix more than once (page batches, fix rounds, review passes)
 # ask Claude to cache up to each mark; every other provider just gets the joined text.
@@ -165,17 +171,42 @@ def token_budget(p: dict, answer: int, effort: str | None) -> int:
     return min(answer + EFFORT_ROOM.get(effort or "none", 0), cap)
 
 
+def prompt_token_bound(system: str, user: str) -> int:
+    """More tokens than the prompt can possibly be. Byte-level tokenizers never emit a token
+    shorter than one byte, so a prompt has at most one token per UTF-8 byte, plus framing."""
+    return len(system.encode("utf-8")) + len(_flat(user).encode("utf-8")) + FRAMING_TOKENS
+
+
+def headroom(cfg: dict) -> float:
+    return float(cfg.get("max_price_headroom", MAX_PRICE_HEADROOM))
+
+
+def ceiling_rates(cfg: dict, model: str, prompt_tokens: float) -> dict:
+    """The highest per-million rates one call of this size can be charged: the long-context tier
+    when the prompt can reach it, raised by the max_price headroom on OpenRouter (where the
+    call sends that ceiling, so a pricier provider is never chosen)."""
+    p = K.price(cfg, model, prompt_tokens)
+    h = headroom(cfg) if p.get("provider") == "openrouter" else 1.0
+    return {k: float(p.get(k, 0) or 0) * h for k in ("in", "out", "cache_read", "cache_write")}
+
+
+def max_price(cfg: dict, model: str, prompt_tokens: float) -> dict:
+    """provider.max_price for an OpenRouter call, in dollars per million tokens."""
+    r = ceiling_rates(cfg, model, prompt_tokens)
+    return {"prompt": round(r["in"], 6), "completion": round(r["out"], 6)}
+
+
 def worst_case_usd(cfg: dict, model: str, system: str, user: str, max_tokens: int) -> float:
-    """An upper bound for one call at list price: every prompt character counted as a third of a
-    token, no cache discount, and the whole reply limit spent."""
-    p = cfg["prices"][model]
-    n_in = (len(system) + len(_flat(user))) / CHARS_PER_TOKEN_FLOOR
-    return round((n_in * max(p["in"], p.get("cache_write", 0)) + max_tokens * p["out"]) / 1e6, 6)
+    """An upper bound for one call: every prompt byte a token, every prompt token at the higher of
+    the input and cache-write ceiling, and the whole reply limit spent at the output ceiling."""
+    n_in = prompt_token_bound(system, user)
+    r = ceiling_rates(cfg, model, n_in)
+    return round((n_in * max(r["in"], r["cache_write"]) + max_tokens * r["out"]) / 1e6, 6)
 
 
 # ------------------------------------------------------------------ providers
 def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, confidential: bool,
-                cache: bool = False, effort: str | None = None) -> dict:
+                cache: bool = False, effort: str | None = None, ceiling: dict | None = None) -> dict:
     key = _env_key("OPENROUTER_API_KEY")
     base = os.environ.get("OPENROUTER_BASE_URL", OPENROUTER_BASE).rstrip("/")
     route = p.get("route", model)
@@ -187,7 +218,8 @@ def _openrouter(p: dict, model: str, system: str, user: str, max_tokens: int, co
         user_content = _flat(user)
     body = {"model": route, "max_tokens": max_tokens,
             "messages": [sys_msg, {"role": "user", "content": user_content}],
-            "provider": {"data_collection": "deny", **({"zdr": True} if confidential else {})}}
+            "provider": {"data_collection": "deny", **({"zdr": True} if confidential else {}),
+                         **({"max_price": ceiling} if ceiling else {})}}
     if effort:
         body["reasoning"] = {"effort": effort}
     if p.get("temperature") is not None:     # newer Claude and GPT models take no temperature
@@ -225,7 +257,8 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAUL
         return {"text": text, "usage": {"in": len(flat) // 4, "out": len(text) // 4, "cache_read": 0, "cache_write": 0},
                 "model": model, "provider": "fake", "truncated": False}
     if prov == "openrouter":
-        return _openrouter(p, model, system, user, max_tokens, confidential, cache, effort)
+        return _openrouter(p, model, system, user, max_tokens, confidential, cache, effort,
+                           ceiling=max_price(cfg, model, prompt_token_bound(system, user)))
     user = _flat(user) if prov != "anthropic" else user
     truncated = False
     if prov == "anthropic":
@@ -277,8 +310,9 @@ def call(model: str, system: str, user: str, cfg: dict, max_tokens: int = DEFAUL
 
 
 def usd(cfg: dict, model: str, usage: dict) -> float:
-    """List-price cost of one call from its token counts (USD)."""
-    p = cfg["prices"][model]
+    """List-price cost of one call from its token counts (USD), at the long-context rates when
+    the prompt reached that tier."""
+    p = K.price(cfg, model, usage.get("in", 0))
     fresh = max(usage["in"] - usage.get("cache_read", 0) - usage.get("cache_write", 0), 0)
     return round((fresh * p["in"] + usage.get("cache_read", 0) * p["cache_read"]
                   + usage.get("cache_write", 0) * p["cache_write"] + usage["out"] * p["out"]) / 1e6, 5)

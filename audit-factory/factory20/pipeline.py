@@ -196,10 +196,25 @@ def fix_list(gate_rep: dict, render_rep: dict | None = None, review: dict | None
     return items
 
 
+def _pages_named(item: dict) -> set[int]:
+    """Every page number an open item names: its page field, "page 7", "pages [2, 7]", "p7:"."""
+    msg = item.get("msg") or ""
+    found = {int(n) for grp in re.findall(r"\bpages? \[?([\d][\d ,]*)\]?", msg) for n in re.findall(r"\d+", grp)}
+    found |= {int(n) for n in re.findall(r"\bp(\d{1,2}):", msg)}
+    if isinstance(item.get("page"), int):
+        found.add(item["page"])
+    return {n for n in found if 1 <= n <= 20}
+
+
 def _front(item: dict) -> bool:
-    if item.get("id") in FRONT_GATES or item.get("page") in (1, 2):
-        return True
-    return bool(re.search(r"\bpages? \[?([12])\b|\bpage 2\b|\bp[12]:", item.get("msg") or ""))
+    """Pages 1-2 belong to the synthesis model."""
+    return item.get("id") in FRONT_GATES or bool(_pages_named(item) & {1, 2})
+
+
+def _back(item: dict) -> bool:
+    """Pages 3-19 belong to the fix model, including an item that also names a front page."""
+    named = _pages_named(item)
+    return not _front(item) or any(3 <= n <= 19 for n in named)
 
 
 def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fake, items: list[dict],
@@ -209,7 +224,7 @@ def _apply_fixes(run_dir: pathlib.Path, ledger: Ledger, tier: str, cfg: dict, fa
     obeys the same confidential guard and spending cap as the first draft."""
     ok = True
     front = [i for i in items if _front(i)]
-    rest = [i for i in items if not _front(i)]
+    rest = [i for i in items if _back(i)]
     if front:
         res = router.run_stage("synthesis", prompt("synthesis", run_dir, ledger, extra={
             "task": "Revise synthesis.json so every item in fix_list is cleared; keep what already works.",
@@ -319,10 +334,15 @@ def _run(run_dir: pathlib.Path, tier: str, cfg: dict, fake, render_pdf: bool, re
             out["usd"] = router.spent(run_dir)
             return out
     audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
-    rounds = 0
-    while fix_list(rep, rr) and rounds < MAX_FIX_ROUNDS:
+    rounds, last = 0, None
+    while rounds < MAX_FIX_ROUNDS:
+        items = fix_list(rep, rr)
+        open_now = sorted((i["from"], str(i["id"]), i["status"]) for i in items)
+        if not items or open_now == last:   # nothing open, or the last round cleared nothing: stop paying for it
+            break
+        last = open_now
         rounds += 1
-        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, fix_list(rep, rr),
+        if not _apply_fixes(run_dir, ledger, tier, cfg, fake, items,
                             confidential=confidential, max_usd=max_usd):
             break
         audit, rep, rr = _check_all(run_dir, ledger, tier, render_pdf)
