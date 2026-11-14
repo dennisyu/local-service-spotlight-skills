@@ -60,9 +60,17 @@ flow         {steps:[{label, detail, state, evidence}]}          # 3-5 steps
 ladder       {markers:[{label, level:0-5, target:0-5}], evidence}
 topic_wheel  {center_label, topics:[{label, weight}], caption, evidence}
 photo        {src:"assets/…", height?, caption, evidence}        # real captured image only
+screenshot   {src:"assets/…", height?, caption, evidence}        # same fields as photo
 ```
 
 `value: null` in bars renders UNKNOWN hatching — never write 0 for something not measured.
+
+**Crop or redact private fields in screenshots before use.** A Google panel, a profile or a
+review page often shows family members, a home address, a personal phone or something on
+`brief.do_not_print`; the gates cannot read your caption's intent, only the pixels. Use an image
+in `assets/` that was already cropped to the part you cite. Gate G75 reads every photo and
+screenshot with OCR and holds the audit on a do-not-print hit, but OCR misses stylised or tiny
+text, so it is a backstop, not the check. If no clean image exists, use a different visual.
 
 ## Output (JSON only)
 
@@ -72,4 +80,5 @@ photo        {src:"assets/…", height?, caption, evidence}        # real captur
 
 Each page: claim headline · ≥ 1 visual block · ≥ 3 real ledger ids · no invented number ·
 no buzzwords (leverage, unlock, elevate, robust, holistic, seamless, game-changer, next level) ·
-every action id you cite exists in the register · namesake rows cited only on pages 4 and 19.
+every action id you cite exists in the register · namesake rows cited only on pages 4 and 19 ·
+nothing on `do_not_print` in your text (G74) or in any screenshot or photo you place (G75).

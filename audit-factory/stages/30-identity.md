@@ -25,7 +25,10 @@ attribute. One attribute is a hypothesis. Same-photo matching is not used.
 ```
 
 If you cannot reach two attributes, set `status: "HOLD"`, list what you tried, and stop the
-scoring stage; the report may still be written as INCOMPLETE with no numbers.
+scoring stage; the report may still be written as INCOMPLETE with no numbers. On HOLD the
+renderer hatches all ten Brand Authority rows and leaves the score box empty, and gate G54 fails
+any Brand Authority score typed as `N/100` in the text, so write no number (not even a
+subtotal) until identity is CONFIRMED.
 
 ## Also decide
 

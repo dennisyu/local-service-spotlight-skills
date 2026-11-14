@@ -235,8 +235,41 @@ def bars(b, ctx):
     return f'<div class="blk bars" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{_caption(b, ctx)}</div>'
 
 
+MONO_EM = 0.602        # advance width of DejaVu Sans Mono, in em: ids are drawn in it
+
+
+def fit_ids(ids, room: float, font_px: float = 7.6, limit: int = 3) -> str:
+    """The first evidence ids (at most `limit`) that fit whole in `room` px of monospace text.
+
+    SVG text does not wrap and the viewBox clips it, so an id that does not fit would be cut
+    in half. Every id still prints in the page's evidence footer."""
+    ids = [str(i) for i in (ids or []) if str(i).strip()][:limit]
+    ch = MONO_EM * font_px
+    while ids and len(" ".join(ids)) * ch > room:
+        ids.pop()
+    return " ".join(ids)
+
+
+def exam_total(res: dict) -> tuple[str, str]:
+    """(number, units) for the score box, in the same terms as the verdict beside it.
+
+    COMPLETE prints the sum out of 100. INCOMPLETE prints the known subtotal out of the
+    points actually checked ("25/90 checked"), never "/100": a reader would take 25/100 for a
+    finished score. An identity HOLD prints no number at all (rubric: no number on HOLD)."""
+    if res["status"] == "HOLD":
+        return "—", "no number"
+    if res["status"] == "INCOMPLETE":
+        return str(res["known_subtotal"]), f"/{10 * res['known_rows']} checked"
+    return str(res["total"]), "/100"
+
+
 def heatmap(b, ctx):
+    """The ten Brand Authority rows. An identity HOLD shows no number anywhere: every row is
+    hatched and labelled HOLD, because a row score for a person not yet confirmed to be the
+    subject would be a number about a namesake (rubric: identity HOLD -> no number at all)."""
     rows = ctx.exam_rows() if b.get("auto", True) and not b.get("rows") else b.get("rows", [])
+    res = ctx.exam_result()
+    hold = bool(res) and res["status"] == "HOLD"
     Wd = W(b, 12) - 150
     rowh, lab = 27, 230
     cell = max(14, int((Wd - lab - 140) / 10) - 3)
@@ -245,21 +278,29 @@ def heatmap(b, ctx):
         y = 4 + k * rowh
         g.append(f'<text x="{lab - 8}" y="{y + 17}" class="tl" text-anchor="end">{r.get("n", k + 1)}. {E(str(r.get("name", ""))[:38])}</text>')
         s_ = r.get("score")
+        known = isinstance(s_, (int, float)) and not hold
         for c in range(10):
             x = lab + c * (cell + 3)
-            if isinstance(s_, (int, float)):
+            if known:
                 g.append(f'<rect x="{x}" y="{y + 4}" width="{cell}" height="{rowh - 9}" class="hc{" on" if c < s_ else ""}" rx="2"/>')
             else:
                 g.append(f'<rect x="{x}" y="{y + 4}" width="{cell}" height="{rowh - 9}" class="hatch" rx="2"/>')
         xs = lab + 10 * (cell + 3) + 8
-        g.append(f'<text x="{xs}" y="{y + 18}" class="tvb">{E(str(s_ if isinstance(s_, (int, float)) else "UNKNOWN"))}</text>')
-        ev = r.get("evidence") or []
-        g.append(f'<text x="{xs + 30}" y="{y + 17}" class="tid">{E(" ".join(ev[:3]))}</text>')
+        label = s_ if known else ("HOLD" if hold else "UNKNOWN")
+        g.append(f'<text x="{xs}" y="{y + 18}" class="tvb">{E(str(label))}</text>')
+        # clear the label: a score is at most two digits, "HOLD" is about 32px and "UNKNOWN"
+        # about 60px at 11px bold
+        xid = xs + (30 if known else 40 if hold else 70)
+        ids = fit_ids(r.get("evidence"), Wd - xid - 2)
+        if ids:
+            g.append(f'<text x="{xid}" y="{y + 17}" class="tid">{E(ids)}</text>')
     H = 10 + len(rows) * rowh
-    res = ctx.exam_result()
-    tot = (f'<div class="examtot"><div class="et-v">{E(str(res["total"] if res["total"] is not None else res["known_subtotal"]))}'
-           f'<span>/100</span></div><div class="et-s">{E(res["verdict"])}</div>'
-           f'<div class="et-p">Pass line {res["pass_line"]} · ten equal rows · never averaged with other exams</div></div>') if res else ""
+    tot = ""
+    if res:
+        num, units = exam_total(res)
+        tot = (f'<div class="examtot"><div class="et-v">{E(num)}<span>{E(units)}</span></div>'
+               f'<div class="et-s">{E(res["verdict"])}</div>'
+               f'<div class="et-p">Pass line {res["pass_line"]} · ten equal rows · never averaged with other exams</div></div>')
     return f'<div class="blk heatmap" {_span(b)}>{_title(b)}<div class="hmwrap">{_svg(Wd, H, "".join(g))}{tot}</div>{_caption(b, ctx)}</div>'
 
 
@@ -354,32 +395,71 @@ def timeline(b, ctx):
     return f'<div class="blk timeline" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{_caption(b, ctx)}</div>'
 
 
+SWIM_MIN_W, SWIM_GAP, SWIM_ROW, SWIM_BAR, SWIM_LANE_MIN = 30, 2, 13, 12, 34
+
+
+def pack_rows(spans: list[tuple[float, float]], gap: float = SWIM_GAP) -> list[int]:
+    """Interval packing: the row for each (x0, x1) span, so no two spans in a row touch.
+
+    Spans are placed in order of their start (ties keep their given order), each in the first
+    row whose last span ends at least `gap` px before it starts, else in a new row. Placing by
+    start makes first-fit use the fewest rows the overlaps allow."""
+    rows_end: list[float] = []
+    out = [0] * len(spans)
+    for k in sorted(range(len(spans)), key=lambda i: (spans[i][0], i)):
+        x0, x1 = spans[k]
+        r = next((j for j, end in enumerate(rows_end) if end + gap <= x0), len(rows_end))
+        if r == len(rows_end):
+            rows_end.append(x1)
+        else:
+            rows_end[r] = x1
+        out[k] = r
+    return out
+
+
 def swimlane(b, ctx):
+    """The 30/60/90 plan, one lane per function. Bars that share a time window stack in rows
+    (interval packing), and each lane grows to hold its rows, so no action hides behind
+    another — a lane of five same-window actions draws five rows."""
     items = b.get("items") or ctx.plan_items()
     lanes = []
     for it in items:
         if it["lane"] not in lanes:
             lanes.append(it["lane"])
     horizon = int(b.get("horizon_days", 90))
-    Wd, lab, laneh = W(b), 132, 34
-    H = 30 + laneh * max(len(lanes), 1)
+    Wd, lab = W(b), 132
     x = lambda d: lab + (Wd - lab - 12) * min(d, horizon) / horizon
+    ch = MONO_EM * 7.6                                   # bar labels are 7.6px monospace
+    placed = []                                          # (lane index, row, x0, width, item)
+    heights = []
+    for li, ln in enumerate(lanes):
+        row = [i for i in items if i["lane"] == ln]
+        spans = []
+        for it in row:
+            s0, e0 = it.get("start", 0), max(it.get("end", 7), it.get("start", 0) + 4)
+            w = max(x(e0) - x(s0), SWIM_MIN_W, len(str(it.get("id", ""))) * ch + 8)
+            x0 = min(x(s0), Wd - 2 - w)                  # a late, short bar stays inside the chart
+            spans.append((x0, x0 + w))
+        rows = pack_rows(spans)
+        heights.append(max(SWIM_LANE_MIN, 8 + SWIM_ROW * (max(rows) + 1 if rows else 1)))
+        placed += [(li, r, x0, x1 - x0, it) for (x0, x1), r, it in zip(spans, rows, row)]
+    tops = [22 + sum(heights[:li]) for li in range(len(lanes))]
+    H = 30 + (sum(heights) if lanes else SWIM_LANE_MIN)
     g = []
-    for li in range(len(lanes)):
+    for li, h in enumerate(heights):
         if li % 2 == 0:
-            g.append(f'<rect x="0" y="{22 + li * laneh}" width="{Wd}" height="{laneh}" class="laneband"/>')
+            g.append(f'<rect x="0" y="{tops[li]}" width="{Wd}" height="{h}" class="laneband"/>')
     for d, name in ((0, "Today"), (7, "Day 7"), (30, "Day 30"), (60, "Day 60"), (90, "Day 90")):
         g.append(f'<line x1="{x(d):.1f}" y1="16" x2="{x(d):.1f}" y2="{H}" class="grid"/>')
         g.append(f'<text x="{x(d):.1f}" y="12" class="td" text-anchor="middle">{name}</text>')
     for li, ln in enumerate(lanes):
-        y = 22 + li * laneh
-        g.append(f'<text x="{lab - 8}" y="{y + 21}" class="tl" text-anchor="end">{E(ln[:22])}</text>')
-        row = [i for i in items if i["lane"] == ln]
-        for k, it in enumerate(row):
-            s0, e0 = it.get("start", 0), max(it.get("end", 7), it.get("start", 0) + 4)
-            yy = y + 4 + (k % 2) * 13
-            g.append(f'<rect x="{x(s0):.1f}" y="{yy}" width="{max(x(e0) - x(s0), 30):.1f}" height="12" rx="2" class="bar{" alt" if k % 2 else ""}"/>')
-            g.append(f'<text x="{x(s0) + 4:.1f}" y="{yy + 9}" class="sl2{" dk" if k % 2 else ""}">{E(str(it.get("id", "")))}</text>')
+        g.append(f'<text x="{lab - 8}" y="{tops[li] + heights[li] / 2 + 4:.1f}" class="tl" text-anchor="end">{E(ln[:22])}</text>')
+    for li, r, x0, w, it in placed:
+        yy = tops[li] + 4 + r * SWIM_ROW
+        alt = r % 2 == 1                                 # colour alternates by row, not by register order
+        aid = E(str(it.get("id", "")))
+        g.append(f'<rect x="{x0:.1f}" y="{yy}" width="{w:.1f}" height="{SWIM_BAR}" rx="2" class="bar{" alt" if alt else ""}" data-id="{aid}"/>')
+        g.append(f'<text x="{x0 + 4:.1f}" y="{yy + 9}" class="sl2{" dk" if alt else ""}">{aid}</text>')
     return f'<div class="blk swim" {_span(b)}>{_title(b)}{_svg(Wd, H, "".join(g))}{_caption(b, ctx)}</div>'
 
 

@@ -40,7 +40,8 @@ def cmd_gate(a) -> int:
     brief = pathlib.Path(a.brief) if a.brief else pathlib.Path(a.audit).with_name("brief.json")
     b = json.loads(brief.read_text()) if brief.exists() else {}
     rep = gates.gate_audit(audit, led, a.tier, do_not_print=b.get("do_not_print", []),
-                           allowed_phones=b.get("allowed_phones", [])).summary()
+                           allowed_phones=b.get("allowed_phones", []),
+                           asset_base=pathlib.Path(a.audit).parent).summary()
     if a.json:
         pathlib.Path(a.json).write_text(json.dumps(rep, indent=1))
     _print_report(rep, "Content gates")

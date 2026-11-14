@@ -36,7 +36,7 @@ chases later nothing had happened. **One runner owns an audit end to end.**
 | 10 Collect | **no collector code yet** — the runner researches with its own search and data tools (web search, Ahrefs, Knowledge Graph) following the card | the runner |
 | 20 Harvest | **no harvest code yet** — the runner (or cheap helpers it starts) turns captured sources into ledger rows following the card | the runner |
 | 30-70 Identity → actions | `factory20 run` calls each stage's model, checks the output, retries with the failure list, escalates one rung | code + routed models |
-| Gates, render, fix rounds | code: 40 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
+| Gates, render, fix rounds | code: 41 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
 | 80 Review | code calls the review model in a fresh context (final files only, no drafting history); S0/S1 sends fixes back and re-reviews | code + review model |
 | 90 Deliver | `factory20 basecamp` writes the to-do list; filing and the Basecamp post follow [stages/90-deliver.md](stages/90-deliver.md) | the runner |
 
@@ -64,6 +64,9 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
 1. **Python 3.11+** and `pip install -r requirements.txt`; Chromium through Playwright
    (`python -m playwright install chromium`), and `pdftoppm` for the QR check (`poppler-utils` on
    Linux, `brew install poppler` on a Mac; without it the QR check warns instead of passing).
+   For any brief with a `do_not_print` list, install **Tesseract** too (`apt install tesseract-ocr`,
+   `brew install tesseract`): gate G75 reads the words inside every screenshot and photo with it.
+   Without it G75 warns instead of passing, and a person must check each image by eye.
 2. **Model keys** for a live run. Simplest: one `OPENROUTER_API_KEY` and an `openrouter*` tier,
    which sends every call — Claude included — through OpenRouter ([below](#run-it-through-openrouter-one-key)).
    Otherwise each provider's own key: `standard`, `muse` and `enterprise` need
@@ -162,7 +165,8 @@ which is why the score clamps and the Claude review sit around the cheap draftin
 ```
 runs/<subject>/
   brief.json        subject, goal, prepared_for, prepared_by, dates, palette,  ← you write
-                    do_not_print (confidential numbers, embargoed titles, private names; gate G74)
+                    do_not_print (confidential numbers, embargoed titles, private names;
+                                  gate G74 in the text, G75 inside screenshots and photos)
                     allowed_phones (the business's own listed numbers; gate G71)
   ledger.json       stages 10-20 (collect + harvest) or an existing ledger
   identity.json  score.json  synthesis.json  pages.json  actions.json         ← stages 30-70
@@ -180,15 +184,32 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 
 ## Quality control
 
-1. **Gates (free, every draft):** 40 content gates (29 must pass on a real audit, 11 warn) — page
+1. **Gates (free, every draft):** 41 content gates (30 must pass on a real audit, 11 warn) — page
    structure, cited ids that exist in the ledger and at least three per page, namesake leakage,
    insight-card anatomy, the page-2 word budget, headline claims, buzzwords, density,
    specificity, a visual on every page, identity, score calibration, the action contract,
-   approval before any client-facing change, privacy (including the brief's do-not-print list),
-   the install QR, and the preparer's name and face on page 1 (a warning on the synthetic demo,
-   a failure on a real audit) — plus 5 render gates (3 must pass, 2 warn) for page count,
+   approval before any client-facing change, privacy (including the brief's do-not-print list,
+   in the text and, read by OCR, inside every screenshot and photo), the install QR, and the
+   preparer's name and face on page 1 (a warning on the synthetic demo, a failure on a real
+   audit) — plus 5 render gates (3 must pass, 2 warn) for page count,
    overflow, fill, links and a decoded QR. Every message says
    what to fix; an overflow says by how much and which card is tallest. `HOLD` never ships.
+
+### Screenshots and the do-not-print list (known limitation)
+
+Gate G74 checks the words in `audit.json`; a screenshot is pixels. On the 2026-11-11 Nik Halik
+audit a Google panel screenshot on page 1 showed private family names that were on
+`brief.do_not_print`, and every text gate passed. Gate **G75** now reads every embedded
+`photo` and `screenshot` block (and the preparer's photo) with Tesseract and searches the words
+for the same list: a hit **fails** the audit, no OCR engine or an unreadable image **warns**. Its
+message names the item's number in the brief, the page and the image, never the private words.
+
+OCR is a backstop, not proof that an image is clean. It misses stylised, tiny, rotated or
+low-contrast text, text inside logos and handwriting, and it cannot know that a face or a house
+is private. So the rule stays: **crop or redact private fields in screenshots before use**
+(family names, personal phone numbers, home addresses, anything on `do_not_print`). A G75 failure
+is not sent to the drafting model, because no model can redact pixels: the run holds with
+`holding_gates: ["G75"]` until the runner crops or redacts the image file and re-runs the gates.
 2. **One structured frontier review** ([stages/80-review.md](stages/80-review.md)) on the exact
    final files, in a fresh context that never saw the drafting: twelve judgment checks code cannot
    do, S0-S3 severity, a second pass only if S0/S1 was found. For enterprise audits and the pilot,
@@ -201,7 +222,7 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 
 | Path | What |
 |---|---|
-| `factory20/` | ledger, scoring, gates, renderer, components, cost, router, pipeline, OpenRouter check, Basecamp export, CLI |
+| `factory20/` | ledger, scoring, gates, OCR for the image privacy gate, renderer, components, cost, router, pipeline, OpenRouter check, Basecamp export, CLI |
 | `stages/` | the ten stage cards any model can follow |
 | `config/routing.json` | prices, stage budgets, tier → model routing, escalation ladder, confidential flags |
 | `config/agents.json` | which running agent picks up each function's to-dos, and who chases them |
@@ -209,7 +230,7 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
 | `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
-| `../tests/test_audit_factory.py` | 72 tests: every gate has a failing mutation |
+| `../tests/test_audit_factory.py` | 101 tests: every gate has a failing mutation; the score box (including identity HOLD), swimlane packing and image privacy gate have geometry and OCR tests |
 | `../tests/test_audit_factory_openrouter.py` | 30 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
 | `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

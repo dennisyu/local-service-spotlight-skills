@@ -35,6 +35,12 @@ Write `sources.jsonl`: one line per capture with `url`, `kind`, `captured_at`, `
 `locale`, `status`, `path`. A failed fetch is a row with `status: "blocked"` — an access
 limit, not a finding.
 
+Keep the full capture in `captures/` as evidence, but **crop or redact private fields in
+screenshots before use**: whatever goes into `assets/` prints in the client PDF. Knowledge
+panels list spouses and children; profiles show home addresses and personal phones. Crop to
+the part you will cite and blank anything on `brief.do_not_print`. Gate G75 reads the images
+with OCR and holds the audit on a hit, but it is a backstop (it misses stylised or tiny text).
+
 ## Done when
 
 At least 120 sources for a person+company audit (60 for a micro business), every query

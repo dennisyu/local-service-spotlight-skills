@@ -56,3 +56,9 @@ them appears on a page or in the action register, and its message never repeats 
 2026-10-25 bake-off on one evidence packet, two cheap models printed exactly these (a
 confidential investor detail and an embargoed title) while the frontier models did not; the
 list turns that judgment into a check any model passes.
+
+G74 reads text, and a screenshot is pixels: on the 2026-11-11 Nik Halik audit a Google panel
+screenshot on page 1 showed private family names from the list and every text gate passed.
+Gate G75 now reads every embedded photo and screenshot with OCR (install Tesseract; without it
+G75 warns) and fails on a hit. OCR misses some text, so **crop or redact private fields in
+screenshots before use** — at capture (stage 10) and again when you place an image (stage 60).
