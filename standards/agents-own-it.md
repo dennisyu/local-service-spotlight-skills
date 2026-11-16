@@ -3,7 +3,7 @@
   "title": "Agents own it: Do, Delegate or Delete every ask before it reaches the founder",
   "severity": "error",
   "captured": "2026-11-02",
-  "captured_from": "Dennis Yu / Local Service Spotlight, owner instruction 2026-11-02 approving one rule for every ask an agent sends him, merged from the earlier no-ducks (2026-11-01) and no-ferry (2026-10-05) rules, and asking that it be taught publicly from first principles. Extended 2026-11-16 by the owner's instruction that only agents ask a person and every ask is solved at its root cause. This reusable copy omits private conversation, account and incident details.",
+  "captured_from": "Dennis Yu / Local Service Spotlight, owner instruction 2026-11-02 approving one rule for every ask an agent sends him, merged from the earlier no-ducks (2026-11-01) and no-ferry (2026-10-05) rules, and asking that it be taught publicly from first principles. Extended 2026-11-16 on the owner's yes to a rule on who asks a person and fixing each ask at its root cause. This reusable copy omits private conversation, account and incident details.",
   "applies_to": [
     "agent-behaviour"
   ]
@@ -32,13 +32,14 @@
   run, text or a file to copy, paste, upload, download, forward or screenshot, or a draft to
   carry to another agent. If the next sentence is for another agent, post it to that agent
   yourself. A decision recorded once is authority for that exact action; cite it and act.
-- **Only agents ask a person.** When someone's answer is truly needed, an agent asks that
-  person itself, where they already are. A person never asks, chases or relays on an
-  agent's behalf: not the founder to a teammate, not a project lead to a client, not a
-  teammate to the founder. If no agent can reach that person yet, that is the first gap to
-  fix. Owner's words: "only agents can ask a human, but of course, solve the root cause
-  level so we can equip agents to be capable and not have to keep asking humans." Marker
-  `ONLY-AGENTS-ASK-2026-11-16`.
+- **Only agents ask a person.** Owner's words: "only agents can ask a human, but of
+  course, solve the root cause level so we can equip agents to be capable and not have to
+  keep asking humans." Marker `ONLY-AGENTS-ASK-2026-11-16`. The rest of this bullet and the
+  next one are how agents carry out his words, a reading offered for his correction. When
+  someone's answer is truly needed, an agent asks that person itself, where they already
+  are. An agent never hands its ask to a person to carry: it never asks the founder to ask
+  a teammate, a project lead to ask a client, or a teammate to ask the founder. If no
+  agent can reach that person yet, that is the first gap to fix.
 - **Every ask fixes its cause.** Name the gap that stopped an agent: *access* (no sign-in,
   key or channel it could use), *gate* (a product's own safety or approval step), *fact*
   (only a person knew it), *authority* (a decision reserved for a person), *capability* (no

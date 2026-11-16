@@ -3,7 +3,7 @@
   "title": "Human review only when it matters",
   "severity": "error",
   "captured": "2026-11-04",
-  "captured_from": "Dennis Yu / Local Service Spotlight, owner instruction 2026-11-04: agents use judgment on when a human needs to review and merge, a human only when it matters, and the requirements for when a human should see it are published for every agent. The seven cases were drafted from the team's existing review rules and revised after an independent review. Extended 2026-11-16: only agents ask a person, and every ask is solved at its root cause. This reusable copy omits private conversation, account and incident details.",
+  "captured_from": "Dennis Yu / Local Service Spotlight, owner instruction 2026-11-04: agents use judgment on when a human needs to review and merge, a human only when it matters, and the requirements for when a human should see it are published for every agent. The seven cases were drafted from the team's existing review rules and revised after an independent review. Extended 2026-11-16 on the owner's yes to a rule on who asks a person and fixing each ask at its root cause. This reusable copy omits private conversation, account and incident details.",
   "applies_to": [
     "agent-behaviour"
   ]
@@ -57,8 +57,8 @@ Marker: `HUMAN-REVIEW-WHEN-IT-MATTERS-2026-11-04`.
      standing rule. Carrying out a decision already recorded, in the person's own words
      and within its scope, is not new; adding your own detail to it is.
 - **An agent asks the person who owns that decision, once, where they already are:** the
-  chat they are working in or the thread already open for the work. A person never carries
-  the ask for an agent; only agents ask a person (see `agents-own-it`). Name which case it
+  chat they are working in or the thread already open for the work. An agent does not hand
+  its ask to a person to carry (see `agents-own-it`). Name which case it
   hits, give your recommendation and the link, and keep working on everything else. Log the
   ask with the gap that stopped the agent and the fix that closes it, so the same review ask
   does not come back. Cases 1 to 6 wait

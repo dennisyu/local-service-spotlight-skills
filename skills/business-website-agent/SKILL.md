@@ -1942,13 +1942,14 @@ numbers for the same thing.
   run, text or a file to copy, paste, upload, download, forward or screenshot, or a draft to
   carry to another agent. If the next sentence is for another agent, post it to that agent
   yourself. A decision recorded once is authority for that exact action; cite it and act.
-- **Only agents ask a person.** When someone's answer is truly needed, an agent asks that
-  person itself, where they already are. A person never asks, chases or relays on an
-  agent's behalf: not the founder to a teammate, not a project lead to a client, not a
-  teammate to the founder. If no agent can reach that person yet, that is the first gap to
-  fix. Owner's words: "only agents can ask a human, but of course, solve the root cause
-  level so we can equip agents to be capable and not have to keep asking humans." Marker
-  `ONLY-AGENTS-ASK-2026-11-16`.
+- **Only agents ask a person.** Owner's words: "only agents can ask a human, but of
+  course, solve the root cause level so we can equip agents to be capable and not have to
+  keep asking humans." Marker `ONLY-AGENTS-ASK-2026-11-16`. The rest of this bullet and the
+  next one are how agents carry out his words, a reading offered for his correction. When
+  someone's answer is truly needed, an agent asks that person itself, where they already
+  are. An agent never hands its ask to a person to carry: it never asks the founder to ask
+  a teammate, a project lead to ask a client, or a teammate to ask the founder. If no
+  agent can reach that person yet, that is the first gap to fix.
 - **Every ask fixes its cause.** Name the gap that stopped an agent: *access* (no sign-in,
   key or channel it could use), *gate* (a product's own safety or approval step), *fact*
   (only a person knew it), *authority* (a decision reserved for a person), *capability* (no
@@ -2027,8 +2028,8 @@ Marker: `HUMAN-REVIEW-WHEN-IT-MATTERS-2026-11-04`.
      standing rule. Carrying out a decision already recorded, in the person's own words
      and within its scope, is not new; adding your own detail to it is.
 - **An agent asks the person who owns that decision, once, where they already are:** the
-  chat they are working in or the thread already open for the work. A person never carries
-  the ask for an agent; only agents ask a person (see `agents-own-it`). Name which case it
+  chat they are working in or the thread already open for the work. An agent does not hand
+  its ask to a person to carry (see `agents-own-it`). Name which case it
   hits, give your recommendation and the link, and keep working on everything else. Log the
   ask with the gap that stopped the agent and the fix that closes it, so the same review ask
   does not come back. Cases 1 to 6 wait
