@@ -3,7 +3,7 @@
   "title": "Agents own it: Do, Delegate or Delete every ask before it reaches the founder",
   "severity": "error",
   "captured": "2026-11-02",
-  "captured_from": "Dennis Yu / Local Service Spotlight, owner instruction 2026-11-02 approving one rule for every ask an agent sends him, merged from the earlier no-ducks (2026-11-01) and no-ferry (2026-10-05) rules, and asking that it be taught publicly from first principles. This reusable copy omits private conversation, account and incident details.",
+  "captured_from": "Dennis Yu / Local Service Spotlight, owner instruction 2026-11-02 approving one rule for every ask an agent sends him, merged from the earlier no-ducks (2026-11-01) and no-ferry (2026-10-05) rules, and asking that it be taught publicly from first principles. Extended 2026-11-16 by the owner's instruction that only agents ask a person and every ask is solved at its root cause. This reusable copy omits private conversation, account and incident details.",
   "applies_to": [
     "agent-behaviour"
   ]
@@ -32,6 +32,23 @@
   run, text or a file to copy, paste, upload, download, forward or screenshot, or a draft to
   carry to another agent. If the next sentence is for another agent, post it to that agent
   yourself. A decision recorded once is authority for that exact action; cite it and act.
+- **Only agents ask a person.** When someone's answer is truly needed, an agent asks that
+  person itself, where they already are. A person never asks, chases or relays on an
+  agent's behalf: not the founder to a teammate, not a project lead to a client, not a
+  teammate to the founder. If no agent can reach that person yet, that is the first gap to
+  fix. Owner's words: "only agents can ask a human, but of course, solve the root cause
+  level so we can equip agents to be capable and not have to keep asking humans." Marker
+  `ONLY-AGENTS-ASK-2026-11-16`.
+- **Every ask fixes its cause.** Name the gap that stopped an agent: *access* (no sign-in,
+  key or channel it could use), *gate* (a product's own safety or approval step), *fact*
+  (only a person knew it), *authority* (a decision reserved for a person), *capability* (no
+  tool or skill could do it) or *duck* (it should not have been asked). Then name the fix
+  that equips the next agent: store the access where agents can use it, record the decision
+  or a standing envelope, write the fact where agents read, build the tool or skill, or have
+  the gate's owner change its setting. Never hand a gated step to another session. Some
+  asks stay with a person by design (money above an envelope, a new rule, a legal call):
+  say so and why. A fix cited by asks on two different days has not landed; the weekly
+  review names it until it does.
 - **The real gates do not change.** Money, credentials and access grants, deletes, anything
   irreversible, sends to outside people beyond the team's routine lane, and the other
   consequential categories in `agents-draft-humans-send` still wait for their yes. A
@@ -40,7 +57,7 @@
   platform gates.
 - **Count it, or it will creep back.** Log every ask that reaches the founder (the
   "Needs you:" line of a report, plus one log line for any ask sent by email, chat or text),
-  mark each as a judgment call or a duck, and review the count weekly in the team's
+  mark each as a judgment call or a duck with its gap and fix, and review the count weekly in the team's
   Metrics, Analysis, Action review. Target: zero ducks, and total asks down at least 20%
   week over week until they settle at a handful. For each duck, the agent that sent it fixes
   the instruction that produced it the same day.
