@@ -88,7 +88,8 @@ class Ctx:
             win = int(a.get("window") or (7 if due <= 7 else 30 if due <= 30 else 60 if due <= 60 else 90))
             startd = {7: 0, 30: 7, 60: 30, 90: 60}.get(win, 0)
             lane = (a.get("function") or "Owner").split("(")[0].strip()[:22]
-            out.append({"id": a.get("id"), "lane": lane, "start": startd, "end": max(due, startd + 4)})
+            out.append({"id": a.get("id"), "lane": lane, "start": startd, "end": max(due, startd + 4),
+                        "executor": a.get("executor", ""), "due": max(due, 0)})
         return out
 
 
@@ -124,17 +125,50 @@ def expand(audit: dict, ledger: Ledger | None) -> dict:
     return a
 
 
+def chromium_candidates() -> list[str]:
+    """Chromium binaries to try when Playwright's bundled build is missing.
+
+    Order: $FACTORY20_CHROMIUM, then any pre-installed Playwright Chromium under
+    $PLAYWRIGHT_BROWSERS_PATH or /opt/pw-browsers (cloud sessions ship one whose
+    revision can differ from the installed Python package).
+    """
+    import glob
+    import os
+    out = []
+    env = os.environ.get("FACTORY20_CHROMIUM")
+    if env:
+        out.append(env)
+    roots = [os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or "", "/opt/pw-browsers"]
+    for root in roots:
+        if root:
+            out += sorted(glob.glob(os.path.join(root, "chromium-*", "chrome-linux*", "chrome")), reverse=True)
+    return [p for p in dict.fromkeys(out) if os.path.exists(p)]
+
+
+def launch_chromium(pw):
+    """Launch Playwright's Chromium; fall back to a known binary when the bundled one is absent."""
+    try:
+        return pw.chromium.launch()
+    except Exception as first:  # noqa: BLE001 - Playwright raises a generic Error for a missing browser
+        for path in chromium_candidates():
+            try:
+                return pw.chromium.launch(executable_path=path)
+            except Exception:  # noqa: BLE001
+                continue
+        raise first
+
+
 def _receipt_blocks(a: dict, ledger: Ledger | None) -> list[dict]:
     blocks = []
     if ledger:
         st = ledger.stats()
-        items = [{"label": k.replace("-", " ").lower(), "value": v} for k, v in
+        short = {"INDEPENDENTLY-CORROBORATED": "independent", "FIRM-UNATTRIBUTED": "firm, unattributed"}
+        items = [{"label": short.get(k, k.replace("-", " ").lower()), "value": v} for k, v in
                  sorted(st["by_class"].items(), key=lambda x: -x[1])]
-        items += [{"label": "namesake / ambiguous rows (excluded)", "value": st["ambiguous"]},
-                  {"label": "conflict groups kept visible", "value": st["conflicts"]},
-                  {"label": "named unknowns", "value": st["unknowns"]}]
         blocks.append({"type": "bars", "span": 6, "title": f"Evidence ledger — {st['evidence']} rows by class",
-                       "items": items})
+                       "items": items,
+                       "caption": f"Kept beside the ledger, not counted in the {st['evidence']}: {st['ambiguous']} namesake rows, "
+                                  f"{st['conflicts']} conflict groups, {st['unknowns']} named unknowns."})
         # five most-cited facts: what a stranger should check first
         counts: dict[str, int] = {}
         for p in a.get("pages", []):
@@ -150,7 +184,8 @@ def _receipt_blocks(a: dict, ledger: Ledger | None) -> list[dict]:
         for t in [p.get("type")] + list(p.get("covers") or []):
             if t in cover:
                 cover[t].append(str(p.get("n")))
-    xw = [[str(i + 1), t.replace("_", " "), ", ".join(cover[t]) or "MISSING"] for i, t in enumerate(M.PAGE_TYPES)]
+    shown = {"lighthouse": "partners"}
+    xw = [[str(i + 1), shown.get(t, t.replace("_", " ")), ", ".join(cover[t]) or "MISSING"] for i, t in enumerate(M.PAGE_TYPES)]
     blocks.append({"type": "table", "span": 6, "title": "Coverage crosswalk — default blueprint page → this PDF",
                    "columns": ["Default", "Requirement", "This PDF"], "rows": xw, "compact": True})
     files = a.get("meta", {}).get("companions") or ["evidence ledger (JSON/CSV)", "action register (CSV + Basecamp to-dos)",
@@ -204,7 +239,7 @@ a.ev { color: #1d4ed8; border-color: #b8c6ef; background: #f3f6fe }
 .pair { margin: 2px 0 } .pr { display: grid; grid-template-columns: 34% 1fr auto; gap: 5px; align-items: center; font-size: 8.6px }
 .pb { height: 9px; background: var(--ink); display: block; border-radius: 1px } .pb.alt { background: var(--accent) } .pv { font-weight: 800; font-size: 8px }
 .doors { display: flex; gap: 4px; flex-wrap: wrap } .door { font: 700 8.2px Inter; padding: 3px 6px; border-radius: 3px; border: 1px solid }
-.door.ok { color: var(--obs); border-color: var(--obs) } .door.no { color: #b91c1c; border-color: #b91c1c; text-decoration: line-through }
+.door.ok { color: var(--obs); border-color: var(--obs) } .door.no { color: #b91c1c; border-color: #b91c1c } .door.warn { color: #92400e; border-color: #d97706; background: #fffbeb }
 .sgrid { display: grid; gap: 6px }
 .stat { border: 1px solid var(--rule); padding: 6px 8px; border-left: 4px solid var(--accent) }
 .sv { font: 800 25px/1 "Inter Display"; letter-spacing: -.02em } .sl { font: 700 9.4px/1.28 Inter; margin-top: 4px } .ss { font-size: 8.4px; color: var(--muted); margin-top: 2px }
@@ -216,13 +251,13 @@ table { width: 100%; border-collapse: collapse; font-size: 9.1px; line-height: 1
 th { text-align: left; background: var(--ink); color: #fff; font: 700 8.2px/1.25 Inter; letter-spacing: .04em; padding: 4px 5px }
 td { border-bottom: 1px solid var(--rule); padding: 4px 6px; vertical-align: top }
 .cap { font-size: 8.4px; color: var(--muted); margin-top: 3px; line-height: 1.35 }
-.callout { border-left: 4px solid var(--ink); background: #f5f6f8; padding: 6px 9px }
+.callout { border-left: 4px solid var(--ink); background: #f5f6f8; padding: 6px 9px; align-self: start }
 .callout.t-decision { border-color: var(--accent); background: #111318; color: #fff } .callout.t-decision .ctl { color: var(--accent) }
 .callout.t-warn { border-color: #b91c1c; background: #fef2f2 } .callout.t-info { border-color: #1d4ed8; background: #f3f6fe }
 .ctl { font: 800 10.6px/1.28 Inter; margin-bottom: 3px } .cbd { font-size: 10px; line-height: 1.45 }
 .quote .q { font: 600 14px/1.38 "Inter Display"; } .quote .qa { font-size: 8px; color: var(--muted); margin-top: 3px }
 .checklist .ck { display: grid; grid-template-columns: 58px 1fr; gap: 7px; font-size: 9.2px; padding: 2px 0; border-bottom: 1px solid var(--rule) }
-.cks { font: 800 6.8px/1.6 Inter; text-align: center; border-radius: 3px; color: #fff; background: #6b7280 }
+.cks { font: 800 6.8px/1.6 Inter; text-align: center; border-radius: 3px; color: #fff; background: #6b7280; align-self: start; margin-top: 1px }
 .cks.s-pass { background: var(--obs) } .cks.s-fail { background: #b91c1c } .cks.s-warn, .cks.s-partial { background: var(--inf) }
 .conflicts .cf { border: 1px solid var(--rule); padding: 5px 7px; margin-bottom: 5px } .cm { font: 800 9px Inter } .cv { font-size: 8.2px } .cr { font-size: 8.2px; margin-top: 2px }
 figure.photo { margin: 0 } .frame { width: 100%; overflow: hidden; border-radius: 3px; background: #eef0f3 }
@@ -232,7 +267,7 @@ figure.photo { margin: 0 } .frame { width: 100%; overflow: hidden; border-radius
 svg.viz { display: block; width: 100%; height: auto }
 svg .tl { font: 600 9.6px Inter; fill: #2b303a } svg .tl2 { font: 500 9px Inter; fill: #2b303a } svg .tl2b { font: 600 9.4px Inter; fill: #1f232b } svg .tv { font: 800 10px Inter; fill: #111 } svg .tvb { font: 800 11px Inter; fill: #111 }
 svg .tu { font: 700 8.6px Inter; fill: #374151 } svg .tid { font: 600 7.6px "DejaVu Sans Mono"; fill: #6b7280 } svg .td { font: 800 8.4px Inter; fill: #5b616e }
-svg .bar { fill: var(--ink) } svg .bar.alt { fill: var(--accent) } svg .hatch { fill: url(#hatch); stroke: #9ca3af; stroke-width: .6 }
+svg .bar { fill: var(--ink) } svg .bar.alt { fill: var(--accent) } svg .bar.ro { fill: #fff; stroke: var(--ink); stroke-width: 1.2 } svg .hatch { fill: url(#hatch); stroke: #9ca3af; stroke-width: .6 }
 svg .hc { fill: #eceef2 } svg .hc.on { fill: var(--accent) }
 svg .axis { stroke: var(--ink); stroke-width: 1.6 } svg .grid { stroke: #d7dae0; stroke-width: 1; stroke-dasharray: 2 3 }
 svg .dot.n-obs { fill: var(--obs) } svg .dot.n-inf { fill: var(--inf) } svg .dot.n-unk { fill: #9ca3af } svg .ring { fill: #fff; stroke: var(--accent); stroke-width: 2.4 }
@@ -392,7 +427,7 @@ def render(audit_path: str | pathlib.Path, ledger_path: str | pathlib.Path | Non
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
-        b = pw.chromium.launch()
+        b = launch_chromium(pw)
         pg = b.new_page(viewport={"width": 816, "height": 1056})
         pg.goto(html_file.resolve().as_uri(), wait_until="load")
         pg.evaluate("document.fonts.ready")

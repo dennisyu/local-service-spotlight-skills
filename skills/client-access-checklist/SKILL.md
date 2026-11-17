@@ -1,10 +1,12 @@
 ---
 name: client-access-checklist
-description: "Verify the scoped access and measurement prerequisites for client/site work: Search Console, the real edit path, analytics, tag management, DNS, business profiles, video, social and ads. Use at kickoff, before authorized publishing, or when checking whether an existing approved access route can be reused."
+description: "Verify the scoped access and measurement prerequisites for client/site work: Google Search Console, Bing Webmaster Tools, the real edit path, analytics, tag management, DNS, business profiles, video, social and ads. Use at kickoff, before authorized publishing, or when checking whether an existing approved access route can be reused."
 author: Dennis Yu — Local Service Spotlight
 references:
   - https://blitzmetrics.com/verify-client-sites-google-search-console/
   - https://blitzmetrics.com/digital-plumbing/
+  - https://blitzmetrics.com/bing-webmaster-tools-checklist/
+  - https://www.bing.com/webmasters/help/add-and-verify-site-12184f8b
 ---
 
 # Client Access Checklist
@@ -31,7 +33,7 @@ a dependent publishing action remains blocked.
 
 | # | Access | Evidence of readiness |
 |---|---|---|
-| 1 | **Google Search Console** | Correct property, approved role, successful property read and supported sitemap state |
+| 1 | **Google Search Console + Bing Webmaster Tools** | Separate property, role, verification, sitemap and representative URL inspection evidence for each engine |
 | 2 | **Actual website edit/release path** | Verified live runtime/source and least-privilege authorized connector, deployment or CMS route; any secret remains in the approved secret store |
 | 3 | **Google Analytics 4 or agreed analytics** | Correct property, intended events firing on the live page and applicable filters; inspect actual events, not only markup |
 | 4 | **Tag manager, when used** | Real configured container and current published version; a script reference or empty container is insufficient |
@@ -64,6 +66,14 @@ a dependent publishing action remains blocked.
    rules and scope. Use https://blitzmetrics.com/verify-client-sites-google-search-console/
    and current official product documentation for the chosen method. Make only an
    authorized reversible change; then verify from the intended property account.
+   **Set up Bing Webmaster Tools alongside Google Search Console** for owned sites
+   and managed sites where search administration is authorized. Reuse the exact
+   verified property if it exists. Otherwise use an approved Google Search Console
+   import for the selected site or another supported ownership method. Read back
+   verification in Bing. Reuse an existing valid sitemap entry or submit the real
+   public sitemap. Record processing status and inspect the homepage and one
+   priority canonical page in each engine. Keep verification, sitemap processing,
+   and observed indexing separate.
 6. **Verify measurement before optimization.** Use the agreed live event test and
    applicable analytics/tag-manager setup. Avoid duplicate tags and containers.
    Publishing markup alone is not evidence of a received event.
@@ -82,6 +92,9 @@ a dependent publishing action remains blocked.
 - [ ] The required readiness gates passed, or the exact dependent action remains blocked with its permitted recovery/exception recorded.
 - [ ] The private access register names the actual runtime, account, source revision and tested scope; secret values are absent.
 - [ ] Current harmless reads support the claimed state; public markup and authenticated access claims remain separate.
+- [ ] Both search engines have separate property, verification, sitemap and URL
+  inspection receipts or a recorded scope/access blocker. Receipts include
+  observed time, coverage denominator, and owner/next check for open items.
 - [ ] Applicable sitemap and measurement tests use the intended property and live source.
 - [ ] Any missing-access request states the minimum exact gap and required product approval.
 - [ ] A receiving worker independently reads the intended artifact before a cross-runtime delivery or adoption claim.
