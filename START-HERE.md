@@ -215,6 +215,57 @@ receiver's actual acknowledgment. A local pass does not prove shared access,
 claim serialization or unattended pickup. Add a schedule only when needed and
 authorized, then verify its first firing separately using [ACCEPTANCE.md](ACCEPTANCE.md).
 
+### Add people and agent identities without confusing access with adoption
+
+Use this checklist when a small team grows. It is a recommended rollout pattern,
+not permission to invite anyone, change security settings or buy seats.
+
+| Participant | Recommended access pattern | Evidence before assigning real work |
+|---|---|---|
+| Internal teammate | Their own verified GitHub account; a role-based team with only the needed repositories | Accepted invitation, actual repository role, harmless read of the agreed revision |
+| Long-lived operations or review agent | A scoped, organization-owned GitHub App **if its runtime supports that authentication** | Actual authenticated actor, selected repositories, tested read and permitted write route |
+| Temporary worker/subagent | The approved runtime route and task scope; do not assume it needs a new paid account | Record the real actor and worker separately; test access in that runtime |
+| Client | Outside-collaborator access to a separate repository containing only material approved for that client | Verify the full repository and history are safe for that audience, then test the intended access |
+
+A connector authenticated as a human is not a distinct agent identity just because
+a task calls it “Ops” or “Reviewer.” Record the account/app that actually performed
+the action and the agent that did the work. Do not share human passwords or tokens
+between people, or claim independent permissions where both workers use one
+credential. Independent review still requires a reviewer who did not write the
+change; a second label alone does not prove that.
+
+GitHub Apps have repository-specific permissions and do not consume a user seat,
+but an existing assistant connector may not accept a custom App identity. Prove
+compatibility before building an integration or buying machine-user seats.
+See [GitHub's App guidance](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/deciding-when-to-build-a-github-app).
+For clients, outside collaborators cannot join organization teams and private
+repository access can consume a paid license. Check the actual plan and existing
+licenses before inviting or purchasing.
+See [GitHub's outside-collaborator guidance](https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-outside-collaborators/adding-outside-collaborators-to-repositories-in-your-organization).
+
+**Pilot before expanding:**
+
+1. Name an operations worker, a separate reviewer and an accountable human owner.
+   Keep billing, organization administration and access approval with authorized
+   humans; an operations assignment is not an administrator grant.
+2. Use the existing private team record. Record proposed account/app, repositories,
+   role, owner and expiry/review date there. Keep private roster and access evidence
+   out of this public source. Verify recipient identity and authorization before
+   issuing an invitation or changing access.
+3. Have each participant read the same harmless probe in its actual runtime and
+   report the exact revision. “Invite sent” is not “accepted”; “accepted” is not
+   “agent can read.” Record each separately.
+4. Run one authorized bounded task with a claimed owner, exact-source links,
+   checked artifact and independent review. Complete the handoff in steps 3–5
+   before expanding to the next teammates.
+5. Keep client work separate from the internal coordination repository. A folder
+   name, branch or instruction saying “do not read other clients” is not an access
+   boundary. Review repository contents and history before any client grant.
+6. Record one reusable lesson in this existing guide or the relevant canonical
+   standard. Retain runtime-specific activation receipts privately. Repeat the
+   same checks for each newly connected person or agent instead of declaring all
+   agents current from one successful run.
+
 ## Problems and recovery
 
 | Observation | Next action |
