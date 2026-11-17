@@ -27,6 +27,12 @@ rebuilt to a written visual standard — after which Muse's next audit measured 
 rows are not 20-page audits (a 15-page and a 46-page ChatGPT build), and density is a review
 trigger, not proof of quality.
 
+**These measurements are not reviewer calibration.** `python -m factory20 bundle` makes any finished
+run gradable by the house gate (`docs/audit-quality/verify_bundle.py`): it proves which bytes were
+graded and lists every check the run did not perform, but it records calibration as `NOT_RUN`, so
+every bundle holds until people grade three safe anchor audits (the synthetic demo's bundle can be
+one) and that grading is recorded.
+
 ## What the numbers say
 
 1. **The gap is mostly specification, not intelligence.** Muse went from below-bar to
@@ -115,6 +121,79 @@ Opus findings add enough to earn twice the price is the pilot's main question: i
 not show:** research quality from a cheap harvest (the clean ledger still carries the research
 lanes' own notes, as any harvest would), or what the frontier review adds.
 
+## The pilot: two audits rebuilt and graded blind (2026-11-10 to 2026-11-12)
+
+The pilot rebuilt two audits Claude had already built, each from the original's evidence ledger
+with the original's insights removed: a company audit dated Nov 4 and a person audit dated Oct 23.
+Their names are in the private crosswalk, not here. A fresh agent answered every call on the model
+the tier routes that stage to, except that Claude stood in for the lean tier's two models from other
+providers: Haiku for DeepSeek V4.1 Flash (pages, actions and fixes) and Sonnet for GPT-6.1 Terra
+(identity and score). Lean's findings (Sonnet) and review (Opus) are its own. Another fresh agent,
+which saw none of the work, graded each rebuild
+against its original on the twelve review checks, with a letter scale fixed before any grading:
+Fable as the official grader and Opus 5.5 as a cross-check (the protocol names Fable 5.1; where
+the log records which version answered the subagent alias, it was Fable 5.2). Where both models wrote text that
+stayed in the audit, the lower letter counts, and so does any S0 or S1 that either grader finds and
+the ledger supports. A rebuild passes with no S0 or S1 and no more than one letter below its
+original. Costs are estimates, not a bill: each call's measured prompt at Nov 10 list prices with
+the kit's prompt caching, plus its reply and the kit's typical thinking for the stage's effort. The
+pilot's subagents thought far longer than that; at face value, with every token they used and no
+caching, the six runs come to $4.96 to $25.59. Lean's costs are at its stand-ins' prices; at its
+own models' prices they come to $0.98 and $1.26.
+
+| rebuild | kit | grade, Fable / Opus | original in the same set | grader S1s | key insights found of 20 (partial) | new supported | cost | kit's verdict | pass rule |
+|---|---|---|---|---|---|---|---|---|---|
+| company, standard | 523018f | A- / B+ | B / B | 0 | 12 (6) | 14 | $3.46 | HOLD on 3 S1 | pass |
+| company, lean | 523018f | B+ / B+ | B / B | 0 | 7 (11) | 9 | $1.07 | HOLD on 3 S1 | pass |
+| person, standard | 523018f | B / B | A- / B+ | 1 | 17 (3) | 14 | $4.40 | HOLD on 2 S1 and a page overflow | fail |
+| person, lean | 523018f | B / B | A- / B+ | 1 | 9 (10), 1 contradicted | 11 | $1.32 | HOLD on 5 S1 | fail |
+| person, standard, rerun | 229cfc9 | A- / A- | B / B | 0 | 19 (1) / 18 (1), 1 contradicted | 14 / 12 | $6.45 | HOLD on 2 S1 | pass |
+| person, standard, rerun with item 15 | 68a7f4d | A- / A- | A- / A- | 0 | 14 (6) / 15 (5) | 13 / 11 | $6.65 | READY | pass |
+
+Recall on the first four rows is Fable's; on the reruns it is Fable / Opus. Both graders found one
+S1 in the company original (a percentage no ledger row supports) and none in its rebuilds. The second
+rerun reused the first rerun's first 12 answers, whose prompts were the same byte for byte; its cost
+counts them.
+
+**What failed, and what fixed it.** Each failing person rebuild kept one S1 that the kit's own last
+review had found: the standard tier's second review is its last, and lean has no fix after its one
+review. The standard failure, a cover that kept a figure the page fix had changed, is fixed by
+revising the cover after the pages it summarizes, and the first rerun passed. Its rise from B to
+A- is not that fix alone: in both reruns Fable wrote the findings after two Opus answers failed
+their checks, and the original itself moved between B and A- across sets. The kit still held that
+rerun on two S1s from its second review, which both graders rated S2, because each finding had reached
+a writer that did not own the words it faulted. Item 15 sends each review finding to the writer of
+those words, and the second rerun ended READY. The lean failure is not fixed: a fix round after
+lean's one review is a cost decision for the kit's owner.
+
+**The reviewer, calibrated against the graders.** The kit's last review is stricter than the blind
+graders and finds what they find. Across the six rebuilds it left 15 S1s in place. The graders found
+an S1 in two rebuilds (in the person lean rebuild, each grader a different one), and every one of them
+was among the review's. On the first rerun, the two the review called S1 the graders called S2. A
+grader reads three audits side by side against the ledger; the review reads one alone and lists what
+must change. The review is the gate, and the grade is the comparison with the original.
+
+**The graders, measured against themselves.** The same file graded in different sets moved. The person
+original got A-, B and A- from Fable and B+, B and A- from Opus; in the B set each grader found an S1
+in it. Fable found 19 of the 20 insights in the first rerun in one set and 15 in the next. So a letter moves up
+to two steps, and recall about four insights, with the audits beside it. One letter of margin in the
+pass rule is about that size, so report a grade as a range.
+
+**What it answers.** The question from the Nov 4 blind test was whether Opus findings earn twice the
+price. Standard's Opus findings found more of each original's insights than lean's Sonnet findings, 12
+against 7 on the company audit and 17 against 9 on the person audit, and the lean person rebuild
+failed. On one subject of each kind, standard stays the default for person audits; lean passed the
+company audit. Passing here is the blind comparison: the kit's own review held five of the six
+rebuilds, and only the last ended READY. **What it does not show:** a home-service subject
+(planned, still owed), lean with its own models (Haiku stood in for DeepSeek, Sonnet for GPT-6.1
+Terra), research from a cheap harvest (both ledgers came from frontier research), a
+live OpenRouter bill, and costs at the one-pass estimates in the README: real rebuilds came to $3.46
+to $6.65 on standard and $1.07 to $1.32 on lean, because they needed retries, fix rounds and a second
+review. Every standard rebuild came to more than the cost model's worst case for one audit ($3.07),
+which adds a quarter for retries but never moves a stage to a bigger model; on the person reruns the
+findings went to Fable after two Opus answers failed their checks. Lean stayed within its worst case
+($1.33).
+
 ## The OpenRouter path (2026-11-04)
 
 **What is tested.** Every call the kit makes through OpenRouter, against a local stand-in for
@@ -154,8 +233,8 @@ OpenRouter's live models list, and each code fix has a test:
 2. **The spending cap could be crossed.** It was checked against what had already been spent, so
    the last call could run past it. Every call now checks its own worst case first (every
    prompt character counted as a third of a token, no cache discount, the whole reply limit
-   spent); a call that could cross the cap is not made, and the audit holds with the reason.
-   Removing the check fails two tests.
+   spent; tightened by the second review below); a call that could cross the cap is not made,
+   and the audit holds with the reason. Removing the check fails two tests.
 3. **A cut-off reply was treated as a writing mistake.** It was sent back with "fix your JSON".
    Replies that stop at their limit (`finish_reason` "length", `stop_reason` "max_tokens") now
    get one retry on the same model with twice the room, then the normal escalation.
@@ -170,27 +249,91 @@ OpenRouter's live models list, and each code fix has a test:
    `data_collection: "deny"` ("providers which do not collect user data") instead of "keep no
    prompts".
 
+**What the second independent review found (2026-11-08).** A fresh reviewer on a different
+model (Claude Fable 5.1), which wrote none of the code, ran every documented command, mutated
+inputs and read the public claims against the code. Five findings were material. All are
+fixed; each fix has a test that fails on the old code:
+
+1. **The pass line came from the writing model.** `score.compute` read `pass_line` from
+   `audit.json`, so a model that wrote 30 turned the demo's 38/100 into PASS. It is now
+   `score.PASS_LINE` only; the score card no longer asks for the field.
+2. **Long prompts were priced at the short-prompt rate.** Haiku 5.5 costs $0.50 / $2.50 per
+   million tokens from 100,000 prompt tokens (OpenRouter lists it as a pricing override), five
+   times its base rate. The logged cost and the cap check ignored that; both use
+   `cost.price_entry` now, the OpenRouter route carries the tier, `openrouter-check` compares
+   long-context tiers too, and it found two more routes missing theirs (Grok 4.7 from 200,000,
+   GPT-6.1 Sol from 272,000).
+3. **The cap rested on two guesses: three characters a token, and the listed price.** Neither
+   is guaranteed: a prompt dense with URLs and ids tokenizes worse, and OpenRouter can route a
+   call to a provider that charges more. The worst case now counts every UTF-8 byte as a token
+   (no tokenizer emits a token shorter than a byte) plus framing, and every OpenRouter call
+   sends `provider.max_price`: the listed price, at its long-context tier when the prompt can
+   reach it, plus 25% headroom. The cap test's stand-in now charges the most a provider could
+   under that request, with its own arithmetic, so a weaker bound or a missing ceiling fails it.
+   The byte bound is about 3.6 times the measured token count, so a tight custom cap can hold a
+   real audit before its last call; the tier defaults leave room, and the hold says what the
+   next call could cost.
+4. **"Every gate has a failing mutation" was false.** 18 of 45 gates had none. Each now has a
+   mutation that trips it, and a test fails when a gate is added without one.
+5. **The exam box printed a number it withholds.** With identity HOLD the page showed the
+   subtotal over "NO NUMBER"; with an UNKNOWN row it showed "31 /100". It now prints no score on
+   HOLD and "31 of 90 checked" when incomplete. The same rule now holds for words a model types: gate
+   G54 reads "38 of 100" as well as "38/100", and allows a score out of 100 only when the exam is
+   complete.
+
+Smaller findings, also fixed: the fix loop spent all three rounds on warnings the writer cannot
+clear (it now stops when a round changes nothing); the privacy gates scanned page text only,
+not the action register or a printed QR address (they scan both now); an item naming page 2
+and page 7 reached only the front-page writer (it reaches both now); and the review card listed
+page images the code never sends (the card now says what the reviewer gets). One finding did
+not reproduce: OpenRouter returns `usage.cost` on every response, and its documentation marks
+the `usage: {"include": true}` flag deprecated, so the kit's reading of the charge is right.
+The review passed the house-gate bundle (`factory20 bundle`) and the skill registration fix.
+
 **What one audit costs, counted from a real audit's prompts and replies** (the clean blind run's
 own stage files; the review and fix sizes and the thinking are assumptions), from an existing
 ledger:
 
 | Tier | Typical | Worst case |
 |---|---:|---:|
-| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.95 | $1.51 |
+| `openrouter-lean` (Sonnet judgment, DeepSeek drafting, one Opus review) | $0.99 | $1.59 |
 | `openrouter` and `standard` (same models, one key or two) | $1.61 | $3.07 |
-| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.62 | $0.96 |
+| `openrouter-budget` (experimental: no Claude unless a cheaper model fails twice) | $0.66 | $1.04 |
 
 Typical is one fix round, one review pass and a typical amount of thinking per call (1,000
 tokens at low effort, 3,000 at medium, 6,000 at high); worst case is three fix rounds, every
 review pass, every call thinking up to its full room (2,048 / 6,144 / 12,288 tokens) and 25%
 retries. On `openrouter-lean` the one Opus review is about half the typical cost ($0.52 of
-$0.95). Research (stages 10-20) is extra. These sit below the $2.45 the Sonnet blind test cost
+$0.99). Research (stages 10-20) is extra. These sit below the $2.45 the Sonnet blind test cost
 because that was an interactive session re-reading its files (8.0 million cache reads); the
 runner sends each stage's prompt once. **Not measured yet:** a live bill, and the
 quality of the one-key tiers. The first live run rebuilds the public demo on each one-key tier,
 then the clean blind ledger on `openrouter-lean`, scored by the same independent judge; its
 numbers replace this paragraph. The Oct 27 replay below is the evidence so far for cheap drafting
 through OpenRouter.
+
+**Nov 10, 2026: DeepSeek's price on OpenRouter went up.** The listing for DeepSeek V4.1 Flash went
+from $0.051 to $0.30 per million input tokens and from $0.41 to $1.20 per million output tokens;
+cached input fell from $0.022 to $0.006. `openrouter-check` failed in CI on it, and `--write`
+refreshed `routing.json` and saved `fixtures/openrouter/models-2026-11-10.json`. The table above
+uses the new price. One pass on `openrouter-lean` moves from $0.95 to $0.99: its DeepSeek calls
+mostly reread a cached prompt, and the Opus review is half the bill. The planning estimate moves
+from $2.91 to $3.45, because it counts DeepSeek's research harvest at the full input price. Also
+listed: a dated snapshot, `deepseek/deepseek-v4.1-flash-1017`, at $0.006 in and $0.50 out. Moving
+to it changes the model, so it needs its own quality check first. The route's "off-peak; peak
+doubles" note predates the new listing and is not verified against it.
+
+**Nov 11, 2026: the headline moved back, and the check now asks the providers.** The listing for
+DeepSeek V4.1 Flash went to $0.051 in, $0.567 out and $0.018 cached, and `openrouter-check` failed
+in CI again. That headline is one provider's price. OpenRouter lists 36 endpoints for the route; 30
+were up, 7 of them at $0.30 and $1.20, and 5 of those at the configured $0.006 cached. Writing the
+headline into `routing.json` would have set each call's ceiling (the price plus 25% headroom) near
+$0.064 in and $0.71 out, which three providers meet. So the check now also reads each route's
+endpoints. A different headline input, output or cached price is current when at least three
+providers that are up charge the configured one; it is still drift when they do not, and a missing
+route, a changed effort list or a changed long-context tier still fails. The routing prices are
+unchanged. `fixtures/openrouter/models-2026-11-11.json` keeps the endpoints, and saved dates are
+now UTC, so a machine on Pacific time cannot write Nov 11's prices into Nov 10's file.
 
 ## Score calibration evidence
 

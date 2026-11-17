@@ -103,6 +103,16 @@ class ScoreTests(unittest.TestCase):
         self.assertIsNone(r["total"])
         self.assertEqual(r["known_subtotal"], 33)
 
+    def test_the_pass_line_is_the_rubrics_not_the_models(self):
+        """A model that writes pass_line 30 must not turn a failing score into a PASS."""
+        ex = copy.deepcopy(AUDIT["exams"]["brand_authority"])
+        honest = score.compute(ex)
+        ex["pass_line"] = 30
+        bent = score.compute(ex)
+        self.assertEqual((bent["verdict"], bent["pass_line"]), (honest["verdict"], score.PASS_LINE))
+        self.assertLess(honest["total"], score.PASS_LINE)
+        self.assertEqual(honest["verdict"], "BELOW PASS LINE")
+
     def test_identity_hold_has_no_number(self):
         r = score.compute(AUDIT["exams"]["brand_authority"], "HOLD")
         self.assertEqual(r["status"], "HOLD")
@@ -230,6 +240,18 @@ class GateNegativeTests(unittest.TestCase):
     def test_G54_hand_typed_score(self):
         self.mutate(lambda a: self.page(a, 6).update(dek="Brand Authority is 61/100 by our count."), "G54")
 
+    def test_G54_a_score_in_words_is_still_a_score(self):
+        self.mutate(lambda a: self.page(a, 6).update(dek="Brand Authority is 61 out of 100 by our count."), "G54")
+
+    def test_G54_no_score_out_of_100_without_a_complete_exam(self):
+        hold = copy.deepcopy(AUDIT)
+        hold["meta"]["identity"]["status"] = "HOLD"
+        self.assertEqual(status(gate(hold), "G54"), "FAIL")         # the demo's headline says "38 of 100"
+        unknown = copy.deepcopy(AUDIT)
+        unknown["exams"]["brand_authority"]["rows"][6]["score"] = "UNKNOWN"
+        self.assertEqual(status(gate(unknown), "G54"), "FAIL")
+        self.assertEqual(status(gate(copy.deepcopy(AUDIT)), "G54"), "PASS")
+
     def test_G61_action_without_test(self):
         self.mutate(lambda a: a["actions"][0].update(acceptance_test="done"), "G61")
 
@@ -298,6 +320,171 @@ class GateNegativeTests(unittest.TestCase):
     def test_G80_expansion_adds_qr(self):
         self.assertEqual(status(gate(copy.deepcopy(AUDIT)), "G80"), "PASS")
 
+
+
+def gate_statuses(a, gid, tier="standard", ledger=None, **kw):
+    """Every status a gate reported. Some gates (G02, G51) report more than once, and a dict
+    keyed by gate id would keep only the last one."""
+    led = ledger or LEDGER
+    rep = gates.gate_audit(render.expand(a, led), led, tier, **kw)
+    return [c["status"] for c in rep.checks if c["id"] == gid]
+
+
+def _reader_strings(obj, fn, key=None):
+    """Apply fn to every reader-visible string (the text the gates count), in place."""
+    if isinstance(obj, dict):
+        for k, v in list(obj.items()):
+            if isinstance(v, str) and k not in M._SKIP_TEXT_KEYS:
+                obj[k] = fn(v)
+            else:
+                _reader_strings(v, fn, k)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str) and key not in M._SKIP_TEXT_KEYS:
+                obj[i] = fn(v)
+            else:
+                _reader_strings(v, fn, key)
+
+
+class GateMutationCoverageTests(unittest.TestCase):
+    """The rest of the gates, so that every gate has a mutation that trips it (the claim in the
+    kit README). Hard gates must FAIL; advisory gates must WARN."""
+
+    def page(self, a, n):
+        return next(p for p in a["pages"] if p["n"] == n)
+
+    def trips(self, fn, gid, expect="FAIL", ledger=None, **kw):
+        a = copy.deepcopy(AUDIT)
+        fn(a)
+        self.assertIn(expect, gate_statuses(a, gid, ledger=ledger, **kw), gid)
+        self.assertNotIn(expect, gate_statuses(copy.deepcopy(AUDIT), gid, ledger=ledger, **kw), f"{gid} on the clean demo")
+
+    def test_G02_fixed_page_has_the_wrong_type(self):
+        self.trips(lambda a: self.page(a, 1).update(type="audience"), "G02")
+
+    def test_G04_unknown_block_type(self):
+        self.trips(lambda a: self.page(a, 5)["blocks"].append({"type": "sparkle"}), "G04")
+
+    def test_G05_a_ledger_id_a_table_cannot_cite(self):
+        data = json.loads((DEMO / "ledger.json").read_text())
+        data["unknowns"][0]["id"] = "VU01"      # no hyphen: a table cell would print it as a word
+        self.assertEqual(gate_statuses(copy.deepcopy(AUDIT), "G05", ledger=Ledger.from_json(data)), ["FAIL"])
+        self.assertEqual(gate_statuses(copy.deepcopy(AUDIT), "G05"), ["PASS"])
+
+    def test_G12_most_cited_rows_have_no_link(self):
+        data = json.loads((DEMO / "ledger.json").read_text())
+        for row in data["items"][:45]:
+            row["source_url"] = ""
+        self.assertIn("WARN", gate_statuses(copy.deepcopy(AUDIT), "G12", ledger=Ledger.from_json(data)))
+        self.assertNotIn("WARN", gate_statuses(copy.deepcopy(AUDIT), "G12"))
+
+    def test_G14_page_without_evidence(self):
+        def f(a):
+            for d in M.walk(self.page(a, 12)):
+                for k in M.EVID_KEYS:
+                    if k in d:
+                        d[k] = []
+        self.trips(f, "G14")
+
+    def test_G32_thin_pages_on_average(self):
+        self.trips(lambda a: _reader_strings(a["pages"], lambda s: " ".join(s.split()[:6])), "G32", "WARN")
+
+    def test_G33_one_nearly_empty_page(self):
+        self.trips(lambda a: self.page(a, 5).update(headline="One short claim on this page.", dek="",
+                                                     blocks=[{"type": "photo", "src": "x.jpg"}]), "G33", "WARN")
+
+    def test_G34_pages_without_numbers(self):
+        import re
+        self.trips(lambda a: _reader_strings(a["pages"], lambda s: re.sub(r"\d", "", s)), "G34", "WARN")
+
+    def test_G41_one_kind_of_visual(self):
+        def f(a):
+            for p in a["pages"]:
+                p["blocks"] = [b for b in p["blocks"] if b["type"] not in M.VISUAL_BLOCKS or b["type"] == "photo"]
+        self.trips(f, "G41", "WARN")
+
+    def test_G42_three_pages_with_the_same_layout(self):
+        def f(a):
+            for n in (10, 11):
+                self.page(a, n)["blocks"] = copy.deepcopy(self.page(a, 9)["blocks"])
+        self.trips(f, "G42", "WARN")
+
+    def test_G51_nine_rows(self):
+        self.trips(lambda a: a["exams"]["brand_authority"]["rows"].pop(), "G51")
+
+    def test_G51_no_exam(self):
+        self.trips(lambda a: a["exams"].pop("brand_authority"), "G51", "WARN")
+
+    def test_G53_row_without_its_reason(self):
+        self.trips(lambda a: a["exams"]["brand_authority"]["rows"][2].pop("why"), "G53", "WARN")
+
+    def test_G60_too_few_actions(self):
+        self.trips(lambda a: a.update(actions=a["actions"][:5]), "G60")
+
+    def test_G63_action_without_executor(self):
+        self.trips(lambda a: a["actions"][3].pop("executor"), "G63", "WARN")
+
+    def test_G64_no_first_week(self):
+        def f(a):
+            for x in a["actions"]:
+                if str(x.get("window")) == "7":
+                    x["window"] = "30"
+        self.trips(f, "G64", "WARN")
+
+    def test_G73_bold_claim_on_a_self_claim(self):
+        def f(a):
+            card = self.page(a, 2)["blocks"][0]["items"][0]
+            card.update(body="Vega is the largest roofer in Tulsa.", evidence=["V-E001"])
+        self.trips(f, "G73", "WARN")
+
+    def test_R01_R03_R04_render_gates(self):
+        good = {"pdf_pages": 20, "overflow_pages": [], "fill": {str(n): 0.8 for n in range(1, 21)}, "links": 120}
+        self.assertEqual({c["id"]: c["status"] for c in gates.gate_render(good).checks},
+                         {"R01": "PASS", "R02": "PASS", "R03": "PASS", "R04": "PASS"})
+        bad = dict(good, pdf_pages=19, fill=dict(good["fill"], **{"3": 0.40, "4": 0.50}), links=10)
+        got = {c["id"]: c["status"] for c in gates.gate_render(bad).checks}
+        self.assertEqual((got["R01"], got["R03"], got["R04"]), ("FAIL", "WARN", "WARN"))
+
+    def test_R06_an_image_that_prints_as_an_empty_box(self):
+        good = {"pdf_pages": 20, "overflow_pages": [], "fill": {str(n): 0.8 for n in range(1, 21)}, "links": 120,
+                "missing_images": [], "assets_available": ["assets/mock-gbp.png"]}
+        self.assertEqual({c["id"]: c["status"] for c in gates.gate_render(good).checks}["R06"], "PASS")
+        bad = dict(good, missing_images=[{"page": 1, "src": "assets/cover-shot.png"}])
+        c = next(c for c in gates.gate_render(bad).checks if c["id"] == "R06")
+        self.assertEqual(c["status"], "FAIL")
+        self.assertIn("page 1 prints an empty IMAGE NEEDED box for assets/cover-shot.png", c["msg"])
+        self.assertIn("(assets/mock-gbp.png)", c["msg"])
+
+    def test_every_gate_has_a_mutation(self):
+        """Keeps the README's claim true: a new gate needs a test here or in GateNegativeTests."""
+        import inspect
+        import re
+        src = inspect.getsource(sys.modules[__name__])
+        tested = set(re.findall(r"test_((?:G|R)\d\d)", src)) | set(re.findall(r"\"((?:G|R)\d\d)\"", src))
+        defined = set(re.findall(r'R\.add\("((?:G|R)\d\d)"', inspect.getsource(gates)))
+        self.assertEqual(sorted(defined - tested), [])
+
+
+class PrivacyCoversWhatShipsTests(unittest.TestCase):
+    """The action register ships as a CSV and as to-dos, and a QR code prints its address."""
+
+    def statuses(self, fn, gid, **kw):
+        a = copy.deepcopy(AUDIT)
+        fn(a)
+        return gate_statuses(a, gid, **kw)
+
+    def test_phone_email_and_key_in_the_action_register(self):
+        def add(text):
+            return lambda a: a["actions"][0].update(action=a["actions"][0]["action"] + " " + text)
+        self.assertIn("FAIL", self.statuses(add("Call 918-555-0142 first."), "G71"))
+        self.assertIn("FAIL", self.statuses(add("Write to marisol@gmail.com."), "G70"))
+        self.assertIn("FAIL", self.statuses(add("Use key sk-abcdef1234567890."), "G72"))
+
+    def test_qr_address_is_scanned(self):
+        def qr(url):
+            return lambda a: next(p for p in a["pages"] if p["n"] == 19)["blocks"].append({"type": "qr", "url": url})
+        self.assertIn("FAIL", self.statuses(qr("https://x.example/?to=marisol@gmail.com"), "G70"))
+        self.assertIn("FAIL", self.statuses(qr("https://x.example/raise-14m"), "G74", do_not_print=["raise-14m"]))
 
 @unittest.skipUnless(have_browser(), "Playwright/Chromium not available")
 class RenderTests(unittest.TestCase):
@@ -412,8 +599,8 @@ class RouterTests(unittest.TestCase):
             d = pathlib.Path(d)
             with self.assertRaises(router.Pending):
                 router.run_stage("pages", "user", "muse", d, check=lambda o: [])
-            self.assertTrue((d / "prompts" / "pages.md").exists())
-            (d / "outputs" / "pages.json").write_text('{"pages": []}')
+            [asked] = (d / "prompts").glob("pages-*.md")
+            (d / "outputs" / f"{asked.stem}.json").write_text('{"pages": []}')
             self.assertTrue(router.run_stage("pages", "user", "muse", d, check=lambda o: [])["ok"])
 
 
@@ -444,6 +631,58 @@ class BasecampTests(unittest.TestCase):
         self.assertIn("Runs it:", a1["description"])
         bare = basecamp.todos(AUDIT, LEDGER, agents={"functions": {}, "default_agent": "", "chaser": ""})
         self.assertIn("A1", bare["unassigned"])
+
+
+class ExamBoxTests(unittest.TestCase):
+    """The printed exam box says what score.compute says, with no number it withholds."""
+
+    def box(self, mutate):
+        a = copy.deepcopy(AUDIT)
+        mutate(a)
+        html, _ = render.build_html(render.expand(a, LEDGER), LEDGER, DEMO)
+        start = html.index('class="examtot"')
+        return html[start:html.index("</div></div>", start)]
+
+    def test_identity_hold_prints_no_score(self):
+        box = self.box(lambda a: a["meta"]["identity"].update(status="HOLD"))
+        self.assertIn("no score", box)
+        self.assertNotIn("/100", box)
+        self.assertIn("NO NUMBER", box)
+
+    def test_an_unknown_row_prints_what_was_checked(self):
+        box = self.box(lambda a: a["exams"]["brand_authority"]["rows"][6].update(score="UNKNOWN"))
+        self.assertIn("of 90 checked", box)
+        self.assertNotIn("/100", box)
+        self.assertIn("INCOMPLETE", box)
+
+    def test_a_complete_exam_prints_its_score_out_of_100(self):
+        box = self.box(lambda a: None)
+        self.assertIn("/100", box)
+
+
+class LongContextPriceTests(unittest.TestCase):
+    """Haiku 5.5 costs five times more per token past 100k prompt tokens; every figure must know."""
+
+    def setUp(self):
+        self.cfg = cost.load_routing()
+
+    def test_the_tier_starts_at_its_threshold(self):
+        self.assertEqual(cost.price(self.cfg, "claude-haiku-5-5", 99_999)["in"], 0.10)
+        self.assertEqual(cost.price(self.cfg, "claude-haiku-5-5", 100_000)["in"], 0.50)
+        self.assertEqual(cost.price(self.cfg, "or:anthropic/claude-haiku-5.5", 100_000)["cache_write"], 0.625)
+
+    def test_logged_cost_uses_the_tier_the_call_reached(self):
+        self.assertAlmostEqual(router.usd(self.cfg, "claude-haiku-5-5", {"in": 120_000, "out": 0}), 0.06)
+        self.assertAlmostEqual(router.usd(self.cfg, "claude-haiku-5-5", {"in": 50_000, "out": 0}), 0.005)
+
+    def test_worst_case_covers_a_long_prompt_at_the_long_rate(self):
+        user = "x" * 360_000                                   # 360k bytes: up to 360k tokens
+        worst = router.worst_case_usd(self.cfg, "claude-haiku-5-5", "card", user, 16_000)
+        at_long_rate = (360_004 * 0.625 + 16_000 * 2.50) / 1e6    # the cache-write ceiling of the long tier
+        self.assertGreaterEqual(worst, at_long_rate)
+
+    def test_the_token_bound_counts_bytes_not_characters(self):
+        self.assertGreaterEqual(router.prompt_token_bound("", "\u2014" * 1000), 3000)
 
 
 class PipelineTests(unittest.TestCase):
@@ -499,6 +738,49 @@ class PipelineTests(unittest.TestCase):
             res = pipeline.run(d, "standard", fake=fake, render_pdf=False)
             self.assertEqual(res["fix_rounds"], 1, res)
             self.assertEqual(res["verdict"], "READY", res)
+
+    def test_a_warning_the_writer_cannot_clear_costs_one_round_not_three(self):
+        """Most cited rows without a URL is a ledger problem; rewriting pages cannot fix it, so the
+        loop must stop once a round changes nothing rather than buy two more rounds."""
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d)
+            data = json.loads((DEMO / "ledger.json").read_text())
+            for row in data["items"][:45]:
+                row["source_url"] = ""
+            (d / "ledger.json").write_text(json.dumps(data))
+            res = pipeline.run(d, "standard", fake=fake_from_fixture(str(DEMO / "audit.json")), render_pdf=False)
+            self.assertEqual(res["fix_rounds"], 1, res)
+            self.assertEqual(res["verdict"], "READY", res)
+            fixes = [a for a in json.loads((d / "run.json").read_text())["attempts"] if a["stage"] == "fix"]
+            self.assertEqual(len(fixes), 1)
+
+    def test_an_item_naming_a_front_page_and_a_later_page_reaches_both_writers(self):
+        both = {"from": "gate", "id": "G14", "status": "FAIL", "msg": "pages [2, 7] cite fewer than 3 rows"}
+        self.assertEqual((pipeline._front(both), pipeline._back(both)), (True, True))
+        front = {"from": "gate", "id": "G24", "status": "WARN", "msg": "page 2 runs long"}
+        self.assertEqual((pipeline._front(front), pipeline._back(front)), (True, False))
+        back = {"from": "review", "id": "F3", "status": "FAIL", "page": 9, "msg": "p9: a number disagrees"}
+        self.assertEqual((pipeline._front(back), pipeline._back(back)), (False, True))
+        self.assertEqual(pipeline._pages_named(both), {2, 7})
+
+    def test_apply_fixes_sends_a_mixed_item_to_both_writers(self):
+        from factory20.testing import split_fixture
+        with tempfile.TemporaryDirectory() as d:
+            d = pathlib.Path(d)
+            self._run_dir(d)
+            for name, obj in split_fixture(AUDIT).items():
+                (d / f"{name}.json").write_text(json.dumps(obj))
+            seen = {}
+            base = fake_from_fixture(str(DEMO / "audit.json"))
+
+            def fake(stage, model, system, user):
+                seen[stage] = user
+                return json.dumps({"pages": []}) if stage == "fix" else base(stage, model, system, user)
+            item = {"from": "gate", "id": "G14", "status": "FAIL", "msg": "pages [2, 7] cite fewer than 3 rows"}
+            pipeline._apply_fixes(d, LEDGER, "standard", cost.load_routing(), fake, [item])
+            self.assertIn("pages [2, 7]", seen.get("synthesis", ""))
+            self.assertIn("pages [2, 7]", seen.get("fix", ""))
 
     def test_review_finding_triggers_a_fix_and_second_pass(self):
         s1 = {"verdict": "NOT_READY", "findings": [{"id": "R1-01", "severity": "S1", "page": 5, "where": "callout",

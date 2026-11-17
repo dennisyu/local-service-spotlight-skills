@@ -92,7 +92,8 @@ research is unfinished — say so and send the gap back to stage 10 instead of w
 ```
 
 Cover: exactly four stats, five finding-map items, a real captured image, the ask box and the
-first-week strip. `**bold**` in a headline renders in the accent colour — use it once, on the
+first-week strip. The image is a file listed under # ASSETS; with none listed, the finding map
+takes the whole row. Never invent a file name: a missing file prints an empty box. `**bold**` in a headline renders in the accent colour — use it once, on the
 surprising part. `viz` is optional per card; give at least two cards a `pair` (two numbers to
 scale) or `doors` (`{"type":"doors","items":[{"label":"Form","ok":false}]}`) micro-chart.
 Use action ids A1, A2… now; stage 70 fills in the register that matches them.
