@@ -9,7 +9,7 @@ DeepSeek), plain code and the runner do everything else. The design and the qual
 in code, so any model fills in the same proven template and is told exactly what to fix.
 Standard tier: **about $5 per audit** in API fees by the conservative planning estimate (stage
 budgets, research included). Counted from the prompts and replies of a real 20-page audit, one
-pass from an existing evidence ledger comes to about **$1.61 on standard and $0.95 on the
+pass from an existing evidence ledger comes to about **$1.61 on standard and $0.99 on the
 one-key OpenRouter tier** — estimates until the first live bill, which the pilot records.
 
 ## Why Claude's audits were better (and why that is fixable)
@@ -36,7 +36,7 @@ chases later nothing had happened. **One runner owns an audit end to end.**
 | 10 Collect | **no collector code yet** — the runner researches with its own search and data tools (web search, Ahrefs, Knowledge Graph) following the card | the runner |
 | 20 Harvest | **no harvest code yet** — the runner (or cheap helpers it starts) turns captured sources into ledger rows following the card | the runner |
 | 30-70 Identity → actions | `factory20 run` calls each stage's model, checks the output, retries with the failure list, escalates one rung | code + routed models |
-| Gates, render, fix rounds | code: 40 content gates, 5 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
+| Gates, render, fix rounds | code: 41 content gates, 6 render gates, then up to 3 fix rounds that send the exact failure list back to the writer | code + routed models |
 | 80 Review | code calls the review model in a fresh context (final files only, no drafting history); S0/S1 sends fixes back and re-reviews | code + review model |
 | 90 Deliver | `factory20 basecamp` writes the to-do list; filing and the Basecamp post follow [stages/90-deliver.md](stages/90-deliver.md) | the runner |
 
@@ -52,7 +52,7 @@ python -m factory20 gate   fixtures/demo/audit.json --ledger fixtures/demo/ledge
 python -m factory20 render fixtures/demo/audit.json --ledger fixtures/demo/ledger.json --out demo.pdf
 python -m factory20 measure demo.pdf any-other-audit.pdf      # grade any agent's PDF
 python -m factory20 cost --per-month 200                       # per-stage and monthly cost by tier
-python -m factory20 openrouter-check                           # OpenRouter routes still listed at our prices (no key)
+python -m factory20 openrouter-check                           # OpenRouter routes still listed at our prices, or charged by 3 providers that are up (no key)
 python -m factory20 basecamp fixtures/demo/audit.json --ledger fixtures/demo/ledger.json --out todos.json
 # the whole line with replayed model answers, no keys:
 python -m factory20 init runs/demo --from-demo                 # brief.json + ledger.json + assets/
@@ -69,9 +69,10 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
    Otherwise each provider's own key: `standard`, `muse` and `enterprise` need
    `ANTHROPIC_API_KEY`; `lean` also needs `OPENAI_API_KEY` (GPT-6.1 Terra) and `OPENROUTER_API_KEY`
    (DeepSeek), plus `GEMINI_API_KEY` if you run its harvest stage. A missing key holds the audit
-   and names the variable. No key? Use the manual provider: the runner writes `prompts/<stage>.md` and
-   reads `outputs/<stage>.json`, so an app session that can read and write files in the run
-   folder can answer each stage. Keys come from your own secret store; never put one in a file.
+   and names the variable. No key? Use the manual provider: the runner writes `prompts/<stage>-<hash>.md` and
+   reads `outputs/<stage>-<hash>.json`, one pair per distinct call (a retry, each page batch and
+   each fix round get their own; a restarted run finds the answers it has), so an app session
+   that can read and write files in the run folder can answer each stage. Keys come from your own secret store; never put one in a file.
 3. **Data accounts** for research (steps 10-20): a web search tool, a backlink and keyword tool
    (Ahrefs or similar), and Google's Knowledge Graph API. Budget about $0.50 of data per audit.
 4. **Your own fleet** in [config/agents.json](config/agents.json): which running agent picks up
@@ -81,13 +82,13 @@ python -m factory20 run runs/demo --tier standard --fake fixtures/demo/audit.jso
 
 | Tier | Frontier model does | Everything else | Planning* | From a ledger† |
 |---|---|---|---:|---:|
-| `lean` | final review (Opus 5.5, 1 pass) | Gemini Flash-Lite, GPT-6.1 Terra, DeepSeek V4.1 Flash, Sonnet findings | ≈ $2.65 | ≈ $0.80 |
+| `lean` | final review (Opus 5.5, 1 pass) | Gemini Flash-Lite, GPT-6.1 Terra, DeepSeek V4.1 Flash, Sonnet findings | ≈ $2.75 | ≈ $0.84 |
 | `standard` | findings + review (Opus 5.5, ≤ 2 passes) | Haiku harvest and fixes, Sonnet identity/score/pages/actions | ≈ $5.40 ($4.70 batched) | ≈ $1.61 |
 | `muse` | findings + review (Opus 5.5) | pages and actions drafted in an app session's own subscription | ≈ $4.20 | ≈ $1.10 |
 | `enterprise` | findings + review (Fable 5.1, ≤ 3 passes) + a person's read | Opus drafting, Sonnet harvest | ≈ $17.80 | ≈ $3.82 |
 | `openrouter` | the standard tier's models, all through one OpenRouter key | — | ≈ $5.40 | ≈ $1.61 |
-| `openrouter-lean` | final review (Opus 5.5, 1 pass) | Sonnet identity, score and the eight findings; DeepSeek V4.1 Flash pages, actions and fixes — one key | ≈ $2.90 | ≈ $0.95 |
-| `openrouter-budget` | none — **experimental, not measured** | Grok 4.7 judgment, DeepSeek drafting, GPT-6.1 Sol review; Sonnet only if a cheaper model fails twice | ≈ $2.05 | ≈ $0.62 |
+| `openrouter-lean` | final review (Opus 5.5, 1 pass) | Sonnet identity, score and the eight findings; DeepSeek V4.1 Flash pages, actions and fixes — one key | ≈ $3.45 | ≈ $0.99 |
+| `openrouter-budget` | none — **experimental, not measured** | Grok 4.7 judgment, DeepSeek drafting, GPT-6.1 Sol review; Sonnet only if a cheaper model fails twice | ≈ $2.60 | ≈ $0.66 |
 | reference | the Oct 23 all-Claude Cowork run, measured tokens at list price | — | $281 ($301 with its website package) | — |
 
 *Planning estimate: the stage budgets in [config/routing.json](config/routing.json), research
@@ -127,16 +128,21 @@ on one key, and `openrouter-lean` is the few-dollar tier. What the kit does on e
   drafting — and leaves room for that thinking in the reply limit, because Sonnet and Opus 5.5
   always think and thinking is billed as output; a reply cut off at its limit gets one retry
   with twice the room;
-- records the charge OpenRouter reports in the reply, not an estimate, in `run.json`;
+- records the charge OpenRouter reports in the reply (it returns one on every response), not an
+  estimate, in `run.json`;
+- sends a price ceiling (`provider.max_price`): the listed price, at its long-context tier when the
+  prompt can reach it, plus 25% headroom (`max_price_headroom`), so no provider charges more than
+  the spending cap assumed; a call no provider can serve under it fails and escalates;
 - retries rate limits and server errors (honouring `Retry-After`), stops at once on a bad key or
-  empty credits, and never crosses the spending cap: a call whose worst case would cross it is not
-  made, and the held audit says why;
+  empty credits, and never crosses the spending cap: before each call it adds that call's worst
+  case (every prompt byte a token, the whole reply limit, the ceiling rate) to what the run has
+  spent, and a call that could cross the cap is not made; the held audit says why;
 - writes pages 3-19 in four calls that share a cached prefix, because a real audit's pages run
   about 19,000 output tokens, more than one reply should carry.
 
 ```bash
 export OPENROUTER_API_KEY=...              # from your own secret store; never commit it
-python -m factory20 openrouter-check       # every route still listed, at the prices assumed
+python -m factory20 openrouter-check       # every route still listed, at the prices assumed or charged by 3 providers that are up
 python -m factory20 init runs/demo --from-demo
 python -m factory20 run runs/demo --tier openrouter-lean --max-usd 3
 ```
@@ -170,25 +176,40 @@ runs/<subject>/
 ```
 
 `python -m factory20 init runs/<subject> --ledger L --brief B` makes the folder;
-`python -m factory20 run runs/<subject> --tier standard` reuses any stage file already present,
+`python -m factory20 run runs/<subject> --tier standard` first checks the ledger. Ids a table
+cannot cite (G05), or a `capture_date` that is not one `YYYY-MM-DD` date (the house-gate bundle
+dates every row by it), hold the run at the ledger before anything is paid for. Then it reuses any stage file already present,
 calls each missing stage's model from `routing.json`, checks the output, retries once with the
 failure list and escalates one rung if it still fails. Then it assembles, gates and renders,
-runs up to three fix rounds (pages 1-2 go back to the findings model, pages 3-19 to the fix
-model), and finishes with the fresh-context review: `READY` needs zero S0/S1 findings. The
+runs up to three fix rounds (pages 3-19 go back to the fix model, then pages 1-2 to the findings
+model, which sees the pages it summarizes, then the action register to the actions model; each
+gate message says where its problem sits, so it reaches the writer who owns that text). A round that clears nothing ends the loop,
+except that a hard FAIL a writer owns first gets one round one rung up the ladder (page 20 is
+built by code, so nothing there qualifies), and warnings a round already had get no round of
+their own. A fix that returns no pages is an answer only when no FAIL names a page it owns (the
+later numbers of a `where` list like "p2 and 5 cards" are routed but not required, since some are
+counts). It finishes with the
+fresh-context review: `READY` needs zero S0/S1 findings. A review's score adjustments land first; each
+finding then goes to every page its `where` field or text names, to every writer that owns the words it
+quotes (a page, the register, or an exam row's reason, which the score model rewrites with its score
+locked), to the fix model when it covers pages it does not number, and to the actions model when it
+names an action. When a fix for a review's findings breaks
+a hard gate (a page that now runs over), the draft gets the fix rounds the run has left before the
+next review; if it still holds, no further review is paid for. The
 verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY`).
 `--max-usd` overrides the tier's spending cap; reaching it holds the audit with the amount spent.
 
 ## Quality control
 
-1. **Gates (free, every draft):** 40 content gates (29 must pass on a real audit, 11 warn) — page
-   structure, cited ids that exist in the ledger and at least three per page, namesake leakage,
+1. **Gates (free, every draft):** 41 content gates (30 must pass on a real audit, 11 warn) — page
+   structure, ledger ids a table can cite, cited ids that exist in the ledger and at least three per page, namesake leakage,
    insight-card anatomy, the page-2 word budget, headline claims, buzzwords, density,
    specificity, a visual on every page, identity, score calibration, the action contract,
    approval before any client-facing change, privacy (including the brief's do-not-print list),
    the install QR, and the preparer's name and face on page 1 (a warning on the synthetic demo,
-   a failure on a real audit) — plus 5 render gates (3 must pass, 2 warn) for page count,
-   overflow, fill, links and a decoded QR. Every message says
-   what to fix; an overflow says by how much and which card is tallest. `HOLD` never ships.
+   a failure on a real audit) — plus 6 render gates (4 must pass, 2 warn) for page count,
+   overflow, fill, links, a decoded QR and every image's file. Every message says
+   what to fix; an overflow says by how much and names the move that clears it. `HOLD` never ships.
 2. **One structured frontier review** ([stages/80-review.md](stages/80-review.md)) on the exact
    final files, in a fresh context that never saw the drafting: twelve judgment checks code cannot
    do, S0-S3 severity, a second pass only if S0/S1 was found. For enterprise audits and the pilot,
@@ -197,11 +218,35 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
    disagreement becomes a gate or a card change. The first calibration uses three anchor audits
    whose grades are already agreed, which is the reviewer calibration the house audit rule asks for.
 
+## Grade a finished run with the house audit-quality gate
+
+```bash
+python -m factory20 bundle runs/<subject>          # needs audit.pdf; exit 2 if the run's records disagree
+python3 ../docs/audit-quality/verify_bundle.py --root runs/<subject>    # add --mode exercise for the demo
+```
+
+`bundle` writes, inside the run folder, `uaqg-receipt.json` (the tier receipt; `run.json` stays the
+call log), `bundle-manifest.json`, and a capture envelope under `uaqg/` for every ledger row and run
+record. It first re-runs the free gates and re-reads the PDF, and refuses a run whose `gate.json` or
+render report no longer describes the final files. **What it proves:** which bytes were graded
+(change one byte of `audit.pdf` or of any capture and verification fails), and exactly what the run
+did not check. **What it does not prove:** that the audit is right. Only identity is filled by a
+factory gate (G50 and G11, re-run on the final `audit.json`); the other 14 required checks stay
+UNKNOWN beside a record of what is missing. Reviewer calibration stays `NOT_RUN`, the six quality
+ratings stay empty (the Brand Authority score rates the business, not the audit), and the factory's
+own review is recorded but does not count as the independent review: it never sees the PDF pages
+and is not bound to a hash. A cost is `MEASURED` only when the provider reported every charge. So the
+gate holds every bundle today, the demo in production mode because it is synthetic, and in exercise
+mode, like a real run, on those named gaps; a person closes them. A ledger row whose URL has exactly
+one capture in the stage-10 `sources.jsonl` is bound to that file and its `captured_at`; otherwise
+its capture is the row itself, dated only by the ledger's `capture_date`, which the gate flags
+because it carries no time zone.
+
 ## Files
 
 | Path | What |
 |---|---|
-| `factory20/` | ledger, scoring, gates, renderer, components, cost, router, pipeline, OpenRouter check, Basecamp export, CLI |
+| `factory20/` | ledger, scoring, gates, renderer, components, cost, router, pipeline, OpenRouter check, Basecamp export, house-gate bundle, CLI |
 | `stages/` | the ten stage cards any model can follow |
 | `config/routing.json` | prices, stage budgets, tier → model routing, escalation ladder, confidential flags |
 | `config/agents.json` | which running agent picks up each function's to-dos, and who chases them |
@@ -209,7 +254,9 @@ verdict is `READY` or `HOLD`; `--no-review` stops after the gates (`REVIEW_READY
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
 | `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
-| `../tests/test_audit_factory.py` | 72 tests: every gate has a failing mutation |
-| `../tests/test_audit_factory_openrouter.py` | 30 tests: the OpenRouter path against a local stand-in for its API, no key, no spend |
-| `fixtures/openrouter/` | dated copies of the slice of OpenRouter's models list the config relies on (`openrouter-check --write` saves one) |
+| `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
+| `../tests/test_audit_factory_openrouter.py` | 39 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could; the price check takes a one-provider headline as current only when three providers that are up charge our price, and dates what it saves in UTC |
+| `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
+| `../tests/test_audit_factory_pilot.py` | 56 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite and whose capture date the bundle can read, images that exist, a bar chart's scale, no production notes in the copy, gate rounds before a second review, the cover revised after its pages, a receipt whose chart and caption account for every ledger row; 53 fail on the kit before the fix |
+| `fixtures/openrouter/` | dated copies (UTC) of the slice of OpenRouter's models list the config relies on, with each route's provider endpoints from Nov 11 on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

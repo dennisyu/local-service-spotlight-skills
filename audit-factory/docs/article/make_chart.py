@@ -30,7 +30,7 @@ from factory20 import cost as K  # noqa: E402
 BLIND_TEST_USD = 2.45        # docs/CALIBRATION.md, "Blind tests": Sonnet 5.5 + kit, clean run
 SURFACE, BAR, INK, MUTED, FAINT, GRID = "#fcfcfb", "#2a78d6", "#111111", "#5b5b5b", "#7a7a7a", "#e6e6e6"
 TITLE = "Model fees for one 20-page audit, in US dollars"
-SOURCES = "Sources: audit-factory/docs/CALIBRATION.md and config/routing.json in the public kit, Nov 4, 2026."
+SOURCES = "Sources: audit-factory/docs/CALIBRATION.md and config/routing.json in the public kit, Nov 10, 2026."
 
 
 def numbers() -> list[dict]:

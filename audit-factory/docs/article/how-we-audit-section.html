@@ -7,10 +7,10 @@
 -->
 <h2>Have cheaper models write the 20-page report</h2>
 
-<p><strong>One of our first 20-page audits cost $281 in AI fees. Our most expensive model did every step. Now a cheaper model writes the pages. Code draws and checks them. The expensive model only reviews the finished file. From research that is already done, that should cost about $1 to $2. That is cheap enough to run an audit every month, not once a year.</strong></p>
+<p><strong>One of our first 20-page audits cost $281 in AI fees. Our most expensive model did every step. Now a cheaper model writes the pages. Code draws and checks them. The expensive model only reviews the finished text. From research that is already done, that should cost about $1 to $2. That is cheap enough to run an audit every month, not once a year.</strong></p>
 
 <figure>
-  <picture><source media="(max-width: 600px)" srcset="img/cost-per-audit-phone.png" width="900" height="1280"><img src="img/cost-per-audit.png" width="1760" height="920" alt="Bar chart of model fees for one 20-page audit: $281 for the all-Claude audit of Oct 23 (research, writing and seven review rounds, measured); $2.45 for Sonnet writing with the kit from Claude's research (measured); about $1.61 for the standard tier through the API and about $0.95 for the one-key OpenRouter lean tier (both estimates, thinking included)."></picture>
+  <picture><source media="(max-width: 600px)" srcset="img/cost-per-audit-phone.png" width="900" height="1280"><img src="img/cost-per-audit.png" width="1760" height="920" alt="Bar chart of model fees for one 20-page audit: $281 for the all-Claude audit of Oct 23 (research, writing and seven review rounds, measured); $2.45 for Sonnet writing with the kit from Claude's research (measured); about $1.61 for the standard tier through the API and about $0.99 for the one-key OpenRouter lean tier (both estimates, thinking included)."></picture>
   <figcaption>Model fees for one 20-page audit. The top two are measured token counts at list price; the bottom two are estimates from a real audit's prompt and reply sizes, with the models' thinking included, until the first live bill. The bottom three start from research that is already done.</figcaption>
 </figure>
 
@@ -20,7 +20,7 @@
     <tr><td>All Claude, Oct 23, 2026: research, writing and seven review rounds</td><td>$281</td><td>measured tokens at list price</td></tr>
     <tr><td>Claude Sonnet with the kit, writing from Claude's research, no review (Nov 4)</td><td>$2.45</td><td>measured tokens at list price</td></tr>
     <tr><td>Standard tier through the API, writing from research plus one Opus review</td><td>about $1.61</td><td>estimate from a real audit's prompt and reply sizes, thinking included</td></tr>
-    <tr><td>One OpenRouter key, lean tier, writing from research plus one Opus review</td><td>about $0.95</td><td>same estimate</td></tr>
+    <tr><td>One OpenRouter key, lean tier, writing from research plus one Opus review</td><td>about $0.99</td><td>same estimate</td></tr>
   </tbody>
 </table>
 
@@ -48,6 +48,7 @@ python -m factory20 run runs/demo --tier openrouter-lean --max-usd 3</code></pre
 <ul>
   <li><strong>No live OpenRouter bill yet.</strong> The one-key tiers are tested against a stand-in for OpenRouter's API, not the real one. The first live run is next, and its bill replaces the estimates above.</li>
   <li><strong>Research for a new subject is not cheap yet.</strong> Until the code that collects sources is built, the agent running the audit does the research in its own session.</li>
+  <li><strong>The review reads the text, not the pages.</strong> The expensive model checks the finished text, the evidence and the results of the checks. It does not see the page images yet, so a person still looks at the photos and the layout.</li>
   <li><strong>The cheapest tier is experimental.</strong> It uses no Claude model unless a cheaper one fails twice, and nobody has measured its quality.</li>
 </ul>
 <p>This kit runs the current Brand Authority exam. It is not the legacy Audit Factory diagnostic in the exam table below. How we built and tested it, with every receipt: <a href="https://blitzmetrics.com/cheaper-models-write-our-audits/">how cheaper models now write our 20-page audits</a>.</p>

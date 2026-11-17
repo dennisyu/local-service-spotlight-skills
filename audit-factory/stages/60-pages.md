@@ -11,6 +11,10 @@ everything.** Never write HTML, CSS or markdown tables.
 - `dek`: 1-2 sentences — what the page shows and how to read it.
 - 2-4 blocks. **At least one visual block** (graph, bars, matrix, timeline, swimlane, ladder,
   flow, topic_wheel, photo, screenshot, heatmap, qr). Tables and prose do not count as visuals.
+  Pages 5, 17 and 18 get theirs from the renderer (the exam heatmap, the agents QR, the plan
+  swimlane): add no visual of your own there, or the page runs over. That is a note for you,
+  not for the reader: write "the heatmap above", never "the renderer adds the heatmap".
+- A photo or screenshot uses a file listed under # ASSETS, and nothing else.
 - **≥ 3 evidence ids** cited inside the blocks, and ~260-380 words of reader text: captions,
   "So:" lines, table cells, card bodies. Depth comes from specifics, never from padding.
 - Vary the visual: no three pages in a row with the same block layout.
@@ -59,10 +63,13 @@ timeline     {events:[{date,label,state}], caption, evidence}
 flow         {steps:[{label, detail, state, evidence}]}          # 3-5 steps
 ladder       {markers:[{label, level:0-5, target:0-5}], evidence}
 topic_wheel  {center_label, topics:[{label, weight}], caption, evidence}
-photo        {src:"assets/…", height?, caption, evidence}        # real captured image only
+photo        {src:"assets/…", height?, caption, evidence}        # a real capture listed under # ASSETS only
 ```
 
 `value: null` in bars renders UNKNOWN hatching — never write 0 for something not measured.
+`max` in bars is the top of the scale. Set it whenever the values are scores or shares (a
+Brand Authority row is out of 10, a share out of 100) and say the scale in the title. Without
+it the longest bar is the largest value, so a row scored 4 of 10 prints as a full bar.
 
 ## Output (JSON only)
 
