@@ -10,7 +10,9 @@ in code, so any model fills in the same proven template and is told exactly what
 Standard tier: **about $5 per audit** in API fees by the conservative planning estimate (stage
 budgets, research included). Counted from the prompts and replies of a real 20-page audit, one
 pass from an existing evidence ledger comes to about **$1.61 on standard and $0.99 on the
-one-key OpenRouter tier** — estimates until the first live bill, which the pilot records.
+one-key OpenRouter tier** — estimates until the first live bill. Worked out the same way, the pilot's
+rebuilds cost $3.46 to $6.65 on standard and $1.07 to $1.32 on lean, because real runs needed retries,
+fix rounds and a second review (docs/CALIBRATION.md).
 
 ## Why Claude's audits were better (and why that is fixable)
 

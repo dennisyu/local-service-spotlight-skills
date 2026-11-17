@@ -121,6 +121,64 @@ Opus findings add enough to earn twice the price is the pilot's main question: i
 not show:** research quality from a cheap harvest (the clean ledger still carries the research
 lanes' own notes, as any harvest would), or what the frontier review adds.
 
+## The pilot: two audits rebuilt and graded blind (2026-11-10 to 2026-11-12)
+
+The pilot rebuilt two audits Claude had already built, each from the original's evidence ledger
+with the original's insights removed: a company audit dated Nov 4 and a person audit dated Oct 23.
+Their names are in the private crosswalk, not here. A fresh agent on the model the tier routes each
+stage to answered every call. Another fresh agent, which saw none of the work, graded each rebuild
+against its original on the twelve review checks, with a letter scale fixed before any grading:
+Fable 5.1 as the official grader and Opus 5.5 as a cross-check. Where both models wrote text that
+stayed in the audit, the lower letter counts, and so does any S0 or S1 that either grader finds and
+the ledger supports. A rebuild passes with no S0 or S1 and no more than one letter below its
+original. Costs are at Nov 10 list prices with the kit's effort settings and caching, worked out
+from each call's tokens; they are not a bill.
+
+| rebuild | kit | grade, Fable / Opus | original in the same set | grader S1s | key insights found of 20 (partial) | new supported | cost | kit's verdict | pass rule |
+|---|---|---|---|---|---|---|---|---|---|
+| company, standard | 523018f | A- / B+ | B / B | 0 | 12 (6) | 14 | $3.46 | HOLD on 3 S1 | pass |
+| company, lean | 523018f | B+ / B+ | B / B | 0 | 7 (11) | 9 | $1.07 | HOLD on 3 S1 | pass |
+| person, standard | 523018f | B / B | A- / B+ | 1 | 17 (3) | 14 | $4.40 | HOLD on 2 S1 and a page overflow | fail |
+| person, lean | 523018f | B / B | A- / B+ | 1 | 9 (10), 1 contradicted | 11 | $1.32 | HOLD on 5 S1 | fail |
+| person, standard, rerun | 229cfc9 | A- / A- | B / B | 0 | 19 (1) / 18 (1), 1 contradicted | 14 / 12 | $6.45 | HOLD on 2 S1 | pass |
+| person, standard, rerun with item 15 | 68a7f4d | A- / A- | A- / A- | 0 | 14 (6) / 15 (5) | 13 / 11 | $6.65 | READY | pass |
+
+Recall on the first four rows is Fable's; on the reruns it is Fable / Opus. Both graders found one
+S1 in the company original (a percentage no ledger row supports) and none in its rebuilds. The second
+rerun reused the first rerun's first 12 answers, whose prompts were the same byte for byte; its cost
+counts them.
+
+**What failed, and what fixed it.** Each failing person rebuild kept one S1 that the kit's own last
+review had found: the standard tier's second review is its last, and lean has no fix after its one
+review. The standard failure, a cover that kept a figure the page fix had changed, is fixed by
+revising the cover after the pages it summarizes, and the first rerun passed. The kit still held that
+rerun on two S1s from its second review, which both graders rated S2, because each finding had reached
+a writer that did not own the words it faulted. Item 15 sends each review finding to the writer of
+those words, and the second rerun ended READY. The lean failure is not fixed: a fix round after
+lean's one review is a cost decision for the kit's owner.
+
+**The reviewer, calibrated against the graders.** The kit's last review is stricter than the blind
+graders and finds what they find. Across the six rebuilds it left 15 S1s in place. The graders found
+an S1 in two rebuilds (in the person lean rebuild, each grader a different one), and every one of them
+was among the review's. On the first rerun, the two the review called S1 the graders called S2. A
+grader reads three audits side by side against the ledger; the review reads one alone and lists what
+must change. The review is the gate, and the grade is the comparison with the original.
+
+**The graders, measured against themselves.** The same file graded in different sets moved. The person
+original got A-, B and A- from Fable and B+, B and A- from Opus; in the B set each grader found an S1
+in it. Fable found 19 of the 20 insights in the first rerun in one set and 15 in the next. So a letter moves up
+to two steps, and recall about four insights, with the audits beside it. One letter of margin in the
+pass rule is about that size, so report a grade as a range.
+
+**What it answers.** The question from the Nov 4 blind test was whether Opus findings earn twice the
+price. Standard's Opus findings found more of each original's insights than lean's Sonnet findings, 12
+against 7 on the company audit and 17 against 9 on the person audit, and the lean person rebuild
+failed. Standard stays the default for person audits; lean passed the company audit. **What it does
+not show:** a home-service subject (planned, still owed), research from a cheap harvest (both ledgers
+came from frontier research), a live OpenRouter bill, and costs at the one-pass estimates in the
+README: real rebuilds cost $3.46 to $6.65 on standard and $1.07 to $1.32 on lean, because they needed
+retries, fix rounds and a second review.
+
 ## The OpenRouter path (2026-11-04)
 
 **What is tested.** Every call the kit makes through OpenRouter, against a local stand-in for
