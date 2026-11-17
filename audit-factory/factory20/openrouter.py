@@ -38,6 +38,34 @@ def _per_million(v) -> float | None:
         return None
 
 
+def _live_long_context(pricing: dict) -> dict | None:
+    """OpenRouter's long-context tier (pricing.overrides[].min_prompt_tokens), in our field names."""
+    tiers = [o for o in (pricing.get("overrides") or []) if isinstance(o, dict) and o.get("min_prompt_tokens")]
+    if not tiers:
+        return None
+    o = min(tiers, key=lambda x: x["min_prompt_tokens"])
+    lc = {"over": int(o["min_prompt_tokens"])}
+    for ours, theirs in FIELDS:
+        v = _per_million(o.get(theirs))
+        if v is not None:
+            lc[ours] = v
+    return lc
+
+
+def _lc_drift(ours: dict | None, live: dict | None, tolerance: float) -> bool:
+    if not ours and not live:
+        return False
+    if not ours or not live or int(ours.get("over", -1)) != int(live.get("over", -2)):
+        return True
+    for k, v in live.items():
+        if k == "over":
+            continue
+        have = float(ours.get(k, 0) or 0)
+        if have == 0 or abs(v - have) / max(have, 1e-12) > tolerance:
+            return True
+    return False
+
+
 def check(cfg: dict, models: list[dict], tolerance: float = 0.10) -> dict:
     """One row per OpenRouter route: listed or missing, and every price that drifted."""
     live = {m["id"]: m for m in models}
@@ -62,6 +90,12 @@ def check(cfg: dict, models: list[dict], tolerance: float = 0.10) -> dict:
                     continue
                 if have == 0 or abs(v - have) / max(have, 1e-12) > tolerance:
                     row["drift"][ours] = {"ours": have, "live": v}
+            # a long-context tier is a price too: missing it lets a long prompt cost 5x the cap's figure
+            live_lc = _live_long_context(m.get("pricing") or {})
+            if live_lc:
+                row["live"]["long_context"] = live_lc
+            if _lc_drift(p.get("long_context"), live_lc, tolerance):
+                row["drift"]["long_context"] = {"ours": p.get("long_context"), "live": live_lc}
         rows.append(row)
     missing = [r["key"] for r in rows if not r["listed"]]
     drifted = [r["key"] for r in rows if r["drift"]]
@@ -113,7 +147,10 @@ def write_prices(report: dict, path: str | pathlib.Path = K.ROUTING, today: str 
             continue
         entry = json.loads(m.group(2))
         for field, d in row["drift"].items():
-            entry[field] = d["live"]
+            if field == "long_context" and d["live"] is None:
+                entry.pop("long_context", None)
+            else:
+                entry[field] = d["live"]
         entry["source"] = re.sub(r"read \d{4}-\d{2}-\d{2}", f"read {today}", entry.get("source", "")) \
             if "read " in entry.get("source", "") else f"OpenRouter models API ({MODELS_URL}), read {today}"
         line = "{" + ", ".join(f"{json.dumps(k)}: {_fmt(v) if not isinstance(v, (dict, list)) else json.dumps(v)}"

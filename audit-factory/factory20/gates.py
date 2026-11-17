@@ -257,10 +257,13 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
         soft = [f for f in flags if f["level"] == "WARN"]
         R.add("G53", "Each row records its anchor reason", "exam", not soft,
               "; ".join(f"row {f['row']}: {f['msg']}" for f in soft[:6]), hard=False)
-        typed = set(int(x) for x in re.findall(r"\b(\d{1,3})\s*/\s*100\b", text))
+        # "61/100", "61 of 100" and "61 out of 100" are all a score out of 100. Only a complete
+        # exam has one: with identity HOLD there is no number, and an incomplete exam's subtotal
+        # is out of what was checked, never out of 100.
+        typed = set(int(x) for x in re.findall(r"\b(\d{1,3})\s*(?:/|of|out of)\s*100\b", text, re.I))
         sep = {int(re.sub(r"\D", "", str(x.get("value", "")) or "-1") or -1)
                for x in (audit.get("exams") or {}).get("separate", []) if re.search(r"\d", str(x.get("value", "")))}
-        stray = typed - {res["total"], res["known_subtotal"]} - sep
+        stray = typed - ({res["total"]} if res["status"] == "COMPLETE" else set()) - sep
         R.add("G54", "No hand-typed score that disagrees with the arithmetic", "exam", not stray,
               f"text shows {sorted(stray)}/100 but the rows sum to {res['known_subtotal']}; let the renderer print scores")
     else:
@@ -308,16 +311,21 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
           "and name who approves in human_gate, or set pre_approved to the recorded approval")
 
     # ---------- G70 privacy and claims ----------
-    emails = sorted({e for e in EMAIL.findall(text) if e.lower() not in ALLOWED_EMAILS})
+    # Everything the client receives is scanned: page text, the action register (it ships as a
+    # CSV and as to-dos), and every address a block prints, such as a QR code's URL.
+    def _printed_urls(obj) -> str:
+        return " ".join(d["url"] for d in M.walk(obj) if isinstance(d.get("url"), str))
+    shipped = " ".join([text, M.text_of(actions), _printed_urls(pages), _printed_urls(actions)])
+    emails = sorted({e for e in EMAIL.findall(shipped) if e.lower() not in ALLOWED_EMAILS})
     R.add("G70", "No personal email addresses in the client edition", "privacy", not emails,
           f"remove {emails}")
     # A local business's own listed numbers are fair game (name-address-phone checks need them);
     # list them in brief.allowed_phones. Any other number is a private one.
     ok_phones = {_digits(p) for p in (allowed_phones or [])}
-    phones = [p for p in PHONE.findall(text) if _digits(p) not in ok_phones]
+    phones = [p for p in PHONE.findall(shipped) if _digits(p) not in ok_phones]
     R.add("G71", "No phone numbers except the business's own listed numbers", "privacy", not phones,
           f"remove {phones[:5]}, or add the business's own listed numbers to brief.allowed_phones")
-    sec = sorted(set(m.lower() for m in SECRETS.findall(text)))
+    sec = sorted(set(m.lower() for m in SECRETS.findall(shipped)))
     R.add("G72", "No credentials or internal agent receipts", "privacy", not sec, f"remove {sec}")
     # The brief's do-not-print list: confidential numbers, embargoed titles, private names.
     # Cheap models leaked exactly these in the Oct 25 bake-off. The message never repeats
@@ -325,9 +333,9 @@ def gate_audit(audit: dict, ledger: Ledger | None = None, tier: str = "standard"
     dnp = [s.strip().lower() for s in (do_not_print or []) if isinstance(s, str) and len(s.strip()) >= 3]
     hits_dnp = []
     for p in pages:
-        pt = M.text_of(p).lower()
+        pt = (M.text_of(p) + " " + _printed_urls(p)).lower()
         hits_dnp += [(p.get("n"), j) for j, s in enumerate(dnp, 1) if s in pt]
-    act_text = M.text_of(actions).lower()
+    act_text = (M.text_of(actions) + " " + _printed_urls(actions)).lower()
     hits_dnp += [("actions", j) for j, s in enumerate(dnp, 1) if s in act_text]
     R.add("G74", "Nothing on the brief's do-not-print list appears", "privacy", not hits_dnp,
           "brief.do_not_print items found — " + ", ".join(f"item {j} on page {n}" for n, j in hits_dnp[:8])

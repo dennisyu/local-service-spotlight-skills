@@ -7,13 +7,15 @@ fields or link formatting. **Spend it on judgment** — the things code cannot s
 
 For enterprise audits and for every pilot audit, a second reviewer on a different model (or a
 person) repeats this pass, because a model reviewing its own family's writing shares its blind
-spots.
+spots. The factory does not run that second pass for you yet; whoever runs the audit arranges it.
 
 ## Inputs
 
-`audit.json` (final), the evidence ledger pack, `gate.json`, `render.json`, and the 20 page
-images. Review the bytes you were given; if anything changes after your review, the review
-is void for those pages.
+`audit.json` (final), the evidence ledger pack, `gate.json` and the render report. The page
+images are not sent yet, so judge layout only from the render report, and name any finding
+that needs a person to look at the pages (photos for check 9, the visual read for check 12).
+Review the bytes you were given; if anything changes after your review, the review is void for
+those pages.
 
 ## The twelve judgment checks
 
