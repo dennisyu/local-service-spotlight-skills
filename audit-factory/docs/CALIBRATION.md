@@ -136,7 +136,7 @@ the log records which version answered the subagent alias, it was Fable 5.2). Wh
 stayed in the audit, the lower letter counts, and so does any S0 or S1 that either grader finds and
 the ledger supports. A rebuild passes with no S0 or S1 and no more than one letter below its
 original. Costs are estimates, not a bill: each call's measured prompt at Nov 10 list prices with
-the kit's prompt caching, plus its reply and the thinking the kit allows at the stage's effort. The
+the kit's prompt caching, plus its reply and the kit's typical thinking for the stage's effort. The
 pilot's subagents thought far longer than that; at face value, with every token they used and no
 caching, the six runs come to $4.96 to $25.59. Lean's costs are at its stand-ins' prices; at its
 own models' prices they come to $0.98 and $1.26.
@@ -187,9 +187,9 @@ company audit. Passing here is the blind comparison: the kit's own review held f
 rebuilds, and only the last ended READY. **What it does not show:** a home-service subject
 (planned, still owed), lean with its own models (Haiku stood in for DeepSeek, Sonnet for GPT-6.1
 Terra), research from a cheap harvest (both ledgers came from frontier research), a
-live OpenRouter bill, and costs at the one-pass estimates in the README: real rebuilds cost $3.46 to
-$6.65 on standard and $1.07 to $1.32 on lean, because they needed retries, fix rounds and a second
-review. Every standard rebuild cost more than the cost model's worst case for one audit ($3.07),
+live OpenRouter bill, and costs at the one-pass estimates in the README: real rebuilds came to $3.46
+to $6.65 on standard and $1.07 to $1.32 on lean, because they needed retries, fix rounds and a second
+review. Every standard rebuild came to more than the cost model's worst case for one audit ($3.07),
 which adds a quarter for retries but never moves a stage to a bigger model; on the person reruns the
 findings went to Fable after two Opus answers failed their checks. Lean stayed within its worst case
 ($1.33).
