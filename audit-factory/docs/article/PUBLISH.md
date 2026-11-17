@@ -4,6 +4,10 @@ Two pieces go live on blitzmetrics.com, in this order, from the files in this fo
 commit you were handed. Publishing through the site's normal edit path is the publisher's job;
 nothing here needs a person to copy text by hand.
 
+**Changed Nov 17, 2026:** the pilot's results (two finished audits rebuilt and graded blind) replaced
+the one-pass cost estimates in both pieces and in both charts. Upload the redrawn chart images;
+copies uploaded before Nov 17 show the old estimates.
+
 ## 1. The meta article (publish first; the section links to it)
 
 | Field | Value |
@@ -13,7 +17,7 @@ nothing here needs a person to copy text by hand.
 | Slug | `/cheaper-models-write-our-audits/` |
 | Author · category | Dennis Yu · meta articles |
 | SEO title | How Cheaper Models Now Write Our 20-Page Audits, With Receipts |
-| Meta description | One all-Claude 20-page audit cost $281 in AI fees. A cheaper model now writes the pages from finished research for about $1 to $2 in estimated fees, and Claude reviews. Every receipt, and what is still unproven. |
+| Meta description | One all-Claude 20-page audit cost $281 in AI fees. Now cheaper models write the pages and Claude reviews: rebuilding two audits cost $1 to $7 each, graded blind. Every receipt, and what is still unproven. |
 | Featured image | `img/demo-page-01.png` (page 1 of the kit's made-up demo audit) |
 | Real photo | one approved photo from the media library (Dennis teaching, or the team at work), marked `data-lss-real-image="verified"`; the page has no other photograph |
 
@@ -31,8 +35,8 @@ nothing here needs a person to copy text by hand.
 Upload all four from `img/` and replace the `src` and `srcset` values:
 `cost-per-audit.png` (1760×920, desktop chart), `cost-per-audit-phone.png` (900×1280, the
 `<source>` inside `<picture>` for screens under 600px), `demo-page-01.png`, `demo-page-02.png`.
-Both charts are drawn by `make_chart.py` from the kit's cost model; if a price changes, re-run it
-rather than editing a picture.
+Both charts are drawn by `make_chart.py` from the kit's cost model and the pilot's measured costs;
+if a number changes, re-run it rather than editing a picture.
 
 ## Link audit
 

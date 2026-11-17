@@ -11,8 +11,9 @@ Standard tier: **about $5 per audit** in API fees by the conservative planning e
 budgets, research included). Counted from the prompts and replies of a real 20-page audit, one
 pass from an existing evidence ledger comes to about **$1.61 on standard and $0.99 on the
 one-key OpenRouter tier** — estimates until the first live bill. Worked out the same way, the pilot's
-rebuilds cost $3.46 to $6.65 on standard and $1.07 to $1.32 on lean, because real runs needed retries,
-fix rounds and a second review (docs/CALIBRATION.md).
+rebuilds cost $3.46 to $6.65 on standard and $1.07 to $1.32 on lean (Claude standing in for lean's
+DeepSeek and GPT models), because real runs needed retries, fix rounds and a second review
+(docs/CALIBRATION.md).
 
 ## Why Claude's audits were better (and why that is fixable)
 
@@ -42,8 +43,9 @@ chases later nothing had happened. **One runner owns an audit end to end.**
 | 80 Review | code calls the review model in a fresh context (final files only, no drafting history); S0/S1 sends fixes back and re-reviews | code + review model |
 | 90 Deliver | `factory20 basecamp` writes the to-do list; filing and the Basecamp post follow [stages/90-deliver.md](stages/90-deliver.md) | the runner |
 
-Collectors for steps 10-20 are the next engineering job; until they exist, the pilot measures
-steps 30-90 on fresh research done by the runner.
+Collectors for steps 10-20 are the next engineering job. The pilot measured steps 30-90 on the
+evidence ledgers behind two finished audits ([docs/CALIBRATION.md](docs/CALIBRATION.md)); research
+from a cheap harvest is not measured yet.
 
 ## Quickstart (no keys needed)
 
@@ -255,10 +257,10 @@ because it carries no time zone.
 | `schema/audit.schema.json` | the `audit.json` contract |
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
-| `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
-| `../tests/test_audit_factory.py` | 105 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
+| `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model and the pilot's measured costs) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
+| `../tests/test_audit_factory.py` | 107 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 39 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could; the price check takes a one-provider headline as current only when three providers that are up charge our price, and dates what it saves in UTC |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
-| `../tests/test_audit_factory_pilot.py` | 56 tests: what the Nov 10 pilot rebuilds and two independent reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite and whose capture date the bundle can read, images that exist, a bar chart's scale, no production notes in the copy, gate rounds before a second review, the cover revised after its pages, a receipt whose chart and caption account for every ledger row; 53 fail on the kit before the fix |
+| `../tests/test_audit_factory_pilot.py` | 99 tests: what the pilot rebuilds (Nov 10-12) and three independent code reviews found — REPORTED cards, table evidence columns counted and checked, overflow advice that names the renderer's own blocks as fixed and leads with a move that clears the page, a revision path for the action register, one rung up for a stuck FAIL, no round spent on a warning no writer can clear, a receipt page with slack, one manual answer file per call, a ledger whose ids a table can cite and whose capture date the bundle can read, images that exist, a bar chart's scale, no production notes in the copy, gate rounds before a second review, the cover revised after its pages, a receipt whose chart and caption account for every ledger row, and a review finding that reaches every writer of the words it faults (a page, the action register, or an exam row's reason, rewritten with every score locked) and every page it names, read from the reviewer's own text; 95 fail on the kit before the fix |
 | `fixtures/openrouter/` | dated copies (UTC) of the slice of OpenRouter's models list the config relies on, with each route's provider endpoints from Nov 11 on (`openrouter-check --write` saves one) |
 | `../.github/workflows/audit-factory-openrouter.yml` | the price check on pull requests, and the manual demo run on one OpenRouter key |

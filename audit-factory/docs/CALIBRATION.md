@@ -125,14 +125,18 @@ lanes' own notes, as any harvest would), or what the frontier review adds.
 
 The pilot rebuilt two audits Claude had already built, each from the original's evidence ledger
 with the original's insights removed: a company audit dated Nov 4 and a person audit dated Oct 23.
-Their names are in the private crosswalk, not here. A fresh agent on the model the tier routes each
-stage to answered every call. Another fresh agent, which saw none of the work, graded each rebuild
+Their names are in the private crosswalk, not here. A fresh agent answered every call on the model
+the tier routes that stage to, except that Claude stood in for the lean tier's two models from other
+providers: Haiku for DeepSeek V4.1 Flash (pages, actions and fixes) and Sonnet for GPT-6.1 Terra
+(identity and score). Lean's findings (Sonnet) and review (Opus) are its own. Another fresh agent,
+which saw none of the work, graded each rebuild
 against its original on the twelve review checks, with a letter scale fixed before any grading:
 Fable 5.1 as the official grader and Opus 5.5 as a cross-check. Where both models wrote text that
 stayed in the audit, the lower letter counts, and so does any S0 or S1 that either grader finds and
 the ledger supports. A rebuild passes with no S0 or S1 and no more than one letter below its
 original. Costs are at Nov 10 list prices with the kit's effort settings and caching, worked out
-from each call's tokens; they are not a bill.
+from each call's tokens; they are not a bill. Lean's are at its stand-ins' prices; the same tokens
+at its own models' prices come to $0.98 and $1.26.
 
 | rebuild | kit | grade, Fable / Opus | original in the same set | grader S1s | key insights found of 20 (partial) | new supported | cost | kit's verdict | pass rule |
 |---|---|---|---|---|---|---|---|---|---|
@@ -174,10 +178,14 @@ pass rule is about that size, so report a grade as a range.
 price. Standard's Opus findings found more of each original's insights than lean's Sonnet findings, 12
 against 7 on the company audit and 17 against 9 on the person audit, and the lean person rebuild
 failed. Standard stays the default for person audits; lean passed the company audit. **What it does
-not show:** a home-service subject (planned, still owed), research from a cheap harvest (both ledgers
-came from frontier research), a live OpenRouter bill, and costs at the one-pass estimates in the
-README: real rebuilds cost $3.46 to $6.65 on standard and $1.07 to $1.32 on lean, because they needed
-retries, fix rounds and a second review.
+not show:** a home-service subject (planned, still owed), lean with its own drafting model (Haiku
+stood in for DeepSeek), research from a cheap harvest (both ledgers came from frontier research), a
+live OpenRouter bill, and costs at the one-pass estimates in the README: real rebuilds cost $3.46 to
+$6.65 on standard and $1.07 to $1.32 on lean, because they needed retries, fix rounds and a second
+review. Every standard rebuild cost more than the cost model's worst case for one audit ($3.07),
+which adds a quarter for retries but never moves a stage to a bigger model; on the person reruns the
+findings went to Fable after two Opus answers failed their checks. Lean stayed within its worst case
+($1.33).
 
 ## The OpenRouter path (2026-11-04)
 
