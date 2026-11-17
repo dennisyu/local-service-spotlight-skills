@@ -5,10 +5,11 @@
 Writes two shapes of the same chart: img/cost-per-audit.png (wide, for desktop) and
 img/cost-per-audit-phone.png (tall, with bigger type, for screens under 600px; the article
 picks it with <picture>). The all-Claude reference comes from factory20.cost, the same
-function `python -m factory20 cost` prints. The blind test's $2.45 and the pilot's two cost
-ranges are session costs the cost model does not hold; they are copied from the blind-test
-table and the pilot table in docs/CALIBRATION.md. The pilot ranges replaced the cost model's
-one-pass estimates (Nov 17, 2026): every standard rebuild cost more than even its worst case.
+function `python -m factory20 cost` prints. The blind test's $2.45 (measured) and the pilot's
+two cost ranges (estimated from the rebuilds' real prompts, replies and thinking at the kit's
+limits) are figures the cost model does not hold; they are copied from the blind-test table and
+the pilot table in docs/CALIBRATION.md. The pilot ranges replaced the cost model's one-pass
+estimates (Nov 17, 2026): every standard rebuild came to more than even its worst case.
 """
 from __future__ import annotations
 
@@ -30,7 +31,7 @@ from factory20 import cost as K  # noqa: E402
 
 BLIND_TEST_USD = 2.45        # docs/CALIBRATION.md, "Blind tests": Sonnet 5.5 + kit, clean run
 PILOT_STANDARD_USD = (3.46, 6.65)   # docs/CALIBRATION.md, "The pilot": the four standard rebuilds
-PILOT_LEAN_USD = (1.07, 1.32)       # the same table: the two lean rebuilds, at their stand-ins' prices
+PILOT_LEAN_USD = (1.07, 1.32)       # the same table: the two lean rebuilds, at their Claude stand-ins' prices
 SURFACE, BAR, INK, MUTED, FAINT, GRID = "#fcfcfb", "#2a78d6", "#111111", "#5b5b5b", "#7a7a7a", "#e6e6e6"
 TITLE = "Model fees for one 20-page audit, in US dollars"
 SOURCES = "Sources: audit-factory/docs/CALIBRATION.md and config/routing.json in the public kit, Nov 17, 2026."
@@ -42,9 +43,9 @@ def numbers() -> list[dict]:
     return [
         {"label": "All-Claude audit, Oct 23: research,\nwriting and 7 review rounds", "usd": ref},
         {"label": "Sonnet + the kit, writing from Claude's\nresearch, no review (Nov 4)", "usd": BLIND_TEST_USD},
-        {"label": "Standard tier: two audits rebuilt from\ntheir research, retries included (Nov 10-12)",
+        {"label": "Standard tier: two audits rebuilt, retries\nincluded (estimate, Nov 10-12)",
          "usd": PILOT_STANDARD_USD[1], "low": PILOT_STANDARD_USD[0]},
-        {"label": "Lean tier: the same two audits\nrebuilt, retries included (Nov 10)",
+        {"label": "Lean tier with Claude stand-ins: the\nsame two audits (estimate, Nov 10)",
          "usd": PILOT_LEAN_USD[1], "low": PILOT_LEAN_USD[0]},
     ]
 
@@ -86,8 +87,8 @@ def draw_wide(rows: list[dict], out: pathlib.Path) -> None:
     _frame(ax, 300, 50, 10)
     fig.text(0.015, 0.955, TITLE, fontsize=16.5, fontweight="bold", color=INK, va="top")
     fig.text(0.015, 0.885,
-             "Token counts at list price. The bottom two show the lowest and highest cost of our pilot rebuilds, with\n"
-             "the kit's thinking limits; a live bill will check them. The bottom three start from finished research.",
+             "Top two: measured token counts at list price. Bottom two: the lowest and highest estimates for our pilot\n"
+             "rebuilds, from real prompts with replies held to the kit's limits. The bottom three start from research.",
              fontsize=10.5, color=MUTED, va="top", linespacing=1.45)
     fig.text(0.015, 0.098,
              "Research for a new subject adds data fees (about $0.50) and the research model's tokens. "
@@ -113,10 +114,10 @@ def draw_phone(rows: list[dict], out: pathlib.Path) -> None:
     fig.text(0.045, 0.975, "Model fees for one 20-page\naudit, in US dollars", fontsize=15, fontweight="bold",
              color=INK, va="top", linespacing=1.2)
     fig.text(0.045, 0.868,
-             "Token counts at list price. The bottom two\n"
-             "show the lowest and highest cost of our pilot\n"
-             "rebuilds; a live bill will check them. The\n"
-             "bottom three start from finished research.",
+             "Top two: measured at list price. Bottom\n"
+             "two: estimates for our pilot rebuilds from\n"
+             "their real prompts; a live bill will check\n"
+             "them. The bottom three start from research.",
              fontsize=9.5, color=MUTED, va="top", linespacing=1.4)
     fig.text(0.045, 0.105,
              "Research for a new subject adds data fees (about $0.50)\n"

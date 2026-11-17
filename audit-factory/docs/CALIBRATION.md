@@ -131,12 +131,15 @@ providers: Haiku for DeepSeek V4.1 Flash (pages, actions and fixes) and Sonnet f
 (identity and score). Lean's findings (Sonnet) and review (Opus) are its own. Another fresh agent,
 which saw none of the work, graded each rebuild
 against its original on the twelve review checks, with a letter scale fixed before any grading:
-Fable 5.1 as the official grader and Opus 5.5 as a cross-check. Where both models wrote text that
+Fable as the official grader and Opus 5.5 as a cross-check (the protocol names Fable 5.1; where
+the log records which version answered the subagent alias, it was Fable 5.2). Where both models wrote text that
 stayed in the audit, the lower letter counts, and so does any S0 or S1 that either grader finds and
 the ledger supports. A rebuild passes with no S0 or S1 and no more than one letter below its
-original. Costs are at Nov 10 list prices with the kit's effort settings and caching, worked out
-from each call's tokens; they are not a bill. Lean's are at its stand-ins' prices; the same tokens
-at its own models' prices come to $0.98 and $1.26.
+original. Costs are estimates, not a bill: each call's measured prompt at Nov 10 list prices with
+the kit's prompt caching, plus its reply and the thinking the kit allows at the stage's effort. The
+pilot's subagents thought far longer than that; at face value, with every token they used and no
+caching, the six runs come to $4.96 to $25.59. Lean's costs are at its stand-ins' prices; at its
+own models' prices they come to $0.98 and $1.26.
 
 | rebuild | kit | grade, Fable / Opus | original in the same set | grader S1s | key insights found of 20 (partial) | new supported | cost | kit's verdict | pass rule |
 |---|---|---|---|---|---|---|---|---|---|
@@ -155,7 +158,9 @@ counts them.
 **What failed, and what fixed it.** Each failing person rebuild kept one S1 that the kit's own last
 review had found: the standard tier's second review is its last, and lean has no fix after its one
 review. The standard failure, a cover that kept a figure the page fix had changed, is fixed by
-revising the cover after the pages it summarizes, and the first rerun passed. The kit still held that
+revising the cover after the pages it summarizes, and the first rerun passed. Its rise from B to
+A- is not that fix alone: in both reruns Fable wrote the findings after two Opus answers failed
+their checks, and the original itself moved between B and A- across sets. The kit still held that
 rerun on two S1s from its second review, which both graders rated S2, because each finding had reached
 a writer that did not own the words it faulted. Item 15 sends each review finding to the writer of
 those words, and the second rerun ended READY. The lean failure is not fixed: a fix round after
@@ -177,9 +182,11 @@ pass rule is about that size, so report a grade as a range.
 **What it answers.** The question from the Nov 4 blind test was whether Opus findings earn twice the
 price. Standard's Opus findings found more of each original's insights than lean's Sonnet findings, 12
 against 7 on the company audit and 17 against 9 on the person audit, and the lean person rebuild
-failed. Standard stays the default for person audits; lean passed the company audit. **What it does
-not show:** a home-service subject (planned, still owed), lean with its own drafting model (Haiku
-stood in for DeepSeek), research from a cheap harvest (both ledgers came from frontier research), a
+failed. On one subject of each kind, standard stays the default for person audits; lean passed the
+company audit. Passing here is the blind comparison: the kit's own review held five of the six
+rebuilds, and only the last ended READY. **What it does not show:** a home-service subject
+(planned, still owed), lean with its own models (Haiku stood in for DeepSeek, Sonnet for GPT-6.1
+Terra), research from a cheap harvest (both ledgers came from frontier research), a
 live OpenRouter bill, and costs at the one-pass estimates in the README: real rebuilds cost $3.46 to
 $6.65 on standard and $1.07 to $1.32 on lean, because they needed retries, fix rounds and a second
 review. Every standard rebuild cost more than the cost model's worst case for one audit ($3.07),

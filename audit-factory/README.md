@@ -10,10 +10,11 @@ in code, so any model fills in the same proven template and is told exactly what
 Standard tier: **about $5 per audit** in API fees by the conservative planning estimate (stage
 budgets, research included). Counted from the prompts and replies of a real 20-page audit, one
 pass from an existing evidence ledger comes to about **$1.61 on standard and $0.99 on the
-one-key OpenRouter tier** — estimates until the first live bill. Worked out the same way, the pilot's
-rebuilds cost $3.46 to $6.65 on standard and $1.07 to $1.32 on lean (Claude standing in for lean's
-DeepSeek and GPT models), because real runs needed retries, fix rounds and a second review
-(docs/CALIBRATION.md).
+one-key OpenRouter tier** — estimates until the first live bill. Estimated from their real prompts
+with replies held to the kit's limits, the pilot's rebuilds come to $3.46 to $6.65 on standard
+and $1.07 to $1.32 on `lean` (one pass: $1.61 and $0.84; in the pilot Claude stood in for lean's
+DeepSeek and GPT models), because real runs needed retries, fix rounds and, on standard, a second
+review (docs/CALIBRATION.md).
 
 ## Why Claude's audits were better (and why that is fixable)
 
@@ -257,7 +258,7 @@ because it carries no time zone.
 | `schema/audit.schema.json` | the `audit.json` contract |
 | `fixtures/demo/` | a complete SYNTHETIC 20-page exemplar (every fact invented) |
 | `docs/CALIBRATION.md` | the measurements behind every threshold, the blind tests, and the OpenRouter path's tests and code review |
-| `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model and the pilot's measured costs) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
+| `docs/article/` | the public write-up: the How We Audit section, the meta article, their images, `make_chart.py` (draws the cost chart from the cost model and the pilot's cost estimates) and `PUBLISH.md` (order, fields, link audit and checks for publishing it) |
 | `../tests/test_audit_factory.py` | 107 tests: every gate has a mutation that trips it (one test fails when a new gate has none) |
 | `../tests/test_audit_factory_openrouter.py` | 39 tests: the OpenRouter path against a local stand-in for its API, no key, no spend; the cap test's stand-in charges the most a provider could; the price check takes a one-provider headline as current only when three providers that are up charge our price, and dates what it saves in UTC |
 | `../tests/test_audit_factory_bundle.py` | 20 tests: the house-gate bundle — what each mode holds on, byte changes caught, nothing passed by filling fields |
