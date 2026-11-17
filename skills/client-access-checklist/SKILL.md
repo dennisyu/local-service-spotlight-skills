@@ -1,10 +1,12 @@
 ---
 name: client-access-checklist
-description: "Verify the scoped access and measurement prerequisites for client/site work: Search Console, the real edit path, analytics, tag management, DNS, business profiles, video, social and ads. Use at kickoff, before authorized publishing, or when checking whether an existing approved access route can be reused."
+description: "Verify the scoped access and measurement prerequisites for client/site work: Google Search Console, Bing Webmaster Tools, the real edit path, analytics, tag management, DNS, business profiles, video, social and ads. Use at kickoff, before authorized publishing, or when checking whether an existing approved access route can be reused."
 author: Dennis Yu — Local Service Spotlight
 references:
   - https://blitzmetrics.com/verify-client-sites-google-search-console/
   - https://blitzmetrics.com/digital-plumbing/
+  - https://blitzmetrics.com/bing-webmaster-tools-checklist/
+  - https://www.bing.com/webmasters/help/add-and-verify-site-12184f8b
 ---
 
 # Client Access Checklist
@@ -31,7 +33,7 @@ a dependent publishing action remains blocked.
 
 | # | Access | Evidence of readiness |
 |---|---|---|
-| 1 | **Google Search Console** | Correct property, approved role, successful property read and supported sitemap state |
+| 1 | **Google Search Console + Bing Webmaster Tools** | Separate property, role, verification, sitemap and representative URL inspection evidence for each engine |
 | 2 | **Actual website edit/release path** | Verified live runtime/source and least-privilege authorized connector, deployment or CMS route; any secret remains in the approved secret store |
 | 3 | **Google Analytics 4 or agreed analytics** | Correct property, intended events firing on the live page and applicable filters; inspect actual events, not only markup |
 | 4 | **Tag manager, when used** | Real configured container and current published version; a script reference or empty container is insufficient |
@@ -64,6 +66,14 @@ a dependent publishing action remains blocked.
    rules and scope. Use https://blitzmetrics.com/verify-client-sites-google-search-console/
    and current official product documentation for the chosen method. Make only an
    authorized reversible change; then verify from the intended property account.
+   **Set up Bing Webmaster Tools alongside Google Search Console** for owned sites
+   and managed sites where search administration is authorized. Reuse the exact
+   verified property if it exists. Otherwise use an approved Google Search Console
+   import for the selected site or another supported ownership method. Read back
+   verification in Bing. Reuse an existing valid sitemap entry or submit the real
+   public sitemap. Record processing status and inspect the homepage and one
+   priority canonical page in each engine. Keep verification, sitemap processing,
+   and observed indexing separate.
 6. **Verify measurement before optimization.** Use the agreed live event test and
    applicable analytics/tag-manager setup. Avoid duplicate tags and containers.
    Publishing markup alone is not evidence of a received event.
@@ -82,6 +92,9 @@ a dependent publishing action remains blocked.
 - [ ] The required readiness gates passed, or the exact dependent action remains blocked with its permitted recovery/exception recorded.
 - [ ] The private access register names the actual runtime, account, source revision and tested scope; secret values are absent.
 - [ ] Current harmless reads support the claimed state; public markup and authenticated access claims remain separate.
+- [ ] Both search engines have separate property, verification, sitemap and URL
+  inspection receipts or a recorded scope/access blocker. Receipts include
+  observed time, coverage denominator, and owner/next check for open items.
 - [ ] Applicable sitemap and measurement tests use the intended property and live source.
 - [ ] Any missing-access request states the minimum exact gap and required product approval.
 - [ ] A receiving worker independently reads the intended artifact before a cross-runtime delivery or adoption claim.
@@ -1382,6 +1395,75 @@ numbers for the same thing.
   count, the weekly review and the fix. Learn, Do, Teach: learn it, use it on your next ask,
   teach it in your own run notes. The triangles: https://theninetriangles.com/ddd/.
 <!-- shared-rule:agents-own-it:end -->
+
+<!-- shared-rule:human-review-when-it-matters:start -->
+## Human review only when it matters
+
+Marker: `HUMAN-REVIEW-WHEN-IT-MATTERS-2026-11-04`.
+
+- **This rule works inside the authority your owner has recorded.** It covers changes to
+  a repository: pull requests, merges and commits, including code or prompts that make
+  automation send, post or publish. Where your owner has not said that agents may merge
+  their own changes, keep their existing review rule and offer this one to them as a
+  proposal, once. Messages, publishing and sends follow `agents-draft-humans-send`; a yes
+  to merge is not a yes to send, spend money or grant access.
+- **Within that authority, the agent that made a change finishes it, merges included.**
+  Update the branch from the main branch right before merging. Merge when every check
+  passes. The one exception is a check that is not required and fails on the main branch
+  with the same findings, none caused by your change: name it in the pull request with
+  the failing run and who owns that failure. Never use it for a required or security
+  check or for a change to the check itself, and never merge over a failing required
+  check with an admin override. Anything
+  beyond a trivial change (a note, a typo, a link) first gets an independent review from
+  another model or a fresh-context agent that did not write it. Each finding is fixed, or
+  answered and the reviewer accepts the answer. Keep one revert as the undo. Then read the
+  result back where it landed and record what you saw. "Waiting on a human review" is not
+  a status for anything outside the list below. Owner's words: "I don't want to have the
+  agents think that every time a human has to review and merge, just when it matters."
+- **A person sees it first only when it matters. Any one of these is enough:**
+  1. *Money:* it spends, charges, refunds or moves money, or changes a price, scope, an
+     invoice, a payout or billing code.
+  2. *Access, privacy or security:* it grants or widens access, handles credentials or
+     secrets, moves private or sensitive information to a place more people can read, or
+     weakens a safety gate (branch protection, a required check, an approval step, a
+     firewall rule).
+  3. *Can't be undone:* it deletes data or history, moves a domain, changes production
+     data a revert will not restore, starts something outside the repository a revert
+     cannot call back (messages a job will send, data a script will change), or has no
+     tested rollback.
+  4. *Something new for someone outside:* a message or post to a client, partner or the
+     public beyond your team's routine replies, including a change that makes a job send
+     one; a new price, contract, guarantee or commitment; public work for a big-name
+     client; a client's property without that client's consent on record; press or a
+     crisis.
+  5. *People or legal:* hiring, firing, pay, HR, legal, tax, medical, disputes.
+  6. *A conflict, a hold or real doubt:* it goes against a recorded decision, a standing
+     rule or an explicit hold; an independent reviewer's finding is still disputed; or a
+     fact the change depends on cannot be checked.
+  7. *A brand-new rule nobody decided:* it adds, removes or changes the meaning of a
+     standing rule. Carrying out a decision already recorded, in the person's own words
+     and within its scope, is not new; adding your own detail to it is.
+- **Ask the person who owns that decision, once, where they already are:** the chat they
+  are working in or the thread already open for the work. Name which case it hits, give
+  your recommendation and the link, and keep working on everything else. Cases 1 to 6 wait
+  for an explicit yes; silence is not a yes (see `an-unanswered-ask-never-stops-the-work`).
+  Case 7 may take the shape "doing X on a set date unless you say otherwise" (see
+  `agents-own-it`), except a recorded decision that goes beyond the person's own words,
+  which waits for their yes. A bare "please review this" with no case named is not a reason to
+  wait: do the work.
+- **A tool's own gate is real.** If a tool's safety check refuses a merge or a publish
+  without a person's word, do not route around it: no direct push to a protected branch,
+  no asking another agent to merge it for you, and no handing the refused step to a
+  session that has the access you were refused. Tell the person in one line where they
+  already are, with the link and why it does not need their review. A one-word yes there
+  is enough.
+- **Never claim a review that did not happen.** The receipt says the work was authorized
+  and not separately reviewed (see `agents-draft-humans-send`, which sets the same
+  standard for messages and publishing).
+- **Measure it.** Count merges that waited on a person and check that each names a case
+  above, and track the time from the last green check to the merge. Finished work that
+  sits for days is a process problem, not a people problem.
+<!-- shared-rule:human-review-when-it-matters:end -->
 
 <!-- shared-rule-index:start -->
 ## Other house rules that apply to this work
