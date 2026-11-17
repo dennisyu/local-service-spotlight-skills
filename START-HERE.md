@@ -256,8 +256,13 @@ See [GitHub's outside-collaborator guidance](https://docs.github.com/en/organiza
    report the exact revision. “Invite sent” is not “accepted”; “accepted” is not
    “agent can read.” Record each separately.
 4. Run one authorized bounded task with a claimed owner, exact-source links,
-   checked artifact and independent review. Complete the handoff in steps 3–5
-   before expanding to the next teammates.
+   checked artifact and independent review. Complete the handoff in guide sections 3–5 above
+   before expanding to the next teammates. Each human teammate should explain
+   back which record is authoritative, who owns the task, what their agent may
+   do, and when to escalate. Have the human and their agent jointly demonstrate
+   one handoff to another worker, including the receiver's exact-revision read
+   and next action. Record misunderstandings and correct the existing guide;
+   opening a link or accepting an invitation is not evidence of understanding.
 5. Keep client work separate from the internal coordination repository. A folder
    name, branch or instruction saying “do not read other clients” is not an access
    boundary. Review repository contents and history before any client grant.
