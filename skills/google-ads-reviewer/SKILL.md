@@ -4,6 +4,27 @@ description: >
   Harden a finished Google Ads MAA in a fresh context: re-apply the evidence gates to every finding and action, issue one verdict per item (KEEP, DEMOTE TO WATCH, DROP, REPULL) with the contradicting number quoted, then grade format against the MAA rubric and return a routed punch list. Trigger on "harden this MAA", "review this MAA", "grade this MAA", "run the reviewer", "check this report before I send it", "review the MAA for [client]", "is this MAA ready", or when dispatched after google-ads-analyzer produces a draft. Also handles a human-written MAA. It never rewrites the report and never performs new analysis. Google Ads MAAs only.
 ---
 
+## Shared rules — harness layer (referenced, not inlined)
+
+Before doing this skill's work, read the installed source-root
+[AGENTS.md](../../AGENTS.md) and the current
+[audit execution contract](../../docs/audit-quality/enforcement.md),
+[quality standard](../../standards/audit-quality-gate.md) and
+[shared audit run contract](../personal-brand-audit/references/audit-run-contract.md).
+These files are governing instructions; do not assume the host automatically
+loads a repository-root file. Resolve links relative to this skill directory.
+If the installation omitted these resources, record the exact missing path and
+hold A-family report grading until they are restored or read from the pinned
+canonical source. Do not silently fall back to an older rubric.
+
+The global real-photo, real-video, original-thumbnail, curated-greatest-hits and
+useful-next-actions gate applies to every human-facing audit, including A-, A
+and A+. A specialist's narrower scope, client format/metric spec or older
+recipe cannot waive that report-quality gate. Preserve specialist numerical
+scores and client metric definitions. Source availability, actual skill loading,
+independent semantic review and runtime adoption each require separate evidence.
+Standalone export inlines shared rules and retains these referenced resources.
+
 # Google Ads Reviewer (the hardener)
 
 ## What this skill does
@@ -21,7 +42,7 @@ analyzer's job.
 
 ## The independence rule
 
-Run this in a **fresh context**. The reviewer sees exactly five things: the
+Run this in a **fresh context**. The reviewer reads the governing current audit acceptance contract first, then sees five task inputs: the
 frozen draft, the raw data pack it was built from, the client ledger, the
 client metric spec, and the rubric (plus the evidence gates it references).
 It never sees the analyzer's reasoning, tool calls, or justifications.
@@ -34,6 +55,7 @@ the analyzer was probably thinking, stop and test what is written.
 
 | Input | Required | Notes |
 |---|---|---|
+| Governing audit acceptance contract | Yes | Current source-root AGENTS and UAQG execution/media requirements; no missing-media A waiver. |
 | Frozen draft | Yes | Read-only. Quote from it, never edit it. |
 | Raw data pack | Yes | Campaign, keyword, search term, ad, conversion, network and device datasets, same windows. Without it no verdict can be proven; see coverage. |
 | Client ledger | Yes | Definitions, standing rules, change log, watch list, quarantine, Open ASKs, known data faults. |

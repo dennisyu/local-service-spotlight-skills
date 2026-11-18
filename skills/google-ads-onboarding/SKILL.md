@@ -4,6 +4,27 @@ description: >
   Onboard a new Google Ads client into the weekly MAA system in one run: verify access, scrape the account's full history (12 to 24 months, all statuses, inherited state), investigate the website and landing pages, research the real geographic footprint, package the questions only the client can answer, and bootstrap the client folder with a compact ledger the weekly drafter reads first. Trigger on "onboard [client]", "set up [client] for the MAA", "new Google Ads client", "first run for CID [digits]", "bootstrap the ledger for [client]", or any request to take over an existing Google Ads account. Runs once per client, before the first weekly MAA. Google Ads only; LSA is inventoried but not analyzed.
 ---
 
+## Shared rules — harness layer (referenced, not inlined)
+
+Before doing this skill's work, read the installed source-root
+[AGENTS.md](../../AGENTS.md) and the current
+[audit execution contract](../../docs/audit-quality/enforcement.md),
+[quality standard](../../standards/audit-quality-gate.md) and
+[shared audit run contract](../personal-brand-audit/references/audit-run-contract.md).
+These files are governing instructions; do not assume the host automatically
+loads a repository-root file. Resolve links relative to this skill directory.
+If the installation omitted these resources, record the exact missing path and
+hold A-family report grading until they are restored or read from the pinned
+canonical source. Do not silently fall back to an older rubric.
+
+The global real-photo, real-video, original-thumbnail, curated-greatest-hits and
+useful-next-actions gate applies to every human-facing audit, including A-, A
+and A+. A specialist's narrower scope, client format/metric spec or older
+recipe cannot waive that report-quality gate. Preserve specialist numerical
+scores and client metric definitions. Source availability, actual skill loading,
+independent semantic review and runtime adoption each require separate evidence.
+Standalone export inlines shared rules and retains these referenced resources.
+
 # Google Ads Onboarding
 
 ## What this skill does

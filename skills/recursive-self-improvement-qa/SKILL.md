@@ -124,19 +124,21 @@ and [acceptance checks](https://github.com/dennisyu/local-service-spotlight-skil
 
 ## Shared rules — harness layer (referenced, not inlined)
 
-This skill operates under the fleet's shared-rule appendix, which lives ONCE at the
-harness layer instead of being pasted into this file:
+Before doing this skill's work, read the installed source-root
+[AGENTS.md](../../AGENTS.md) and the current
+[audit execution contract](../../docs/audit-quality/enforcement.md),
+[quality standard](../../standards/audit-quality-gate.md) and
+[shared audit run contract](../personal-brand-audit/references/audit-run-contract.md).
+These files are governing instructions; do not assume the host automatically
+loads a repository-root file. Resolve links relative to this skill directory.
+If the installation omitted these resources, record the exact missing path and
+hold A-family report grading until they are restored or read from the pinned
+canonical source. Do not silently fall back to an older rubric.
 
-- **Appendix file:** the shared-rule appendix (35 blocks) — canonical
-  blocks live in this repo's `standards/` directory; the harness carries the
-  appendix as one file generated from them, and standalone exports inline it
-  at packaging time (`sync_shared_rules.py --export`). It comprises fleet standards,
-  coordination/ownership rules, QA gates, and field lessons that apply pack-wide).
-- **How to use it:** the appendix is part of this skill's instructions. Read the
-  blocks relevant to the task at hand before acting; where a block sets a gate,
-  threshold, filing rule, or prohibition, it binds exactly as if it were printed here.
-- **Precedence:** if a core instruction above and an appendix block conflict, the
-  more specific instruction wins; if still tied, the appendix's QA/safety gate wins
-  and the conflict is noted in the run's receipt.
-- **What changed:** nothing about the rules — only their address. The core above is
-  the recipe; the appendix is the standing orders every recipe runs under.
+The global real-photo, real-video, original-thumbnail, curated-greatest-hits and
+useful-next-actions gate applies to every human-facing audit, including A-, A
+and A+. A specialist's narrower scope, client format/metric spec or older
+recipe cannot waive that report-quality gate. Preserve specialist numerical
+scores and client metric definitions. Source availability, actual skill loading,
+independent semantic review and runtime adoption each require separate evidence.
+Standalone export inlines shared rules and retains these referenced resources.

@@ -4,6 +4,27 @@ description: >
   Daily exceptions-only health check across a roster of Google Ads accounts: new disapprovals and policy or verification notices, campaigns that served yesterday and not today or carry a not-serving reason, budget caps and spend far outside the daily budget, conversion actions gone silent on campaigns still spending, and final URLs that stop resolving. Reports breaks only, changes nothing, optimizes nothing. Trigger on "daily check", "run the daily Google Ads check", "any disapprovals today", "is anything broken across the accounts", "morning ads health check", or on the scheduled daily run. Google Ads only; LSA out of scope until migrated.
 ---
 
+## Shared rules — harness layer (referenced, not inlined)
+
+Before doing this skill's work, read the installed source-root
+[AGENTS.md](../../AGENTS.md) and the current
+[audit execution contract](../../docs/audit-quality/enforcement.md),
+[quality standard](../../standards/audit-quality-gate.md) and
+[shared audit run contract](../personal-brand-audit/references/audit-run-contract.md).
+These files are governing instructions; do not assume the host automatically
+loads a repository-root file. Resolve links relative to this skill directory.
+If the installation omitted these resources, record the exact missing path and
+hold A-family report grading until they are restored or read from the pinned
+canonical source. Do not silently fall back to an older rubric.
+
+The global real-photo, real-video, original-thumbnail, curated-greatest-hits and
+useful-next-actions gate applies to every human-facing audit, including A-, A
+and A+. A specialist's narrower scope, client format/metric spec or older
+recipe cannot waive that report-quality gate. Preserve specialist numerical
+scores and client metric definitions. Source availability, actual skill loading,
+independent semantic review and runtime adoption each require separate evidence.
+Standalone export inlines shared rules and retains these referenced resources.
+
 # Google Ads Daily Check
 
 ## What this skill does

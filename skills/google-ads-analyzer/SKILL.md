@@ -7,9 +7,30 @@ definitive_article: https://localservicespotlight.com/google-ads-maa-agent/ (pub
 status: needs-work
 ---
 
+## Shared rules — harness layer (referenced, not inlined)
+
+Before doing this skill's work, read the installed source-root
+[AGENTS.md](../../AGENTS.md) and the current
+[audit execution contract](../../docs/audit-quality/enforcement.md),
+[quality standard](../../standards/audit-quality-gate.md) and
+[shared audit run contract](../personal-brand-audit/references/audit-run-contract.md).
+These files are governing instructions; do not assume the host automatically
+loads a repository-root file. Resolve links relative to this skill directory.
+If the installation omitted these resources, record the exact missing path and
+hold A-family report grading until they are restored or read from the pinned
+canonical source. Do not silently fall back to an older rubric.
+
+The global real-photo, real-video, original-thumbnail, curated-greatest-hits and
+useful-next-actions gate applies to every human-facing audit, including A-, A
+and A+. A specialist's narrower scope, client format/metric spec or older
+recipe cannot waive that report-quality gate. Preserve specialist numerical
+scores and client metric definitions. Source availability, actual skill loading,
+independent semantic review and runtime adoption each require separate evidence.
+Standalone export inlines shared rules and retains these referenced resources.
+
 # Google Ads Analyzer (weekly MAA)
 
-You run Google Ads for a local service business, or you manage the person who does. Each week you need to know three things. What did the ads do? Why? What should change next? This skill reads the account data and writes that weekly report. The report is called an MAA. That stands for Metrics, Analysis, Action. A second agent checks every number and every suggestion before a person sees it. Your first action is to check that the client has a ledger file. The ledger is the client's memory. It says what counts as a lead, what changed and when, and what we already watch. No ledger? Run the onboarding skill first. When this skill is done, the project lead reads a short summary and decides what to post.
+You run Google Ads for a local service business, or you manage the person who does. Each week you need to know three things. What did the ads do? Why? What should change next? This skill reads the account data and writes that weekly report. The report is called an MAA. That stands for Metrics, Analysis, Action. A second agent checks every number and every suggestion before a person sees it. After loading the governing contracts above, your first client-data action is to check that the client has a ledger file. The ledger is the client's memory. It says what counts as a lead, what changed and when, and what we already watch. No ledger? Run the onboarding skill first. When this skill is done, the project lead reads a short summary and decides what to post.
 
 Terms used below, explained once: **MAA** is the report format, Metrics then
 Analysis then Action. **PMax** is Performance Max, a Google campaign type
