@@ -1,12 +1,13 @@
 # Universal Audit Quality Gate
 
-Version UAQG 1.1.0 · 16 October 2026 · Proposed operational profile; calibration required
+Version UAQG 2.0.0 · 18 November 2026 · Proposed operational profile; calibration required
 
 The published baseline is [UAQG1.0.0](https://github.com/dennisyu/local-service-spotlight-skills/blob/dcc098bf7d8aa96ff627e4998bed6e406db891d8/docs/audit-quality/README.md).
-This compatible addition proposes [engagement tiers and capability routing](tier-contracts.md),
+The historical 1.1 annex introduced [engagement tiers and capability routing](tier-contracts.md),
 [product profiles](product-profiles.json), a [typed receipt contract](tier-receipt.schema.json)
-and [examples/tests](tier-examples.md). The six quality dimensions, weights,
-calibrated85 threshold and specialist exam contracts below remain unchanged.
+and [examples/tests](tier-examples.md). UAQG 2.0 adds a mandatory real-media package and breaks the typed receipt contract.
+The six quality dimensions, weights, calibrated 85 threshold and specialist exam
+contracts below remain unchanged.
 
 Use this standard to decide whether an audit is trustworthy enough to act on. It applies to content, documents, SEO, websites and operations. A technically valid file can still lose evidence, useful detail or visual explanation. Acceptance requires both hard gates and a calibrated quality score.
 
@@ -53,6 +54,8 @@ Confidence (high/medium/low with reason) describes evidence strength, not permis
 Distinguish goals from results, expected benefit from measured change, source access from execution, source save from deployment, graph identity from visible Knowledge Panel and owner claim, and installation from activation and a successful run. A failed fetch establishes an access limitation, not a broken website. HTTP 200 establishes availability, not correct body or functioning forms.
 
 ## 3. Hard gates: no weighted score can override these
+
+The required real-media package below is an additional global hard gate for A-family report quality. Every human-facing report requires it, including bounded/free reports.
 
 | Gate | PASS evidence | HOLD condition |
 |---|---|---|
@@ -104,7 +107,7 @@ Default UAQG report-quality profile retains the originating editorial candidate'
 
 Rate each dimension from 0 to 4: **0** observed absent or materially unusable; **1** serious deficiencies; **2** partly meets requirements with substantial rework; **3** meets all required criteria with minor accepted limitations; **4** demonstrably strong, complete and well supported. All dimensions rated 3 total 75: baseline compliance alone does not meet the retained editorial threshold of 85. Acceptance requires evidence exceeding baseline in enough weighted dimensions; do not inflate ratings to reach it. Provide criterion-level evidence and rationale; fractions require explicit anchors agreed in the pinned profile. UNKNOWN stays null, never 0. Each contribution = weight × rating ÷ 4. Sum using exact arithmetic; decide against 85 before display rounding. No hidden caps or bonus points.
 
-For a required dimension with missing evidence, show known subtotal and assessed weight, withhold the total and acceptance. Do not renormalize to 100. All six dimensions apply to this default; operational audits can use a truthful process/evidence map rather than decorative pictures. If a specialized report needs N/A dimensions or different weights, approve and version a separate profile with explicit denominator rules before use. Do not compare its total directly to this profile.
+For a required dimension with missing evidence, show known subtotal and assessed weight, withhold the total and acceptance. Do not renormalize to 100. All six dimensions apply to this default; operational audit maps add explanation alongside the required genuine-media package. If a specialized report needs N/A dimensions or different weights, approve and version a separate profile with explicit denominator rules before use. Do not compare its total directly to this profile.
 
 Use concrete 3/4 anchors: for continuity, 3 accounts for every baseline item while 4 also makes dense evidence easier to use without loss; for visuals, 3 meets all meaningful-visual/render checks while 4 adds demonstrably clearer comparisons and hierarchy; for citations, 3 traces every material claim while 4 also provides precise primary-source locators and resolves corroboration limits; for currency/privacy, 3 passes all checks while 4 supplies complete dated change/contradiction analysis; for navigation, 3 is readable and functional while 4 makes dense evidence and source return paths particularly easy to use; for reproducibility, 3 permits reconstruction while 4 also demonstrates a reproducible rebuild with matching outputs. Reviewers must attach evidence, not adjectives. Synthetic borderline: [4,3,3,4,3,3] = 85 exactly; [3,3,4,4,3,3] = 83.75 and fails.
 
@@ -144,7 +147,7 @@ Keep public receipts sanitized and detailed evidence in authorized private stora
 
 ## 9. Copyable agent brief
 
-> Apply UAQG 1.1.0 with a pinned tier contract to [artifact/process] for [reader and decision]. Read [approved source locations] and [current owner/hold record]. Baseline: [revision/hash]. Specialist exam: [name/version or unscored]. Scope/window: [bounds]. Allowed fixes: [scope]; publisher: [existing function]; private evidence destination: [location]. Preserve valid detail and visual explanation. Build a source/claim ledger and baseline fidelity crosswalk; label FACT/DECIDED/PROPOSED/UNKNOWN separately from observation state. Fix authorized defects, propagate corrections to all dependent outputs, and retest. Use the pinned six-dimension profile; missing evidence stays null. Obtain required fresh-context review of the exact final revision. Deliver only through the accepted owner and route. For a public web edition verify anonymous body/canonical/mobile/links/downloads; for private delivery verify authorized recipient access and final bytes without making the artifact public. Return the versioned receipt, unresolved defects, exact blocker and next action. Do not invent authority, sources, calibration, independent review or live publication.
+> Apply UAQG 2.0.0 with a pinned tier contract to [artifact/process] for [reader and decision]. Read [approved source locations] and [current owner/hold record]. Baseline: [revision/hash]. Specialist exam: [name/version or unscored]. Scope/window: [bounds]. Allowed fixes: [scope]; publisher: [existing function]; private evidence destination: [location]. Preserve valid detail and visual explanation. Build a source/claim ledger and baseline fidelity crosswalk; label FACT/DECIDED/PROPOSED/UNKNOWN separately from observation state. Fix authorized defects, propagate corrections to all dependent outputs, and retest. Use the pinned six-dimension profile; missing evidence stays null. Obtain required fresh-context review of the exact final revision. Deliver only through the accepted owner and route. For a public web edition verify anonymous body/canonical/mobile/links/downloads; for private delivery verify authorized recipient access and final bytes without making the artifact public. Return the versioned receipt, unresolved defects, exact blocker and next action. Do not invent authority, sources, calibration, independent review or live publication.
 
 ## 10. Executable logic (pseudocode)
 
@@ -190,3 +193,49 @@ save_complete_patch_findings_and_next_owner_action(); return HOLD
 This generalizes a private document-quality candidate and its comparison audit into public procedure. No private strategy, contact or screenshot is needed to apply it. The original six weights, ≥85 threshold, fidelity checks, meaningful visuals, citations, privacy, final rendering, reproducibility and independent review remain explicit. Generic privacy omissions are disclosed through a restricted crosswalk. New claim axes, severity gates, calibration, domain profiles and receipt states are proposed operational controls, not an external certification or validated scientific scale.
 
 Maintained teaching context: [How We Audit](https://blitzmetrics.com/how-we-audit/), [Website QA](https://blitzmetrics.com/website-qa-audit/), [Article Guidelines](https://blitzmetrics.com/blog-posting-guidelines/), and [SEO exam guide](https://dennisyu.com/seo-audits/). This addition complements those owners and leaves their exam contracts intact. Read the current source and acceptance status before reuse. It does not assert that any prior audit, installed skill or public article has passed this gate.
+
+## Required real-media package for every human-facing audit
+
+Dennis Yu, 18 November 2026: “Real pictures, videos, thumbnails, greatest hits,
+and useful next steps should be required to earn an A.” This applies to every
+agent and every human-facing audit: personal brand, SEO, GEO, security,
+subscriptions, weekly MAA, ads, profiles and operations, regardless of price.
+
+An A, A+ or A- requires genuine relevant source-bound photographs; verified real
+video with its original accurate thumbnail/poster and exact usable watch link
+(or a tested QR to that exact source in print); curated greatest hits stating
+source, date, buyer relevance, intended reader and next use; and useful
+source-linked next actions with owner/function, concrete first step, timeframe,
+dependencies, authority, destination, done test and measurement when applicable.
+Audio can add proof but cannot replace required video. Diagrams, screenshots,
+charts and process maps add explanation; they cannot replace this package.
+Stock/generated imagery cannot serve as observed proof. Counts cannot prove truth.
+
+Independently inspect the final artifact, each included source and its relevance,
+rights, identity, crop, accurate video/thumbnail pairing, greatest-hit selection
+and action usefulness. Bind the review to exact final hash, physical page/section,
+source evidence/capture and media IDs. Metadata discovery is not recording review;
+record actual frames/transcript or muted recording inspection and never claim to
+have heard/watched lessons from metadata alone. Test click/QR destinations and
+intended-recipient access. A homepage, broken link or inaccessible private player
+is insufficient. Historic media may be useful when clearly dated and relevant;
+a stale capture/review or unrelated asset cannot earn current acceptance.
+
+If any component cannot be verified, disclose the exact gap, required revision
+and next verification; mark report quality A-INELIGIBLE / REVISION_REQUIRED.
+There is no missing-media, N/A, “where useful”, or “only on request” A waiver.
+Do not fabricate assets or lower the subject's reputation/SEO/security score
+because the report lacks media. Keep specialist exams and numerical report
+weights 25/25/20/15/10/5, threshold 85, calibration, privacy, authority and full
+package gates intact. Pure machine/bulk outputs may stay SCREENING, with no A
+or full-report claim. Historical receipts remain historical; legacy schemas
+cannot accept new production reports. Synthetic tests are exercises, never real
+runtime adoption or client proof. Source publication is not fleet activation.
+
+The November 10 article publication fallback remains an article rule; it does
+not waive this stricter audit A gate. Run the versioned typed contract and bundle
+checks, then independent semantic review; a consistency PASS is not a truth certificate.
+
+UAQG 2.0.0 is a breaking receipt contract: use UAQG-TIER-RECEIPT-2.0.0. Retain previous records without retroactive acceptance.
+
+Video curation may use verified video identity, original poster and an explicitly attributed publisher description without pretending the full recording was watched. Claims of a lesson, quote or observed behavior require inspection of the corresponding recording content. Record this distinction in claim_basis and content_review_method.

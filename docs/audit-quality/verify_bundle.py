@@ -15,7 +15,7 @@ import check_quality
 VERSION = 'UAQG-BUNDLE-1.0.0'
 HASH = re.compile(r'[a-f0-9]{64}')
 ACCEPTABLE = {'RELEASE_READY', 'PRIVATE_DELIVERED_VERIFIED', 'PUBLISHED_VERIFIED', 'SCREENING'}
-BOUND_FILES = ['verify_bundle.py', 'check_quality.py', 'tier-receipt.schema.json', 'product-profiles.json']
+BOUND_FILES = ['verify_bundle.py', 'check_quality.py', 'tier-receipt.schema.json', 'product-profiles.json', 'media_package.py']
 
 
 def read_json(path):
@@ -83,7 +83,7 @@ def verify(root, manifest_name, mode='production'):
             return path, actual
         receipt_path, receipt_hash = checked(manifest['receipt'])
         receipt = read_json(receipt_path)
-        if receipt.get('schema_version') != 'UAQG-TIER-RECEIPT-1.0.0':
+        if receipt.get('schema_version') != 'UAQG-TIER-RECEIPT-2.0.0':
             raise ValueError('current tier receipt required; legacy/unknown receipt cannot bypass bundle checks')
         if type(receipt.get('synthetic')) is not bool:
             raise ValueError('explicit synthetic boolean required')
@@ -110,6 +110,7 @@ def verify(root, manifest_name, mode='production'):
         if type(manifest['artifacts']) is not dict or type(manifest['evidence']) is not dict:
             raise ValueError('artifact/evidence manifests must be ID-keyed objects')
         artifact_paths = {safe_file(root, e['path']) for e in manifest['artifacts'].values()}
+        source_captures = {}
         for field in ['artifacts', 'evidence']:
             rows = receipt[field]
             ids = [row['id'] for row in rows]
@@ -136,9 +137,14 @@ def verify(root, manifest_name, mode='production'):
                         raise ValueError('evidence origin differs from receipt; separate synthetic exercises')
                     if mode == 'production' and row['locator'].lower().startswith('synthetic-fixture:'):
                         raise ValueError('known synthetic evidence locator')
-                    capture_path, _ = checked(snapshot['capture'])
+                    capture_path, capture_hash = checked(snapshot['capture'])
+                    source_captures[row['id']] = capture_hash
                     if aliases(capture_path, artifact_paths | {manifest_path, receipt_path, path}):
                         raise ValueError('capture must be a separate source/review record')
+        for package in receipt['media_package']:
+            for asset in package['assets']:
+                if source_captures.get(asset['source_evidence_id']) != asset['source_capture_sha256']:
+                    errors.append('media source capture differs from independently reviewed bytes: ' + asset['id'])
         assessment = check_quality.assess(receipt)
         result['receipt_decision'] = assessment['decision']
         errors.extend(assessment.get('reasons', []))

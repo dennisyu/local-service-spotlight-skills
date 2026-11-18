@@ -114,3 +114,49 @@ registry/receipt process. This file installs no scheduler, model service, access
 grant or vendor-side restriction. Source-level requirements cannot physically
 prevent a disconnected agent from bypassing a publisher; only an integrated
 publisher gate can do that. Report unintegrated routes explicitly.
+
+## Required real-media package for every human-facing audit
+
+Dennis Yu, 18 November 2026: “Real pictures, videos, thumbnails, greatest hits,
+and useful next steps should be required to earn an A.” This applies to every
+agent and every human-facing audit: personal brand, SEO, GEO, security,
+subscriptions, weekly MAA, ads, profiles and operations, regardless of price.
+
+An A, A+ or A- requires genuine relevant source-bound photographs; verified real
+video with its original accurate thumbnail/poster and exact usable watch link
+(or a tested QR to that exact source in print); curated greatest hits stating
+source, date, buyer relevance, intended reader and next use; and useful
+source-linked next actions with owner/function, concrete first step, timeframe,
+dependencies, authority, destination, done test and measurement when applicable.
+Audio can add proof but cannot replace required video. Diagrams, screenshots,
+charts and process maps add explanation; they cannot replace this package.
+Stock/generated imagery cannot serve as observed proof. Counts cannot prove truth.
+
+Independently inspect the final artifact, each included source and its relevance,
+rights, identity, crop, accurate video/thumbnail pairing, greatest-hit selection
+and action usefulness. Bind the review to exact final hash, physical page/section,
+source evidence/capture and media IDs. Metadata discovery is not recording review;
+record actual frames/transcript or muted recording inspection and never claim to
+have heard/watched lessons from metadata alone. Test click/QR destinations and
+intended-recipient access. A homepage, broken link or inaccessible private player
+is insufficient. Historic media may be useful when clearly dated and relevant;
+a stale capture/review or unrelated asset cannot earn current acceptance.
+
+If any component cannot be verified, disclose the exact gap, required revision
+and next verification; mark report quality A-INELIGIBLE / REVISION_REQUIRED.
+There is no missing-media, N/A, “where useful”, or “only on request” A waiver.
+Do not fabricate assets or lower the subject's reputation/SEO/security score
+because the report lacks media. Keep specialist exams and numerical report
+weights 25/25/20/15/10/5, threshold 85, calibration, privacy, authority and full
+package gates intact. Pure machine/bulk outputs may stay SCREENING, with no A
+or full-report claim. Historical receipts remain historical; legacy schemas
+cannot accept new production reports. Synthetic tests are exercises, never real
+runtime adoption or client proof. Source publication is not fleet activation.
+
+The November 10 article publication fallback remains an article rule; it does
+not waive this stricter audit A gate. Run the versioned typed contract and bundle
+checks, then independent semantic review; a consistency PASS is not a truth certificate.
+
+UAQG 2.0.0 is a breaking receipt contract: use UAQG-TIER-RECEIPT-2.0.0. Retain previous records without retroactive acceptance.
+
+Video curation may use verified video identity, original poster and an explicitly attributed publisher description without pretending the full recording was watched. Claims of a lesson, quote or observed behavior require inspection of the corresponding recording content. Record this distinction in claim_basis and content_review_method.

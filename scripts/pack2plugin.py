@@ -115,6 +115,13 @@ def build_plugin(source: Path, output_dir: Path, dry_run: bool = False) -> Path:
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
         )
 
+        # Conversions are distribution: every skill inherits current universal
+        # rules, including referenced/pending source forms. Preserve resources.
+        try:
+            from scripts import sync_shared_rules as shared_rules
+        except ModuleNotFoundError:
+            import sync_shared_rules as shared_rules
+        all_rules = shared_rules.load_standards(shared_rules.STANDARDS_DIR)
         for source_skill, skill_name in zip(skill_dirs, skill_names):
             destination = stage / "skills" / skill_name
             shutil.copytree(
@@ -122,6 +129,21 @@ def build_plugin(source: Path, output_dir: Path, dry_run: bool = False) -> Path:
                 ignore=shutil.ignore_patterns("__MACOSX", ".DS_Store", "*.pyc", "__pycache__"),
             )
             _repair_frontmatter(destination / "SKILL.md", skill_name)
+            skill_file = destination / 'SKILL.md'
+            keep = shared_rules.standards_for(all_rules, shared_rules.skill_scopes(skill_file))
+            rest = [s for s in all_rules if s not in keep]
+            exported, _ = shared_rules.expected_text(skill_file.read_text(), keep, rest, prune=True)
+            skill_file.write_text(exported)
+
+        # Shared rule/checker references stay usable in a standalone archive.
+        for directory in ('docs', 'shared', 'standards', 'scripts'):
+            candidate = shared_rules.ROOT / directory
+            if candidate.is_dir():
+                shutil.copytree(candidate, stage / directory,
+                                ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
+        agents = shared_rules.ROOT / 'AGENTS.md'
+        if agents.is_file():
+            stage.joinpath('AGENTS.md').write_text(agents.read_text())
 
         for optional in ("agents", "commands"):
             candidate = content_root / optional

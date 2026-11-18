@@ -80,7 +80,7 @@ def _assess_v1(receipt):
 
 
 def self_test():
-    base = {"quality": {"weights": WEIGHTS, "ratings": [4, 3, 4, 4, 3, 3], "rationales_and_evidence": ["synthetic evidence"] * 6, "calibration": {"status": "RECORDED"}}, "authority": {"verified": True, "current_holds": []}, "checks": [{"name": n, "status": "PASS", "required": True, "evidence": "synthetic evidence"} for n in REQUIRED_CHECKS], "findings": [], "candidate": {"sha256": "synthetic-final"}, "independent_review": {"reviewer": "synthetic reviewer", "fresh_context": True, "candidate_sha256": "synthetic-final", "content_privacy": "PASS", "design": "PASS"}, "release": {"attempted": False}, "audience": "PUBLIC"}
+    base = {"synthetic": True, "historical_exercise": True, "quality": {"weights": WEIGHTS, "ratings": [4, 3, 4, 4, 3, 3], "rationales_and_evidence": ["synthetic evidence"] * 6, "calibration": {"status": "RECORDED"}}, "authority": {"verified": True, "current_holds": []}, "checks": [{"name": n, "status": "PASS", "required": True, "evidence": "synthetic evidence"} for n in REQUIRED_CHECKS], "findings": [], "candidate": {"sha256": "synthetic-final"}, "independent_review": {"reviewer": "synthetic reviewer", "fresh_context": True, "candidate_sha256": "synthetic-final", "content_privacy": "PASS", "design": "PASS"}, "release": {"attempted": False}, "audience": "PUBLIC"}
     cases = 0
     def check(r, expected):
         nonlocal cases
@@ -289,7 +289,7 @@ def assess_tier(r):
             'reachable': ('LINK_REACHABILITY', {'HTTP_RESPONSE', 'OEMBED_METADATA'}, {'METADATA_ONLY', 'CONTENT_INSPECTED'}),
             'expected_content': ('LINK_CONTENT', {'HTML_CONTENT', 'DOCUMENT_CONTENT', 'TRANSCRIPT_AT_CITED_LOCATION', 'VIDEO_AT_CITED_LOCATION'}, {'CONTENT_INSPECTED'}),
             'recipient_access': ('RECIPIENT_ACCESS', {'ANONYMOUS_RECIPIENT_READ', 'AUTHORIZED_RECIPIENT_READ'}, {'CONTENT_INSPECTED'}),
-            'media_inspected': ('MEDIA_CONTENT', {'TRANSCRIPT_AT_CITED_LOCATION', 'VIDEO_AT_CITED_LOCATION', 'AUDIO_AT_CITED_LOCATION'}, {'CONTENT_INSPECTED'})
+            'media_inspected': ('MEDIA_CONTENT', {'TRANSCRIPT_AT_CITED_LOCATION', 'VIDEO_AT_CITED_LOCATION', 'AUDIO_AT_CITED_LOCATION', 'VIDEO_IDENTITY_AND_POSTER'}, {'CONTENT_INSPECTED'})
         }
         for field in ['reachable', 'expected_content', 'recipient_access', 'media_inspected']:
             state = link[field]
@@ -311,6 +311,11 @@ def assess_tier(r):
                 media = link['media_inspected']
                 need(media['status'] == 'PASS' and media['method'] not in {'OEMBED', 'METADATA_ONLY', 'THUMBNAIL'}, 'metadata is not media inspection')
                 need(evidence.get(media['evidence_id'], {}).get('inspection') == 'CONTENT_INSPECTED', 'media source not inspected')
+    import importlib.util
+    media_spec = importlib.util.spec_from_file_location('uaqg_media_package', root / 'media_package.py')
+    media = importlib.util.module_from_spec(media_spec)
+    media_spec.loader.exec_module(media)
+    errors.extend(media.validate(r, evidence, artifacts, actions, receipt))
     closures = unique(r['closure_receipts'], 'id')
     for defect in r['defects']:
         if defect['closed']:
@@ -405,11 +410,13 @@ def assess_tier(r):
 def assess(receipt):
     if type(receipt) is not dict:
         return {'decision':'HOLD','reasons':['receipt must be an object']}
-    if receipt.get('schema_version') == 'UAQG-TIER-RECEIPT-1.0.0':
+    if receipt.get('schema_version') == 'UAQG-TIER-RECEIPT-2.0.0':
         return assess_tier(receipt)
     if receipt.get('standard') == 'UAQG-1.1.0' or 'product_profile' in receipt:
         return {'decision':'HOLD','reasons':['tier receipt schema/version missing or unknown']}
-    return _assess_v1(receipt)
+    if receipt.get('synthetic') is True and receipt.get('historical_exercise') is True:
+        return _assess_v1(receipt)
+    return {'decision':'HOLD','reasons':['legacy schema is historical only; current media-package contract required for production']}
 
 
 if __name__ == "__main__":

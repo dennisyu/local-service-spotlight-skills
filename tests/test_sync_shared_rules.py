@@ -399,12 +399,16 @@ class StandardV2StatesTests(unittest.TestCase):
         }
         self.standard("always-verify", ["agent-behaviour"], "check the artifact")
         self.standard("no-black-buttons", ["published-html"], "never black")
+        resource = sources['plain'].parent / 'references' / 'source.md'
+        resource.parent.mkdir()
+        resource.write_text('Evidence resource preserved.\n')
         snapshot = {p: p.read_text(encoding="utf-8") for p in sources.values()}
         agents_before = (self.root / "AGENTS.md").read_text(encoding="utf-8")
         target = self.root / "export"
 
         written = self.mod.export_tree(target)
 
+        self.assertEqual((target / 'skills/plain/references/source.md').read_text(), 'Evidence resource preserved.\n')
         self.assertEqual(len(written), 1 + len(sources))  # AGENTS.md + skills
         exported = {
             name: (target / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
