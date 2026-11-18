@@ -26,6 +26,8 @@ class BundleTests(unittest.TestCase):
         # Bind all fixture final-artifact assertions to real temporary bytes.
         self.receipt = json.loads(json.dumps(self.receipt).replace('a' * 64, final_hash))
         self.receipt['artifacts'][0]['path'] = 'report.pdf'
+        from tests.test_audit_quality import refresh_synthetic_media_reviews
+        refresh_synthetic_media_reviews(self.receipt)
         (self.root / 'report.pdf').write_bytes(report)
         self.manifest = {'schema_version': bundle.VERSION, 'receipt': {},
                          'artifacts': {'report': {'path': 'report.pdf', 'sha256': final_hash}},
@@ -39,6 +41,11 @@ class BundleTests(unittest.TestCase):
                 'synthetic':True,'evidence_id':row['id'],'original_locator':row['locator'],
                 'capture':{'path':capture,'sha256':bundle.sha(self.root / capture)}}))
             self.manifest['evidence'][row['id']] = {'path': name, 'sha256': bundle.sha(self.root / name)}
+        for package in self.receipt['media_package']:
+            for asset in package['assets']:
+                snapshot=json.loads((self.root/self.manifest['evidence'][asset['source_evidence_id']]['path']).read_text())
+                asset['source_capture_sha256']=snapshot['capture']['sha256']
+        refresh_synthetic_media_reviews(self.receipt)
         self.write()
 
     def write(self):
@@ -61,6 +68,14 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(r['decision'], 'EXERCISE_PASS', r)
         self.assertEqual(r['receipt_decision'], 'RELEASE_READY')
         self.assertEqual(set(r['checker_sha256']), set(bundle.BOUND_FILES))
+
+    def test_changed_media_capture_rehashed_envelope_still_invalidates_review(self):
+        row=self.manifest['evidence']['MEDIA-source-video']
+        path=self.root/row['path'];snapshot=json.loads(path.read_text())
+        capture=self.root/snapshot['capture']['path'];capture.write_text('Different source recording snapshot')
+        snapshot['capture']['sha256']=bundle.sha(capture);path.write_text(json.dumps(snapshot))
+        row['sha256']=bundle.sha(path);self.write()
+        self.hold('media source capture differs')
 
     def test_default_refuses_synthetic_production(self):
         self.hold('synthetic exercise', mode='production')

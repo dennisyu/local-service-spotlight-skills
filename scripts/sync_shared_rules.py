@@ -249,6 +249,14 @@ def export_tree(target: Path) -> list[Path]:
     """
     if target.exists() and any(target.iterdir()):
         raise StandardError(f"export target {target} exists and is not empty")
+    # Preserve references, helper scripts and resources beside each skill.
+    import shutil
+    target.mkdir(parents=True, exist_ok=True)
+    for directory in ('skills', 'docs', 'shared', 'standards', 'scripts'):
+        source = ROOT / directory
+        if source.is_dir():
+            shutil.copytree(source, target / directory,
+                            ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
     written: list[Path] = []
     for path, keep, rest in plan():
         current = path.read_text(encoding="utf-8") if path.exists() else ""

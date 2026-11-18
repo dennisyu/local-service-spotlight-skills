@@ -15,11 +15,23 @@ spec.loader.exec_module(checker)
 BASE = json.loads((ROOT / 'tests/fixtures/audit-tier-base.json').read_text())
 
 
+def refresh_synthetic_media_reviews(r):
+    """Reissue declared synthetic review only after an intentional fixture revision."""
+    spec=importlib.util.spec_from_file_location('media_fixture',ROOT/'docs/audit-quality/media_package.py')
+    media=importlib.util.module_from_spec(spec);spec.loader.exec_module(media)
+    es={e['id']:e for e in r['evidence']};actions={a['id']:a for a in r['actions']}
+    for p in r['media_package']:
+        for a in p['assets']:es[a['review_evidence_id']]['scope']=media.review_scope(a,es)
+        for h in p['greatest_hits']:
+            a=next(a for a in p['assets'] if a['id']==h['asset_id'])
+            es[h['review_evidence_id']]['scope']=media.hit_scope(h,a,es,actions)
+        es[p['review_evidence_id']]['scope']=media.package_scope(p,es,actions)
+
 def bulk_fixture():
     r = copy.deepcopy(BASE)
     r['product_profile'].update(id='bulk-screening', contracted_pages=None, blueprint_ref=None)
     r['artifacts'][0].update(format='JSON', page_count=None, visual_manifest=[])
-    r.update(claims=[], actions=[], claim_scope='NO_FINDINGS_SCREENING', no_findings_reason='Synthetic leads; no accepted findings.')
+    r.update(media_package=[], claims=[], actions=[], claim_scope='NO_FINDINGS_SCREENING', no_findings_reason='Synthetic leads; no accepted findings.')
     r['quality'].update(ratings=[None]*6, total=None, calibration={'status':'NOT_RUN','receipt_id':None,'anchor_ids':[]})
     r['independent_review'].update(status='UNKNOWN', reviewer_id=None, fresh_context=False, artifacts=[])
     ids = ['a','b','c','d','e']
@@ -43,7 +55,7 @@ def link_fixture():
         e=dict(r['evidence'][0],id='LINK-'+field,kind=kind,purpose=field,scope=link['url'],artifact_sha256='a'*64,recipient_ref='public-anonymous' if field=='recipient_access' else None)
         r['evidence'].append(e)
         link[field]={'status':'PASS','method':method,'evidence_id':e['id'],'observed_at':'2026-10-16T00:00:00Z','reason':None}
-    r['links']=[link]
+    r['links'].insert(0,link)
     return r
 
 
@@ -203,7 +215,7 @@ class AuditQualityTests(unittest.TestCase):
                     if mutate=='wrong_kind':e['kind']='SOURCE'
                     if mutate=='wrong_target':e['scope']='https://example.invalid/other'
                     self.hold(r,'incompatible link evidence')
-        r=link_fixture();e=next(e for e in r['evidence'] if e['kind']=='RECIPIENT_ACCESS');e['recipient_ref']='another-recipient';self.hold(r,'wrong or unspecified recipient')
+        r=link_fixture();e=next(e for e in r['evidence'] if e['id']=='LINK-recipient_access');e['recipient_ref']='another-recipient';self.hold(r,'wrong or unspecified recipient')
         r=link_fixture();r['links'][0]['reachable']['method']='OEMBED_METADATA';next(e for e in r['evidence'] if e['kind']=='LINK_REACHABILITY')['inspection']='METADATA_ONLY'
         self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
 
@@ -219,7 +231,7 @@ class AuditQualityTests(unittest.TestCase):
 
     def test_claim_action_edges_are_bidirectional(self):
         r=copy.deepcopy(BASE);r['claims'].append(dict(r['claims'][0],id='C2'));self.hold(r,'both directions')
-        r['actions'][0]['finding_ids'].append('C2');self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
+        r['actions'][0]['finding_ids'].append('C2');refresh_synthetic_media_reviews(r);self.assertEqual(checker.assess(r)['decision'],'RELEASE_READY')
 
     def test_bulk_does_not_waive_s2_disposition(self):
         r=bulk_fixture();r['defects']=[{'id':'D1','severity':'S2','closed':False,'closure_review_receipt':None,'disposition':dict.fromkeys(['accepted_by','risk_reason','owner','deadline','completion_test'])}]

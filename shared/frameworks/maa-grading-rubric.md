@@ -41,6 +41,22 @@ Where the spec is silent, this rubric governs.
 
 ## Grades
 
+Before awarding A-, A or A+, apply the current
+[global audit quality gate](../../standards/audit-quality-gate.md) and
+[execution contract](../../docs/audit-quality/enforcement.md). Genuine relevant
+source-bound photos, verified real video, its original accurate thumbnail/poster,
+curated greatest hits and useful evidence-linked next steps are mandatory. Test
+source clicks and print URLs/QRs and recipient access; bind independent semantic
+review to final bytes/pages and exact source captures. Diagrams/audio supplement
+this package. Missing/unverified components mean A-INELIGIBLE /
+REVISION_REQUIRED with the exact gap; no N/A or narrower-scope waiver.
+
+The precedence above still governs client format and metric definitions. It
+cannot waive this A-family report-quality prerequisite or alter specialist
+numerical exam scores, UAQG weights/85 threshold, privacy, authority, full-package
+or calibration gates. Pure machine screening stays SCREENING without A/full-report
+claims. This grade prerequisite never lowers the subject's reputation score.
+
 | Grade | Meaning |
 |---|---|
 | **A** | Sendable to a sophisticated client with no edits. Exemplary across the board. Exemplar candidate. |

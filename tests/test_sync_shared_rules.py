@@ -399,12 +399,16 @@ class StandardV2StatesTests(unittest.TestCase):
         }
         self.standard("always-verify", ["agent-behaviour"], "check the artifact")
         self.standard("no-black-buttons", ["published-html"], "never black")
+        resource = sources['plain'].parent / 'references' / 'source.md'
+        resource.parent.mkdir()
+        resource.write_text('Evidence resource preserved.\n')
         snapshot = {p: p.read_text(encoding="utf-8") for p in sources.values()}
         agents_before = (self.root / "AGENTS.md").read_text(encoding="utf-8")
         target = self.root / "export"
 
         written = self.mod.export_tree(target)
 
+        self.assertEqual((target / 'skills/plain/references/source.md').read_text(), 'Evidence resource preserved.\n')
         self.assertEqual(len(written), 1 + len(sources))  # AGENTS.md + skills
         exported = {
             name: (target / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
@@ -442,6 +446,33 @@ class StandardV2StatesTests(unittest.TestCase):
         self.assertEqual(
             (target / "keep.txt").read_text(encoding="utf-8"), "someone else's file\n"
         )
+
+
+class NativeMarketplaceAuditGateTests(unittest.TestCase):
+    def test_every_native_manifest_skill_loads_current_gate(self):
+        import json
+        manifest=json.loads((REPO/'.claude-plugin/marketplace.json').read_text())
+        paths={ref for plugin in manifest['plugins'] for ref in plugin['skills']}
+        self.assertEqual(len(paths),51)
+        for ref in paths:
+            skill=REPO/ref/'SKILL.md';text=skill.read_text()
+            if '<!-- shared-rule:audit-quality-gate:start -->' in text:
+                self.assertIn('A-INELIGIBLE',text,ref)
+                continue
+            for target in ['../../AGENTS.md','../../docs/audit-quality/enforcement.md',
+                           '../../standards/audit-quality-gate.md',
+                           '../personal-brand-audit/references/audit-run-contract.md']:
+                self.assertIn(target,text,ref)
+                self.assertTrue((skill.parent/target).is_file(),(ref,target))
+            self.assertIn('Before doing this skill',text,ref)
+            self.assertIn('cannot waive',text,ref)
+
+    def test_ads_grade_frontdoor_cannot_bypass_gate(self):
+        rubric=(REPO/'shared/frameworks/maa-grading-rubric.md').read_text()
+        self.assertIn('Before awarding A-, A or A+',rubric)
+        self.assertIn('no N/A or narrower-scope waiver',rubric)
+        reviewer=(REPO/'skills/google-ads-reviewer/SKILL.md').read_text()
+        self.assertIn('| Governing audit acceptance contract | Yes |',reviewer)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Engagement tiers and capability routing
 
-Proposed annex UAQG-TIERS 1.0.0 · 16 October 2026 · part of proposed UAQG 1.1.0.
+Tier contract UAQG-TIERS 2.0.0 · 18 November 2026 · part of proposed UAQG 2.0.0.
 Proposed operational profile: publication does not establish calibration, installed
 adoption or an accepted client audit.
 
@@ -45,11 +45,11 @@ product name. [Brand Authority v1.0](../../skills/personal-brand-audit/reference
 [specialist acceptance tests](../../skills/personal-brand-audit/references/acceptance-tests.md)
 and the [20-page blueprint](../../skills/personal-brand-audit/references/20-page-pdf-blueprint.md)
 are the available public contracts at baseline commit
-`dcc098bf7d8aa96ff627e4998bed6e406db891d8`. The live method describes Brand
+`dcc098bf7d8aa96ff627e4998bed6e406db891d8`. The historical live method described Brand
 Authority v1.1 while this historical rubric file is v1.0. Pin what was actually
-used; do not relabel old work or compare cross-version scores as a trend. The [shared run contract pinned by the live method](https://github.com/dennisyu/local-service-spotlight-skills/blob/a9e7d6690c6cf0653d3b8e39884175a3a1e99819/skills/personal-brand-audit/references/audit-run-contract.md)
+used; do not relabel old work or compare cross-version scores as a trend. The historical [shared run contract pinned by the live method](https://github.com/dennisyu/local-service-spotlight-skills/blob/a9e7d6690c6cf0653d3b8e39884175a3a1e99819/skills/personal-brand-audit/references/audit-run-contract.md)
 is AUDIT-METHOD-2026.10.02 at commit `a9e7d6690c6cf0653d3b8e39884175a3a1e99819`.
-That exact pinned file was read for this release; it is not present in the
+That exact pinned file was read for the 1.1 release; it is not present in the
 UAQG1.0.0 baseline main tree. Keep its historical revision explicit rather than
 claiming it is a new specialist scoring version.
 
@@ -167,3 +167,51 @@ not quality targets. Test intended destinations, inspectability and section navi
 Dennis's roughly three-minute on-stage account is reported demo timing; measured
 end-to-end production duration is UNKNOWN. Public teaching may use these bounded
 lessons; the supplied client benchmark and private receipts are not redistributed.
+
+## Required real-media package for every human-facing audit
+
+Dennis Yu, 18 November 2026: “Real pictures, videos, thumbnails, greatest hits,
+and useful next steps should be required to earn an A.” This applies to every
+agent and every human-facing audit: personal brand, SEO, GEO, security,
+subscriptions, weekly MAA, ads, profiles and operations, regardless of price.
+
+An A, A+ or A- requires genuine relevant source-bound photographs; verified real
+video with its original accurate thumbnail/poster and exact usable watch link
+(or a tested QR to that exact source in print); curated greatest hits stating
+source, date, buyer relevance, intended reader and next use; and useful
+source-linked next actions with owner/function, concrete first step, timeframe,
+dependencies, authority, destination, done test and measurement when applicable.
+Audio can add proof but cannot replace required video. Diagrams, screenshots,
+charts and process maps add explanation; they cannot replace this package.
+Stock/generated imagery cannot serve as observed proof. Counts cannot prove truth.
+
+Independently inspect the final artifact, each included source and its relevance,
+rights, identity, crop, accurate video/thumbnail pairing, greatest-hit selection
+and action usefulness. Bind the review to exact final hash, physical page/section,
+source evidence/capture and media IDs. Metadata discovery is not recording review;
+record actual frames/transcript or muted recording inspection and never claim to
+have heard/watched lessons from metadata alone. Test click/QR destinations and
+intended-recipient access. A homepage, broken link or inaccessible private player
+is insufficient. Historic media may be useful when clearly dated and relevant;
+a stale capture/review or unrelated asset cannot earn current acceptance.
+
+If any component cannot be verified, disclose the exact gap, required revision
+and next verification; mark report quality A-INELIGIBLE / REVISION_REQUIRED.
+There is no missing-media, N/A, “where useful”, or “only on request” A waiver.
+Do not fabricate assets or lower the subject's reputation/SEO/security score
+because the report lacks media. Keep specialist exams and numerical report
+weights 25/25/20/15/10/5, threshold 85, calibration, privacy, authority and full
+package gates intact. Pure machine/bulk outputs may stay SCREENING, with no A
+or full-report claim. Historical receipts remain historical; legacy schemas
+cannot accept new production reports. Synthetic tests are exercises, never real
+runtime adoption or client proof. Source publication is not fleet activation.
+
+The November 10 article publication fallback remains an article rule; it does
+not waive this stricter audit A gate. Run the versioned typed contract and bundle
+checks, then independent semantic review; a consistency PASS is not a truth certificate.
+
+UAQG 2.0.0 is a breaking receipt contract: use UAQG-TIER-RECEIPT-2.0.0. Retain previous records without retroactive acceptance.
+
+Video curation may use verified video identity, original poster and an explicitly attributed publisher description without pretending the full recording was watched. Claims of a lesson, quote or observed behavior require inspection of the corresponding recording content. Record this distinction in claim_basis and content_review_method.
+
+Current shared execution contract: AUDIT-METHOD-2026.11.18 in skills/personal-brand-audit/references/audit-run-contract.md. This changes report delivery requirements, never specialist exam scoring.
