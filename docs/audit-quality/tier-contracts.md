@@ -1,6 +1,6 @@
 # Engagement tiers and capability routing
 
-Proposed annex UAQG-TIERS 1.0.0 · 16 October 2026 · part of proposed UAQG 2.0.0.
+Tier contract UAQG-TIERS 2.0.0 · 18 November 2026 · part of proposed UAQG 2.0.0.
 Proposed operational profile: publication does not establish calibration, installed
 adoption or an accepted client audit.
 

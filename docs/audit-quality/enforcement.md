@@ -1,6 +1,6 @@
 # Every agent uses the same audit acceptance process
 
-Execution contract 1.0.0 · 17 October 2026. Required for new audit work governed
+Execution contract 2.0.0 · 18 November 2026. Required for new audit work governed
 by this skill pack under Dennis's instruction to carry audit quality through
 across agents. This adopts the checking process, not an uncalibrated numeric
 score, a specialist exam change, client consent or a new production privilege.
