@@ -2,10 +2,10 @@
   "type": "object",
   "properties": {
     "schema_version": {
-      "const": "UAQG-TIER-RECEIPT-1.0.0"
+      "const": "UAQG-TIER-RECEIPT-2.0.0"
     },
     "standard": {
-      "const": "UAQG-1.1.0"
+      "const": "UAQG-2.0.0"
     },
     "synthetic": {
       "type": "boolean"
@@ -780,6 +780,208 @@
         "additionalProperties": false
       },
       "minItems": 1
+    },
+    "media_package": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_evidence_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_date": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "identity_and_relevance": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rights_evidence_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "content_review_method": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "content_review_notes": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "link_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "review_evidence_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "enum": [
+                    "AUTHENTIC_PHOTO",
+                    "REAL_VIDEO",
+                    "ORIGINAL_THUMBNAIL"
+                  ]
+                },
+                "page": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "video_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                },
+                "claim_basis": {
+                  "enum": [
+                    "CONTENT_DERIVED",
+                    "PUBLISHER_DESCRIPTION_ATTRIBUTED"
+                  ]
+                },
+                "presentation_locator": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "navigation_test": {
+                  "enum": [
+                    "CLICK_TESTED",
+                    "CLICK_AND_QR_DECODED",
+                    "CLICK_AND_PRINT_URL_READBACK"
+                  ]
+                },
+                "tested_target": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_capture_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "print_locator": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id",
+                "source_evidence_id",
+                "source_date",
+                "identity_and_relevance",
+                "rights_evidence_id",
+                "content_review_method",
+                "content_review_notes",
+                "link_id",
+                "review_evidence_id",
+                "kind",
+                "page",
+                "video_id",
+                "claim_basis",
+                "presentation_locator",
+                "navigation_test",
+                "tested_target",
+                "source_capture_sha256",
+                "print_locator"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "greatest_hits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "asset_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_evidence_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_date": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "why_relevant": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intended_reader": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "next_use": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "action_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "review_evidence_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id",
+                "asset_id",
+                "source_evidence_id",
+                "source_date",
+                "why_relevant",
+                "intended_reader",
+                "next_use",
+                "action_id",
+                "review_evidence_id"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "review_evidence_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "artifact_id",
+          "artifact_sha256",
+          "assets",
+          "greatest_hits",
+          "review_evidence_id"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
     }
   },
   "required": [
@@ -815,7 +1017,8 @@
     "timing",
     "release",
     "identity",
-    "closure_receipts"
+    "closure_receipts",
+    "media_package"
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -855,7 +1058,8 @@
             "RECIPIENT_ACCESS",
             "MEDIA_CONTENT",
             "MECHANICAL_VALIDATION",
-            "EXAM_VALIDATION"
+            "EXAM_VALIDATION",
+            "MEDIA_PACKAGE_REVIEW"
           ]
         },
         "purpose": {
@@ -885,7 +1089,8 @@
             "recipient_access",
             "media_inspected",
             "screening",
-            "specialist_exam"
+            "specialist_exam",
+            "media_package"
           ]
         },
         "locator": {
@@ -1312,6 +1517,12 @@
             "$ref": "#/$defs/visual"
           },
           "minItems": 0
+        },
+        "role": {
+          "enum": [
+            "HUMAN_REPORT",
+            "MACHINE_COMPANION"
+          ]
         }
       },
       "required": [
@@ -1321,7 +1532,8 @@
         "sha256",
         "required",
         "page_count",
-        "visual_manifest"
+        "visual_manifest",
+        "role"
       ],
       "additionalProperties": false
     },

@@ -1,6 +1,6 @@
 {
-  "schema_version": "UAQG-TIER-RECEIPT-1.0.0",
-  "standard": "UAQG-1.1.0",
+  "schema_version": "UAQG-TIER-RECEIPT-2.0.0",
+  "standard": "UAQG-2.0.0",
   "synthetic": true,
   "run_id": "SYNTHETIC-TIER-01",
   "author_id": "synthetic-producer",
@@ -133,7 +133,8 @@
           "caption": "Synthetic proof to offer map",
           "render_receipt_id": "E-usability"
         }
-      ]
+      ],
+      "role": "HUMAN_REPORT"
     }
   ],
   "evidence": [
@@ -419,6 +420,308 @@
       "scope": "Synthetic receipt exercise only",
       "source_date": "2026-10-16",
       "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-source-photo",
+      "kind": "SOURCE",
+      "purpose": "claim",
+      "locator": "synthetic-fixture:photo",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-photo",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-review-photo",
+      "kind": "MEDIA_PACKAGE_REVIEW",
+      "purpose": "media_package",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [
+        1
+      ],
+      "scope": "photo#7507d3eabdf1eb7173c8da408de0bd4970b8e8dc7e71909880e2afbdcba49858",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-reachable-photo",
+      "kind": "LINK_REACHABILITY",
+      "purpose": "reachable",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-photo",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-expected_content-photo",
+      "kind": "LINK_CONTENT",
+      "purpose": "expected_content",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-photo",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-recipient_access-photo",
+      "kind": "RECIPIENT_ACCESS",
+      "purpose": "recipient_access",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-photo",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-media_inspected-photo",
+      "kind": "MEDIA_CONTENT",
+      "purpose": "media_inspected",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-photo",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-source-video",
+      "kind": "SOURCE",
+      "purpose": "claim",
+      "locator": "synthetic-fixture:video",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-video",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-review-video",
+      "kind": "MEDIA_PACKAGE_REVIEW",
+      "purpose": "media_package",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [
+        1
+      ],
+      "scope": "video#339b913237fc1f55d746adaaebbc91eca75ae74933555701902d839b299eb4e1",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-reachable-video",
+      "kind": "LINK_REACHABILITY",
+      "purpose": "reachable",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-video",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-expected_content-video",
+      "kind": "LINK_CONTENT",
+      "purpose": "expected_content",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-video",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-recipient_access-video",
+      "kind": "RECIPIENT_ACCESS",
+      "purpose": "recipient_access",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-video",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-media_inspected-video",
+      "kind": "MEDIA_CONTENT",
+      "purpose": "media_inspected",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-video",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-source-thumbnail",
+      "kind": "SOURCE",
+      "purpose": "claim",
+      "locator": "synthetic-fixture:thumbnail",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": null,
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-thumbnail",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-review-thumbnail",
+      "kind": "MEDIA_PACKAGE_REVIEW",
+      "purpose": "media_package",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [
+        1
+      ],
+      "scope": "thumbnail#e5a77000445d994dd2e2b11a245f3b9fdba0a1ff54427b51bc68929095fa8973",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-reachable-thumbnail",
+      "kind": "LINK_REACHABILITY",
+      "purpose": "reachable",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-thumbnail",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-expected_content-thumbnail",
+      "kind": "LINK_CONTENT",
+      "purpose": "expected_content",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-thumbnail",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-recipient_access-thumbnail",
+      "kind": "RECIPIENT_ACCESS",
+      "purpose": "recipient_access",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-thumbnail",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-media_inspected-thumbnail",
+      "kind": "MEDIA_CONTENT",
+      "purpose": "media_inspected",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": null,
+      "covered_pages": [],
+      "scope": "https://example.invalid/synthetic-thumbnail",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z",
+      "recipient_ref": "synthetic-reader"
+    },
+    {
+      "id": "MEDIA-package-review",
+      "kind": "MEDIA_PACKAGE_REVIEW",
+      "purpose": "media_package",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [
+        1
+      ],
+      "scope": "report#949449bd0be7a3caf6bac08ef354cedf00b5f98ae6ff5a67715d71ce7139c55c",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
+    },
+    {
+      "id": "MEDIA-hit-review",
+      "kind": "MEDIA_PACKAGE_REVIEW",
+      "purpose": "media_package",
+      "locator": "synthetic-fixture:S1",
+      "observed_at": "2026-10-16T00:00:00Z",
+      "inspection": "CONTENT_INSPECTED",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reviewer_id": "synthetic-reviewer",
+      "covered_pages": [
+        1
+      ],
+      "scope": "hit1#bca2aca1014c81a52337f6afe3bc12499e4baa49453c4009c83707fe24d748c2",
+      "source_date": "2026-10-16",
+      "retrieved_at": "2026-10-16T00:00:00Z"
     }
   ],
   "claim_scope": "FINDINGS",
@@ -451,7 +754,8 @@
         "C1"
       ],
       "evidence_ids": [
-        "S1"
+        "S1",
+        "MEDIA-source-video"
       ],
       "owner_function": "content",
       "owner_state": "PROPOSED",
@@ -608,7 +912,113 @@
       "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     }
   ],
-  "links": [],
+  "links": [
+    {
+      "id": "MEDIA-link-photo",
+      "url": "https://example.invalid/synthetic-photo",
+      "material": true,
+      "is_media": false,
+      "recipient_ref": "synthetic-reader",
+      "reachable": {
+        "status": "PASS",
+        "method": "HTTP_RESPONSE",
+        "evidence_id": "MEDIA-reachable-photo",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "expected_content": {
+        "status": "PASS",
+        "method": "HTML_CONTENT",
+        "evidence_id": "MEDIA-expected_content-photo",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "recipient_access": {
+        "status": "PASS",
+        "method": "AUTHORIZED_RECIPIENT_READ",
+        "evidence_id": "MEDIA-recipient_access-photo",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "media_inspected": {
+        "status": "PASS",
+        "method": "VIDEO_AT_CITED_LOCATION",
+        "evidence_id": "MEDIA-media_inspected-photo",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      }
+    },
+    {
+      "id": "MEDIA-link-video",
+      "url": "https://example.invalid/synthetic-video",
+      "material": true,
+      "is_media": true,
+      "recipient_ref": "synthetic-reader",
+      "reachable": {
+        "status": "PASS",
+        "method": "HTTP_RESPONSE",
+        "evidence_id": "MEDIA-reachable-video",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "expected_content": {
+        "status": "PASS",
+        "method": "HTML_CONTENT",
+        "evidence_id": "MEDIA-expected_content-video",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "recipient_access": {
+        "status": "PASS",
+        "method": "AUTHORIZED_RECIPIENT_READ",
+        "evidence_id": "MEDIA-recipient_access-video",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "media_inspected": {
+        "status": "PASS",
+        "method": "VIDEO_AT_CITED_LOCATION",
+        "evidence_id": "MEDIA-media_inspected-video",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      }
+    },
+    {
+      "id": "MEDIA-link-thumbnail",
+      "url": "https://example.invalid/synthetic-thumbnail",
+      "material": true,
+      "is_media": false,
+      "recipient_ref": "synthetic-reader",
+      "reachable": {
+        "status": "PASS",
+        "method": "HTTP_RESPONSE",
+        "evidence_id": "MEDIA-reachable-thumbnail",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "expected_content": {
+        "status": "PASS",
+        "method": "HTML_CONTENT",
+        "evidence_id": "MEDIA-expected_content-thumbnail",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "recipient_access": {
+        "status": "PASS",
+        "method": "AUTHORIZED_RECIPIENT_READ",
+        "evidence_id": "MEDIA-recipient_access-thumbnail",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      },
+      "media_inspected": {
+        "status": "PASS",
+        "method": "VIDEO_AT_CITED_LOCATION",
+        "evidence_id": "MEDIA-media_inspected-thumbnail",
+        "observed_at": "2026-11-18T00:00:00Z",
+        "reason": null
+      }
+    }
+  ],
   "defects": [],
   "authority": {
     "verified": true,
@@ -736,5 +1146,87 @@
     "observed_harm": false,
     "readback": []
   },
-  "closure_receipts": []
+  "closure_receipts": [],
+  "media_package": [
+    {
+      "artifact_id": "report",
+      "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "assets": [
+        {
+          "id": "photo",
+          "kind": "AUTHENTIC_PHOTO",
+          "source_evidence_id": "MEDIA-source-photo",
+          "source_date": "2026-10-16",
+          "identity_and_relevance": "Synthetic identity and buyer relevance exercise",
+          "rights_evidence_id": "MEDIA-source-photo",
+          "content_review_method": "IMAGE_INSPECTED",
+          "content_review_notes": "Synthetic content inspection declaration, no real playback",
+          "link_id": "MEDIA-link-photo",
+          "review_evidence_id": "MEDIA-review-photo",
+          "page": 1,
+          "video_id": null,
+          "claim_basis": "CONTENT_DERIVED",
+          "presentation_locator": "Page 1 synthetic source card",
+          "navigation_test": "CLICK_AND_PRINT_URL_READBACK",
+          "tested_target": "https://example.invalid/synthetic-photo",
+          "source_capture_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "print_locator": "Synthetic printed source URL beside media card"
+        },
+        {
+          "id": "video",
+          "kind": "REAL_VIDEO",
+          "source_evidence_id": "MEDIA-source-video",
+          "source_date": "2026-10-16",
+          "identity_and_relevance": "Synthetic identity and buyer relevance exercise",
+          "rights_evidence_id": "MEDIA-source-video",
+          "content_review_method": "FRAMES_AND_TRANSCRIPT",
+          "content_review_notes": "Synthetic content inspection declaration, no real playback",
+          "link_id": "MEDIA-link-video",
+          "review_evidence_id": "MEDIA-review-video",
+          "page": 1,
+          "video_id": null,
+          "claim_basis": "CONTENT_DERIVED",
+          "presentation_locator": "Page 1 synthetic source card",
+          "navigation_test": "CLICK_AND_PRINT_URL_READBACK",
+          "tested_target": "https://example.invalid/synthetic-video",
+          "source_capture_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "print_locator": "Synthetic printed source URL beside media card"
+        },
+        {
+          "id": "thumbnail",
+          "kind": "ORIGINAL_THUMBNAIL",
+          "source_evidence_id": "MEDIA-source-thumbnail",
+          "source_date": "2026-10-16",
+          "identity_and_relevance": "Synthetic identity and buyer relevance exercise",
+          "rights_evidence_id": "MEDIA-source-thumbnail",
+          "content_review_method": "IMAGE_INSPECTED",
+          "content_review_notes": "Synthetic content inspection declaration, no real playback",
+          "link_id": "MEDIA-link-thumbnail",
+          "review_evidence_id": "MEDIA-review-thumbnail",
+          "page": 1,
+          "video_id": "video",
+          "claim_basis": "CONTENT_DERIVED",
+          "presentation_locator": "Page 1 synthetic source card",
+          "navigation_test": "CLICK_AND_PRINT_URL_READBACK",
+          "tested_target": "https://example.invalid/synthetic-thumbnail",
+          "source_capture_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "print_locator": "Synthetic printed source URL beside media card"
+        }
+      ],
+      "greatest_hits": [
+        {
+          "id": "hit1",
+          "asset_id": "video",
+          "source_evidence_id": "MEDIA-source-video",
+          "source_date": "2026-10-16",
+          "why_relevant": "Synthetic buyer proof",
+          "intended_reader": "Synthetic reader",
+          "next_use": "Use source in the action destination after authorized review",
+          "action_id": "A1",
+          "review_evidence_id": "MEDIA-hit-review"
+        }
+      ],
+      "review_evidence_id": "MEDIA-package-review"
+    }
+  ]
 }

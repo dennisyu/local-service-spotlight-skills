@@ -1,6 +1,6 @@
 {
-  "schema_version": "UAQG-TIER-RECEIPT-1.0.0",
-  "standard": "UAQG-1.1.0",
+  "schema_version": "UAQG-TIER-RECEIPT-2.0.0",
+  "standard": "UAQG-2.0.0",
   "synthetic": false,
   "run_id": "REPLACE",
   "author_id": "REPLACE",
@@ -133,7 +133,8 @@
           "caption": "Synthetic proof to offer map",
           "render_receipt_id": "E-usability"
         }
-      ]
+      ],
+      "role": "HUMAN_REPORT"
     }
   ],
   "evidence": [
@@ -676,5 +677,6 @@
     "observed_harm": false,
     "readback": []
   },
-  "closure_receipts": []
+  "closure_receipts": [],
+  "media_package": []
 }

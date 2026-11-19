@@ -33,6 +33,10 @@ class PackToPluginTests(unittest.TestCase):
                 self.assertIn("commands/cook.md", names)
                 skill_text = archive.read("skills/content-helper/SKILL.md").decode()
                 self.assertIn('name: "content-helper"', skill_text)
+                self.assertIn('shared-rule:audit-quality-gate:start', skill_text)
+                self.assertIn('shared-rule:audit-method-and-correction-propagation:start', skill_text)
+                self.assertIn('docs/audit-quality/media_package.py', names)
+                self.assertIn('docs/audit-quality/tier-receipt.schema.json', names)
 
     def test_rejects_zip_path_traversal(self):
         with tempfile.TemporaryDirectory() as temp_name:
