@@ -271,6 +271,27 @@ See [GitHub's outside-collaborator guidance](https://docs.github.com/en/organiza
    same checks for each newly connected person or agent instead of declaring all
    agents current from one successful run.
 
+## How many jobs can an agent run in parallel?
+
+**Source check: November 19, 2026.** Count the right thing: running jobs at the
+same time, subagents within one job, and enabled schedules are different limits.
+Plan, rollout, interface and usage limits can affect the capacity you actually see.
+
+| Surface | What the vendor documents | What to verify locally |
+|---|---|---|
+| Gemini Apps, Tasks | [Google documents up to 15 simultaneously running tasks](https://support.google.com/gemini/answer/17094507). Scheduled runs don't start while all 15 are occupied. [Enabled task schedules](https://support.google.com/gemini/answer/17094710) are a separate limit: 50 on AI Pro/Ultra, 10 on AI Plus/free. [Chat scheduled actions](https://support.google.com/gemini/answer/16316416) are a separate feature. | Check whether your account has Tasks, and verify actual overlap in your task status view. The published cap is not an account test. |
+| Cursor 2.0 editor release | [Cursor's release notes](https://cursor.com/changelog/2-0) advertised up to eight agents for one prompt. That is a versioned editor feature, not a capacity claim for current cloud runs. | Check your current editor version, execution mode and pricing before scaling. |
+| Meta Muse Spark | [Meta describes parallel subagents](https://about.fb.com/news/2026/04/introducing-muse-spark-meta-superintelligence-labs/). This announcement is not a numeric cap for a Muse account. | Record observed overlap, or mark the number unknown. |
+
+**Learn → Do → Teach; Content → Checklist → Software.** Learn by checking the
+exact product and vendor docs. Do two harmless, independent jobs with separate
+outputs; record overlapping start/end times and verify both outputs. A queued job
+or enabled schedule does not prove overlap. Teach the smallest reliable test in
+the [existing guide](https://dennisyu.com/how-agents-run-the-company/the-bench/):
+what worked, the constraints and one failure case. Turn it into a checklist and
+then a repeatable check where supported. Keep actual account receipts and private
+inputs in your team's own record; publish dated findings, not private evidence.
+
 ## Problems and recovery
 
 | Observation | Next action |
