@@ -2298,6 +2298,24 @@ digital clicks and a usable printed URL or decoded QR to the exact source.
   run, text or a file to copy, paste, upload, download, forward or screenshot, or a draft to
   carry to another agent. If the next sentence is for another agent, post it to that agent
   yourself. A decision recorded once is authority for that exact action; cite it and act.
+- **Only agents ask a person.** Owner's words: "only agents can ask a human, but of
+  course, solve the root cause level so we can equip agents to be capable and not have to
+  keep asking humans." Marker `ONLY-AGENTS-ASK-2026-11-16`. The rest of this bullet and the
+  next one are how agents carry out his words, a reading offered for his correction. When
+  someone's answer is truly needed, an agent asks that person itself, where they already
+  are. An agent never hands its ask to a person to carry: it never asks the founder to ask
+  a teammate, a project lead to ask a client, or a teammate to ask the founder. If no
+  agent can reach that person yet, that is the first gap to fix.
+- **Every ask fixes its cause.** Name the gap that stopped an agent: *access* (no sign-in,
+  key or channel it could use), *gate* (a product's own safety or approval step), *fact*
+  (only a person knew it), *authority* (a decision reserved for a person), *capability* (no
+  tool or skill could do it) or *duck* (it should not have been asked). Then name the fix
+  that equips the next agent: store the access where agents can use it, record the decision
+  or a standing envelope, write the fact where agents read, build the tool or skill, or have
+  the gate's owner change its setting. Never hand a gated step to another session. Some
+  asks stay with a person by design (money above an envelope, a new rule, a legal call):
+  say so and why. A fix cited by asks on two different days has not landed; the weekly
+  review names it until it does.
 - **The real gates do not change.** Money, credentials and access grants, deletes, anything
   irreversible, sends to outside people beyond the team's routine lane, and the other
   consequential categories in `agents-draft-humans-send` still wait for their yes. A
@@ -2306,7 +2324,7 @@ digital clicks and a usable printed URL or decoded QR to the exact source.
   platform gates.
 - **Count it, or it will creep back.** Log every ask that reaches the founder (the
   "Needs you:" line of a report, plus one log line for any ask sent by email, chat or text),
-  mark each as a judgment call or a duck, and review the count weekly in the team's
+  mark each as a judgment call or a duck with its gap and fix, and review the count weekly in the team's
   Metrics, Analysis, Action review. Target: zero ducks, and total asks down at least 20%
   week over week until they settle at a handful. For each duck, the agent that sent it fixes
   the instruction that produced it the same day.
@@ -2365,9 +2383,12 @@ Marker: `HUMAN-REVIEW-WHEN-IT-MATTERS-2026-11-04`.
   7. *A brand-new rule nobody decided:* it adds, removes or changes the meaning of a
      standing rule. Carrying out a decision already recorded, in the person's own words
      and within its scope, is not new; adding your own detail to it is.
-- **Ask the person who owns that decision, once, where they already are:** the chat they
-  are working in or the thread already open for the work. Name which case it hits, give
-  your recommendation and the link, and keep working on everything else. Cases 1 to 6 wait
+- **An agent asks the person who owns that decision, once, where they already are:** the
+  chat they are working in or the thread already open for the work. An agent does not hand
+  its ask to a person to carry (see `agents-own-it`). Name which case it
+  hits, give your recommendation and the link, and keep working on everything else. Log the
+  ask with the gap that stopped the agent and the fix that closes it, so the same review ask
+  does not come back. Cases 1 to 6 wait
   for an explicit yes; silence is not a yes (see `an-unanswered-ask-never-stops-the-work`).
   Case 7 may take the shape "doing X on a set date unless you say otherwise" (see
   `agents-own-it`), except a recorded decision that goes beyond the person's own words,
