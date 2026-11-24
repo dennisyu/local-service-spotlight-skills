@@ -154,6 +154,19 @@ class AuditContractTest(unittest.TestCase):
                              receipt["retired_quotes_allowed"])
             self.assertIn("reviewer", receipt["verification_scope"])
 
+    def test_retired_claim_split_across_lines_is_still_found(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); body = "He said he won Funeral Home\nof the year and had an eight-\nfigure exit. Public record:\nfinalist, 2023."
+            (root/"audit.txt").write_text(body)
+            manifest = {"expected_artifacts":["audit.txt"], "shared_facts":{"C9":{"revision":"r3","dependents":["audit.txt"],
+                        "required_text":"Public record: finalist, 2023.","retired_text":["funeral home of the year","eight-figure exit"]}},
+                        "artifacts":[{"path":"audit.txt","sha256":hashlib.sha256(body.encode()).hexdigest(),"shared_fact_revisions":{"C9":"r3"}}]}
+            with self.assertRaisesRegex(AuditContractError,"retired claim C9 survived"): validate_batch(manifest,root)
+            manifest["artifacts"][0]["retired_quote_allowance"] = {"C9":{"max_count":1,"reason":"quoted once as the line being retired"}}
+            with self.assertRaisesRegex(AuditContractError,"quoted 2 times"): validate_batch(manifest,root)
+            manifest["artifacts"][0]["retired_quote_allowance"]["C9"]["max_count"] = 2
+            self.assertEqual(2, validate_batch(manifest,root)["retired_quotes_allowed"][0]["count"])
+
     def test_retired_quote_allowance_is_bounded_and_reasoned(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d); body = "top award winner; again: top award winner. Public record: finalist, 2023."
