@@ -121,6 +121,13 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   distinctions remain understandable without color alone.
 - [ ] No placeholder copy, generic stock proof, invented portrait, invented quote, or fabricated
   chart value appears.
+- [ ] Before any image counts as a real photograph of the subject or their work, its embedded
+  provenance was read with `scripts/image_provenance.py`. A `GENERATED_LABELLED` result (a C2PA
+  generator manifest or an IPTC `trainedAlgorithmicMedia` / `compositeWithTrainedAlgorithmicMedia`
+  source type) means the image may appear only as evidence of a problem, never as proof of what a
+  person looks like or did. `NO_LABEL_FOUND` is not proof of a real photo; the source record,
+  permission and a human look still decide.
+
 - [ ] The file name, title, subject, research cutoff, version, and confidentiality label agree.
 
 ## 5. Links, QR, and installability
@@ -141,6 +148,8 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   `https://github.com/dennisyu/local-service-spotlight-skills`, the
   `lss-everything` bundle, and the same released version and master-skill count as
   `.claude-plugin/marketplace.json`. A reachable but stale guide fails.
+- [ ] `scripts/check_install_guide.py` returns `MATCHES` at delivery time; a `STALE` result is
+  recorded in the receipt with the guide's and the manifest's versions.
 - [ ] The agent diagram names the eight routed skills exactly and describes input, output,
   human gate, and handoff for each.
 - [ ] The receipt says only AVAILABLE, INSTALLED, ENABLED, TESTED, SCHEDULED, or OBSERVED when
