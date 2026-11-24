@@ -2205,10 +2205,14 @@ Marker: `HUMAN-REVIEW-WHEN-IT-MATTERS-2026-11-04`.
   self-sourced claim may come back only as the subject's own attributed statement, after their
   written confirmation.
 - **Why:** an audit in November 2026 found an exit size, an award and a "main stage" credential
-  that no public record supported and the subject never said on camera. The earliest record was
-  an agent-written site update. Four of our own articles had then repeated the lines, one of them
-  beside the sentence that every figure was public and verifiable. Retiring them took two
-  publication runs across three domains, plus an image file and its sitemap entry.
+  stated as plain fact on a client's site, and four of our own articles repeated them, one beside
+  the sentence that every figure was public and verifiable. No public record supported them. We
+  first traced them to an agent-written site update and believed the subject had never said
+  them. A later check of an older public video found him saying two of them himself, unverified;
+  the award appeared nowhere. Both halves are the lesson: our copy turned an unverified
+  self-description into fact, and the trace was not finished until every recording and draft had
+  been searched. Retiring the lines took two publication runs across three domains, plus an image
+  file and its sitemap entry.
 
 No honest regex can trace where a claim first appeared or decide whether a quote is framed as
 retired. Enforce this rule in `evidence-verification`, in the audit acceptance tests and in the
