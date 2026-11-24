@@ -74,6 +74,11 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   checks current hashes and fact revisions, rejects retired claims, and binds
   fresh PDF extraction to the exact final PDF. Render/source review is separate.
 
+- [ ] Every retired or self-sourced claim is listed as `retired_text` in the batch
+  shared-fact ledger, and `scripts/audit_report_contract.py --batch` passes on the exact final
+  files. When the report must quote a retired line in order to retire it, the artifact declares
+  a counted `retired_quote_allowance` with a reason, and the reviewer confirms that each quote is
+  framed as retired. The batch receipt lists every allowed quote.
 - [ ] The receipt names the Brand Authority rubric version, and every numeric row cites both
   its evidence IDs and the exact anchor or documented interpolation that produced the score.
 - [ ] All ten Brand Authority rows were checked and the headline equals their arithmetic sum,
@@ -116,6 +121,13 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   distinctions remain understandable without color alone.
 - [ ] No placeholder copy, generic stock proof, invented portrait, invented quote, or fabricated
   chart value appears.
+- [ ] Before any image counts as a real photograph of the subject or their work, its embedded
+  provenance was read with `scripts/image_provenance.py`. A `GENERATED_LABELLED` result (a C2PA
+  generator manifest or an IPTC `trainedAlgorithmicMedia` / `compositeWithTrainedAlgorithmicMedia`
+  source type) means the image may appear only as evidence of a problem, never as proof of what a
+  person looks like or did. `NO_LABEL_FOUND` is not proof of a real photo; the source record,
+  permission and a human look still decide.
+
 - [ ] The file name, title, subject, research cutoff, version, and confidentiality label agree.
 
 ## 5. Links, QR, and installability
@@ -136,6 +148,8 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   `https://github.com/dennisyu/local-service-spotlight-skills`, the
   `lss-everything` bundle, and the same released version and master-skill count as
   `.claude-plugin/marketplace.json`. A reachable but stale guide fails.
+- [ ] `scripts/check_install_guide.py` returns `MATCHES` at delivery time; a `STALE` result is
+  recorded in the receipt with the guide's and the manifest's versions.
 - [ ] The agent diagram names the eight routed skills exactly and describes input, output,
   human gate, and handoff for each.
 - [ ] The receipt says only AVAILABLE, INSTALLED, ENABLED, TESTED, SCHEDULED, or OBSERVED when

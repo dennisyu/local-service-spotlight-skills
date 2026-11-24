@@ -161,6 +161,7 @@ def validate_batch(manifest, root):
     facts = manifest.get("shared_facts", {})
     if not facts:
         raise AuditContractError("batch requires authoritative shared-fact ledger")
+    quoted = []
     for artifact in artifacts:
         path = (root / artifact["path"]).resolve()
         if not path.is_relative_to(root):
@@ -184,9 +185,28 @@ def validate_batch(manifest, root):
             text = data.decode("utf-8")
         else:
             raise AuditContractError("unsupported final artifact kind")
+        allowance = artifact.get("retired_quote_allowance", {})
+        if not isinstance(allowance, dict):
+            raise AuditContractError(f"{artifact['path']}: retired_quote_allowance must be an object")
+        for fact_id in allowance:
+            if fact_id not in facts:
+                raise AuditContractError(f"{artifact['path']}: allowance names unknown fact {fact_id}")
+        folded = text.casefold()
         for fact_id, fact in facts.items():
-            if any(old.casefold() in text.casefold() for old in fact.get("retired_text", [])):
-                raise AuditContractError(f"{artifact['path']}: retired claim {fact_id} survived")
+            # An audit may need to quote a retired claim in order to retire it. That is allowed only
+            # through an explicit, counted, reasoned allowance; a reviewer still confirms the framing.
+            hits = sum(folded.count(old.casefold()) for old in fact.get("retired_text", []) if old)
+            if hits:
+                grant = allowance.get(fact_id)
+                if not grant:
+                    raise AuditContractError(f"{artifact['path']}: retired claim {fact_id} survived")
+                limit, reason = grant.get("max_count"), grant.get("reason")
+                if (isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
+                        or not isinstance(reason, str) or len(reason.strip()) < 20):
+                    raise AuditContractError(f"{artifact['path']}: allowance for {fact_id} needs max_count >= 1 and a reason")
+                if hits > limit:
+                    raise AuditContractError(f"{artifact['path']}: retired claim {fact_id} quoted {hits} times; allowance is {limit}")
+                quoted.append({"artifact": artifact["path"], "fact_id": fact_id, "count": hits, "reason": reason.strip()})
             if artifact["path"] in fact.get("dependents", []):
                 if artifact.get("shared_fact_revisions", {}).get(fact_id) != fact.get("revision"):
                     raise AuditContractError(f"{artifact['path']}: stale shared fact {fact_id}")
@@ -195,8 +215,9 @@ def validate_batch(manifest, root):
     for fact_id, fact in facts.items():
         if not fact.get("revision") or not set(fact.get("dependents", [])).issubset(set(expected)):
             raise AuditContractError(f"{fact_id}: missing revision/dependent artifact")
-    return {"state": "CHECKED", "artifact_count": len(artifacts),
-            "verification_scope": "exact hashes/shared-fact propagation; visual review separate"}
+    return {"state": "CHECKED", "artifact_count": len(artifacts), "retired_quotes_allowed": quoted,
+            "verification_scope": ("exact hashes/shared-fact propagation; allowed retired quotes still need a "
+                                   "reviewer to confirm each is framed as retired; visual review separate")}
 
 
 def main():
