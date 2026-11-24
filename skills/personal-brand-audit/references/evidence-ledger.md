@@ -44,6 +44,12 @@ atomic claim or relationship observation. Do not bury contradictory values in pr
 - **UNKNOWN:** no adequate source or access was available. Record who can answer, what to ask,
   and what action remains blocked. Never assign a numeric zero for UNKNOWN.
 
+A claim whose earliest appearance is our own copy (an agent draft, a client site we wrote, our
+articles, our schema) is **self-sourced**. Record that earliest locator and date. Its
+`evidence_state` stays below `VERIFIED` until an independent record or the subject's dated,
+attributable statement supports it; repeated copies on our own pages count as one source. See
+the standard `our-own-copy-is-never-a-source`.
+
 An `OBSERVED` self-authored bio is not the same as an independently corroborated fact. Source
 class and authority carry that distinction.
 

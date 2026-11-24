@@ -140,6 +140,38 @@ class AuditContractTest(unittest.TestCase):
             manifest["artifacts"][-1]["sha256"] = hashlib.sha256((root/names[-1]).read_bytes()).hexdigest()
             with self.assertRaisesRegex(AuditContractError,"retired claim"): validate_batch(manifest,root)
 
+    def test_retired_claim_may_be_quoted_only_through_a_counted_allowance(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); body = "Unsupported line removed: 'top award winner'. Public record: finalist, 2023."
+            (root/"audit.txt").write_text(body)
+            manifest = {"expected_artifacts":["audit.txt"], "shared_facts":{"C9":{"revision":"r3","dependents":["audit.txt"],
+                        "required_text":"Public record: finalist, 2023.","retired_text":["top award winner"]}},
+                        "artifacts":[{"path":"audit.txt","sha256":hashlib.sha256(body.encode()).hexdigest(),"shared_fact_revisions":{"C9":"r3"}}]}
+            with self.assertRaisesRegex(AuditContractError,"retired claim C9 survived"): validate_batch(manifest,root)
+            manifest["artifacts"][0]["retired_quote_allowance"] = {"C9":{"max_count":1,"reason":"quoted once as the line being retired"}}
+            receipt = validate_batch(manifest,root)
+            self.assertEqual([{"artifact":"audit.txt","fact_id":"C9","count":1,"reason":"quoted once as the line being retired"}],
+                             receipt["retired_quotes_allowed"])
+            self.assertIn("reviewer", receipt["verification_scope"])
+
+    def test_retired_quote_allowance_is_bounded_and_reasoned(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); body = "top award winner; again: top award winner. Public record: finalist, 2023."
+            (root/"audit.txt").write_text(body)
+            base = {"expected_artifacts":["audit.txt"], "shared_facts":{"C9":{"revision":"r3","dependents":["audit.txt"],
+                    "retired_text":["top award winner"]}},
+                    "artifacts":[{"path":"audit.txt","sha256":hashlib.sha256(body.encode()).hexdigest(),"shared_fact_revisions":{"C9":"r3"}}]}
+            for grant, message in [({"max_count":1,"reason":"quoted once as the line being retired"}, "quoted 2 times"),
+                                   ({"max_count":2,"reason":"short"}, "needs max_count"),
+                                   ({"max_count":True,"reason":"quoted as the line being retired"}, "needs max_count"),
+                                   ({"max_count":0,"reason":"quoted as the line being retired"}, "needs max_count")]:
+                m = copy.deepcopy(base); m["artifacts"][0]["retired_quote_allowance"] = {"C9": grant}
+                with self.assertRaisesRegex(AuditContractError, message): validate_batch(m,root)
+            m = copy.deepcopy(base); m["artifacts"][0]["retired_quote_allowance"] = {"C404":{"max_count":1,"reason":"quoted as the line being retired"}}
+            with self.assertRaisesRegex(AuditContractError,"unknown fact"): validate_batch(m,root)
+            m = copy.deepcopy(base); m["artifacts"][0]["retired_quote_allowance"] = ["C9"]
+            with self.assertRaisesRegex(AuditContractError,"must be an object"): validate_batch(m,root)
+
     def test_missing_artifact_or_stale_fact_blocks_batch(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);(root/"report.txt").write_text("new")

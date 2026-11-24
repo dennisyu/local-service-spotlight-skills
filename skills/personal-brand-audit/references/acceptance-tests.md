@@ -74,6 +74,11 @@ delivery package. A check that was not run is **UNTESTED**, not passed.
   checks current hashes and fact revisions, rejects retired claims, and binds
   fresh PDF extraction to the exact final PDF. Render/source review is separate.
 
+- [ ] Every retired or self-sourced claim is listed as `retired_text` in the batch
+  shared-fact ledger, and `scripts/audit_report_contract.py --batch` passes on the exact final
+  files. When the report must quote a retired line in order to retire it, the artifact declares
+  a counted `retired_quote_allowance` with a reason, and the reviewer confirms that each quote is
+  framed as retired. The batch receipt lists every allowed quote.
 - [ ] The receipt names the Brand Authority rubric version, and every numeric row cites both
   its evidence IDs and the exact anchor or documented interpolation that produced the score.
 - [ ] All ten Brand Authority rows were checked and the headline equals their arithmetic sum,
