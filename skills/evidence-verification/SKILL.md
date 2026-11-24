@@ -1654,11 +1654,12 @@ Marker: `HUMAN-REVIEW-WHEN-IT-MATTERS-2026-11-04`.
   stated as plain fact on a client's site, and four of our own articles repeated them, one beside
   the sentence that every figure was public and verifiable. No public record supported them. We
   first traced them to an agent-written site update and believed the subject had never said
-  them. A later check of an older public video found him saying two of them himself, unverified;
-  the award appeared nowhere. Both halves are the lesson: our copy turned an unverified
-  self-description into fact, and the trace was not finished until every recording and draft had
-  been searched. Retiring the lines took two publication runs across three domains, plus an image
-  file and its sitemap entry.
+  them. A later check of an older public video, on our own channel, found him saying all three
+  himself, unverified. That check first reported two, because the award phrase was split across
+  two caption lines. Both halves are the lesson: our copy turned an unverified self-description
+  into fact, and the trace was not finished until every recording and draft had been searched as
+  joined text, not line by line. Retiring the lines took two publication runs across three
+  domains, plus an image file and its sitemap entry.
 
 No honest regex can trace where a claim first appeared or decide whether a quote is framed as
 retired. Enforce this rule in `evidence-verification`, in the audit acceptance tests and in the
