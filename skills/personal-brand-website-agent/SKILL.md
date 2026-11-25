@@ -116,9 +116,9 @@ See `boil-the-ocean.md` for the full operating principles.
 
 *Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
 
-<!-- learning:2026-07-19-backdated-content-contradiction --> **July 19, 2026** (from: michaelkrigsman.com QA run (filed into the loop by skill-pack-propagation 2026-07-19))
+<!-- learning:2026-07-19-backdated-content-contradiction --> **July 19, 2026** (from: a client site's QA run (filed into the loop by skill-pack-propagation 2026-07-19))
 
-Never backdate WordPress posts below the visible byline. On the Krigsman build, rendered byline dates and the WP/schema datePublished diverged on 8 of 16 articles by up to 9 months — a self-contradiction any journalist or Google can see, and an EEAT risk. The honest scheme: set the visible byline to "Episode NNN, recorded {air date}" and set datePublished to the REAL publish date. Air date and publish date are different facts; show both truthfully rather than forcing datePublished to match a backdated byline.
+Never backdate WordPress posts below the visible byline. On one client build, rendered byline dates and the WP/schema datePublished diverged on 8 of 16 articles by up to 9 months — a self-contradiction any journalist or Google can see, and an EEAT risk. The honest scheme: set the visible byline to "Episode NNN, recorded {air date}" and set datePublished to the REAL publish date. Air date and publish date are different facts; show both truthfully rather than forcing datePublished to match a backdated byline.
 
 <!-- learning:2026-07-20-consent-scanner-blanks-inline-apps --> **July 20, 2026** (from: a partner's member dashboards — refiled from a stray root note by skill-pack-propagation on July 21, 2026)
 
