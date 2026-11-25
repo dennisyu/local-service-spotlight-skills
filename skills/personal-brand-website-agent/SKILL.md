@@ -350,7 +350,7 @@ Learned August 2, 2026.
 
 A member's finished site sat unpublished for sixteen days on one missing Application Password. Three escalations went out over four days: a comment on an assigned to-do, a line on the client thread, and an email. Each asked, in good faith, for "an Application Password for `<domain>`."
 
-The reply arrived with a key and a link to where it had first been posted. It was the same key that had been failing since day 12 — minted on the member's *old* install, which is a separate WordPress from the live site she was moved to after a domain move. It returns 401 under every username, and the sender's own status export said `hasAppPass:false` for the new site.
+The reply arrived with a key and a link to where it had first been posted. It was the same key that had been failing since day 12 — minted on the member's *old* install, which is a separate WordPress from the live site the member was moved to after a domain move. It returns 401 under every username, and the sender's own status export said `hasAppPass:false` for the new site.
 
 Nobody dropped anything. The ask named a **domain** and a **credential type**, and the person doing the work reasonably read that as "send the password for that domain" — and one existed. The word that was missing was the verb, and the target.
 
