@@ -1675,11 +1675,10 @@ your own owner. If your team has no shared login yet, setting one up is your own
   Netlify, GitHub, Shopify, GoDaddy, WordPress and so on.
 - **For clients that matter more and where we do more work, also ask for dedicated
   individual logins:** one for each person working the account and one for each AI agent.
-- **Why:** a client's Netlify-hosted site sat unfixed because access depended on one person.
-  Only the client's account owner could invite people. A teammate had arranged Netlify access
-  for access@ in late October 2026, but nobody recorded or tested it. When that teammate was no
-  longer available, nobody could confirm it worked. Shared plus individual logins mean the work
-  never hangs on one teammate.
+- **Why:** a client website fix sat for days because only one shared login could reach the
+  client's hosting account, and that login's access had never been recorded or tested. Shared
+  plus individual logins, each recorded and tested, mean the work never hangs on one login or
+  one person.
 
 The steps below are how agents carry this out, offered for Dennis's correction. Where a step
 cites another rule, that rule already says the same.
