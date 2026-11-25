@@ -142,7 +142,7 @@ When a publish target returns HTTP 500, three cheap probes localize the fault be
 
 And the publishing rule that follows: publish to the healthy hosts, record the unreachable ones, and NEVER bump a "Kept current" date on a surface you could not actually refresh. A pack whose date says today but whose zip is yesterday's is worse than an honestly stale date. Learned July 21, 2026.
 
-<!-- learning:2026-07-28-a-passing-marker-check-can-ship-a-broken-page --> **July 28, 2026** (from: a group website-request intake, first publish of jagodapasko.com, July 28, 2026)
+<!-- learning:2026-07-28-a-passing-marker-check-can-ship-a-broken-page --> **July 28, 2026** (from: a group website-request intake, first publish of a member's site, July 28, 2026)
 
 On **July 28, 2026** the fleet publisher pushed a member's finished site to a new WordPress install and reported a clean pass: 12 of 12 content and brand markers found, Person schema present, WordPress starter content trashed. A screenshot taken thirty seconds later showed a page nobody would call finished — the block theme printed its own `<h1>Home</h1>` above the hero, and `main.is-layout-constrained.has-global-padding` had squeezed a full-bleed design into a 645px column inside a 1717px viewport. Not one marker moved, because markers are strings and none of them touch layout.
 
@@ -154,7 +154,7 @@ Three concrete rules that came out of it:
 2. Fix at the generator, never in the published HTML. The correction belongs in the build script so a re-run cannot regress it, then rebuild and republish.
 3. Diff the client's supplied assets against what actually renders. Eight of her photos were uploaded and only six were placed; the other two surfaced by diffing the media list against the image references across all pages, and both were added. Make that diff part of the build rather than something a person notices later.
 
-<!-- learning:2026-07-28-an-app-password-belongs-to-whoever-minted-it --> **July 28, 2026** (from: jagodapasko.com credential handoff, July 28, 2026)
+<!-- learning:2026-07-28-an-app-password-belongs-to-whoever-minted-it --> **July 28, 2026** (from: a member site's credential handoff, July 28, 2026)
 
 On **July 28, 2026** ops handed over a WordPress Application Password in the same message as a username, and the two did not go together — the key had been minted under `admin`, not under the member address quoted beside it. Authenticating as the named user returned `rest_not_logged_in` and looked exactly like a bad credential. It was a good credential pointed at the wrong name.
 
@@ -165,7 +165,7 @@ Two related rules for fleet WordPress work:
 1. `permalink_structure` cannot be set through the API. It is not in `wp/v2/settings`, and authenticated XML-RPC is blocked at the fleet edge (400 on any credentialed call, while unauthenticated `system.listMethods` returns 200). Pretty permalinks are a wp-admin-only step, so ask for them at provisioning time instead of discovering it after launch — a site left on plain permalinks serves every page as `?page_id=N` and drops a typed `/about/` on the homepage.
 2. Rapid sequential requests trip the fleet WAF into serving a 4,735-byte stub with HTTP 200 on every URL, which reads as a total outage. Space requests a few seconds apart, send a full Chrome User-Agent, and re-fetch once before believing a bad result. *(Superseded: see the July 29, 2026 entry "a 4,735-byte response is a write failure, not a WAF" — the stub was a local write failure, not a WAF. Corrected there, and the superseded claim is named so nobody re-derives it.)*
 
-<!-- learning:2026-07-28-the-credential-may-already-be-in-your-inbox --> **July 28, 2026** (from: jagodapasko.com, July 28, 2026)
+<!-- learning:2026-07-28-the-credential-may-already-be-in-your-inbox --> **July 28, 2026** (from: a member's site, July 28, 2026)
 
 On **July 28, 2026** a run reported a member's site as blocked on a missing WordPress Application Password for the fifth straight day. The member had emailed that exact password **sixteen hours earlier**, replying on the same thread the DNS instructions went out on. The run had checked the ops Basecamp thread and the credentials file, and stopped there. A finished website sat unpublished for a day because nobody read the member's own reply.
 
@@ -235,9 +235,9 @@ So the work split three ways and each page went through exactly one owner: gener
 
 Learned July 29, 2026.
 
-<!-- learning:2026-07-29-audit-the-name-in-every-language-they-live-in --> **July 29, 2026** (from: jagodapasko.com second pass, July 29, 2026)
+<!-- learning:2026-07-29-audit-the-name-in-every-language-they-live-in --> **July 29, 2026** (from: a member site's second pass, July 29, 2026)
 
-On **July 29, 2026** a client's audit from six weeks earlier recorded **2 proof items, 24 authority points, 0 power proof**, and described her third-party footprint as very thin. A single afternoon of searching found national television coverage on two networks, a broadcast documentary segment, three long-form interviews on three independent channels, and a verified fundraiser documenting 210+ evacuations. None of it was hidden. All of it was in **Polish**, and most of it lived on other people's channels rather than her own.
+On **July 29, 2026** a client's audit from six weeks earlier recorded **2 proof items, 24 authority points, 0 power proof**, and described her third-party footprint as very thin. A single afternoon of searching found substantial third-party coverage, including television, a documentary segment and long-form interviews. None of it was hidden. All of it was in **her first language, not English**, and most of it lived on other people's channels rather than her own.
 
 **A proof library built from English-language search of a non-English person is a measurement artefact, not a finding.** So before scoring anyone's authority:
 
@@ -246,11 +246,11 @@ On **July 29, 2026** a client's audit from six weeks earlier recorded **2 proof 
 3. Treat "third-party footprint is thin" as a **hypothesis that must survive a native-language search**, never as a conclusion from an English result set. Say which languages were searched, so the next run can see the gap instead of inheriting it.
 4. Verify every video with oEmbed before publishing it — it returns the exact title, the real channel, and whether the thing is still public. Titles get paraphrased from memory otherwise, and paraphrasing someone else's video title onto a client's press page is how a credibility asset turns into an error.
 
-**Reject search summaries that conflict with primary sources.** One auto-generated summary in this run asserted the client had been "a TV director turned brain-injury recovery mentor." It was a different person with a similar name, and it contradicted a verified twenty-year finance career. A name collision inside a research tool will happily produce fluent, specific, false biography — check every claim against a source that names the person unambiguously before it reaches a published page.
+**Reject search summaries that conflict with primary sources.** One auto-generated summary in this run gave the client a confident career history that belonged to a different person with a similar name, and it contradicted her verified career. A name collision inside a research tool will happily produce fluent, specific, false biography — check every claim against a source that names the person unambiguously before it reaches a published page.
 
 <!-- learning:2026-07-29-a-4735-byte-response-is-a-write-failure-not-a-waf --> **July 29, 2026** (from: a group website-request intake daily run, July 29, 2026)
 
-Check that your tool could WRITE its output before you diagnose the server. On July 28, 2026 a run recorded a gotcha that read: "hammering a fleet site with rapid sequential curl calls trips the WAF into serving a 4,735-byte stub with http 200 for every URL — it looks exactly like the site breaking." On July 29 the same signature appeared again: nine URLs on jagodapasko.com, every one `200 4735`, identical byte count on pages that differ by 8,000 bytes. There is no WAF stub. `curl -o /tmp/pg.html` was writing to a file left behind by an earlier session's sandbox, owned by `nobody:nogroup` and not writable by the current user. curl aborts the transfer when the write fails and still reports `http_code 200` with a truncated `size_download`. Reproduced deliberately: the same URL fetched to the stale path returned 4,735 bytes; fetched to a fresh `mktemp -d` path it returned 103,652. The 4,735 is a property of the local filesystem, not of the remote host.
+Check that your tool could WRITE its output before you diagnose the server. On July 28, 2026 a run recorded a gotcha that read: "hammering a fleet site with rapid sequential curl calls trips the WAF into serving a 4,735-byte stub with http 200 for every URL — it looks exactly like the site breaking." On July 29 the same signature appeared again: nine URLs on a member's site, every one `200 4735`, identical byte count on pages that differ by 8,000 bytes. There is no WAF stub. `curl -o /tmp/pg.html` was writing to a file left behind by an earlier session's sandbox, owned by `nobody:nogroup` and not writable by the current user. curl aborts the transfer when the write fails and still reports `http_code 200` with a truncated `size_download`. Reproduced deliberately: the same URL fetched to the stale path returned 4,735 bytes; fetched to a fresh `mktemp -d` path it returned 103,652. The 4,735 is a property of the local filesystem, not of the remote host.
 
 The rule: write every fetch into a directory you just created (`W=$(mktemp -d)`), never into a fixed `/tmp/<name>` that a previous run or a previous session may own. When a response looks wrong, run `ls -l` on the output path and compare `size_download` against `wc -c` of the file before forming any theory about the server. Identical byte counts across URLs that should differ is the tell — real pages are never the same size by accident.
 
@@ -316,13 +316,13 @@ Adopt as standing practice:
 
 **"Does not resolve" and "is not registered" look identical to `dig +short` and have completely different owners. Ask the TLD's own authoritative server, with controls.**
 
-Four member domains were on a live ops ticket that said "point the A-record at the fleet." Two of them — `anneliesalminen.com` and `piamuggerud.com` — are not registered at all. There is no zone to add a record to. `dig +short A` returned empty for them, which reads as "DNS not configured yet" and had been reported that way for four weeks. Ops would have gone looking in GoDaddy for zones that do not exist.
+Four member domains were on a live ops ticket that said "point the A-record at the fleet." Two of them are not registered at all. There is no zone to add a record to. `dig +short A` returned empty for them, which reads as "DNS not configured yet" and had been reported that way for four weeks. Ops would have gone looking in GoDaddy for zones that do not exist.
 
 Adopt as standing practice:
 
 1. **Query the registry, not a resolver.** `dig @a.gtld-servers.net <domain> NS` and read the rcode: `NXDOMAIN` means no registry delegation (unregistered, or registered with no nameservers — either way the fix is at the registrar). `NOERROR` with an NS referral means registered and delegated, and only then is "add an A record" a real instruction.
 2. **Run both controls in the same call or the result is unfalsifiable.** A made-up domain as the negative control (must return NXDOMAIN) and a known-good domain from the same batch as the positive control (must return an NS referral). Without them, an NXDOMAIN could be a network artifact. With them it is a finding you can put in front of a client.
-3. **Before repointing any domain at the fleet, fetch its root and read the title.** The email-safety rule catches MX; it does not catch a working homepage. `lisasennhauserkelly.com` matched every "built but never provisioned" description in the queue while serving the member's real live business site at HTTP 200. Repointing it would have destroyed live work. Check for a live site *and* live email, separately.
+3. **Before repointing any domain at the fleet, fetch its root and read the title.** The email-safety rule catches MX; it does not catch a working homepage. One member's domain matched every "built but never provisioned" description in the queue while serving the member's real live business site at HTTP 200. Repointing it would have destroyed live work. Check for a live site *and* live email, separately.
 4. **Correct a wrong public status the same day you find it.** Two of eight entries on a client-visible list were mis-diagnosed as waiting on our DNS. Left alone, the members would have waited on an action nobody could take. Naming the real blocker moved two items from an ops backlog to a one-message ask.
 
 <!-- learning:2026-08-02-a-fix-in-one-copy-of-a-script-is-not-a-fix --> **August 2, 2026** (from: the group website intake — Christine's publish package still carried the render bug fixed in Jagoda's builder five days earlier)
