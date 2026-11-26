@@ -90,9 +90,9 @@ See `boil-the-ocean.md` for the full operating principles.
 
 *Appended automatically by the self-improvement loop (Skill-Learnings/): dated lessons from real runs. Newest at the bottom.*
 
-<!-- learning:2026-07-29-audit-the-name-in-every-language-they-live-in --> **July 29, 2026** (from: jagodapasko.com second pass, July 29, 2026)
+<!-- learning:2026-07-29-audit-the-name-in-every-language-they-live-in --> **July 29, 2026** (from: a member site's second pass, July 29, 2026)
 
-On **July 29, 2026** a client's audit from six weeks earlier recorded **2 proof items, 24 authority points, 0 power proof**, and described her third-party footprint as very thin. A single afternoon of searching found national television coverage on two networks, a broadcast documentary segment, three long-form interviews on three independent channels, and a verified fundraiser documenting 210+ evacuations. None of it was hidden. All of it was in **Polish**, and most of it lived on other people's channels rather than her own.
+On **July 29, 2026** a client's audit from six weeks earlier recorded **2 proof items, 24 authority points, 0 power proof**, and described her third-party footprint as very thin. A single afternoon of searching found substantial third-party coverage, including television, a documentary segment and long-form interviews. None of it was hidden. All of it was in **her first language, not English**, and most of it lived on other people's channels rather than her own.
 
 **A proof library built from English-language search of a non-English person is a measurement artefact, not a finding.** So before scoring anyone's authority:
 
@@ -101,7 +101,7 @@ On **July 29, 2026** a client's audit from six weeks earlier recorded **2 proof 
 3. Treat "third-party footprint is thin" as a **hypothesis that must survive a native-language search**, never as a conclusion from an English result set. Say which languages were searched, so the next run can see the gap instead of inheriting it.
 4. Verify every video with oEmbed before publishing it — it returns the exact title, the real channel, and whether the thing is still public. Titles get paraphrased from memory otherwise, and paraphrasing someone else's video title onto a client's press page is how a credibility asset turns into an error.
 
-**Reject search summaries that conflict with primary sources.** One auto-generated summary in this run asserted the client had been "a TV director turned brain-injury recovery mentor." It was a different person with a similar name, and it contradicted a verified twenty-year finance career. A name collision inside a research tool will happily produce fluent, specific, false biography — check every claim against a source that names the person unambiguously before it reaches a published page.
+**Reject search summaries that conflict with primary sources.** One auto-generated summary in this run gave the client a confident career history that belonged to a different person with a similar name, and it contradicted her verified career. A name collision inside a research tool will happily produce fluent, specific, false biography — check every claim against a source that names the person unambiguously before it reaches a published page.
 
 ---
 
