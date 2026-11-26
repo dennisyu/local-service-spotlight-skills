@@ -6,14 +6,14 @@ It does **not** mean "dump every private file on the internet." The public layer
 
 ## Browse the knowledge
 
-Use the [Knowledge Library](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/) to find a method, public source or useful next action. It connects the existing IF/THEN Builder Journey with the maintained knowledge owners; the source pages and repositories remain the places to cite and improve the work.
+Use the [Knowledge Library](https://dennisyu.com/knowledge/) to find a method, public source or useful next action. It connects the existing IF/THEN Builder Journey with the maintained knowledge owners; the source pages and repositories remain the places to cite and improve the work.
 
 | View | What it helps you find |
 |---|---|
-| [Source directory](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/sources/) | Existing method hubs, task recipes, training sources, Spotlight sites, public relationships and proof |
-| [Agent entry](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/for-agents/) | Source IDs, provenance and the route from a question to its maintained owner |
-| [Knowledge catalog JSON](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/catalog.json) | The site's derived public browse projection, with links back to canonical sources |
-| [Public video index JSON](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/videos.json) | Existing public video entries and their source links |
+| [Source directory](https://dennisyu.com/knowledge/#sources) | Existing method hubs, task recipes, training sources, Spotlight sites, public relationships and proof |
+| [Agent entry](https://dennisyu.com/knowledge/#for-agents) | Source IDs, provenance and the route from a question to its maintained owner |
+| [Knowledge catalog JSON](https://dennisyu.com/knowledge/catalog.json) | The site's derived public browse projection, with links back to canonical sources |
+| [Public video index JSON](https://dennisyu.com/knowledge/videos.json) | Existing public video entries and their source links |
 | [Public video library](https://if-then-builder-journey.local-servic-8436.chatgpt.site/library/all/) | The same video entries in a browsable human view |
 
 The library groups destinations without replacing the source catalog's IDs. Its video index reuses the existing public library; an entry is source metadata, not a claim that the recording was reviewed or that a learner completed it. Source revisions and coverage are recorded in the published views.
