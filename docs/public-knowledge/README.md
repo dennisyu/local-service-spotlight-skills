@@ -4,6 +4,20 @@ This folder is the public map of the knowledge Local Service Spotlight deliberat
 
 It does **not** mean "dump every private file on the internet." The public layer contains methods, evidence that is already public or cleared for public use, public relationships and credits, public case studies, public training, public agent instructions, public entity facts, and public descriptions of how the system works. Credentials, private client data, private calls, private learner records, contracts, unpublished personal information and other restricted material stay out.
 
+## Browse the knowledge
+
+Use the [Knowledge Library](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/) to find a method, public source or useful next action. It connects the existing IF/THEN Builder Journey with the maintained knowledge owners; the source pages and repositories remain the places to cite and improve the work.
+
+| View | What it helps you find |
+|---|---|
+| [Source directory](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/sources/) | Existing method hubs, task recipes, training sources, Spotlight sites, public relationships and proof |
+| [Agent entry](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/for-agents/) | Source IDs, provenance and the route from a question to its maintained owner |
+| [Knowledge catalog JSON](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/catalog.json) | The site's derived public browse projection, with links back to canonical sources |
+| [Public video index JSON](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/videos.json) | Existing public video entries and their source links |
+| [Public video library](https://if-then-builder-journey.local-servic-8436.chatgpt.site/library/all/) | The same video entries in a browsable human view |
+
+The library groups destinations without replacing the source catalog's IDs. Its video index reuses the existing public library; an entry is source metadata, not a claim that the recording was reviewed or that a learner completed it. Source revisions and coverage are recorded in the published views.
+
 ## Why this exists
 
 Local Service Spotlight has several kinds of knowledge that were historically easy to separate:
