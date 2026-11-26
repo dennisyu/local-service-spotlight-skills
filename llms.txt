@@ -19,3 +19,22 @@
 - [Contribute](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/CONTRIBUTING.md): reviewed changes, tests and release identity.
 
 Use the exact retrieved source revision. Available source is not Installed, Enabled, Tested, Scheduled or Observed behavior. Preserve the owner's permission boundary; mark unreadable or untested steps UNKNOWN/BLOCKED.
+
+## Public knowledge graph
+
+- [Public knowledge map](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/README.md): how canonical methods, proof, training, Spotlight verticals, public relationships and agents connect.
+- [Publishing standard](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/PUBLISHING-STANDARD.md): public/private boundary, canonical fields, distribution and measurement.
+- [IF/THEN recommendation layer](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/IF-THEN.md): observable situation → supported action → proof → outcome.
+- [Spotlight + training integration](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/SPOTLIGHT-AND-TRAINING.md): one graph feeding the mothership, niche Spotlight sites, Skool, agent skills and social/video.
+- [Machine-readable catalog](https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/docs/public-knowledge/catalog.json): public-safe starter object index for agents and crawlers.
+
+## Browse the published knowledge
+
+These views connect the IF/THEN Builder Journey to existing source owners. Use their canonical destinations and provenance when citing or updating a method.
+
+- [Knowledge Library](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/): public guides and searchable canonical destinations.
+- [Source directory](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/sources/): existing hubs for methods, tasks, training, Spotlight sites, public relationships and proof.
+- [Agent entry](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/for-agents/): source IDs, provenance and routes to maintained owners.
+- [Derived knowledge catalog JSON](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/catalog.json): the site's browse projection, preserving links to canonical sources.
+- [Public video index JSON](https://if-then-builder-journey.local-servic-8436.chatgpt.site/knowledge/videos.json): metadata from the existing public video library; listing does not establish recording review or learner completion.
+- [Public video library](https://if-then-builder-journey.local-servic-8436.chatgpt.site/library/all/): human browse view of those existing video entries.
