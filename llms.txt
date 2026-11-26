@@ -19,3 +19,12 @@
 - [Contribute](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/CONTRIBUTING.md): reviewed changes, tests and release identity.
 
 Use the exact retrieved source revision. Available source is not Installed, Enabled, Tested, Scheduled or Observed behavior. Preserve the owner's permission boundary; mark unreadable or untested steps UNKNOWN/BLOCKED.
+
+## Public knowledge graph
+
+- [Public knowledge map](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/README.md): how canonical methods, proof, training, Spotlight verticals, public relationships and agents connect.
+- [Publishing standard](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/PUBLISHING-STANDARD.md): public/private boundary, canonical fields, distribution and measurement.
+- [IF/THEN recommendation layer](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/IF-THEN.md): observable situation → supported action → proof → outcome.
+- [Spotlight + training integration](https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/SPOTLIGHT-AND-TRAINING.md): one graph feeding the mothership, niche Spotlight sites, Skool, agent skills and social/video.
+- [Machine-readable catalog](https://raw.githubusercontent.com/dennisyu/local-service-spotlight-skills/main/docs/public-knowledge/catalog.json): public-safe starter object index for agents and crawlers.
+
