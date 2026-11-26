@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "purpose": "Public machine-readable starter index for Local Service Spotlight knowledge. This file contains only deliberately public destinations and public-safe descriptions.",
+  "updated": "2026-11-25",
+  "objects": [
+    {
+      "id": "concept:content-factory",
+      "type": "concept",
+      "title": "Content Factory",
+      "canonical_url": "https://blitzmetrics.com/content-factory/",
+      "summary": "Four-stage Produce → Process → Post → Promote framework for turning real source material into connected assets and measured distribution.",
+      "related": [
+        "concept:article-guidelines",
+        "concept:entity-linking",
+        "system:spotlight-network",
+        "system:ifthen"
+      ]
+    },
+    {
+      "id": "concept:article-guidelines",
+      "type": "standard",
+      "title": "Article Guidelines",
+      "canonical_url": "https://localservicespotlight.com/article-guidelines/",
+      "summary": "Current public writing/review standard for source-backed useful articles.",
+      "related": [
+        "concept:content-factory",
+        "concept:entity-linking"
+      ]
+    },
+    {
+      "id": "concept:entity-linking",
+      "type": "concept",
+      "title": "Entity Linking",
+      "canonical_url": "https://blitzmetrics.com/entity-linking/",
+      "summary": "Method for choosing verified, useful destinations for named entities and concepts.",
+      "related": [
+        "concept:seo-tree",
+        "system:public-knowledge"
+      ]
+    },
+    {
+      "id": "concept:seo-tree",
+      "type": "concept",
+      "title": "SEO Tree",
+      "canonical_url": "https://blitzmetrics.com/seo-tree/",
+      "summary": "Framework for relating root, brand, topic and supporting pages.",
+      "related": [
+        "concept:entity-linking",
+        "system:spotlight-network"
+      ]
+    },
+    {
+      "id": "concept:nine-triangles",
+      "type": "concept",
+      "title": "Nine Triangles",
+      "canonical_url": "https://blitzmetrics.com/nine-triangles/",
+      "summary": "Public locator for the Nine Triangles framework.",
+      "related": [
+        "program:ai-builder"
+      ]
+    },
+    {
+      "id": "program:ai-builder",
+      "type": "program",
+      "title": "AI Builder Program",
+      "canonical_url": "https://localservicespotlight.com/ai-builder-program/",
+      "summary": "Hands-on path for builders to learn, execute and prove work for real businesses.",
+      "related": [
+        "system:ifthen",
+        "system:spotlight-network",
+        "concept:content-factory"
+      ]
+    },
+    {
+      "id": "system:knowledge-graph-explorer",
+      "type": "tool",
+      "title": "Knowledge Graph Explorer",
+      "canonical_url": "https://localservicespotlight.com/knowledge-graph-explorer/",
+      "summary": "Public Local Service Spotlight knowledge-graph exploration surface.",
+      "related": [
+        "system:public-knowledge"
+      ]
+    },
+    {
+      "id": "system:agent-skills",
+      "type": "repository",
+      "title": "Local Service Spotlight skills",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills",
+      "summary": "Public reusable agent instructions and standards.",
+      "related": [
+        "system:public-knowledge",
+        "program:ai-builder"
+      ]
+    },
+    {
+      "id": "system:ifthen",
+      "type": "system",
+      "title": "IF/THEN recommendation layer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/IF-THEN.md",
+      "summary": "Public method for routing a person from an observable situation to a supported next action and measurable outcome.",
+      "related": [
+        "program:ai-builder",
+        "system:spotlight-network",
+        "system:public-knowledge"
+      ]
+    },
+    {
+      "id": "system:spotlight-network",
+      "type": "network",
+      "title": "Spotlight network",
+      "canonical_url": "https://localservicespotlight.com/",
+      "summary": "Network of category-specific public surfaces that reuse shared methods, entities and proof while serving niche/local intent.",
+      "related": [
+        "system:public-knowledge",
+        "program:ai-builder",
+        "concept:seo-tree"
+      ]
+    },
+    {
+      "id": "system:public-knowledge",
+      "type": "system",
+      "title": "Public knowledge graph",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/README.md",
+      "summary": "Public contract that connects canonical methods, proof, training, Spotlight verticals, agents and IF/THEN recommendations.",
+      "related": [
+        "system:agent-skills",
+        "system:ifthen",
+        "system:spotlight-network"
+      ]
+    }
+  ]
+}
