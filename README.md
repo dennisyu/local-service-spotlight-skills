@@ -12,9 +12,12 @@ connector and execution capabilities must be tested in that assistant's account.
 | Install a supported skills package | [Illustrated install guide](https://localservicespotlight.com/install/) and product-specific routes below |
 | Understand Learn → Do → Teach and CCS | [Worked learning loop](docs/agent-setup/LEARN-DO-TEACH.md) |
 | Let an agent navigate the source | [agent-setup.json](agent-setup.json) and [llms.txt](llms.txt) |
+| Browse the public knowledge graph | [Public knowledge map](docs/public-knowledge/README.md), [IF/THEN method](docs/public-knowledge/IF-THEN.md), and [machine catalog](docs/public-knowledge/catalog.json) |
 
 This is the **public reusable source**. Dennis's private operational repositories
 are implementation examples, not prerequisites or credentials for your team.
+
+The repository also carries the public knowledge layer that connects Local Service Spotlight's methods, public proof, Spotlight verticals, training, relationships, and IF/THEN recommendations. Start at [docs/public-knowledge/README.md](docs/public-knowledge/README.md).
 
 Use these guides to turn your business's proof into work you can check. Pick a
 task, such as checking a customer claim or drafting an article. Read the steps,
