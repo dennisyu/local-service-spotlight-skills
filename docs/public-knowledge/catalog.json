@@ -1,0 +1,815 @@
+{
+  "schema_version": 1,
+  "purpose": "Public machine-readable starter index for Local Service Spotlight knowledge. This file contains only deliberately public destinations and public-safe descriptions.",
+  "updated": "2026-11-25",
+  "objects": [
+    {
+      "id": "canonical:article-guidelines",
+      "type": "concept",
+      "title": "Article Guidelines",
+      "canonical_url": "https://localservicespotlight.com/article-guidelines/",
+      "source_of_truth_url": "https://localservicespotlight.com/article-guidelines/",
+      "owner_function": "Content (article quality)",
+      "owning_skill": "definitive-article-writer",
+      "last_verified": "2026-11-03",
+      "publication_status": "PUBLIC_OR_PUBLIC_LOCATOR"
+    },
+    {
+      "id": "canonical:content-factory",
+      "type": "concept",
+      "title": "Content Factory",
+      "canonical_url": "https://blitzmetrics.com/content-factory/",
+      "source_of_truth_url": "https://blitzmetrics.com/content-factory/",
+      "owner_function": "Content (production and distribution)",
+      "owning_skill": "content-factory",
+      "last_verified": "2026-11-03",
+      "publication_status": "PUBLIC_OR_PUBLIC_LOCATOR"
+    },
+    {
+      "id": "canonical:entity-linking",
+      "type": "concept",
+      "title": "Entity Linking",
+      "canonical_url": "https://blitzmetrics.com/entity-linking/",
+      "source_of_truth_url": "https://blitzmetrics.com/entity-linking/",
+      "owner_function": "Content (entity and link quality)",
+      "owning_skill": "definitive-article-writer",
+      "last_verified": "2026-11-03",
+      "publication_status": "PUBLIC_OR_PUBLIC_LOCATOR"
+    },
+    {
+      "id": "canonical:nine-triangles",
+      "type": "concept",
+      "title": "Nine Triangles",
+      "canonical_url": "https://blitzmetrics.com/nine-triangles/",
+      "source_of_truth_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/nine-triangles/references/canonical-framework.md",
+      "owner_function": "Framework owner and methods maintainers",
+      "owning_skill": "nine-triangles",
+      "last_verified": "2026-11-03",
+      "publication_status": "PUBLIC_OR_PUBLIC_LOCATOR"
+    },
+    {
+      "id": "canonical:podcast-appearances",
+      "type": "canonical_topic",
+      "title": "Dennis Yu",
+      "canonical_url": "https://blitzmetrics.com/dennis-yu-podcast-appearances/",
+      "source_of_truth_url": "https://www.podchaser.com/creators/dennis-yu-107aRuUrqM",
+      "owner_function": "Research (authority-and-reputation)",
+      "owning_skill": "podcast-appearance-syndicator",
+      "last_verified": "2026-10-17",
+      "publication_status": "PUBLIC_OR_PUBLIC_LOCATOR"
+    },
+    {
+      "id": "canonical:seo-tree",
+      "type": "concept",
+      "title": "SEO Tree",
+      "canonical_url": "https://blitzmetrics.com/seo-tree/",
+      "source_of_truth_url": "https://blitzmetrics.com/canonical/",
+      "owner_function": "Content (content architecture)",
+      "owning_skill": "definitive-article-writer",
+      "last_verified": "2026-11-03",
+      "publication_status": "PUBLIC_OR_PUBLIC_LOCATOR"
+    },
+    {
+      "id": "concept:article-guidelines",
+      "type": "standard",
+      "title": "Article Guidelines",
+      "canonical_url": "https://localservicespotlight.com/article-guidelines/",
+      "summary": "Current public writing/review standard for source-backed useful articles.",
+      "related": [
+        "concept:content-factory",
+        "concept:entity-linking"
+      ]
+    },
+    {
+      "id": "concept:content-factory",
+      "type": "concept",
+      "title": "Content Factory",
+      "canonical_url": "https://blitzmetrics.com/content-factory/",
+      "summary": "Four-stage Produce → Process → Post → Promote framework for turning real source material into connected assets and measured distribution.",
+      "related": [
+        "concept:article-guidelines",
+        "concept:entity-linking",
+        "system:spotlight-network",
+        "system:ifthen"
+      ]
+    },
+    {
+      "id": "concept:entity-linking",
+      "type": "concept",
+      "title": "Entity Linking",
+      "canonical_url": "https://blitzmetrics.com/entity-linking/",
+      "summary": "Method for choosing verified, useful destinations for named entities and concepts.",
+      "related": [
+        "concept:seo-tree",
+        "system:public-knowledge"
+      ]
+    },
+    {
+      "id": "concept:nine-triangles",
+      "type": "concept",
+      "title": "Nine Triangles",
+      "canonical_url": "https://blitzmetrics.com/nine-triangles/",
+      "summary": "Public locator for the Nine Triangles framework.",
+      "related": [
+        "program:ai-builder"
+      ]
+    },
+    {
+      "id": "concept:seo-tree",
+      "type": "concept",
+      "title": "SEO Tree",
+      "canonical_url": "https://blitzmetrics.com/seo-tree/",
+      "summary": "Framework for relating root, brand, topic and supporting pages.",
+      "related": [
+        "concept:entity-linking",
+        "system:spotlight-network"
+      ]
+    },
+    {
+      "id": "program:ai-builder",
+      "type": "program",
+      "title": "AI Builder Program",
+      "canonical_url": "https://localservicespotlight.com/ai-builder-program/",
+      "summary": "Hands-on path for builders to learn, execute and prove work for real businesses.",
+      "related": [
+        "system:ifthen",
+        "system:spotlight-network",
+        "concept:content-factory"
+      ]
+    },
+    {
+      "id": "skill:agents-first-reassignment",
+      "type": "agent_skill",
+      "title": "agents-first-reassignment",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/agents-first-reassignment/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:ai-search-visibility",
+      "type": "agent_skill",
+      "title": "ai-search-visibility",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/ai-search-visibility/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:boil-the-ocean",
+      "type": "agent_skill",
+      "title": "boil-the-ocean",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/boil-the-ocean/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:business-brand-strategist",
+      "type": "agent_skill",
+      "title": "business-brand-strategist",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/business-brand-strategist/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:business-website-agent",
+      "type": "agent_skill",
+      "title": "business-website-agent",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/business-website-agent/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:client-access-checklist",
+      "type": "agent_skill",
+      "title": "client-access-checklist",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/client-access-checklist/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:client-relationship-cadence",
+      "type": "agent_skill",
+      "title": "client-relationship-cadence",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/client-relationship-cadence/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:content-agent",
+      "type": "agent_skill",
+      "title": "content-agent",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/content-agent/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:content-factory",
+      "type": "agent_skill",
+      "title": "content-factory",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/content-factory/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:cross-post-watch",
+      "type": "agent_skill",
+      "title": "cross-post-watch",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/cross-post-watch/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:definitive-article-writer",
+      "type": "agent_skill",
+      "title": "definitive-article-writer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/definitive-article-writer/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:dollar-a-day-strategist",
+      "type": "agent_skill",
+      "title": "dollar-a-day-strategist",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/dollar-a-day-strategist/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:evidence-verification",
+      "type": "agent_skill",
+      "title": "evidence-verification",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/evidence-verification/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:fitting-reply",
+      "type": "agent_skill",
+      "title": "fitting-reply",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/fitting-reply/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:ga4-client-view",
+      "type": "agent_skill",
+      "title": "ga4-client-view",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/ga4-client-view/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:ga4-website-maa",
+      "type": "agent_skill",
+      "title": "ga4-website-maa",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/ga4-website-maa/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:gct-screen",
+      "type": "agent_skill",
+      "title": "gct-screen",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/gct-screen/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:geo-visibility-audit",
+      "type": "agent_skill",
+      "title": "geo-visibility-audit",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/geo-visibility-audit/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-analyzer",
+      "type": "agent_skill",
+      "title": "google-ads-analyzer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-analyzer/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-change-scripts",
+      "type": "agent_skill",
+      "title": "google-ads-change-scripts",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-change-scripts/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-client-view",
+      "type": "agent_skill",
+      "title": "google-ads-client-view",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-client-view/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-copy-optimizer",
+      "type": "agent_skill",
+      "title": "google-ads-copy-optimizer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-copy-optimizer/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-daily-check",
+      "type": "agent_skill",
+      "title": "google-ads-daily-check",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-daily-check/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-lp-auditor",
+      "type": "agent_skill",
+      "title": "google-ads-lp-auditor",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-lp-auditor/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-onboarding",
+      "type": "agent_skill",
+      "title": "google-ads-onboarding",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-onboarding/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-reviewer",
+      "type": "agent_skill",
+      "title": "google-ads-reviewer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-reviewer/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:google-ads-script",
+      "type": "agent_skill",
+      "title": "google-ads-script",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/google-ads-script/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:grokipedia-authority",
+      "type": "agent_skill",
+      "title": "grokipedia-authority",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/grokipedia-authority/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:knowledge-panel-entity-seo",
+      "type": "agent_skill",
+      "title": "knowledge-panel-entity-seo",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/knowledge-panel-entity-seo/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:measurement-analytics",
+      "type": "agent_skill",
+      "title": "measurement-analytics",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/measurement-analytics/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:model-judgment",
+      "type": "agent_skill",
+      "title": "model-judgment",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/model-judgment/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:nine-triangles",
+      "type": "agent_skill",
+      "title": "nine-triangles",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/nine-triangles/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:one-session-client-onboarding",
+      "type": "agent_skill",
+      "title": "one-session-client-onboarding",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/one-session-client-onboarding/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:outbound-action-closeout",
+      "type": "agent_skill",
+      "title": "outbound-action-closeout",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/outbound-action-closeout/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:personal-brand-audit",
+      "type": "agent_skill",
+      "title": "personal-brand-audit",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/personal-brand-audit/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:personal-brand-strategist",
+      "type": "agent_skill",
+      "title": "personal-brand-strategist",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/personal-brand-strategist/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:personal-brand-website-agent",
+      "type": "agent_skill",
+      "title": "personal-brand-website-agent",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/personal-brand-website-agent/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:positive-mentions-harvester",
+      "type": "agent_skill",
+      "title": "positive-mentions-harvester",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/positive-mentions-harvester/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:recursive-self-improvement-qa",
+      "type": "agent_skill",
+      "title": "recursive-self-improvement-qa",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/recursive-self-improvement-qa/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:reputation-gap-analyzer",
+      "type": "agent_skill",
+      "title": "reputation-gap-analyzer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/reputation-gap-analyzer/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:reuse-agent-access",
+      "type": "agent_skill",
+      "title": "reuse-agent-access",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/reuse-agent-access/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:sales-every-day",
+      "type": "agent_skill",
+      "title": "sales-every-day",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/sales-every-day/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:second-ring-network-mapper",
+      "type": "agent_skill",
+      "title": "second-ring-network-mapper",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/second-ring-network-mapper/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "authority-and-reputation"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:security-audit",
+      "type": "agent_skill",
+      "title": "security-audit",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/security-audit/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:seo-audit",
+      "type": "agent_skill",
+      "title": "seo-audit",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/seo-audit/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:shared-memory",
+      "type": "agent_skill",
+      "title": "shared-memory",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/shared-memory/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:skill-registry",
+      "type": "agent_skill",
+      "title": "skill-registry",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/skill-registry/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "quality-and-standards"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:social-amplification-engine",
+      "type": "agent_skill",
+      "title": "social-amplification-engine",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/social-amplification-engine/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:software-subscription-audit",
+      "type": "agent_skill",
+      "title": "software-subscription-audit",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/software-subscription-audit/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:video-repurposing-agent",
+      "type": "agent_skill",
+      "title": "video-repurposing-agent",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/video-repurposing-agent/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "content-engine"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "skill:weekly-brand-maa",
+      "type": "agent_skill",
+      "title": "weekly-brand-maa",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/skills/weekly-brand-maa/SKILL.md",
+      "source": "canonical marketplace manifest",
+      "bundles": [
+        "lss-everything",
+        "client-operations"
+      ],
+      "publication_status": "PUBLIC"
+    },
+    {
+      "id": "system:agent-skills",
+      "type": "repository",
+      "title": "Local Service Spotlight skills",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills",
+      "summary": "Public reusable agent instructions and standards.",
+      "related": [
+        "system:public-knowledge",
+        "program:ai-builder"
+      ]
+    },
+    {
+      "id": "system:ifthen",
+      "type": "system",
+      "title": "IF/THEN recommendation layer",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/IF-THEN.md",
+      "summary": "Public method for routing a person from an observable situation to a supported next action and measurable outcome.",
+      "related": [
+        "program:ai-builder",
+        "system:spotlight-network",
+        "system:public-knowledge"
+      ]
+    },
+    {
+      "id": "system:knowledge-graph-explorer",
+      "type": "tool",
+      "title": "Knowledge Graph Explorer",
+      "canonical_url": "https://localservicespotlight.com/knowledge-graph-explorer/",
+      "summary": "Public Local Service Spotlight knowledge-graph exploration surface.",
+      "related": [
+        "system:public-knowledge"
+      ]
+    },
+    {
+      "id": "system:public-knowledge",
+      "type": "system",
+      "title": "Public knowledge graph",
+      "canonical_url": "https://github.com/dennisyu/local-service-spotlight-skills/blob/main/docs/public-knowledge/README.md",
+      "summary": "Public contract that connects canonical methods, proof, training, Spotlight verticals, agents and IF/THEN recommendations.",
+      "related": [
+        "system:agent-skills",
+        "system:ifthen",
+        "system:spotlight-network"
+      ]
+    },
+    {
+      "id": "system:spotlight-network",
+      "type": "network",
+      "title": "Spotlight network",
+      "canonical_url": "https://localservicespotlight.com/",
+      "summary": "Network of category-specific public surfaces that reuse shared methods, entities and proof while serving niche/local intent.",
+      "related": [
+        "system:public-knowledge",
+        "program:ai-builder",
+        "concept:seo-tree"
+      ]
+    }
+  ],
+  "counts": {
+    "total_objects": 68,
+    "public_skills": 51,
+    "canonical_master_topics": 6
+  }
+}
