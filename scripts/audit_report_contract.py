@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
@@ -151,6 +152,11 @@ def extract_pdf(data_path):
         raise AuditContractError("final PDF extraction unavailable/failed; batch HOLD") from exc
 
 
+def _joined(value):
+    """Casefold and collapse whitespace, rejoining words hyphenated across a line break."""
+    return " ".join(re.sub(r"(\w)-\s*\n\s*(\w)", r"\1-\2", value).split()).casefold()
+
+
 def validate_batch(manifest, root):
     root = Path(root).resolve()
     expected = manifest.get("expected_artifacts", [])
@@ -191,11 +197,13 @@ def validate_batch(manifest, root):
         for fact_id in allowance:
             if fact_id not in facts:
                 raise AuditContractError(f"{artifact['path']}: allowance names unknown fact {fact_id}")
-        folded = text.casefold()
+        # Match on joined text: PDF extraction and transcripts break lines mid-phrase, and a
+        # line-by-line match lets a split retired line through. Rejoin hyphenated breaks too.
+        folded = _joined(text)
         for fact_id, fact in facts.items():
             # An audit may need to quote a retired claim in order to retire it. That is allowed only
             # through an explicit, counted, reasoned allowance; a reviewer still confirms the framing.
-            hits = sum(folded.count(old.casefold()) for old in fact.get("retired_text", []) if old)
+            hits = sum(folded.count(_joined(old)) for old in fact.get("retired_text", []) if old.strip())
             if hits:
                 grant = allowance.get(fact_id)
                 if not grant:
@@ -210,7 +218,7 @@ def validate_batch(manifest, root):
             if artifact["path"] in fact.get("dependents", []):
                 if artifact.get("shared_fact_revisions", {}).get(fact_id) != fact.get("revision"):
                     raise AuditContractError(f"{artifact['path']}: stale shared fact {fact_id}")
-                if fact.get("required_text") and fact["required_text"] not in text:
+                if fact.get("required_text") and _joined(fact["required_text"]) not in folded:
                     raise AuditContractError(f"{artifact['path']}: corrected fact {fact_id} missing")
     for fact_id, fact in facts.items():
         if not fact.get("revision") or not set(fact.get("dependents", [])).issubset(set(expected)):
