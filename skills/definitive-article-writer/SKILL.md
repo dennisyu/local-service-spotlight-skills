@@ -1252,6 +1252,18 @@ entity-linking preflight and a live link audit.
 - **Every page means every page.** The former prose/policy exemption is removed
   by Dennis's 2026-09-05 instruction. A short policy can use a concise diagram
   explaining its actual process. Do not invent a person or pad a page with stock.
+- **Standing rule, reaffirmed (Dennis 2026-11-26 t1506u): "We always want to
+  have a visual item above the fold."** Every published article or page needs
+  at least one qualifying visual in the first desktop (1280x800) and mobile
+  (390x844) screen without scrolling: a real photograph, a chart or diagram
+  built from real data, or a verified video embed. Stock, AI-generated or
+  decorative imagery never qualifies. This applies retroactively to every
+  article already published, not just new ones: audit, then fix by moving an
+  existing on-page visual up, reusing an image already published on the same
+  domain (with a hash receipt), or building a real-data diagram. Respect
+  PHOTO-TAKEDOWNS and never add a new identifiable-person photo without source
+  and permission. Publish the fix on the owner's own sites without asking and
+  QA after go-live (Dennis 2026-11-26 t1505u).
 - **Keep media invited and silent during QA.** First paint must not autoplay.
   YouTube uses youtube-nocookie.com, rel=0, cc_load_policy=1 and a page-language
   cc_lang_pref. A click-to-play poster counts only when the real relevant image
